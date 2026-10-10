@@ -54,9 +54,7 @@ fn number<T: std::str::FromStr>(args: &[String], name: &str) -> Result<Option<T>
 
 impl Options {
     fn parse(root: &Path, args: &[String]) -> Result<Self> {
-        let path = |name: &str, default: &str| {
-            flag_value(args, name).map_or_else(|| root.join(default), PathBuf::from)
-        };
+        let path = |name: &str, default: &str| root.join(flag_value(args, name).unwrap_or(default));
         Ok(Self {
             root: root.to_path_buf(),
             exe: path("--exe", "target/e2e/mivia-desktop.exe"),
@@ -64,7 +62,7 @@ impl Options {
             out: path("--out", "target/perf"),
             runs: number(args, "--runs")?,
             idle_minutes: number(args, "--idle-minutes")?.unwrap_or(30),
-            hidden_minutes: number(args, "--hidden-minutes")?.unwrap_or(10),
+            hidden_minutes: number(args, "--hidden-minutes")?.unwrap_or(8),
             allow_noise: args.iter().any(|arg| arg == "--allow-noise"),
             installer: flag_value(args, "--installer").map(PathBuf::from),
             previous: flag_value(args, "--previous").map(PathBuf::from),

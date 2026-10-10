@@ -94,6 +94,7 @@ async fn history_pages_are_fast() {
     let count = batches();
     let started = Instant::now();
     fill(&fx.store, count).await;
+    fx.store.keep_readers();
     let big = members(&fx.store).await;
     let seeded_s = started.elapsed().as_secs_f64();
     let search = HistoryFilter {
