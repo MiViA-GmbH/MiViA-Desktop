@@ -88,3 +88,39 @@ test('empty overview at the minimum window size shows the rail', async ({ page }
 	await noHorizontalScroll(page);
 	await page.screenshot({ path: `${SHOTS}/z1-min-overview-en.png` });
 });
+
+for (const lang of ['en', 'de']) {
+	test(`support settings and the problem report dialog (${lang})`, async ({ page }) => {
+		await open(page, `/settings/support?scenario=calm&lang=${lang}`);
+		await expect(page.getByRole('row')).toHaveCount(15);
+		await expect(page.getByText('0192f1d0')).toBeVisible();
+		await structure(page);
+		await noHorizontalScroll(page);
+		await page.screenshot({ path: `${SHOTS}/g3-settings-support-${lang}.png`, fullPage: true });
+		await page.getByRole('button', { name: /^(Report a problem|Problem melden)…$/ }).click();
+		const dialog = page.getByRole('dialog');
+		await dialog.getByRole('button', { name: /^(Review what will be sent|Ansehen, was gesendet wird)$/ }).click();
+		await dialog.getByRole('combobox', { name: /^(Show file|Datei anzeigen)$/ }).click();
+		await page.getByRole('option', { name: /^system\.json/ }).click();
+		await expect(dialog.getByText('"arch":"x86_64"', { exact: false })).toBeVisible();
+		await structure(page);
+		await page.screenshot({ path: `${SHOTS}/r1-report-dialog-${lang}.png` });
+	});
+}
+
+test('a series with problems offers a problem report from its row', async ({ page }) => {
+	await open(page, '/history?scenario=calm');
+	await page
+		.getByRole('row', { name: /Probe 4710/ })
+		.getByRole('button', { name: 'More actions' })
+		.click();
+	await page.getByRole('menuitem', { name: 'Report a problem…' }).click();
+	await expect(page.getByRole('dialog', { name: 'Report a problem' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeVisible();
+});
+
+test('reporting turned off by policy hides the report entry points', async ({ page }) => {
+	await open(page, '/settings/support?scenario=reporting-off');
+	await expect(page.getByText('Problem reports are turned off by your administrator.')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Report a problem…' })).toHaveCount(0);
+});

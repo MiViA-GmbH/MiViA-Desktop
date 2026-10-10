@@ -4,6 +4,7 @@ import type { FolderView } from '../../shared/ipc/bindings';
 import { ATTENTION, BATCH, FOLDERS, HOLDS, ITEMS, ONE_OFF, REPORTS } from './fixtures';
 import { historyResponses } from './history';
 import { setupResponses, setupView } from './setup';
+import { supportResponses } from './support';
 
 const params = new URLSearchParams(window.location.search);
 const scenario = params.get('scenario') ?? 'hold';
@@ -37,6 +38,7 @@ const responses: Record<string, unknown> = {
 	list_series_reports: REPORTS,
 	get_one_off: scenario === 'one-off' ? ONE_OFF : null,
 	get_remaining_uploads: 1176,
+	...supportResponses(scenario),
 };
 
 const setup = { ...setupResponses(setupView(scenario)), ...historyResponses(scenario) };

@@ -236,6 +236,8 @@ test.describe
 					['list_series_reports', { id }],
 					['get_one_off', {}],
 					['get_remaining_uploads', {}],
+					['get_support', {}],
+					['list_pending_reports', {}],
 				];
 				const results: Record<string, string> = {};
 				for (const [command, args] of calls) {
@@ -246,6 +248,49 @@ test.describe
 				}
 				return results;
 			});
-			expect(Object.values(outcomes)).toEqual(Array(15).fill('ok'));
+			expect(Object.values(outcomes)).toEqual(Array(17).fill('ok'));
+		});
+
+		test('scenario 6: a problem report is sent, saved after a 404 and the local logs are deleted', async () => {
+			const { page, origin } = running;
+			await page
+				.getByRole('link', { name: /Settings/ })
+				.first()
+				.click();
+			await page.getByRole('link', { name: 'Support' }).click();
+			await expect(page.getByRole('row')).toHaveCount(15);
+			const report = async (description: string) => {
+				await page.getByRole('button', { name: 'Report a problem…' }).click();
+				const dialog = page.getByRole('dialog', { name: 'Report a problem' });
+				await dialog.getByLabel('What happened?').fill(description);
+				await dialog.getByRole('button', { name: 'Review what will be sent' }).click();
+				await expect(dialog.getByText(/^\d+ files, /)).toBeVisible({ timeout: 30_000 });
+				await dialog.getByRole('button', { name: 'Send', exact: true }).click();
+				await expect(dialog).toBeHidden();
+			};
+			await report('Report stopped after the upload.');
+			await expect(page.getByText(/^Problem report sent\. Reference [0-9a-f]{8}\.$/)).toBeVisible({ timeout: 30_000 });
+			const journal: { op: string }[] = await (await fetch(`${origin}/__stub/journal`)).json();
+			expect(journal.some((entry) => entry.op === 'ProblemReport')).toBe(true);
+			const fault = { op: 'problemReport', kind: 'before', status: 404 };
+			await fetch(`${origin}/__stub/fault`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(fault),
+			});
+			await report('Second report.');
+			await page.getByRole('button', { name: 'Save and e-mail' }).first().click();
+			await expect(page.getByText('The report is in your Downloads folder.', { exact: false })).toBeVisible();
+			expect(
+				readdirSync(join(RUN, 'appdata'), { recursive: true })
+					.map(String)
+					.some((name) => /downloads[\\/]MiViA-report-.+\.zip$/.test(name)),
+			).toBe(true);
+			await page.getByRole('button', { name: 'Delete local logs' }).click();
+			await page
+				.getByRole('dialog', { name: 'Delete local logs?' })
+				.getByRole('button', { name: 'Delete logs' })
+				.click();
+			await expect(page.getByText(/files? deleted\.$/)).toBeVisible();
 		});
 	});
