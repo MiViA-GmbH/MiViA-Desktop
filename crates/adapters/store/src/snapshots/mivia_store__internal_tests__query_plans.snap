@@ -105,3 +105,78 @@ list member paths:
   SEARCH source_file USING INDEX source_file_by_batch (batch_id=?)
 list detected members:
   SEARCH source_file USING INDEX source_file_by_batch (batch_id=?)
+claim pipeline upload:
+  SEARCH s USING INDEX source_file_due (account_id=? AND state=? AND next_attempt_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SCALAR SUBQUERY 4
+  SEARCH h USING PRIMARY KEY (account_id=?)
+  LIST SUBQUERY 2
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SEARCH c EXISTS USING INDEX computation_by_source (source_file_id=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH f USING INTEGER PRIMARY KEY (rowid=?)
+claim upload canary:
+  SEARCH s USING INDEX source_file_due (account_id=? AND state=? AND next_attempt_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  LIST SUBQUERY 2
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SEARCH c EXISTS USING INDEX computation_by_source (source_file_id=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH f USING INTEGER PRIMARY KEY (rowid=?)
+claim pipeline submit:
+  SEARCH c USING INDEX computation_claim (state=? AND next_attempt_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SCALAR SUBQUERY 3
+  SEARCH h USING PRIMARY KEY (account_id=?)
+  LIST SUBQUERY 2
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+claim submit canary:
+  SEARCH c USING INDEX computation_claim (state=? AND next_attempt_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  LIST SUBQUERY 2
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+next poll:
+  SEARCH computation USING COVERING INDEX computation_poll (account_id=?)
+claim pipeline poll:
+  SEARCH computation USING INDEX computation_poll (account_id=? AND next_poll_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SCALAR SUBQUERY 2
+  SEARCH h USING PRIMARY KEY (account_id=?)
+claim recovery attempts:
+  SEARCH computation USING INDEX computation_claim (state=? AND next_attempt_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+get submit attempt:
+  SEARCH submit_attempt USING PRIMARY KEY (key=?)
+list attempt members:
+  SEARCH c USING INDEX computation_by_attempt (submit_attempt_key=?)
+  SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+find job reference:
+  SEARCH computation USING COVERING INDEX computation_server_job (server_job_id=?)
+find files of image:
+  SEARCH source_file USING COVERING INDEX source_file_server_image (account_id=? AND server_image_id=?)
+count computing:
+  SEARCH computation USING COVERING INDEX computation_poll (account_id=?)
+list uploading files:
+  SEARCH source_file USING COVERING INDEX source_file_due (account_id=? AND state=?)
+list queued choices:
+  SEARCH computation USING INDEX computation_claim (state=?)

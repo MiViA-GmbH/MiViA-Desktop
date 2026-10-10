@@ -41,6 +41,9 @@ CREATE UNIQUE INDEX batch_open_key ON batch(account_id, batch_key) WHERE open = 
 index bmc_hist
 CREATE INDEX bmc_hist ON batch_model_choice(account_id, model_id, sort_at DESC, batch_id DESC)
 
+index computation_by_attempt
+CREATE INDEX computation_by_attempt ON computation(submit_attempt_key) WHERE submit_attempt_key IS NOT NULL
+
 index computation_by_batch
 CREATE INDEX computation_by_batch ON computation(batch_id, model_choice_key, state)
 
@@ -97,6 +100,9 @@ CREATE INDEX source_file_by_batch ON source_file(batch_id, arrival_seq)
 
 index source_file_due
 CREATE INDEX source_file_due ON source_file(account_id, state, next_attempt_at)
+
+index source_file_server_image
+CREATE INDEX source_file_server_image ON source_file(account_id, server_image_id) WHERE server_image_id IS NOT NULL
 
 index sqlite_autoindex_account_1
 

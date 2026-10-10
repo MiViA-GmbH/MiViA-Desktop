@@ -168,6 +168,7 @@ CREATE TABLE source_file (
 
 CREATE INDEX source_file_by_batch ON source_file(batch_id, arrival_seq);
 CREATE INDEX source_file_due ON source_file(account_id, state, next_attempt_at);
+CREATE INDEX source_file_server_image ON source_file(account_id, server_image_id) WHERE server_image_id IS NOT NULL;
 
 CREATE TABLE submit_attempt (
   key TEXT PRIMARY KEY,
@@ -211,6 +212,7 @@ CREATE INDEX computation_poll ON computation(account_id, next_poll_at) WHERE sta
 CREATE INDEX computation_by_batch ON computation(batch_id, model_choice_key, state);
 CREATE INDEX computation_by_source ON computation(source_file_id, model_choice_key);
 CREATE INDEX computation_server_job ON computation(server_job_id) WHERE server_job_id IS NOT NULL;
+CREATE INDEX computation_by_attempt ON computation(submit_attempt_key) WHERE submit_attempt_key IS NOT NULL;
 
 CREATE TABLE ledger_entry (
   folder_id INTEGER NOT NULL REFERENCES watched_folder(id),

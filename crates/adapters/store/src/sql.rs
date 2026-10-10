@@ -1,3 +1,5 @@
+pub(crate) mod pipeline;
+
 use mivia_domain::hold::Gate;
 
 pub(crate) const CLAIM_LIMIT: i64 = 50;
@@ -253,7 +255,7 @@ pub(crate) const MOVE_MEMBER: &str = "UPDATE source_file SET batch_id = ?2, \
 
 #[cfg(test)]
 pub(crate) fn planned() -> Vec<(&'static str, String)> {
-    vec![
+    let mut queries = vec![
         ("claim source probe", source_due_probe()),
         ("claim source upload", source_due_upload()),
         ("claim computation submit", computation_due_submit()),
@@ -284,5 +286,7 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("list open batch rows", OPEN_BATCH_ROWS.to_owned()),
         ("list member paths", MEMBER_PATHS.to_owned()),
         ("list detected members", DETECTED_IN_BATCH.to_owned()),
-    ]
+    ];
+    queries.extend(pipeline::planned());
+    queries
 }
