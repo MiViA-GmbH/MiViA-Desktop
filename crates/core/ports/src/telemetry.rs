@@ -1,150 +1,163 @@
+use mivia_domain::ids::{BatchId, ComputationId, FolderId, ReportId};
 use uuid::Uuid;
 
-macro_rules! kinds {
-    ($($variant:ident $name:literal),* $(,)?) => {
-        #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-        pub enum EventKind {
-            $($variant),*
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FieldKind {
+    Num,
+    Flag,
+    Uuid,
+    Version,
+    Enum(&'static [&'static str]),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Field {
+    Tag(&'static str),
+    Id(Uuid),
+    Entity(&'static str, i64),
+    Version(Version),
+    Num(u64),
+    Flag(bool),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Version {
+    pub major: u32,
+    pub minor: u32,
+    pub patch: u32,
+}
+
+pub trait Value {
+    const KIND: FieldKind;
+    fn field(&self) -> Field;
+}
+
+impl Value for u64 {
+    const KIND: FieldKind = FieldKind::Num;
+    fn field(&self) -> Field {
+        Field::Num(*self)
+    }
+}
+
+impl Value for bool {
+    const KIND: FieldKind = FieldKind::Flag;
+    fn field(&self) -> Field {
+        Field::Flag(*self)
+    }
+}
+
+impl Value for Uuid {
+    const KIND: FieldKind = FieldKind::Uuid;
+    fn field(&self) -> Field {
+        Field::Id(*self)
+    }
+}
+
+impl Value for Version {
+    const KIND: FieldKind = FieldKind::Version;
+    fn field(&self) -> Field {
+        Field::Version(*self)
+    }
+}
+
+macro_rules! entities {
+    ($($type:ident $kind:literal),* $(,)?) => {
+        $(
+            impl Value for $type {
+                const KIND: FieldKind = FieldKind::Uuid;
+                fn field(&self) -> Field {
+                    Field::Entity($kind, self.0)
+                }
+            }
+        )*
+    };
+}
+
+entities! {
+    FolderId "folder",
+    BatchId "batch",
+    ReportId "report",
+    ComputationId "computation",
+}
+
+macro_rules! tag_values {
+    ($($type:ty { $($pat:pat => $text:literal),+ $(,)? })*) => {
+        $(
+            impl Value for $type {
+                const KIND: FieldKind = FieldKind::Enum(&[$($text),+]);
+                fn field(&self) -> Field {
+                    Field::Tag(match self {
+                        $($pat => $text),+
+                    })
+                }
+            }
+        )*
+    };
+}
+
+macro_rules! tags {
+    ($($name:ident { $($variant:ident $text:literal),+ $(,)? })*) => {
+        $(
+            #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+            pub enum $name {
+                $($variant),+
+            }
+
+            tag_values! { $name { $($name::$variant => $text),+ } }
+        )*
+    };
+}
+
+macro_rules! events {
+    ($($variant:ident $name:literal { $($field:ident: $type:ty),+ $(,)? })*) => {
+        $(
+            #[derive(Clone, Debug, Default, PartialEq, Eq)]
+            pub struct $variant {
+                $(pub $field: Option<$type>),+
+            }
+
+            impl From<$variant> for ProductEvent {
+                fn from(event: $variant) -> Self {
+                    Self::$variant(event)
+                }
+            }
+        )*
+
+        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[must_use]
+        pub enum ProductEvent {
+            $($variant($variant)),*
         }
 
-        impl EventKind {
-            pub const ALL: &'static [Self] = &[$(Self::$variant),*];
+        impl ProductEvent {
+            pub const CATALOGUE: &'static [(&'static str, &'static [(&'static str, FieldKind)])] = &[
+                $(($name, &[$((stringify!($field), <$type as Value>::KIND)),+])),*
+            ];
 
-            pub const fn name(self) -> &'static str {
+            pub const fn name(&self) -> &'static str {
                 match self {
-                    $(Self::$variant => $name),*
+                    $(Self::$variant(_) => $name),*
                 }
+            }
+
+            pub fn fields(&self) -> Vec<(&'static str, Field)> {
+                let mut fields = Vec::new();
+                match self {
+                    $(Self::$variant(event) => {
+                        $(if let Some(value) = &event.$field {
+                            fields.push((stringify!($field), value.field()));
+                        })+
+                    })*
+                }
+                fields
             }
         }
     };
 }
 
-kinds! {
-    SessionStart "session.start",
-    SessionAlive "session.alive",
-    SessionStop "session.stop",
-    SessionUnclean "session.unclean",
-    Crash "crash",
-    SettingsSnapshot "settings.snapshot",
-    WizardStepShown "wizard.step_shown",
-    WizardStepCompleted "wizard.step_completed",
-    WizardBack "wizard.back",
-    WizardError "wizard.error",
-    WizardLegacyFound "wizard.legacy_found",
-    WizardRestarted "wizard.restarted",
-    WizardFinished "wizard.finished",
-    AccountConnected "account.connected",
-    AccountSwitched "account.switched",
-    AccountDisconnected "account.disconnected",
-    LegacyMigrated "legacy.migrated",
-    FolderAdded "folder.added",
-    FolderChanged "folder.changed",
-    FolderPaused "folder.paused",
-    FolderResumed "folder.resumed",
-    FolderRemoved "folder.removed",
-    FolderCondition "folder.condition",
-    WatcherRescan "watcher.rescan",
-    ResumeCatchup "resume.catchup",
-    BatchClosed "batch.closed",
-    BatchManualClose "batch.manual_close",
-    BatchRenamed "batch.renamed",
-    UploadFailed "upload.failed",
-    SubmitDone "submit.done",
-    ComputationSettled "computation.settled",
-    AttentionRaised "attention.raised",
-    AttentionCleared "attention.cleared",
-    ReportSettled "report.settled",
-    ReportOpened "report.opened",
-    ReportCustomCreated "report.custom_created",
-    ReportStaleUpdated "report.stale_updated",
-    HoldRaised "hold.raised",
-    HoldLifted "hold.lifted",
-    ProxyAuthRequired "proxy.auth_required",
-    TlsUntrusted "tls.untrusted",
-    WatchMarkerConflict "watch_marker.conflict",
-    AppError "app.error",
-    UpdateCheck "update.check",
-    UpdateDownloaded "update.downloaded",
-    UpdateDeferred "update.deferred",
-    UpdateInstallStarted "update.install_started",
-    UpdateApplied "update.applied",
-    UpdateFailed "update.failed",
-    UpdateMinVersion "update.min_version",
-    UiView "ui.view",
-    WindowShown "window.shown",
-    NotificationShown "notification.shown",
-    NotificationClicked "notification.clicked",
-    HistorySearch "history.search",
-    HistoryExport "history.export",
-    SendtoRequest "sendto.request",
-    OneoffDialog "oneoff.dialog",
-    PreviewOpened "preview.opened",
-    PreviewZoomMaxTier "preview.zoom_max_tier",
-    ProblemReportOffered "problem_report.offered",
-    ProblemReportSent "problem_report.sent",
-    InstanceHandoff "instance.handoff",
-    PrivacyViewed "privacy.viewed",
-}
+mod catalogue;
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum Field {
-    Tag(&'static str),
-    Id(Uuid),
-    Entity(&'static str, i64),
-    Version(String),
-    Num(f64),
-    Flag(bool),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-#[must_use]
-pub struct ProductEvent {
-    pub kind: EventKind,
-    pub fields: Vec<(&'static str, Field)>,
-}
-
-impl ProductEvent {
-    pub const fn new(kind: EventKind) -> Self {
-        Self {
-            kind,
-            fields: Vec::new(),
-        }
-    }
-
-    fn with(mut self, name: &'static str, field: Field) -> Self {
-        self.fields.push((name, field));
-        self
-    }
-
-    pub fn tag(self, name: &'static str, value: &'static str) -> Self {
-        self.with(name, Field::Tag(value))
-    }
-
-    pub fn id(self, name: &'static str, value: Uuid) -> Self {
-        self.with(name, Field::Id(value))
-    }
-
-    pub fn entity(self, name: &'static str, kind: &'static str, id: i64) -> Self {
-        self.with(name, Field::Entity(kind, id))
-    }
-
-    pub fn version(self, name: &'static str, value: &str) -> Self {
-        self.with(name, Field::Version(value.to_owned()))
-    }
-
-    pub fn num(self, name: &'static str, value: f64) -> Self {
-        self.with(name, Field::Num(value))
-    }
-
-    pub fn count(self, name: &'static str, value: u64) -> Self {
-        let value = u32::try_from(value).map_or_else(|_| f64::from(u32::MAX), f64::from);
-        self.with(name, Field::Num(value))
-    }
-
-    pub fn flag(self, name: &'static str, value: bool) -> Self {
-        self.with(name, Field::Flag(value))
-    }
-}
+pub use catalogue::*;
 
 pub trait TelemetrySink: Send + Sync {
     fn record(&self, event: ProductEvent);

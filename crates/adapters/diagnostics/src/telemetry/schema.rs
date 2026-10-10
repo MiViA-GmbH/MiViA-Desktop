@@ -1,14 +1,13 @@
 use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
-use mivia_ports::telemetry::{EventKind, Field, ProductEvent};
+use mivia_ports::telemetry::{Field, ProductEvent};
 
 use crate::context::entity_id;
 use serde::Deserialize;
-use serde_json::{Map, Number, Value};
+use serde_json::{Map, Value};
 
 const SOURCE: &str = include_str!("../../telemetry/events.toml");
-const MAX_TEXT: usize = 64;
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -53,16 +52,6 @@ pub struct Schema {
     pub event: Vec<Def>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Reject {
-    UnknownEvent,
-    UnknownField,
-    DuplicateField,
-    WrongKind,
-    NotAllowed,
-    BadValue,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Checked {
     pub name: &'static str,
@@ -80,75 +69,42 @@ pub fn source() -> &'static str {
     SOURCE
 }
 
-fn semver(text: &str) -> bool {
-    let core = text.split(['-', '+']).next().unwrap_or_default();
-    let parts: Vec<&str> = core.split('.').collect();
-    closed_text(text)
-        && parts.len() == 3
-        && parts
-            .iter()
-            .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
-}
-
-const fn closed_char(byte: u8) -> bool {
-    byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b':' | b'+' | b'-')
-}
-
-pub fn closed_text(text: &str) -> bool {
-    text.len() <= MAX_TEXT && text.bytes().all(closed_char)
-}
-
-fn finite(value: f64) -> Option<Number> {
-    value.is_finite().then(|| Number::from_f64(value)).flatten()
-}
-
-const ENTITIES: [&str; 4] = ["folder", "batch", "report", "computation"];
-
-fn value(kind: &Kind, field: &Field, install_id: &str) -> Result<Value, Reject> {
-    match (kind, field) {
-        (Kind::Plain(Plain::Uuid), Field::Entity(entity, id)) => ENTITIES
-            .contains(entity)
-            .then(|| Value::String(entity_id(install_id, entity, *id).hyphenated().to_string()))
-            .ok_or(Reject::NotAllowed),
-        (Kind::Enum { values }, Field::Tag(tag)) => values
-            .iter()
-            .any(|allowed| allowed == tag)
-            .then(|| Value::String((*tag).to_owned()))
-            .ok_or(Reject::NotAllowed),
-        (Kind::Plain(Plain::Uuid), Field::Id(id)) => Ok(Value::String(id.hyphenated().to_string())),
-        (Kind::Plain(Plain::Version), Field::Version(text)) => semver(text)
-            .then(|| Value::String(text.clone()))
-            .ok_or(Reject::BadValue),
-        (Kind::Plain(Plain::Num), Field::Num(number)) => {
-            finite(*number).map(Value::Number).ok_or(Reject::BadValue)
+fn value(field: Field, install_id: &str) -> Value {
+    match field {
+        Field::Tag(tag) => Value::String(tag.to_owned()),
+        Field::Id(id) => Value::String(id.hyphenated().to_string()),
+        Field::Entity(kind, id) => {
+            Value::String(entity_id(install_id, kind, id).hyphenated().to_string())
         }
-        (Kind::Plain(Plain::Flag), Field::Flag(flag)) => Ok(Value::Bool(*flag)),
-        _ => Err(Reject::WrongKind),
+        Field::Version(version) => Value::String(format!(
+            "{}.{}.{}",
+            version.major, version.minor, version.patch
+        )),
+        Field::Num(number) => Value::from(number),
+        Field::Flag(flag) => Value::Bool(flag),
     }
+}
+
+pub fn payload(fields: Vec<(&'static str, Field)>, install_id: &str) -> String {
+    let fields: Map<String, Value> = fields
+        .into_iter()
+        .map(|(name, field)| (name.to_owned(), value(field, install_id)))
+        .collect();
+    Value::Object(fields).to_string()
 }
 
 impl Schema {
-    pub fn def(&self, kind: EventKind) -> Option<&Def> {
-        self.event.iter().find(|def| def.name == kind.name())
+    pub fn def(&self, name: &str) -> Option<&Def> {
+        self.event.iter().find(|def| def.name == name)
     }
 
-    pub fn check(&self, event: &ProductEvent, install_id: &str) -> Result<Checked, Reject> {
-        let def = self.def(event.kind).ok_or(Reject::UnknownEvent)?;
-        let mut fields = Map::new();
-        for (name, field) in &event.fields {
-            let kind = def.fields.get(*name).ok_or(Reject::UnknownField)?;
-            let value = value(kind, field, install_id)?;
-            if fields.insert((*name).to_owned(), value).is_some() {
-                return Err(Reject::DuplicateField);
-            }
-        }
-        let payload =
-            serde_json::to_string(&Value::Object(fields)).map_err(|_| Reject::BadValue)?;
-        Ok(Checked {
-            name: event.kind.name(),
+    pub fn encode(&self, event: &ProductEvent, install_id: &str) -> Option<Checked> {
+        let def = self.def(event.name())?;
+        Some(Checked {
+            name: event.name(),
             category: def.category.clone(),
             interaction: def.priority == Priority::Interaction,
-            payload,
+            payload: payload(event.fields(), install_id),
         })
     }
 }

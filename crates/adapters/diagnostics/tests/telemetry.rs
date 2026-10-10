@@ -1,93 +1,100 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
-use mivia_diagnostics::{Checked, Kind, Plain, Reject, closed_text, schema, source};
-use mivia_ports::telemetry::{EventKind, Field, ProductEvent};
+use mivia_diagnostics::{Kind, Plain, payload, schema, source};
+use mivia_domain::ids::{BatchId, FolderId};
+use mivia_ports::ipc::setup::{ArrivalPreset, ReportMode};
+use mivia_ports::telemetry::{
+    BatchRenamed, Field, FieldKind, FolderAdded, FolderPaused, FolderVia, ProductEvent, UiView,
+    UpdateCheck, Version, View,
+};
 use proptest::prelude::*;
 use serde_json::Value;
 use uuid::Uuid;
 
-const HOSTILE: &[&str] = &[
-    "C:\\Users\\Anna Schmidt\\Pictures\\scan_001.tif",
-    "\\\\fileserver\\labshare\\patient 17\\slide.tif",
-    "/home/anna/slides/case-4.png",
-    "Anna Schmidt",
-    "anna.schmidt@lab.example",
-    "Series of 12 October",
-    "report final v2.pdf",
-    "../../etc/passwd",
-    "a b",
-    "line\nbreak",
-    "",
-    "<script>alert(1)</script>",
-    "mvk_live_0123456789abcdef0123456789abcdef",
-    "https://app.mivia.ai/jobs/12",
-    "\u{202e}tif.exe",
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-];
+const ENTITIES: [&str; 4] = ["folder", "batch", "report", "computation"];
 
-fn leak(text: &str) -> &'static str {
-    Box::leak(text.to_owned().into_boxed_str())
+fn closed(text: &str) -> bool {
+    text.len() <= 64
+        && text
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || b"._:+-".contains(&byte))
 }
 
-fn closed(value: &str) -> bool {
-    closed_text(value)
-}
-
-fn strings(value: &Value, out: &mut Vec<String>) {
-    match value {
-        Value::String(text) => out.push(text.clone()),
-        Value::Array(items) => items.iter().for_each(|item| strings(item, out)),
-        Value::Object(map) => map.values().for_each(|item| strings(item, out)),
-        Value::Null | Value::Bool(_) | Value::Number(_) => {}
+fn table_kind(kind: &Kind) -> FieldKind {
+    match kind {
+        Kind::Plain(Plain::Num) => FieldKind::Num,
+        Kind::Plain(Plain::Flag) => FieldKind::Flag,
+        Kind::Plain(Plain::Uuid) => FieldKind::Uuid,
+        Kind::Plain(Plain::Version) => FieldKind::Version,
+        Kind::Enum { values } => {
+            let values: Vec<&'static str> = values
+                .iter()
+                .map(|value| &*Box::leak(value.clone().into_boxed_str()))
+                .collect();
+            FieldKind::Enum(Box::leak(values.into_boxed_slice()))
+        }
     }
 }
 
-fn assert_payload_is_closed(payload: &str) {
+fn assert_payload_is_closed(name: &str, payload: &str) {
+    let fields: BTreeSet<&str> = ProductEvent::CATALOGUE
+        .iter()
+        .find(|(event, _)| *event == name)
+        .unwrap()
+        .1
+        .iter()
+        .map(|(field, _)| *field)
+        .collect();
     let value: Value = serde_json::from_str(payload).unwrap();
     let Value::Object(map) = &value else {
         panic!("payload is not an object");
     };
-    for (name, field) in map {
-        assert!(closed(name), "field name {name}");
+    for (key, field) in map {
+        assert!(fields.contains(key.as_str()), "{name}.{key}");
         match field {
-            Value::String(text) => assert!(closed(text), "string {text:?}"),
-            Value::Number(number) => assert!(number.as_f64().is_some_and(f64::is_finite)),
+            Value::String(text) => {
+                assert!(closed(text), "{name}.{key} {text:?}");
+                assert!(!text.contains(['\\', '/', ' ', '@']), "{text:?}");
+            }
+            Value::Number(number) => assert!(number.is_u64(), "{name}.{key}"),
             Value::Bool(_) => {}
-            Value::Null | Value::Array(_) | Value::Object(_) => panic!("{name} carries {field:?}"),
+            Value::Null | Value::Array(_) | Value::Object(_) => panic!("{key} carries {field:?}"),
         }
     }
-    let mut texts = Vec::new();
-    strings(&value, &mut texts);
-    for text in texts {
-        assert!(!text.contains(['\\', '/', ' ', '@', '\n']), "{text:?}");
-    }
-}
-
-fn check(event: &ProductEvent) -> Result<Checked, Reject> {
-    schema().check(event, "install-a")
-}
-
-fn event(kind: EventKind, name: &'static str, field: Field) -> ProductEvent {
-    ProductEvent {
-        kind,
-        fields: vec![(name, field)],
-    }
-}
-
-fn candidates(text: &str) -> Vec<Field> {
-    vec![Field::Tag(leak(text)), Field::Version(text.to_owned())]
 }
 
 #[test]
-fn the_table_and_the_event_kinds_agree() {
+fn the_table_and_the_typed_events_agree_both_ways() {
     let table = schema();
     assert_eq!(table.schema, 1);
     assert_eq!(table.retention_days, 400);
-    let names: BTreeSet<&str> = table.event.iter().map(|def| def.name.as_str()).collect();
-    let kinds: BTreeSet<&str> = EventKind::ALL.iter().map(|kind| kind.name()).collect();
-    assert_eq!(table.event.len(), names.len(), "duplicate event names");
-    assert_eq!(names, kinds);
     assert!(source().contains("[[event]]"));
+    let from_table: BTreeMap<&str, BTreeMap<&str, FieldKind>> = table
+        .event
+        .iter()
+        .map(|def| {
+            let fields = def
+                .fields
+                .iter()
+                .map(|(name, kind)| (name.as_str(), table_kind(kind)))
+                .collect();
+            (def.name.as_str(), fields)
+        })
+        .collect();
+    let from_types: BTreeMap<&str, BTreeMap<&str, FieldKind>> = ProductEvent::CATALOGUE
+        .iter()
+        .map(|(name, fields)| (*name, fields.iter().copied().collect()))
+        .collect();
+    assert_eq!(table.event.len(), from_table.len(), "duplicate event names");
+    assert_eq!(ProductEvent::CATALOGUE.len(), from_types.len());
+    assert_eq!(from_table.len(), 64);
+    for (name, fields) in &from_table {
+        assert_eq!(Some(fields), from_types.get(name), "{name}");
+    }
+    assert_eq!(
+        from_table.keys().collect::<Vec<_>>(),
+        from_types.keys().collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -125,127 +132,21 @@ fn every_definition_is_complete_and_closed() {
     }
 }
 
-#[test]
-fn hostile_text_never_reaches_a_payload() {
-    for def in &schema().event {
-        let kind = *EventKind::ALL
-            .iter()
-            .find(|k| k.name() == def.name)
-            .unwrap();
-        for name in def.fields.keys() {
-            let name = leak(name);
-            for text in HOSTILE {
-                for field in candidates(text) {
-                    if let Ok(checked) = check(&event(kind, name, field)) {
-                        assert_payload_is_closed(&checked.payload);
-                    }
-                }
-            }
+fn domain(kind: FieldKind, number: u64, id: u128, row: i64) -> Vec<Field> {
+    match kind {
+        FieldKind::Num => vec![Field::Num(number)],
+        FieldKind::Flag => vec![Field::Flag(number.is_multiple_of(2))],
+        FieldKind::Uuid => {
+            let mut values = vec![Field::Id(Uuid::from_u128(id))];
+            values.extend(ENTITIES.map(|entity| Field::Entity(entity, row)));
+            values
         }
-    }
-}
-
-#[test]
-fn enum_fields_accept_only_their_listed_values() {
-    for def in &schema().event {
-        let kind = *EventKind::ALL
-            .iter()
-            .find(|k| k.name() == def.name)
-            .unwrap();
-        for (name, field) in &def.fields {
-            let Kind::Enum { values } = field else {
-                continue;
-            };
-            for value in values {
-                let ok = check(&event(kind, leak(name), Field::Tag(leak(value))));
-                assert!(ok.is_ok(), "{}.{name}={value}", def.name);
-            }
-            let outside = check(&event(kind, leak(name), Field::Tag("not_listed")));
-            assert_eq!(outside, Err(Reject::NotAllowed), "{}.{name}", def.name);
-        }
-    }
-}
-
-#[test]
-fn wrong_kinds_unknown_fields_and_duplicates_are_rejected() {
-    let kind = EventKind::SessionStart;
-    let bad = [
-        event(kind, "state", Field::Num(1.0)),
-        event(kind, "duration_ms", Field::Tag("autostart")),
-        event(kind, "duration_ms", Field::Num(f64::NAN)),
-        event(kind, "duration_ms", Field::Num(f64::INFINITY)),
-        event(kind, "first_run", Field::Num(1.0)),
-        event(kind, "path", Field::Tag("user")),
-        event(EventKind::FolderAdded, "folder_id", Field::Tag("C:")),
-        event(
-            EventKind::FolderAdded,
-            "folder_id",
-            Field::Version("1.2.3".to_owned()),
-        ),
-        event(
-            EventKind::UpdateCheck,
-            "to",
-            Field::Version("C:\\x".to_owned()),
-        ),
-        event(
-            EventKind::UpdateCheck,
-            "to",
-            Field::Version("1.2".to_owned()),
-        ),
-        event(
-            EventKind::UpdateCheck,
-            "to",
-            Field::Version(format!("1.2.3-{}", "a".repeat(80))),
-        ),
-    ];
-    for event in &bad {
-        assert!(check(event).is_err(), "{event:?}");
-    }
-    let twice = ProductEvent {
-        kind,
-        fields: vec![
-            ("duration_ms", Field::Num(1.0)),
-            ("duration_ms", Field::Num(2.0)),
-        ],
-    };
-    assert_eq!(check(&twice), Err(Reject::DuplicateField));
-}
-
-#[test]
-fn valid_events_carry_their_typed_values() {
-    let id = Uuid::new_v4();
-    let event = ProductEvent::new(EventKind::FolderAdded)
-        .id("folder_id", id)
-        .tag("via", "wizard")
-        .flag("is_cloud", false)
-        .count("count", 12);
-    let checked = check(&event).unwrap();
-    assert_eq!(checked.name, "folder.added");
-    assert_eq!(checked.category, "usage");
-    assert!(!checked.interaction);
-    let payload: Value = serde_json::from_str(&checked.payload).unwrap();
-    assert_eq!(payload["folder_id"], id.hyphenated().to_string());
-    assert_eq!(payload["via"], "wizard");
-    assert_eq!(payload["count"], 12.0);
-    let view = check(&ProductEvent::new(EventKind::UiView).tag("state", "history")).unwrap();
-    assert!(view.interaction);
-    let version = ProductEvent::new(EventKind::UpdateCheck).version("to", "2.1.0-beta.1+7");
-    assert!(check(&version).is_ok());
-}
-
-#[test]
-fn every_plain_kind_is_reachable() {
-    let kinds: BTreeSet<String> = schema()
-        .event
-        .iter()
-        .flat_map(|def| def.fields.values())
-        .filter_map(|kind| match kind {
-            Kind::Plain(plain) => Some(format!("{plain:?}")),
-            Kind::Enum { .. } => None,
-        })
-        .collect();
-    for plain in [Plain::Num, Plain::Flag, Plain::Uuid, Plain::Version] {
-        assert!(kinds.contains(&format!("{plain:?}")));
+        FieldKind::Version => vec![Field::Version(Version {
+            major: u32::try_from(number >> 32).unwrap(),
+            minor: u32::try_from(number & 0xffff).unwrap(),
+            patch: u32::try_from(id & 0xff).unwrap(),
+        })],
+        FieldKind::Enum(values) => values.iter().copied().map(Field::Tag).collect(),
     }
 }
 
@@ -253,45 +154,92 @@ proptest! {
     #![proptest_config(ProptestConfig::with_cases(256))]
 
     #[test]
-    fn arbitrary_text_in_any_string_field_is_rejected_or_closed(text in "\\PC{0,100}") {
-        for def in &schema().event {
-            let kind = *EventKind::ALL.iter().find(|k| k.name() == def.name).unwrap();
-            for name in def.fields.keys() {
-                for field in candidates(&text) {
-                    if let Ok(checked) = check(&event(kind, leak(name), field)) {
-                        assert_payload_is_closed(&checked.payload);
-                    }
+    fn every_value_of_every_field_serialises_to_closed_catalogue_text(
+        number in any::<u64>(),
+        id in any::<u128>(),
+        row in any::<i64>(),
+    ) {
+        for (name, fields) in ProductEvent::CATALOGUE {
+            let mut all = BTreeMap::new();
+            for (field, kind) in *fields {
+                for value in domain(*kind, number, id, row) {
+                    assert_payload_is_closed(name, &payload(vec![(field, value)], "install-a"));
+                    all.insert(*field, value);
                 }
             }
-        }
-    }
-
-    #[test]
-    fn arbitrary_numbers_never_leave_the_finite_range(number in any::<f64>()) {
-        let kind = EventKind::SessionAlive;
-        if let Ok(checked) = check(&event(kind, "duration_ms", Field::Num(number))) {
-            assert_payload_is_closed(&checked.payload);
-        } else {
-            prop_assert!(!number.is_finite());
+            assert_payload_is_closed(name, &payload(all.into_iter().collect(), "install-a"));
         }
     }
 }
 
 #[test]
-fn entity_fields_become_stable_pseudonyms_and_only_for_known_kinds() {
-    let event = |kind: &'static str, id: i64| {
-        ProductEvent::new(EventKind::FolderPaused).entity("folder_id", kind, id)
-    };
-    let first = schema().check(&event("folder", 7), "install-a").unwrap();
-    let again = schema().check(&event("folder", 7), "install-a").unwrap();
-    let other = schema().check(&event("folder", 7), "install-b").unwrap();
-    assert_eq!(first.payload, again.payload);
-    assert_ne!(first.payload, other.payload);
+fn typed_events_carry_their_values() {
+    let event: ProductEvent = FolderAdded {
+        folder_id: Some(FolderId(7)),
+        via: Some(FolderVia::Wizard),
+        preset: Some(ArrivalPreset::WholeFolder),
+        report_mode: Some(ReportMode::Beside),
+        is_cloud: Some(false),
+        count: Some(12),
+        ..FolderAdded::default()
+    }
+    .into();
+    let checked = schema().encode(&event, "install-a").unwrap();
+    assert_eq!(checked.name, "folder.added");
+    assert_eq!(checked.category, "usage");
+    assert!(!checked.interaction);
+    let payload: Value = serde_json::from_str(&checked.payload).unwrap();
+    assert_eq!(payload["folder_id"].as_str().unwrap().len(), 36);
     assert_eq!(
-        schema().check(&event("path", 7), "install-a"),
-        Err(Reject::NotAllowed)
+        payload,
+        serde_json::json!({
+            "folder_id": payload["folder_id"],
+            "via": "wizard",
+            "preset": "whole_folder",
+            "report_mode": "beside",
+            "is_cloud": false,
+            "count": 12,
+        })
     );
-    assert!(!first.payload.contains("\"7\""));
+    let view = UiView {
+        state: Some(View::SingleImages),
+    };
+    let view = schema().encode(&view.into(), "install-a").unwrap();
+    assert!(view.interaction);
+    assert_eq!(view.payload, r#"{"state":"single_images"}"#);
+    let check = UpdateCheck {
+        to: Some(Version {
+            major: 2,
+            minor: 1,
+            patch: 0,
+        }),
+        ..UpdateCheck::default()
+    };
+    let check = schema().encode(&check.into(), "install-a").unwrap();
+    assert_eq!(check.payload, r#"{"to":"2.1.0"}"#);
+}
+
+#[test]
+fn entity_fields_become_stable_install_scoped_pseudonyms() {
+    let paused = |id: i64| -> ProductEvent {
+        FolderPaused {
+            folder_id: Some(FolderId(id)),
+        }
+        .into()
+    };
+    let encode = |event: &ProductEvent, install: &str| schema().encode(event, install).unwrap();
+    let first = encode(&paused(7), "install-a").payload;
+    assert_eq!(first, encode(&paused(7), "install-a").payload);
+    assert_ne!(first, encode(&paused(7), "install-b").payload);
+    assert_ne!(first, encode(&paused(8), "install-a").payload);
+    let renamed: ProductEvent = BatchRenamed {
+        batch_id: Some(BatchId(7)),
+    }
+    .into();
+    let batch: Value = serde_json::from_str(&encode(&renamed, "install-a").payload).unwrap();
+    let folder: Value = serde_json::from_str(&first).unwrap();
+    assert_ne!(folder["folder_id"], batch["batch_id"]);
+    assert!(!first.contains("\"7\""));
 }
 
 #[test]

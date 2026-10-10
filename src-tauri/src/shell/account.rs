@@ -14,7 +14,6 @@ use mivia_ports::ipc::setup::{ConnectOutcome, ConnectionNote, ConnectionView};
 use mivia_ports::queries::Queries;
 use mivia_ports::server::{License, ServerApi, ServerError};
 use mivia_ports::store::{AccountScope, NewAccount, SettingsScope, StoreExt, TxError, WriteTx};
-use mivia_ports::telemetry::{EventKind, ProductEvent};
 use mivia_server::HttpIdentityApi;
 use secrecy::{ExposeSecret, SecretString};
 use tauri::AppHandle;
@@ -261,11 +260,7 @@ pub(crate) async fn enter_account(
         .map_err(|error| app_error(&error, "connect_access_key"))?;
     let cleared = clear_clipboard_if(&key);
     rebuild(cx, false).await;
-    services.telemetry.record(
-        ProductEvent::new(EventKind::AccountConnected)
-            .tag("kind", "access_key")
-            .flag("imported_from_v1", false),
-    );
+    telemetry::account_connected(services, false);
     Ok(ConnectOutcome::Connected {
         connection: connected(&identity, stored),
         other_account: false,
@@ -283,10 +278,7 @@ pub(crate) async fn switch(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, A
         return Ok(ConnectOutcome::Cancelled);
     }
     let entered = enter_account(cx, &ready.services, identity, key).await?;
-    ready
-        .services
-        .telemetry
-        .record(ProductEvent::new(EventKind::AccountSwitched).tag("state", "user"));
+    telemetry::account_switched(&ready.services);
     Ok(entered)
 }
 
@@ -312,10 +304,7 @@ pub(crate) async fn sign_out(cx: &Cx) -> Result<(), AppError> {
         })
         .await
         .map_err(|error| app_error(&error, "sign_out"))?;
-    ready
-        .services
-        .telemetry
-        .record(ProductEvent::new(EventKind::AccountDisconnected).tag("state", "user"));
+    telemetry::account_disconnected(&ready.services);
     rebuild(cx, false).await;
     Ok(())
 }

@@ -5,7 +5,7 @@ use mivia_ports::auth::AuthError;
 use mivia_ports::id_gen::IdGen;
 use mivia_ports::server::CatalogueModel;
 use mivia_ports::server::ServerError;
-use mivia_ports::telemetry::{EventKind, Field, ProductEvent};
+use mivia_ports::telemetry::{HoldRaised, LiftedBy, ProductEvent, SettledState};
 use mivia_testkit::id_gen::SeededIdGen;
 use mivia_testkit::server::{Fault, Licence, Op};
 
@@ -257,13 +257,6 @@ async fn check_now_probes_at_once_instead_of_waiting_for_the_backoff() {
     line.finish().await;
 }
 
-fn has(event: &ProductEvent, name: &str, value: &Field) -> bool {
-    event
-        .fields
-        .iter()
-        .any(|(field, found)| *field == name && found == value)
-}
-
 #[tokio::test]
 async fn holds_and_settled_analyses_are_reported_once_each() {
     let line = Line::new().await;
@@ -276,27 +269,50 @@ async fn holds_and_settled_analyses_are_reported_once_each() {
     line.server.set_down(&everything, None);
     line.run_for(6 * MINUTE_MS, 5 * SECOND_MS).await;
     let events = line.telemetry.events();
-    let of = |kind: EventKind| -> Vec<&ProductEvent> {
-        events.iter().filter(|event| event.kind == kind).collect()
-    };
-    let raised = of(EventKind::HoldRaised);
-    assert_eq!(raised.len(), 1);
-    assert!(has(raised[0], "kind", &Field::Tag("offline")));
-    let lifted = of(EventKind::HoldLifted);
-    assert_eq!(lifted.len(), 1);
-    assert!(has(lifted[0], "by", &Field::Tag("probe")));
-    assert!(
-        lifted[0]
-            .fields
-            .iter()
-            .any(|(name, _)| *name == "duration_ms")
+    let raised: Vec<_> = events
+        .iter()
+        .filter_map(|event| {
+            if let ProductEvent::HoldRaised(raised) = event {
+                Some(raised)
+            } else {
+                None
+            }
+        })
+        .collect();
+    assert_eq!(
+        raised,
+        [&HoldRaised {
+            kind: Some(HoldReason::Offline)
+        }]
     );
-    let settled = of(EventKind::ComputationSettled);
+    let lifted: Vec<_> = events
+        .iter()
+        .filter_map(|event| {
+            if let ProductEvent::HoldLifted(lifted) = event {
+                Some(lifted)
+            } else {
+                None
+            }
+        })
+        .collect();
+    assert_eq!(lifted.len(), 1);
+    assert_eq!(lifted[0].by, Some(LiftedBy::Probe));
+    assert!(lifted[0].duration_ms.is_some());
+    let settled: Vec<_> = events
+        .iter()
+        .filter_map(|event| {
+            if let ProductEvent::ComputationSettled(settled) = event {
+                Some(settled)
+            } else {
+                None
+            }
+        })
+        .collect();
     assert_eq!(settled.len(), line.states().await.len());
     assert!(
         settled
             .iter()
-            .all(|event| has(event, "state", &Field::Tag("done")))
+            .all(|event| event.state == Some(SettledState::Done))
     );
     line.finish().await;
 }

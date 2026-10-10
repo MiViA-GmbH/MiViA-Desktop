@@ -15,7 +15,7 @@ use mivia_ports::ipc::views::OriginView;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::reports::ReportSpec;
 use mivia_ports::store::{StoreError, StoreExt, TxError};
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::telemetry::{BatchRenamed, ReportStaleUpdated};
 
 use super::cx::{Cx, Ready, now, parse_id};
 use super::folders::known;
@@ -164,14 +164,12 @@ pub(crate) async fn report_action(cx: &Cx, id: &str, action: ReportAction) -> Re
     done.map_err(|error| history_error(&error, SITE))?;
     ready.wake();
     if matches!(action, ReportAction::Update) {
-        ready
-            .services
-            .telemetry
-            .record(ProductEvent::new(EventKind::ReportStaleUpdated).entity(
-                "report_id",
-                "report",
-                report.0,
-            ));
+        ready.services.telemetry.record(
+            ReportStaleUpdated {
+                report_id: Some(report),
+            }
+            .into(),
+        );
     }
     Ok(())
 }
@@ -204,7 +202,10 @@ pub(crate) async fn rename(cx: &Cx, id: &str, label: String) -> Result<(), AppEr
     });
     if outcome.is_ok() {
         ready.services.telemetry.record(
-            ProductEvent::new(EventKind::BatchRenamed).entity("batch_id", "batch", batch.0),
+            BatchRenamed {
+                batch_id: Some(batch),
+            }
+            .into(),
         );
     }
     outcome

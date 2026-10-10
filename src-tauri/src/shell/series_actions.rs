@@ -1,7 +1,7 @@
 use mivia_application::errors::intake_error;
 use mivia_domain::ids::{BatchId, FolderId};
 use mivia_ports::ipc::error::AppError;
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::telemetry::{BatchManualClose, FolderPaused, FolderResumed};
 
 use super::cx::{Cx, parse_id};
 
@@ -15,7 +15,10 @@ pub(crate) async fn finish_series(cx: &Cx, id: &str) -> Result<(), AppError> {
         .await
         .map_err(|error| intake_error(&error, SITE))?;
     ready.services.telemetry.record(
-        ProductEvent::new(EventKind::BatchManualClose).entity("batch_id", "batch", batch.0),
+        BatchManualClose {
+            batch_id: Some(batch),
+        }
+        .into(),
     );
     Ok(())
 }
@@ -29,10 +32,12 @@ pub(crate) async fn pause_folder(cx: &Cx, id: &str) -> Result<(), AppError> {
         .pause_folder(folder)
         .await
         .map_err(|error| intake_error(&error, SITE))?;
-    ready
-        .services
-        .telemetry
-        .record(ProductEvent::new(EventKind::FolderPaused).entity("folder_id", "folder", folder.0));
+    ready.services.telemetry.record(
+        FolderPaused {
+            folder_id: Some(folder),
+        }
+        .into(),
+    );
     Ok(())
 }
 
@@ -45,13 +50,12 @@ pub(crate) async fn resume_folder(cx: &Cx, id: &str) -> Result<u32, AppError> {
         .resume_folder(folder)
         .await
         .map_err(|error| intake_error(&error, SITE))?;
-    ready
-        .services
-        .telemetry
-        .record(ProductEvent::new(EventKind::FolderResumed).entity(
-            "folder_id",
-            "folder",
-            folder.0,
-        ));
+    ready.services.telemetry.record(
+        FolderResumed {
+            folder_id: Some(folder),
+            duration_ms: None,
+        }
+        .into(),
+    );
     Ok(u32::try_from(resumed.waiting).unwrap_or(u32::MAX))
 }

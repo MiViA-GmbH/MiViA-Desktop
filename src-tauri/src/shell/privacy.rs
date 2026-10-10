@@ -5,7 +5,7 @@ use mivia_ports::ipc::error::{AppError, AppErrorKind};
 use mivia_ports::ipc::privacy::{PrivacyPanel, PrivacyView, SentBatchView};
 use mivia_ports::store::StoreExt;
 use mivia_ports::store::telemetry::SENT_KEPT_MS;
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::telemetry::PrivacyViewed;
 use mivia_ports::time::iso_utc;
 
 use super::cx::{Cx, Ready, now};
@@ -67,5 +67,5 @@ pub(crate) fn viewed(ready: &Ready, panel: PrivacyPanel) {
     ready
         .services
         .telemetry
-        .record(ProductEvent::new(EventKind::PrivacyViewed).tag("what", panel.as_tag()));
+        .record(PrivacyViewed { what: Some(panel) }.into());
 }

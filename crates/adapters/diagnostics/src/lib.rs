@@ -22,8 +22,7 @@ pub use outbox::{Delivery, OUTBOX_EXPIRY_MS, Outbox, Pending, delivery};
 pub use redact::{Known, Redactor, report_key};
 pub use telemetry::{
     Built, Checked, Conditions, Context, Def, Flush, Health, Kind, MAX_BATCH_EVENTS,
-    MAX_BODY_BYTES, Plain, Priority, QUEUE_CAPACITY, Reject, Schema, Sender, SentBatch, SinkStats,
-    SqliteTelemetrySink, Step, WRITE_AT, closed_text, event, fit, gzip, schema, sent_batches,
-    source,
+    MAX_BODY_BYTES, Plain, Priority, QUEUE_CAPACITY, Schema, Sender, SentBatch, SinkStats,
+    SqliteTelemetrySink, Step, WRITE_AT, event, fit, gzip, payload, schema, sent_batches, source,
 };
 pub use views::{Covered, pending_view, preview, reference};

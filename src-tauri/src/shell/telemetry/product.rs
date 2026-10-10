@@ -2,32 +2,61 @@ use std::path::Path;
 use std::sync::Arc;
 
 use mivia_application::settings::global_settings;
-use mivia_application::telemetry::{preset_tag, report_mode_tag};
 use mivia_domain::ids::FolderId;
 use mivia_ports::ipc::folders::NewFolderInput;
 use mivia_ports::server::ServerApi;
 use mivia_ports::store::AccountScope;
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::telemetry::{
+    AccountConnected, AccountDisconnected, AccountKind, AccountState, AccountSwitched,
+    ExportFormat, FolderAdded, FolderVia, HistoryExport, ReportCustomCreated,
+};
 
 use super::Link;
 use crate::shell::cx::Services;
 
 pub(crate) fn folder_added(services: &Services, id: FolderId, input: &NewFolderInput) {
     services.telemetry.record(
-        ProductEvent::new(EventKind::FolderAdded)
-            .entity("folder_id", "folder", id.0)
-            .tag("via", "settings")
-            .tag("preset", preset_tag(input.preset))
-            .tag("report_mode", report_mode_tag(input.report_mode))
-            .count("model_choices", input.models.len() as u64),
+        FolderAdded {
+            folder_id: Some(id),
+            via: Some(FolderVia::Settings),
+            preset: Some(input.preset),
+            report_mode: Some(input.report_mode),
+            model_choices: Some(input.models.len() as u64),
+            ..FolderAdded::default()
+        }
+        .into(),
     );
+}
+
+pub(crate) fn account_connected(services: &Services, imported: bool) {
+    services.telemetry.record(
+        AccountConnected {
+            kind: Some(AccountKind::AccessKey),
+            imported_from_v1: Some(imported),
+        }
+        .into(),
+    );
+}
+
+pub(crate) fn account_switched(services: &Services) {
+    let state = Some(AccountState::User);
+    services.telemetry.record(AccountSwitched { state }.into());
+}
+
+pub(crate) fn account_disconnected(services: &Services) {
+    let state = Some(AccountState::User);
+    services
+        .telemetry
+        .record(AccountDisconnected { state }.into());
 }
 
 pub(crate) fn custom_report(services: &Services, reports: usize, series: usize) {
     services.telemetry.record(
-        ProductEvent::new(EventKind::ReportCustomCreated)
-            .count("count", reports as u64)
-            .count("source_batches", series as u64),
+        ReportCustomCreated {
+            count: Some(reports as u64),
+            source_batches: Some(series as u64),
+        }
+        .into(),
     );
 }
 
@@ -38,9 +67,15 @@ pub(crate) fn exported(services: &Services, files: &[String]) {
             .is_some_and(|extension| extension.eq_ignore_ascii_case("xlsx"))
     });
     services.telemetry.record(
-        ProductEvent::new(EventKind::HistoryExport)
-            .count("count", files.len() as u64)
-            .tag("format", if sheet { "xlsx" } else { "csv" }),
+        HistoryExport {
+            count: Some(files.len() as u64),
+            format: Some(if sheet {
+                ExportFormat::Xlsx
+            } else {
+                ExportFormat::Csv
+            }),
+        }
+        .into(),
     );
 }
 

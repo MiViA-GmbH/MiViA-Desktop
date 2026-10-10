@@ -14,7 +14,7 @@ use mivia_os::SystemClock;
 use mivia_ports::ipc::setup::SetupOption;
 use mivia_ports::server::ServerApi;
 use mivia_ports::store::{AccountScope, SettingsScope};
-use mivia_ports::telemetry::{ProductEvent, TelemetrySink};
+use mivia_ports::telemetry::{ProductEvent, StartState, TelemetrySink};
 use parking_lot::Mutex;
 use tokio::sync::Notify;
 
@@ -27,7 +27,10 @@ use super::cx::Services;
 use events::{Start, record_start};
 pub(crate) use events::{flush_on_stop, record_stop};
 use loops::{spawn_sender, spawn_writer};
-pub(crate) use product::{attach_pipeline, custom_report, exported, folder_added};
+pub(crate) use product::{
+    account_connected, account_disconnected, account_switched, attach_pipeline, custom_report,
+    exported, folder_added,
+};
 pub(crate) use setup::{finished as setup_finished, restarted, step_changed};
 
 const UNKNOWN_MACHINE: &str = "unknown";
@@ -120,9 +123,9 @@ impl Telemetry {
 pub(super) fn run(services: &Arc<Services>, launch: &Launch, completed: bool) {
     let start = Start {
         launch: if launch.minimized {
-            "autostart"
+            StartState::Autostart
         } else {
-            "user"
+            StartState::User
         },
         first_run: !completed,
         unclean: launch.previous_unclean,

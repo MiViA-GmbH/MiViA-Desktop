@@ -1,7 +1,6 @@
 use mivia_diagnostics::{Flush, Step, sent_batches};
 use mivia_ports::store::StoreExt;
 use mivia_ports::store::telemetry::SENT_KEPT_MS;
-use mivia_ports::telemetry::{EventKind, ProductEvent, TelemetrySink};
 
 use crate::{KEY, NOW, decode, events, world};
 
@@ -184,19 +183,6 @@ async fn canary_values_never_reach_telemetry_rows_bodies_or_views() {
     let world = world(None).await;
     let canaries = [KEY, "canary.owner@lab.example", "canaryuser", "Probe 7"];
     world.record(2, 1).await;
-    for canary in canaries {
-        world
-            .sink
-            .record(ProductEvent::new(EventKind::BatchRenamed).version("x", canary));
-        world
-            .sink
-            .record(ProductEvent::new(EventKind::UiView).tag("path", leak(canary)));
-        world
-            .sink
-            .record(ProductEvent::new(EventKind::UiView).tag("state", leak(canary)));
-    }
-    world.sink.persist(world.store.as_ref()).await.unwrap();
-    assert!(world.sink.stats().rejected >= 12);
     world.now(Flush::Now, NOW).await;
     let rows = world
         .store
@@ -226,8 +212,4 @@ async fn canary_values_never_reach_telemetry_rows_bodies_or_views() {
             );
         }
     }
-}
-
-fn leak(text: &str) -> &'static str {
-    Box::leak(text.to_owned().into_boxed_str())
 }

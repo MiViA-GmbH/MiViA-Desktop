@@ -27,12 +27,3 @@ pub enum PrivacyPanel {
     WhatIsSent,
     ViewSentData,
 }
-
-impl PrivacyPanel {
-    pub const fn as_tag(self) -> &'static str {
-        match self {
-            Self::WhatIsSent => "what_is_sent",
-            Self::ViewSentData => "view_sent_data",
-        }
-    }
-}

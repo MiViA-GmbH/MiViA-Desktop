@@ -6,7 +6,7 @@ use mivia_domain::ids::{ComputationId, MINUTE_MS, Timestamp};
 use mivia_domain::polling::{poll_delay_ms, status_request_gap_ms};
 use mivia_ports::server::{MAX_STATUS_IDS, ServerJob, ServerJobStatus};
 use mivia_ports::store::pipeline::{JobRecord, PollRow};
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::telemetry::{ComputationSettled, ProductEvent, SettledState};
 
 use super::effects::{Call, Item};
 use super::outcome::record;
@@ -157,29 +157,31 @@ impl Pipeline {
 }
 
 fn settled(id: ComputationId, change: &Change, now: Timestamp) -> Option<ProductEvent> {
-    let event = ProductEvent::new(EventKind::ComputationSettled).entity(
-        "computation_id",
-        "computation",
-        id.0,
-    );
+    let event = |state, duration_ms, reused| {
+        ComputationSettled {
+            computation_id: Some(id),
+            state: Some(state),
+            duration_ms,
+            reused,
+            ..ComputationSettled::default()
+        }
+        .into()
+    };
     match change {
         Change::Record(job) => {
-            let took = u64::try_from(now.ms_since(job.submitted_at)).unwrap_or(0);
+            let took = Some(u64::try_from(now.ms_since(job.submitted_at)).unwrap_or(0));
             match job.outcome {
-                JobOutcome::Done { reused } => Some(
-                    event
-                        .tag("state", "done")
-                        .flag("reused", reused)
-                        .count("duration_ms", took),
-                ),
-                JobOutcome::Failed(_) => {
-                    Some(event.tag("state", "failed").count("duration_ms", took))
-                }
+                JobOutcome::Done { reused } => Some(event(SettledState::Done, took, Some(reused))),
+                JobOutcome::Failed(_) => Some(event(SettledState::Failed, took, None)),
                 JobOutcome::Pending => None,
             }
         }
-        Change::Event(ComputationEvent::JobGone { .. }) => Some(event.tag("state", "lost")),
-        Change::Event(ComputationEvent::TimedOut(_)) => Some(event.tag("state", "failed")),
+        Change::Event(ComputationEvent::JobGone { .. }) => {
+            Some(event(SettledState::Lost, None, None))
+        }
+        Change::Event(ComputationEvent::TimedOut(_)) => {
+            Some(event(SettledState::Failed, None, None))
+        }
         Change::Event(_) | Change::PollAt(_) => None,
     }
 }

@@ -1,9 +1,11 @@
 use mivia_application::settings::Integration;
 use mivia_application::setup::SetupDraft;
-use mivia_application::telemetry::{preset_tag, report_mode_tag, step_tag};
 use mivia_domain::ids::FolderId;
-use mivia_ports::ipc::setup::{ConnectionNote, SetupOption, SetupStep};
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::ipc::setup::{ArrivalPreset, ConnectionNote, ReportMode, SetupOption, SetupStep};
+use mivia_ports::telemetry::{
+    ExistingImages, FinishPreset, FinishReportMode, FolderAdded, FolderVia, WizardBack,
+    WizardFinished, WizardRestarted, WizardStepCompleted, WizardStepShown,
+};
 
 use super::refresh_gate;
 use crate::shell::cx::Services;
@@ -27,28 +29,39 @@ pub(crate) async fn step_changed(services: &Services, from: SetupStep, to: Setup
     let telemetry = &services.telemetry;
     if order(to) < order(from) {
         telemetry.record(
-            ProductEvent::new(EventKind::WizardBack)
-                .tag("from", step_tag(from))
-                .tag("to", step_tag(to)),
+            WizardBack {
+                from: Some(from),
+                to: Some(to),
+            }
+            .into(),
         );
     } else {
-        telemetry
-            .record(ProductEvent::new(EventKind::WizardStepCompleted).tag("state", step_tag(from)));
+        telemetry.record(
+            WizardStepCompleted {
+                state: Some(from),
+                duration_ms: None,
+            }
+            .into(),
+        );
     }
-    telemetry.record(ProductEvent::new(EventKind::WizardStepShown).tag("state", step_tag(to)));
+    telemetry.record(WizardStepShown { state: Some(to) }.into());
 }
 
 pub(crate) fn restarted(services: &Services, step: SetupStep) {
-    services
-        .telemetry
-        .record(ProductEvent::new(EventKind::WizardRestarted).tag("state", step_tag(step)));
+    services.telemetry.record(
+        WizardRestarted {
+            state: Some(step),
+            previous_duration_ms: None,
+        }
+        .into(),
+    );
 }
 
-fn existing(folder: Option<FolderId>, draft: &SetupDraft) -> &'static str {
+fn existing(folder: Option<FolderId>, draft: &SetupDraft) -> ExistingImages {
     match (folder, draft.has(SetupOption::IncludeExisting)) {
-        (None, _) => "none",
-        (Some(_), true) => "also_existing",
-        (Some(_), false) => "only_new",
+        (None, _) => ExistingImages::None,
+        (Some(_), true) => ExistingImages::AlsoExisting,
+        (Some(_), false) => ExistingImages::OnlyNew,
     }
 }
 
@@ -57,23 +70,36 @@ fn account_connected(services: &Services, draft: &SetupDraft) {
         .connection
         .as_ref()
         .is_some_and(|connection| connection.notes.contains(&ConnectionNote::Imported));
-    services.telemetry.record(
-        ProductEvent::new(EventKind::AccountConnected)
-            .tag("kind", "access_key")
-            .flag("imported_from_v1", imported),
-    );
+    super::account_connected(services, imported);
 }
 
 fn folder_added(services: &Services, draft: &SetupDraft, id: FolderId) {
     services.telemetry.record(
-        ProductEvent::new(EventKind::FolderAdded)
-            .entity("folder_id", "folder", id.0)
-            .tag("via", "wizard")
-            .tag("preset", preset_tag(draft.preset))
-            .tag("report_mode", report_mode_tag(draft.report_mode))
-            .tag("existing_images", existing(Some(id), draft))
-            .count("model_choices", draft.models.len() as u64),
+        FolderAdded {
+            folder_id: Some(id),
+            via: Some(FolderVia::Wizard),
+            preset: Some(draft.preset),
+            report_mode: Some(draft.report_mode),
+            existing_images: Some(existing(Some(id), draft)),
+            model_choices: Some(draft.models.len() as u64),
+            ..FolderAdded::default()
+        }
+        .into(),
     );
+}
+
+const fn finish_choice(draft: &SetupDraft) -> (FinishPreset, FinishReportMode) {
+    let preset = match draft.preset {
+        ArrivalPreset::Microscope => FinishPreset::Microscope,
+        ArrivalPreset::WholeFolder => FinishPreset::WholeFolder,
+        ArrivalPreset::ByHand => FinishPreset::ByHand,
+    };
+    let mode = match draft.report_mode {
+        ReportMode::Subfolder => FinishReportMode::Subfolder,
+        ReportMode::Beside => FinishReportMode::Beside,
+        ReportMode::Custom => FinishReportMode::Custom,
+    };
+    (preset, mode)
 }
 
 pub(crate) async fn finished(
@@ -83,21 +109,21 @@ pub(crate) async fn finished(
     integration: Integration,
 ) {
     refresh_gate(services).await;
-    let (preset, mode) = folder.map_or(("none", "none"), |_| {
-        (preset_tag(draft.preset), report_mode_tag(draft.report_mode))
+    let (preset, mode) = folder.map_or((FinishPreset::None, FinishReportMode::None), |_| {
+        finish_choice(draft)
     });
     services.telemetry.record(
-        ProductEvent::new(EventKind::WizardFinished)
-            .tag("preset", preset)
-            .tag("report_mode", mode)
-            .tag("existing_images", existing(folder, draft))
-            .flag("autostart", integration.autostart)
-            .flag("explorer", integration.explorer)
-            .count(
-                "skipped_steps",
-                u64::from(draft.has(SetupOption::SkipFolder)),
-            )
-            .count("model_choices", draft.models.len() as u64),
+        WizardFinished {
+            preset: Some(preset),
+            report_mode: Some(mode),
+            existing_images: Some(existing(folder, draft)),
+            autostart: Some(integration.autostart),
+            explorer: Some(integration.explorer),
+            skipped_steps: Some(u64::from(draft.has(SetupOption::SkipFolder))),
+            model_choices: Some(draft.models.len() as u64),
+            duration_ms: None,
+        }
+        .into(),
     );
     account_connected(services, draft);
     if let Some(id) = folder {

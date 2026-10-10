@@ -18,7 +18,9 @@ use mivia_ports::ipc::support::{
 };
 use mivia_ports::server::{ProblemReportForm, ServerApi};
 use mivia_ports::store::StoreExt;
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::telemetry::{
+    ProblemReportOffered, ProblemReportSent, ReportOutcome, ReportTrigger,
+};
 use serde_json::{Map, Value};
 use uuid::Uuid;
 
@@ -95,19 +97,23 @@ pub(crate) fn view(ready: &Ready) -> SupportView {
 pub(crate) fn claim_offer(cx: &Cx, ready: &Ready, signature: &str) -> bool {
     let offered = paths(ready).dialog && cx.offers.lock().claim(signature, now());
     if offered {
-        ready
-            .services
-            .telemetry
-            .record(ProductEvent::new(EventKind::ProblemReportOffered).tag("trigger", "error"));
+        ready.services.telemetry.record(
+            ProblemReportOffered {
+                trigger: Some(ReportTrigger::Error),
+            }
+            .into(),
+        );
     }
     offered
 }
 
-fn record_sent(services: &Services, state: &'static str, names: bool) {
+fn record_sent(services: &Services, state: ReportOutcome, names: bool) {
     services.telemetry.record(
-        ProductEvent::new(EventKind::ProblemReportSent)
-            .tag("state", state)
-            .flag("names_included", names),
+        ProblemReportSent {
+            state: Some(state),
+            names_included: Some(names),
+        }
+        .into(),
     );
 }
 
@@ -216,9 +222,14 @@ pub(crate) async fn send(cx: &Cx, id: &str) -> Result<SendOutcome, AppError> {
     let api = server_api(services, ready.scope.0, authorizer);
     let delivered = outbox.deliver(&api, id, at).await;
     let (outcome, state) = match delivered.map_err(|error| internal(&error, SITE))? {
-        Delivery::Sent | Delivery::Expired => (SendOutcome::Sent { reference }, "sent"),
-        Delivery::Retry => (SendOutcome::Queued { reference }, "queued"),
-        Delivery::SaveAndEmail => (SendOutcome::SaveAndEmail { reference }, "failed"),
+        Delivery::Sent | Delivery::Expired => {
+            (SendOutcome::Sent { reference }, ReportOutcome::Sent)
+        }
+        Delivery::Retry => (SendOutcome::Queued { reference }, ReportOutcome::Queued),
+        Delivery::SaveAndEmail => (
+            SendOutcome::SaveAndEmail { reference },
+            ReportOutcome::Failed,
+        ),
     };
     record_sent(services, state, names);
     Ok(outcome)
@@ -263,7 +274,7 @@ pub(crate) async fn save(cx: &Cx, id: &str) -> Result<(), AppError> {
     .map_err(|error| internal(&error, SITE))?;
     delivered.map_err(|error| internal(&error, SITE))?;
     outbox.remove(&id);
-    record_sent(services, "saved", names);
+    record_sent(services, ReportOutcome::Saved, names);
     tracing::info!(report_id = %id, "report.saved");
     Ok(())
 }

@@ -4,12 +4,12 @@ use std::sync::Arc;
 use arc_swap::ArcSwap;
 use mivia_diagnostics::{Conditions, Flush, Sender, SqliteTelemetrySink, Step};
 use mivia_domain::hold::KeyProblem;
-use mivia_domain::ids::{AccountId, Timestamp};
+use mivia_domain::ids::{AccountId, FolderId, Timestamp};
 use mivia_ports::auth::{AuthError, ServerOrigin};
 use mivia_ports::server::ServerError;
 use mivia_ports::store::StoreExt;
 use mivia_ports::store::telemetry::DAY_MS;
-use mivia_ports::telemetry::{EventKind, ProductEvent, TelemetrySink};
+use mivia_ports::telemetry::{FolderPaused, TelemetrySink, UiView, View};
 use mivia_server::{HttpServerApi, build_clients};
 use mivia_store::{SqliteStore, StoreConfig};
 use mivia_stub::Stub;
@@ -18,7 +18,6 @@ use mivia_testkit::clock::ManualClock;
 use mivia_testkit::observer::RecordingObserver;
 use mivia_testkit::server::Op;
 use serde_json::Value;
-use uuid::Uuid;
 
 pub(crate) const KEY: &str = "mvkCanaryStubKey0123456789abcdefghijXYZ";
 pub(crate) const NOW: i64 = 1_791_590_400_000;
@@ -125,13 +124,17 @@ impl World {
     }
 
     pub(crate) async fn record(&self, core: usize, interaction: usize) {
-        for _ in 0..core {
-            self.sink
-                .record(ProductEvent::new(EventKind::FolderPaused).id("folder_id", Uuid::new_v4()));
+        for id in 0..core {
+            let folder_id = Some(FolderId(i64::try_from(id).unwrap()));
+            self.sink.record(FolderPaused { folder_id }.into());
         }
         for _ in 0..interaction {
-            self.sink
-                .record(ProductEvent::new(EventKind::UiView).tag("state", "history"));
+            self.sink.record(
+                UiView {
+                    state: Some(View::History),
+                }
+                .into(),
+            );
         }
         self.sink.persist(self.store.as_ref()).await.unwrap();
     }

@@ -1,8 +1,10 @@
 use mivia_application::settings::global_settings;
 use mivia_diagnostics::Flush;
-use mivia_ports::ipc::screens::LanguageSetting;
 use mivia_ports::queries::Queries;
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::telemetry::{
+    SessionAlive, SessionStart, SessionStop, SessionUnclean, SettingsSnapshot, StartState,
+    StopState,
+};
 
 use super::loops::step;
 use super::resource;
@@ -25,95 +27,99 @@ pub(super) async fn begin(services: &Services) {
 }
 
 pub(crate) struct Start {
-    pub(crate) launch: &'static str,
+    pub(crate) launch: StartState,
     pub(crate) first_run: bool,
     pub(crate) unclean: bool,
 }
 
 pub(crate) fn record_start(services: &Services, start: &Start) {
     services.telemetry.record(
-        ProductEvent::new(EventKind::SessionStart)
-            .tag("state", start.launch)
-            .count("duration_ms", mivia_os::process_age_ms())
-            .flag("first_run", start.first_run)
-            .flag("prev_unclean", start.unclean),
+        SessionStart {
+            state: Some(start.launch),
+            duration_ms: Some(mivia_os::process_age_ms()),
+            first_run: Some(start.first_run),
+            prev_unclean: Some(start.unclean),
+            ..SessionStart::default()
+        }
+        .into(),
     );
     if start.unclean {
-        services
-            .telemetry
-            .record(ProductEvent::new(EventKind::SessionUnclean));
+        services.telemetry.record(SessionUnclean::default().into());
     }
 }
 
 pub(crate) fn record_stop(services: &Services, session_end: bool) {
-    let state = if session_end { "os_shutdown" } else { "quit" };
+    let state = if session_end {
+        StopState::OsShutdown
+    } else {
+        StopState::Quit
+    };
     services.telemetry.record(
-        ProductEvent::new(EventKind::SessionStop)
-            .tag("state", state)
-            .count("duration_ms", mivia_os::process_age_ms()),
+        SessionStop {
+            state: Some(state),
+            duration_ms: Some(mivia_os::process_age_ms()),
+        }
+        .into(),
     );
 }
 
-async fn counts(services: &Services, mut event: ProductEvent) -> ProductEvent {
+async fn counts(services: &Services, event: &mut SessionAlive) {
     let Some(link) = services.telemetry.linked() else {
-        return event;
+        return;
     };
     let store = &services.store;
     if let Ok(view) = store.list_folders(link.scope).await {
         let folders = &view.folders;
         let count = |keep: fn(&&mivia_ports::ipc::views::FolderView) -> bool| {
-            total(folders.iter().filter(keep).count())
+            Some(total(folders.iter().filter(keep).count()))
         };
-        event = event
-            .count("folders_active", count(|f| !f.paused && !f.missing))
-            .count("folders_paused", count(|f| f.paused))
-            .count("folders_missing", count(|f| f.missing))
-            .count("open_batches", count(|f| f.open_series.is_some()));
+        event.folders_active = count(|f| !f.paused && !f.missing);
+        event.folders_paused = count(|f| f.paused);
+        event.folders_missing = count(|f| f.missing);
+        event.open_batches = count(|f| f.open_series.is_some());
     }
     if let Ok(view) = store.list_holds(link.scope).await {
-        event = event.count("holds_active", total(view.holds.len()));
+        event.holds_active = Some(total(view.holds.len()));
     }
     if let Ok(view) = store.list_needs_attention(link.scope).await {
-        event = event.count("attention_open", u64::from(view.total));
+        event.attention_open = Some(u64::from(view.total));
     }
-    event
 }
 
 pub(super) async fn alive(services: &Services) {
     let telemetry = &services.telemetry;
     let (stats, health) = (telemetry.sink.stats(), telemetry.sender.health());
-    let mut event = ProductEvent::new(EventKind::SessionAlive)
-        .count("duration_ms", mivia_os::process_age_ms())
-        .count("tlm_buffer", stats.buffered)
-        .count("tlm_dropped_core", stats.dropped.core)
-        .count("tlm_dropped_interaction", stats.dropped.interaction)
-        .count("tlm_send_failures", health.send_failures);
-    if let Some(at) = health.last_success_at {
-        let age = u64::try_from((now().0 - at) / 1000).unwrap_or_default();
-        event = event.count("tlm_last_success_age_s", age);
-    }
-    telemetry.record(counts(services, event).await);
+    let mut event = SessionAlive {
+        duration_ms: Some(mivia_os::process_age_ms()),
+        tlm_buffer: Some(stats.buffered),
+        tlm_dropped_core: Some(stats.dropped.core),
+        tlm_dropped_interaction: Some(stats.dropped.interaction),
+        tlm_send_failures: Some(health.send_failures),
+        tlm_last_success_age_s: health
+            .last_success_at
+            .map(|at| u64::try_from((now().0 - at) / 1000).unwrap_or_default()),
+        ..SessionAlive::default()
+    };
+    counts(services, &mut event).await;
+    telemetry.record(event.into());
 }
 
 pub(super) async fn snapshot(services: &Services) {
     let Ok(settings) = global_settings(services.store.as_ref()).await else {
         return;
     };
-    let language = match settings.language {
-        LanguageSetting::Auto => "auto",
-        LanguageSetting::En => "en",
-        LanguageSetting::De => "de",
+    let mut event = SettingsSnapshot {
+        language: Some(settings.language),
+        autostart: Some(settings.integration.autostart),
+        explorer_entries: Some(settings.integration.explorer),
+        folders: None,
     };
-    let mut event = ProductEvent::new(EventKind::SettingsSnapshot)
-        .tag("language", language)
-        .flag("autostart", settings.integration.autostart)
-        .flag("explorer_entries", settings.integration.explorer);
     if let Some(link) = services.telemetry.linked()
         && let Ok(view) = services.store.list_folders(link.scope).await
     {
-        event = event.count("folders", total(view.folders.len()));
+        event.folders = Some(total(view.folders.len()));
     }
-    services.telemetry.record(event);
+    services.telemetry.record(event.into());
 }
 
 pub(crate) async fn flush_on_stop(services: &Services) {

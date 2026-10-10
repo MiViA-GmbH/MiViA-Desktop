@@ -173,13 +173,10 @@ impl TelemetrySink for SqliteTelemetrySink {
         if !self.enabled() {
             return;
         }
-        let checked = match self.schema.check(&event, &self.install_id) {
-            Ok(checked) => checked,
-            Err(reject) => {
-                tracing::warn!(event = event.kind.name(), ?reject, "telemetry.rejected");
-                self.inner.lock().rejected += 1;
-                return;
-            }
+        let Some(checked) = self.schema.encode(&event, &self.install_id) else {
+            tracing::warn!(event = event.name(), "telemetry.rejected");
+            self.inner.lock().rejected += 1;
+            return;
         };
         let mut inner = self.inner.lock();
         if inner.queue.len() >= QUEUE_CAPACITY {

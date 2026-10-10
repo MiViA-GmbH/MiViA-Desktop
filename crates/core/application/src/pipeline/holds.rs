@@ -3,9 +3,8 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use mivia_domain::hold::HoldReason;
 use mivia_domain::ids::{MINUTE_MS, SECOND_MS, Timestamp};
 use mivia_domain::retry::RetryPolicy;
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::telemetry::{HoldLifted, HoldRaised, LiftedBy};
 
-use crate::telemetry::hold_tag;
 use parking_lot::Mutex;
 
 use super::{Pipeline, PipelineError};
@@ -61,8 +60,8 @@ impl Pipeline {
             first
         };
         if first {
-            let event = ProductEvent::new(EventKind::HoldRaised).tag("kind", hold_tag(reason));
-            self.ports.telemetry.record(event);
+            let event = HoldRaised { kind: Some(reason) };
+            self.ports.telemetry.record(event.into());
         }
         tracing::info!(?reason, "hold.raised");
         self.wakers.probe.notify_one();
@@ -100,17 +99,13 @@ impl Pipeline {
 
     fn lifted_event(&self, reason: HoldReason, now: Timestamp, probes: u32) {
         let since = self.holds.raised.lock().remove(&reason);
-        let mut event = ProductEvent::new(EventKind::HoldLifted)
-            .tag("kind", hold_tag(reason))
-            .count("count", u64::from(probes))
-            .tag("by", "probe");
-        if let Some(since) = since {
-            event = event.count(
-                "duration_ms",
-                u64::try_from(now.ms_since(since)).unwrap_or(0),
-            );
-        }
-        self.ports.telemetry.record(event);
+        let event = HoldLifted {
+            kind: Some(reason),
+            duration_ms: since.map(|since| u64::try_from(now.ms_since(since)).unwrap_or(0)),
+            count: Some(u64::from(probes)),
+            by: Some(LiftedBy::Probe),
+        };
+        self.ports.telemetry.record(event.into());
     }
 
     pub(super) fn counts_attempt(&self) -> bool {

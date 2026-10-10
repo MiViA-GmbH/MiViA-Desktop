@@ -40,7 +40,7 @@ use mivia_diagnostics::{
 use mivia_os::SystemClock;
 use mivia_ports::clock::Clock;
 use mivia_ports::store::history::Actor;
-use mivia_ports::telemetry::{EventKind, ProductEvent};
+use mivia_ports::telemetry::{HandoffKind, InstanceHandoff};
 use mivia_store::{SqliteStore, StoreConfig};
 use tauri::{AppHandle, Manager, RunEvent};
 use tokio::sync::mpsc::{Receiver, channel};
@@ -233,12 +233,12 @@ fn open_at_start(app: &AppHandle) {
     }
 }
 
-async fn record_handoff(app: &AppHandle, kind: &'static str) {
+async fn record_handoff(app: &AppHandle, kind: HandoffKind) {
     let ready = app.state::<Cx>().ready().await;
     ready
         .services
         .telemetry
-        .record(ProductEvent::new(EventKind::InstanceHandoff).tag("kind", kind));
+        .record(InstanceHandoff { kind: Some(kind) }.into());
 }
 
 async fn receive(app: AppHandle, mut received: Receiver<Handoff>, data_dir: PathBuf) {
@@ -246,11 +246,11 @@ async fn receive(app: AppHandle, mut received: Receiver<Handoff>, data_dir: Path
         match handoff {
             Handoff::Wake => {
                 tracing::info!("instance.wake");
-                record_handoff(&app, "wake").await;
+                record_handoff(&app, HandoffKind::Wake).await;
                 open_at_start(&app);
             }
             Handoff::Spool(id) => {
-                record_handoff(&app, "spool").await;
+                record_handoff(&app, HandoffKind::Spool).await;
                 one_off::ingest(&app, &instance::spool_file(&data_dir, id)).await;
             }
         }
