@@ -2,11 +2,14 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mivia_domain::ids::Fingerprint;
+use mivia_domain::image_format::{FormatCheck, ImageFormat};
 use mivia_domain::path::WinPath;
 use mivia_ports::fs::{FileSystem, FsError};
 use sha2::{Digest, Sha256};
 
 use super::{Capability, CaseResult, check, check_eq};
+
+pub const JPEG: &[u8] = &[0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3, 0xFF, 0xD9];
 
 #[async_trait]
 pub trait FsHarness: Send + Sync {
@@ -16,6 +19,7 @@ pub trait FsHarness: Send + Sync {
     async fn put(&self, path: &WinPath, bytes: &[u8]);
     async fn lock(&self, path: &WinPath);
     async fn unlock(&self, path: &WinPath);
+    async fn link_dir(&self, link: &WinPath, target: &WinPath);
 }
 
 fn child(harness: &impl FsHarness, name: &str) -> Result<WinPath, String> {
@@ -29,24 +33,29 @@ fn supports(harness: &impl FsHarness, capability: Capability) -> bool {
     harness.capabilities().contains(&capability)
 }
 
+fn shown<T, E: std::fmt::Debug>(result: Result<T, E>) -> Result<T, String> {
+    result.map_err(|error| format!("{error:?}"))
+}
+
 pub async fn fs_stat_reports_size(harness: &impl FsHarness) -> CaseResult {
     let path = child(harness, "a.tif")?;
     harness.put(&path, b"12345").await;
-    let stat = harness
-        .sut()
-        .stat(&path)
-        .await
-        .map_err(|e| format!("{e:?}"))?;
+    let stat = shown(harness.sut().stat(&path).await)?;
     check_eq(&(stat.size, stat.is_dir), &(5, false), "stat")
 }
 
 pub async fn fs_missing_file_is_not_found(harness: &impl FsHarness) -> CaseResult {
     let path = child(harness, "missing.tif")?;
-    let found = harness.sut().stat(&path).await;
+    let sut = harness.sut();
     check_eq(
-        &found.map(drop),
+        &sut.stat(&path).await.map(drop),
         &Err(FsError::NotFound),
         "stat of a missing file",
+    )?;
+    check_eq(
+        &sut.probe(&path).await,
+        &Err(FsError::NotFound),
+        "probe of a missing file",
     )
 }
 
@@ -59,36 +68,89 @@ pub async fn fs_lookup_ignores_case(harness: &impl FsHarness) -> CaseResult {
     check(stat.is_ok(), "case-insensitive lookup failed")
 }
 
-pub async fn fs_list_dir_returns_children(harness: &impl FsHarness) -> CaseResult {
-    harness.put(&child(harness, "b.tif")?, b"b").await;
-    harness.put(&child(harness, "a.tif")?, b"a").await;
-    let entries = harness
-        .sut()
-        .list_dir(&harness.root())
-        .await
+pub async fn fs_walk_lists_files_recursively(harness: &impl FsHarness) -> CaseResult {
+    harness.put(&child(harness, "b.tif")?, b"bb").await;
+    let nested = child(harness, "sub")?
+        .join("a.tif")
         .map_err(|e| format!("{e:?}"))?;
-    let mut names = entries
-        .into_iter()
-        .map(|entry| entry.name)
+    harness.put(&nested, b"a").await;
+    let walk = shown(harness.sut().walk(&harness.root()).await)?;
+    let mut found = walk
+        .files
+        .iter()
+        .map(|entry| (entry.path.key(), entry.size))
         .collect::<Vec<_>>();
-    names.sort();
+    found.sort();
+    let mut expected = vec![(child(harness, "b.tif")?.key(), 2), (nested.key(), 1)];
+    expected.sort();
+    check_eq(&found, &expected, "walk")
+}
+
+pub async fn fs_walk_skips_linked_folders(harness: &impl FsHarness) -> CaseResult {
+    if !supports(harness, Capability::ReparsePoints) {
+        return Ok(());
+    }
+    let outside = child(harness, "outside")?;
+    harness
+        .put(&outside.join("x.tif").map_err(|e| format!("{e:?}"))?, b"x")
+        .await;
+    let watched = child(harness, "watched")?;
+    harness
+        .put(&watched.join("a.tif").map_err(|e| format!("{e:?}"))?, b"a")
+        .await;
+    let link = watched.join("junction").map_err(|e| format!("{e:?}"))?;
+    harness.link_dir(&link, &outside).await;
+    let walk = shown(harness.sut().walk(&watched).await)?;
     check_eq(
-        &names,
-        &vec!["a.tif".to_owned(), "b.tif".to_owned()],
-        "children",
+        &(walk.files.len(), walk.links_skipped),
+        &(1, 1),
+        "walk with a link",
+    )?;
+    let through = link.join("x.tif").map_err(|e| format!("{e:?}"))?;
+    check_eq(
+        &harness.sut().read_image(&through, &watched).await.map(drop),
+        &Err(FsError::Link),
+        "read through a link",
     )
 }
 
-pub async fn fs_fingerprint_is_sha256(harness: &impl FsHarness) -> CaseResult {
-    let path = child(harness, "c.tif")?;
-    harness.put(&path, b"micrograph").await;
-    let fingerprint = harness
-        .sut()
-        .fingerprint(&path)
-        .await
-        .map_err(|e| format!("{e:?}"))?;
-    let expected = Fingerprint(Sha256::digest(b"micrograph").into());
-    check_eq(&fingerprint, &expected, "fingerprint")
+pub async fn fs_read_image_hashes_and_checks_format(harness: &impl FsHarness) -> CaseResult {
+    let path = child(harness, "c.jpg")?;
+    harness.put(&path, JPEG).await;
+    let read = shown(harness.sut().read_image(&path, &harness.root()).await)?;
+    let expected = Fingerprint(Sha256::digest(JPEG).into());
+    check_eq(&read.fingerprint, &expected, "fingerprint")?;
+    check_eq(
+        &read.format,
+        &FormatCheck::Complete(ImageFormat::Jpeg),
+        "format",
+    )?;
+    check_eq(&read.stat.size, &9, "size")
+}
+
+pub async fn fs_read_image_reports_a_truncated_file(harness: &impl FsHarness) -> CaseResult {
+    let path = child(harness, "cut.jpg")?;
+    harness.put(&path, &[0xFF, 0xD8, 0xFF, 0xE0, 0, 0]).await;
+    let read = shown(harness.sut().read_image(&path, &harness.root()).await)?;
+    check_eq(
+        &read.format,
+        &FormatCheck::Incomplete(ImageFormat::Jpeg),
+        "format",
+    )
+}
+
+pub async fn fs_read_image_refuses_paths_outside_root(harness: &impl FsHarness) -> CaseResult {
+    let path = child(harness, "d.jpg")?;
+    harness.put(&path, JPEG).await;
+    let sub = child(harness, "sub")?;
+    harness
+        .put(&sub.join("e.jpg").map_err(|e| format!("{e:?}"))?, JPEG)
+        .await;
+    check_eq(
+        &harness.sut().read_image(&path, &sub).await.map(drop),
+        &Err(FsError::Link),
+        "read outside the watched folder",
+    )
 }
 
 pub async fn fs_probe_fails_while_locked(harness: &impl FsHarness) -> CaseResult {
@@ -98,9 +160,9 @@ pub async fn fs_probe_fails_while_locked(harness: &impl FsHarness) -> CaseResult
     let path = child(harness, "busy.tif")?;
     harness.put(&path, b"x").await;
     harness.lock(&path).await;
-    let locked = harness.sut().probe_exclusive(&path).await;
+    let locked = harness.sut().probe(&path).await;
     harness.unlock(&path).await;
-    let free = harness.sut().probe_exclusive(&path).await;
+    let free = harness.sut().probe(&path).await;
     check_eq(
         &locked,
         &Err(FsError::SharingViolation),
@@ -109,14 +171,21 @@ pub async fn fs_probe_fails_while_locked(harness: &impl FsHarness) -> CaseResult
     check_eq(&free, &Ok(()), "probe after unlock")
 }
 
+pub async fn fs_final_path_of_a_plain_folder_is_itself(harness: &impl FsHarness) -> CaseResult {
+    let root = harness.root();
+    harness
+        .put(&root.join("f.tif").map_err(|e| format!("{e:?}"))?, b"f")
+        .await;
+    let found = shown(harness.sut().final_path(&root).await)?;
+    check_eq(&found.key(), &root.key(), "final path")
+}
+
 pub async fn fs_write_atomic_replaces_content(harness: &impl FsHarness) -> CaseResult {
     let path = child(harness, "report.pdf")?;
     harness.put(&path, b"old").await;
     let sut = harness.sut();
-    sut.write_atomic(&path, b"newer")
-        .await
-        .map_err(|e| format!("{e:?}"))?;
-    let stat = sut.stat(&path).await.map_err(|e| format!("{e:?}"))?;
+    shown(sut.write_atomic(&path, b"newer").await)?;
+    let stat = shown(sut.stat(&path).await)?;
     check_eq(&stat.size, &5, "size after write")
 }
 
@@ -150,9 +219,13 @@ macro_rules! fs_contract_tests {
             fs_stat_reports_size,
             fs_missing_file_is_not_found,
             fs_lookup_ignores_case,
-            fs_list_dir_returns_children,
-            fs_fingerprint_is_sha256,
+            fs_walk_lists_files_recursively,
+            fs_walk_skips_linked_folders,
+            fs_read_image_hashes_and_checks_format,
+            fs_read_image_reports_a_truncated_file,
+            fs_read_image_refuses_paths_outside_root,
             fs_probe_fails_while_locked,
+            fs_final_path_of_a_plain_folder_is_itself,
             fs_write_atomic_replaces_content,
             fs_write_atomic_fails_on_locked_target,
             fs_write_atomic_refuses_reserved_names,

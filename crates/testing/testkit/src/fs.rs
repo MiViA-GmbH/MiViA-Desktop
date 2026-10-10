@@ -2,17 +2,20 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use mivia_domain::ids::{Fingerprint, Timestamp};
+use mivia_domain::image_format::check_format;
 use mivia_domain::path::{WinPath, fold};
-use mivia_ports::fs::{DirEntry, FileStat, FileSystem, FsError};
+use mivia_domain::sanitise::is_reserved;
+use mivia_ports::fs::{FileStat, FileSystem, FsError, ImageRead, Walk, WalkEntry};
 use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FsOp {
     Stat,
-    ListDir,
-    Fingerprint,
+    Walk,
     Probe,
+    Read,
+    FinalPath,
     Write,
     FreeSpace,
 }
@@ -20,15 +23,17 @@ pub enum FsOp {
 type Key = Vec<String>;
 
 struct Node {
-    name: String,
+    path: WinPath,
     bytes: Option<Vec<u8>>,
     mtime: Timestamp,
+    link: bool,
 }
 
 struct State {
     nodes: BTreeMap<Key, Node>,
     locked: BTreeSet<Key>,
     failures: Vec<(FsOp, FsError)>,
+    finals: BTreeMap<Key, WinPath>,
     free_space: u64,
     clock: i64,
 }
@@ -36,8 +41,6 @@ struct State {
 pub struct InMemoryFs {
     state: Mutex<State>,
 }
-
-const RESERVED: &[&str] = &["CON", "PRN", "AUX", "NUL"];
 
 fn ntfs_name(component: &str) -> &str {
     component.trim_end_matches(['.', ' '])
@@ -52,14 +55,17 @@ fn key(path: &WinPath) -> Key {
         .collect()
 }
 
-fn reserved(name: &str) -> bool {
-    let stem = fold(ntfs_name(name).split('.').next().unwrap_or_default());
-    let numbered = ["COM", "LPT"].iter().any(|prefix| {
-        stem.strip_prefix(prefix).is_some_and(|digit| {
-            digit.len() == 1 && digit.chars().all(|c| c.is_ascii_digit() && c != '0')
-        })
-    });
-    numbered || RESERVED.contains(&stem.as_str())
+fn ancestors(path: &WinPath) -> Vec<WinPath> {
+    let text = path.to_string();
+    let mut found = Vec::new();
+    let mut current = text.as_str();
+    while let Some((parent, _)) = current.rsplit_once('\\') {
+        if let Ok(parsed) = WinPath::parse(parent) {
+            found.push(parsed);
+        }
+        current = parent;
+    }
+    found
 }
 
 impl InMemoryFs {
@@ -69,46 +75,65 @@ impl InMemoryFs {
                 nodes: BTreeMap::new(),
                 locked: BTreeSet::new(),
                 failures: Vec::new(),
+                finals: BTreeMap::new(),
                 free_space: u64::MAX,
-                clock: 0,
+                clock: 1_790_000_000_000,
             }),
         }
     }
 
-    pub fn put(&self, path: &WinPath, bytes: &[u8]) {
+    fn insert(&self, path: &WinPath, bytes: Option<Vec<u8>>) {
         let mut state = self.state.lock();
-        let key = key(path);
-        for depth in 1..key.len() {
-            let ancestor = key.iter().take(depth).cloned().collect::<Key>();
-            let name = ancestor.last().cloned().unwrap_or_default();
-            state.nodes.entry(ancestor).or_insert(Node {
-                name,
+        for ancestor in ancestors(path) {
+            state.nodes.entry(key(&ancestor)).or_insert(Node {
+                path: ancestor,
                 bytes: None,
                 mtime: Timestamp(0),
+                link: false,
             });
         }
         state.clock += 1;
         let mtime = Timestamp(state.clock);
-        let name = path
-            .file_name()
-            .map(ntfs_name)
-            .unwrap_or_default()
-            .to_owned();
         state.nodes.insert(
-            key,
+            key(path),
             Node {
-                name,
-                bytes: Some(bytes.to_vec()),
+                path: path.clone(),
+                bytes,
                 mtime,
+                link: false,
             },
         );
     }
 
+    pub fn set_now(&self, at: Timestamp) {
+        self.state.lock().clock = at.0;
+    }
+
+    pub fn put(&self, path: &WinPath, bytes: &[u8]) {
+        self.insert(path, Some(bytes.to_vec()));
+    }
+
     pub fn mkdir(&self, path: &WinPath) {
-        self.put(path, &[]);
+        self.insert(path, None);
+    }
+
+    pub fn link_dir(&self, path: &WinPath) {
+        self.mkdir(path);
         if let Some(node) = self.state.lock().nodes.get_mut(&key(path)) {
-            node.bytes = None;
+            node.link = true;
         }
+    }
+
+    pub fn set_final_path(&self, path: &WinPath, target: &WinPath) {
+        self.state.lock().finals.insert(key(path), target.clone());
+    }
+
+    pub fn is_dir(&self, path: &WinPath) -> bool {
+        self.state
+            .lock()
+            .nodes
+            .get(&key(path))
+            .is_some_and(|node| node.bytes.is_none())
     }
 
     pub fn lock(&self, path: &WinPath) {
@@ -120,7 +145,11 @@ impl InMemoryFs {
     }
 
     pub fn vanish(&self, path: &WinPath) {
-        self.state.lock().nodes.remove(&key(path));
+        let prefix = key(path);
+        self.state
+            .lock()
+            .nodes
+            .retain(|node, _| !node.starts_with(&prefix));
     }
 
     pub fn grow(&self, path: &WinPath, extra: &[u8]) {
@@ -169,17 +198,29 @@ fn stat_of(node: &Node) -> FileStat {
             .as_ref()
             .map_or(0, |bytes| u64::try_from(bytes.len()).unwrap_or(u64::MAX)),
         mtime: node.mtime,
+        change_time: node.mtime,
         is_dir: node.bytes.is_none(),
     }
 }
 
-fn file<'a>(state: &'a State, path: &WinPath) -> Result<&'a [u8], FsError> {
+fn file<'a>(state: &'a State, path: &WinPath) -> Result<&'a Node, FsError> {
     let key = key(path);
     if state.locked.contains(&key) {
         return Err(FsError::SharingViolation);
     }
     let node = state.nodes.get(&key).ok_or(FsError::NotFound)?;
-    node.bytes.as_deref().ok_or(FsError::AccessDenied)
+    if node.bytes.is_none() {
+        return Err(FsError::AccessDenied);
+    }
+    Ok(node)
+}
+
+fn under_link(state: &State, node: &Key, root: &Key) -> bool {
+    (root.len() + 1..node.len()).any(|depth| {
+        node.get(..depth)
+            .and_then(|prefix| state.nodes.get(prefix))
+            .is_some_and(|ancestor| ancestor.link)
+    })
 }
 
 #[async_trait]
@@ -193,35 +234,64 @@ impl FileSystem for InMemoryFs {
             .ok_or(FsError::NotFound)
     }
 
-    async fn list_dir(&self, path: &WinPath) -> Result<Vec<DirEntry>, FsError> {
-        let state = self.begin(FsOp::ListDir)?;
-        let dir = key(path);
+    async fn walk(&self, root: &WinPath) -> Result<Walk, FsError> {
+        let state = self.begin(FsOp::Walk)?;
+        let dir = key(root);
         let node = state.nodes.get(&dir).ok_or(FsError::NotFound)?;
         if node.bytes.is_some() {
             return Err(FsError::NotADirectory);
         }
-        let mut entries = state
-            .nodes
-            .iter()
-            .filter(|(child, _)| child.len() == dir.len() + 1 && child.starts_with(&dir))
-            .map(|(_, node)| DirEntry {
-                name: node.name.clone(),
-                stat: stat_of(node),
-            })
-            .collect::<Vec<_>>();
-        entries.sort_by_key(|entry| fold(&entry.name));
-        Ok(entries)
+        let mut walk = Walk::default();
+        for (child, node) in state.nodes.range(dir.clone()..) {
+            if !child.starts_with(&dir) {
+                break;
+            }
+            if child == &dir || under_link(&state, child, &dir) {
+                continue;
+            }
+            if node.link {
+                walk.links_skipped += 1;
+            } else if let Some(bytes) = &node.bytes {
+                walk.files.push(WalkEntry {
+                    path: node.path.clone(),
+                    size: u64::try_from(bytes.len()).unwrap_or(u64::MAX),
+                    mtime: node.mtime,
+                });
+            }
+        }
+        Ok(walk)
     }
 
-    async fn fingerprint(&self, path: &WinPath) -> Result<Fingerprint, FsError> {
-        let state = self.begin(FsOp::Fingerprint)?;
-        let bytes = file(&state, path)?;
-        Ok(Fingerprint(Sha256::digest(bytes).into()))
-    }
-
-    async fn probe_exclusive(&self, path: &WinPath) -> Result<(), FsError> {
+    async fn probe(&self, path: &WinPath) -> Result<(), FsError> {
         let state = self.begin(FsOp::Probe)?;
         file(&state, path).map(drop)
+    }
+
+    async fn read_image(&self, path: &WinPath, within: &WinPath) -> Result<ImageRead, FsError> {
+        let state = self.begin(FsOp::Read)?;
+        if !within.contains(path) || under_link(&state, &key(path), &key(within)) {
+            return Err(FsError::Link);
+        }
+        let node = file(&state, path)?;
+        let bytes = node.bytes.as_deref().unwrap_or_default();
+        Ok(ImageRead {
+            fingerprint: Fingerprint(Sha256::digest(bytes).into()),
+            format: check_format(bytes),
+            stat: stat_of(node),
+        })
+    }
+
+    async fn final_path(&self, path: &WinPath) -> Result<WinPath, FsError> {
+        let state = self.begin(FsOp::FinalPath)?;
+        let key = key(path);
+        if !state.nodes.contains_key(&key) {
+            return Err(FsError::NotFound);
+        }
+        Ok(state
+            .finals
+            .get(&key)
+            .cloned()
+            .unwrap_or_else(|| path.clone()))
     }
 
     async fn write_atomic(&self, path: &WinPath, bytes: &[u8]) -> Result<(), FsError> {
@@ -232,7 +302,10 @@ impl FileSystem for InMemoryFs {
             .take(target.len().saturating_sub(1))
             .cloned()
             .collect::<Key>();
-        if path.file_name().is_none_or(reserved) {
+        if path
+            .file_name()
+            .is_none_or(|name| is_reserved(ntfs_name(name)))
+        {
             return Err(FsError::InvalidName);
         }
         if state

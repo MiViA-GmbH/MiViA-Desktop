@@ -49,7 +49,7 @@ async fn memory_fs_models_windows_names_and_faults() {
     let stat = fs.stat(&path(r"D:\Lab\a.tif")).await.unwrap();
     assert_eq!((stat.size, stat.mtime), (5, Timestamp(9)));
     assert_eq!(
-        fs.list_dir(&path(r"D:\Lab\a.tif")).await,
+        fs.walk(&path(r"D:\Lab\a.tif")).await,
         Err(FsError::NotADirectory)
     );
     fs.fail_next(FsOp::Stat, FsError::AccessDenied);

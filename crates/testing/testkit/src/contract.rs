@@ -1,6 +1,7 @@
 pub mod clock;
 pub mod fs;
 pub mod server;
+pub mod watch;
 
 use std::fmt::Debug;
 
