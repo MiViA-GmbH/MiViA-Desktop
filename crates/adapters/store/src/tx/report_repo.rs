@@ -3,7 +3,7 @@ use mivia_domain::path::WinPath;
 use mivia_domain::report::{PartEvent, PartState, SaveError};
 use mivia_ports::fs::Staged;
 use mivia_ports::store::reports::{
-    PollRow, ReportSpec, RequestRow, Rerequest, SaveRow, WaitingReport,
+    PollRow, ReportSpec, RequestRow, Rerequest, SaveRow, SavedFile, WaitingReport,
 };
 use mivia_ports::store::{NewReport, ReportRepo, TxError};
 
@@ -140,5 +140,9 @@ impl ReportRepo for SqlTx<'_> {
 
     fn recover_parts(&mut self, now: Timestamp) -> Result<(), TxError> {
         self.recover_report_parts(now)
+    }
+
+    fn saved_file(&mut self, id: ReportPartId) -> Result<Option<SavedFile>, TxError> {
+        self.read_saved_file(id)
     }
 }

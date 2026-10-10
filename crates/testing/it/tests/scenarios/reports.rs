@@ -1,3 +1,4 @@
+use mivia_application::pipeline::SavedCheck;
 use mivia_application::report_settings::ReportSettings;
 use mivia_domain::ids::{HOUR_MS, MINUTE_MS, SECOND_MS, Timestamp};
 use mivia_domain::output::Format;
@@ -325,5 +326,43 @@ async fn a_job_deleted_on_the_server_is_left_out_of_the_report() {
     assert!(jobs.iter().all(|ids| !ids.contains(&deleted)));
     assert_eq!(jobs.iter().map(Vec::len).sum::<usize>(), 3);
     assert_eq!(counts(&line).await, (2, 2, 0));
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn opening_a_saved_report_checks_its_hash() {
+    let line = Line::new().await;
+    line.world
+        .fs
+        .fail_next(FsOp::Save, mivia_ports::fs::FsError::Io);
+    closed_series(&line, 1).await;
+    let part = kept_parts(&line).await.remove(0).id;
+    line.run_for(6 * MINUTE_MS, 30 * SECOND_MS).await;
+    assert_eq!(
+        line.pipeline.check_saved_report(part).await.unwrap(),
+        SavedCheck::Intact
+    );
+    let saved = names(&line, REPORTS).await;
+    let path = saved
+        .iter()
+        .map(|name| win(REPORTS).join(name).unwrap())
+        .find(|path| {
+            let bytes = line.world.fs.contents(path).unwrap();
+            bytes.starts_with(b"%PDF-")
+        })
+        .unwrap();
+    for path in saved.iter().map(|name| win(REPORTS).join(name).unwrap()) {
+        line.world.fs.put(&path, b"%PDF-1.7 edited");
+    }
+    assert_eq!(
+        line.pipeline.check_saved_report(part).await.unwrap(),
+        SavedCheck::Changed
+    );
+    line.world.fs.vanish(&path);
+    line.world.fs.vanish(&win(REPORTS));
+    assert_eq!(
+        line.pipeline.check_saved_report(part).await.unwrap(),
+        SavedCheck::Missing
+    );
     line.finish().await;
 }

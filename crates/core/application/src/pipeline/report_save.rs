@@ -10,6 +10,13 @@ use mivia_ports::store::reports::{Rerequest, SaveRow};
 
 use super::{Pipeline, PipelineError, Tick};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SavedCheck {
+    Intact,
+    Changed,
+    Missing,
+}
+
 struct Plan {
     folder: WinPath,
     base: WinPath,
@@ -97,6 +104,24 @@ impl Pipeline {
         self.part_event(id, PartEvent::Discard).await?;
         self.remove_quietly(&row.staging).await;
         Ok(())
+    }
+
+    pub async fn check_saved_report(&self, id: ReportPartId) -> Result<SavedCheck, PipelineError> {
+        let saved = self
+            .write(move |tx, scope| tx.reports(scope).saved_file(id))
+            .await?;
+        let Some(saved) = saved else {
+            return Ok(SavedCheck::Missing);
+        };
+        let check = match self.ports.fs.digest(&saved.path).await {
+            Ok(found) if found == (saved.size, saved.sha256) => SavedCheck::Intact,
+            Ok(_) => SavedCheck::Changed,
+            Err(_) => SavedCheck::Missing,
+        };
+        if check == SavedCheck::Changed {
+            tracing::warn!(part = id.0, "report.changedAfterSave");
+        }
+        Ok(check)
     }
 
     pub async fn try_again_report_part(&self, id: ReportPartId) -> Result<(), PipelineError> {

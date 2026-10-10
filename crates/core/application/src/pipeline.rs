@@ -31,6 +31,7 @@ use parking_lot::Mutex;
 use tokio::sync::Notify;
 
 pub use crate::worker::{Tick, run};
+pub use report_save::SavedCheck;
 
 const MAX_POLL_GAP_MS: i64 = 5 * MINUTE_MS;
 const MAX_PROBE_GAP_MS: i64 = 30 * MINUTE_MS;

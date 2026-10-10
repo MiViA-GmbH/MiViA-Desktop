@@ -4,7 +4,7 @@ use mivia_domain::path::WinPath;
 use mivia_domain::report::{PartEvent, PartState, SAVE_RETRY_MS, SaveError};
 use mivia_ports::fs::Staged;
 use mivia_ports::store::TxError;
-use mivia_ports::store::reports::SaveRow;
+use mivia_ports::store::reports::{SaveRow, SavedFile};
 use rusqlite::{Row, params};
 
 use super::SqlTx;
@@ -172,6 +172,27 @@ impl SqlTx<'_> {
     pub(super) fn recover_report_parts(&self, now: Timestamp) -> Result<(), TxError> {
         self.run(sql::RECOVER_POLLS, params![self.account(), now.0])?;
         self.run(sql::RECOVER_SAVES, params![self.account(), now.0])
+    }
+
+    pub(super) fn read_saved_file(&self, id: ReportPartId) -> Result<Option<SavedFile>, TxError> {
+        let rows: Vec<(String, i64, Vec<u8>)> = self.rows(
+            "SELECT p.file_path, p.size, p.sha256 FROM report_part p \
+             JOIN report r ON r.id = p.report_id WHERE p.id = ?1 AND r.account_id = ?2 \
+             AND p.state = 'saved' AND p.file_path IS NOT NULL AND p.sha256 IS NOT NULL",
+            [id.0, self.account()],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+        )?;
+        rows.into_iter()
+            .next()
+            .map(|(path, size, sha)| {
+                let sha: [u8; 32] = sha.try_into().map_err(|_| missing("hash"))?;
+                Ok(SavedFile {
+                    path: parse_path(&path)?,
+                    size: u64::try_from(size).unwrap_or_default(),
+                    sha256: Fingerprint(sha),
+                })
+            })
+            .transpose()
     }
 
     pub(super) fn stale_after_run_again(&mut self, id: ComputationId) -> Result<(), TxError> {

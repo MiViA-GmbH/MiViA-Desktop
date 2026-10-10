@@ -78,6 +78,13 @@ pub struct SaveRow {
     pub intended: Option<WinPath>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SavedFile {
+    pub path: WinPath,
+    pub size: u64,
+    pub sha256: Fingerprint,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Rerequest {
     Expired,
@@ -141,4 +148,5 @@ pub trait ReportRepo {
         now: Timestamp,
     ) -> Result<PartState, TxError>;
     fn recover_parts(&mut self, now: Timestamp) -> Result<(), TxError>;
+    fn saved_file(&mut self, id: ReportPartId) -> Result<Option<SavedFile>, TxError>;
 }
