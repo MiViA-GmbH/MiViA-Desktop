@@ -10,6 +10,7 @@
 		"check:full": "node scripts/check.mjs full",
 		"fix": "node scripts/check.mjs fix",
 		"floors:lower": "cargo xtask floors-lower",
+		"gen:telemetry-fields": "cargo xtask telemetry-fields",
 		"why": "cargo xtask why"
 	},
 	"devDependencies": {

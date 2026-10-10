@@ -1,0 +1,1802 @@
+{
+  "events": [
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "first_run",
+          "type": "flag"
+        },
+        {
+          "name": "holds_active",
+          "type": "number"
+        },
+        {
+          "name": "prev_unclean",
+          "type": "flag"
+        },
+        {
+          "name": "proxy_kind",
+          "type": "choice",
+          "values": [
+            "direct",
+            "static",
+            "pac",
+            "wpad",
+            "env",
+            "policy"
+          ]
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "autostart",
+            "user",
+            "sendto",
+            "update_relaunch",
+            "wizard"
+          ]
+        }
+      ],
+      "name": "session.start",
+      "priority": "core",
+      "purpose": "Zählt App-Starts und wie lange der Start dauert."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "attention_open",
+          "type": "number"
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "errors_suppressed",
+          "type": "number"
+        },
+        {
+          "name": "folders_active",
+          "type": "number"
+        },
+        {
+          "name": "folders_missing",
+          "type": "number"
+        },
+        {
+          "name": "folders_paused",
+          "type": "number"
+        },
+        {
+          "name": "holds_active",
+          "type": "number"
+        },
+        {
+          "name": "open_batches",
+          "type": "number"
+        },
+        {
+          "name": "tlm_buffer",
+          "type": "number"
+        },
+        {
+          "name": "tlm_dropped_core",
+          "type": "number"
+        },
+        {
+          "name": "tlm_dropped_interaction",
+          "type": "number"
+        },
+        {
+          "name": "tlm_last_success_age_s",
+          "type": "number"
+        },
+        {
+          "name": "tlm_send_failures",
+          "type": "number"
+        },
+        {
+          "name": "window_open",
+          "type": "flag"
+        }
+      ],
+      "name": "session.alive",
+      "priority": "core",
+      "purpose": "Stündliche Zustandsmessung: Laufzeit, Warteschlangen und Zahl verworfener Ereignisse."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "quit",
+            "update",
+            "os_shutdown",
+            "account_switch"
+          ]
+        }
+      ],
+      "name": "session.stop",
+      "priority": "core",
+      "purpose": "Hält fest, wie eine Sitzung endete und wie lange sie lief."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "last_line_age_s",
+          "type": "number"
+        },
+        {
+          "name": "prev_version",
+          "type": "version"
+        }
+      ],
+      "name": "session.unclean",
+      "priority": "core",
+      "purpose": "Erkennt, dass die vorige Sitzung ohne sauberes Beenden endete."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "panic",
+            "webview",
+            "task_panic"
+          ]
+        },
+        {
+          "name": "prev_session",
+          "type": "flag"
+        }
+      ],
+      "name": "crash",
+      "priority": "core",
+      "purpose": "Meldet einen Absturz, den die App selbst abgefangen hat."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "autostart",
+          "type": "flag"
+        },
+        {
+          "name": "explorer_entries",
+          "type": "flag"
+        },
+        {
+          "name": "folders",
+          "type": "number"
+        },
+        {
+          "name": "language",
+          "type": "choice",
+          "values": [
+            "auto",
+            "en",
+            "de"
+          ]
+        }
+      ],
+      "name": "settings.snapshot",
+      "priority": "core",
+      "purpose": "Zeigt, welche Einstellungen genutzt werden, nur als Ein/Aus-Werte."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "welcome",
+            "legacy",
+            "key",
+            "folder",
+            "series",
+            "models",
+            "finish"
+          ]
+        }
+      ],
+      "name": "wizard.step_shown",
+      "priority": "core",
+      "purpose": "Zeigt, welcher Einrichtungsschritt angezeigt wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "welcome",
+            "legacy",
+            "key",
+            "folder",
+            "series",
+            "models",
+            "finish"
+          ]
+        }
+      ],
+      "name": "wizard.step_completed",
+      "priority": "core",
+      "purpose": "Zeigt, welcher Einrichtungsschritt abgeschlossen wurde und wie lange er dauerte."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "from",
+          "type": "choice",
+          "values": [
+            "welcome",
+            "legacy",
+            "key",
+            "folder",
+            "series",
+            "models",
+            "finish"
+          ]
+        },
+        {
+          "name": "to",
+          "type": "choice",
+          "values": [
+            "welcome",
+            "legacy",
+            "key",
+            "folder",
+            "series",
+            "models",
+            "finish"
+          ]
+        }
+      ],
+      "name": "wizard.back",
+      "priority": "core",
+      "purpose": "Zeigt, von welchem Einrichtungsschritt zu welchem zurückgegangen wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "dns",
+            "connect",
+            "timeout",
+            "tls",
+            "proxy_auth",
+            "redirect",
+            "http_4xx",
+            "http_5xx",
+            "key_invalid",
+            "license",
+            "folder"
+          ]
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "welcome",
+            "legacy",
+            "key",
+            "folder",
+            "series",
+            "models",
+            "finish"
+          ]
+        }
+      ],
+      "name": "wizard.error",
+      "priority": "core",
+      "purpose": "Zeigt die Art des Problems, das einen Einrichtungsschritt aufgehalten hat."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "source",
+          "type": "number"
+        }
+      ],
+      "name": "wizard.legacy_found",
+      "priority": "core",
+      "purpose": "Zeigt, dass bei der Einrichtung eine ältere Installation gefunden wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "previous_duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "welcome",
+            "legacy",
+            "key",
+            "folder",
+            "series",
+            "models",
+            "finish"
+          ]
+        }
+      ],
+      "name": "wizard.restarted",
+      "priority": "core",
+      "purpose": "Zeigt, dass die Einrichtung nach dem Schließen der App fortgesetzt wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "autostart",
+          "type": "flag"
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "existing_images",
+          "type": "choice",
+          "values": [
+            "only_new",
+            "also_existing",
+            "none"
+          ]
+        },
+        {
+          "name": "explorer",
+          "type": "flag"
+        },
+        {
+          "name": "model_choices",
+          "type": "number"
+        },
+        {
+          "name": "preset",
+          "type": "choice",
+          "values": [
+            "microscope",
+            "whole_folder",
+            "by_hand",
+            "none"
+          ]
+        },
+        {
+          "name": "report_mode",
+          "type": "choice",
+          "values": [
+            "subfolder",
+            "beside",
+            "custom",
+            "none"
+          ]
+        },
+        {
+          "name": "skipped_steps",
+          "type": "number"
+        }
+      ],
+      "name": "wizard.finished",
+      "priority": "core",
+      "purpose": "Zeigt die in der Einrichtung getroffenen Entscheidungen, etwa Voreinstellung und Optionen."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "imported_from_v1",
+          "type": "flag"
+        },
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "access_key"
+          ]
+        }
+      ],
+      "name": "account.connected",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein Zugangsschlüssel akzeptiert wurde."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "user",
+            "key_invalid",
+            "key_removed"
+          ]
+        }
+      ],
+      "name": "account.switched",
+      "priority": "core",
+      "purpose": "Zeigt, dass die App zu einem anderen Konto gewechselt hat und warum."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "user",
+            "key_invalid",
+            "key_removed"
+          ]
+        }
+      ],
+      "name": "account.disconnected",
+      "priority": "core",
+      "purpose": "Zeigt, dass das Konto getrennt wurde und warum."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "done",
+            "pending",
+            "failed"
+          ]
+        }
+      ],
+      "name": "legacy.migrated",
+      "priority": "core",
+      "purpose": "Zeigt das Ergebnis des Imports aus einer älteren Installation."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "existing_images",
+          "type": "choice",
+          "values": [
+            "only_new",
+            "also_existing",
+            "none"
+          ]
+        },
+        {
+          "name": "folder_id",
+          "type": "id"
+        },
+        {
+          "name": "is_cloud",
+          "type": "flag"
+        },
+        {
+          "name": "is_network",
+          "type": "flag"
+        },
+        {
+          "name": "model_choices",
+          "type": "number"
+        },
+        {
+          "name": "preset",
+          "type": "choice",
+          "values": [
+            "microscope",
+            "whole_folder",
+            "by_hand"
+          ]
+        },
+        {
+          "name": "report_mode",
+          "type": "choice",
+          "values": [
+            "subfolder",
+            "beside",
+            "custom"
+          ]
+        },
+        {
+          "name": "via",
+          "type": "choice",
+          "values": [
+            "wizard",
+            "settings",
+            "empty_state"
+          ]
+        }
+      ],
+      "name": "folder.added",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein überwachter Ordner hinzugefügt wurde und mit welchen Optionen."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "folder_id",
+          "type": "id"
+        },
+        {
+          "name": "models_added",
+          "type": "number"
+        },
+        {
+          "name": "models_removed",
+          "type": "number"
+        },
+        {
+          "name": "preset_from",
+          "type": "choice",
+          "values": [
+            "microscope",
+            "whole_folder",
+            "by_hand"
+          ]
+        },
+        {
+          "name": "preset_to",
+          "type": "choice",
+          "values": [
+            "microscope",
+            "whole_folder",
+            "by_hand"
+          ]
+        },
+        {
+          "name": "report_mode_from",
+          "type": "choice",
+          "values": [
+            "subfolder",
+            "beside",
+            "custom"
+          ]
+        },
+        {
+          "name": "report_mode_to",
+          "type": "choice",
+          "values": [
+            "subfolder",
+            "beside",
+            "custom"
+          ]
+        }
+      ],
+      "name": "folder.changed",
+      "priority": "core",
+      "purpose": "Zeigt, welche Art von Ordnereinstellung geändert wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "folder_id",
+          "type": "id"
+        }
+      ],
+      "name": "folder.paused",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein Ordner pausiert wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "folder_id",
+          "type": "id"
+        }
+      ],
+      "name": "folder.resumed",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein Ordner fortgesetzt wurde und wie lange er pausiert war."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "age_days",
+          "type": "number"
+        },
+        {
+          "name": "folder_id",
+          "type": "id"
+        }
+      ],
+      "name": "folder.removed",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein Ordner entfernt wurde und wie alt er war."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "drive_type",
+          "type": "choice",
+          "values": [
+            "local",
+            "removable",
+            "network",
+            "cloud"
+          ]
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "folder_id",
+          "type": "id"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "ok",
+            "missing",
+            "waiting_for_network"
+          ]
+        }
+      ],
+      "name": "folder.condition",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein Ordner nicht mehr oder wieder verfügbar wurde."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "folder_id",
+          "type": "id"
+        },
+        {
+          "name": "reason",
+          "type": "choice",
+          "values": [
+            "overflow",
+            "error",
+            "resume",
+            "channel_full"
+          ]
+        }
+      ],
+      "name": "watcher.rescan",
+      "priority": "core",
+      "purpose": "Zeigt, warum ein Ordner erneut durchsucht werden musste."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "folder_id",
+          "type": "id"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "analyze",
+            "skip"
+          ]
+        }
+      ],
+      "name": "resume.catchup",
+      "priority": "core",
+      "purpose": "Zeigt, wie die Frage zu Bildern aus der Pause beantwortet wurde."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "batch_id",
+          "type": "id"
+        },
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "folder_id",
+          "type": "id"
+        },
+        {
+          "name": "origin",
+          "type": "choice",
+          "values": [
+            "folder",
+            "one_off"
+          ]
+        },
+        {
+          "name": "reason",
+          "type": "choice",
+          "values": [
+            "quiet_period",
+            "cap",
+            "manual",
+            "restart",
+            "account_switch",
+            "one_off"
+          ]
+        }
+      ],
+      "name": "batch.closed",
+      "priority": "core",
+      "purpose": "Zeigt, wie und wann eine Serie abgeschlossen wurde und wie viele Dateien sie hatte."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "batch_id",
+          "type": "id"
+        }
+      ],
+      "name": "batch.manual_close",
+      "priority": "core",
+      "purpose": "Zeigt, dass eine Serie von Hand abgeschlossen wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "batch_id",
+          "type": "id"
+        }
+      ],
+      "name": "batch.renamed",
+      "priority": "core",
+      "purpose": "Zeigt, dass eine Serie umbenannt wurde. Der Name wird nie gesendet."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "batch_id",
+          "type": "id"
+        },
+        {
+          "name": "bytes",
+          "type": "number"
+        },
+        {
+          "name": "format",
+          "type": "choice",
+          "values": [
+            "tif",
+            "png",
+            "jpg",
+            "bmp",
+            "other"
+          ]
+        },
+        {
+          "name": "height",
+          "type": "number"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "rejected",
+            "changed",
+            "vanished",
+            "unreadable",
+            "keeps_breaking"
+          ]
+        },
+        {
+          "name": "width",
+          "type": "number"
+        }
+      ],
+      "name": "upload.failed",
+      "priority": "core",
+      "purpose": "Zeigt, warum ein Bild nicht hochgeladen werden konnte, mit Größe und Format."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "model_id",
+          "type": "id"
+        },
+        {
+          "name": "recovery_adopted",
+          "type": "number"
+        },
+        {
+          "name": "recovery_resubmitted",
+          "type": "number"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "ok",
+            "ambiguous",
+            "error"
+          ]
+        }
+      ],
+      "name": "submit.done",
+      "priority": "core",
+      "purpose": "Zeigt das Ergebnis der Übergabe von Bildern zur Analyse."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "batch_id",
+          "type": "id"
+        },
+        {
+          "name": "computation_id",
+          "type": "id"
+        },
+        {
+          "name": "customization_id",
+          "type": "id"
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "e2e_ms",
+          "type": "number"
+        },
+        {
+          "name": "folder_id",
+          "type": "id"
+        },
+        {
+          "name": "model_id",
+          "type": "id"
+        },
+        {
+          "name": "origin",
+          "type": "choice",
+          "values": [
+            "folder",
+            "one_off"
+          ]
+        },
+        {
+          "name": "polls",
+          "type": "number"
+        },
+        {
+          "name": "queue_ms",
+          "type": "number"
+        },
+        {
+          "name": "resubmitted",
+          "type": "flag"
+        },
+        {
+          "name": "reused",
+          "type": "flag"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "done",
+            "failed",
+            "lost",
+            "cancelled",
+            "unavailable",
+            "superseded"
+          ]
+        },
+        {
+          "name": "upload_ms",
+          "type": "number"
+        }
+      ],
+      "name": "computation.settled",
+      "priority": "core",
+      "purpose": "Zeigt, wie eine Analyse endete und wie lange sie dauerte."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "failed_images",
+            "report_problem",
+            "report_not_saved",
+            "other"
+          ]
+        }
+      ],
+      "name": "attention.raised",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein Eintrag unter Aufmerksamkeit erforderlich erschien und welcher Art."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "how",
+          "type": "choice",
+          "values": [
+            "resolved",
+            "dismissed",
+            "opened"
+          ]
+        },
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "failed_images",
+            "report_problem",
+            "report_not_saved",
+            "other"
+          ]
+        }
+      ],
+      "name": "attention.cleared",
+      "priority": "core",
+      "purpose": "Zeigt, wie ein Eintrag unter Aufmerksamkeit erforderlich erledigt wurde."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "batch_id",
+          "type": "id"
+        },
+        {
+          "name": "bytes",
+          "type": "number"
+        },
+        {
+          "name": "code",
+          "type": "number"
+        },
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "e2e_ms",
+          "type": "number"
+        },
+        {
+          "name": "format",
+          "type": "choice",
+          "values": [
+            "pdf",
+            "csv",
+            "xlsx",
+            "other"
+          ]
+        },
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "auto",
+            "custom"
+          ]
+        },
+        {
+          "name": "origin",
+          "type": "choice",
+          "values": [
+            "folder",
+            "one_off"
+          ]
+        },
+        {
+          "name": "part",
+          "type": "number"
+        },
+        {
+          "name": "parts",
+          "type": "number"
+        },
+        {
+          "name": "reason",
+          "type": "choice",
+          "values": [
+            "unreachable",
+            "tls",
+            "proxy",
+            "timeout",
+            "server",
+            "too_large",
+            "write_denied",
+            "disk_full",
+            "path_too_long",
+            "other"
+          ]
+        },
+        {
+          "name": "report_id",
+          "type": "id"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "saved",
+            "failed",
+            "not_saved",
+            "nothing_to_report"
+          ]
+        }
+      ],
+      "name": "report.settled",
+      "priority": "core",
+      "purpose": "Zeigt, wie ein Bericht endete, wie lange er dauerte und warum er fehlschlug."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "from",
+          "type": "choice",
+          "values": [
+            "toast",
+            "history",
+            "tray",
+            "series"
+          ]
+        }
+      ],
+      "name": "report.opened",
+      "priority": "core",
+      "purpose": "Zeigt, von wo ein Bericht geöffnet wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "source_batches",
+          "type": "number"
+        }
+      ],
+      "name": "report.custom_created",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein eigener Bericht erstellt wurde und wie groß er ist."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "report_id",
+          "type": "id"
+        }
+      ],
+      "name": "report.stale_updated",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein veralteter Bericht aktualisiert wurde."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "offline",
+            "service_unavailable",
+            "tls",
+            "proxy_auth",
+            "proxy_refused",
+            "redirect",
+            "key_invalid",
+            "account_blocked",
+            "admin_scope",
+            "license_uploads",
+            "license_all",
+            "client_too_old"
+          ]
+        }
+      ],
+      "name": "hold.raised",
+      "priority": "core",
+      "purpose": "Zeigt, dass die Arbeit durch eine Bedingung wie fehlendes Netz angehalten wurde, und welche."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "by",
+          "type": "choice",
+          "values": [
+            "probe",
+            "canary",
+            "user",
+            "update"
+          ]
+        },
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "offline",
+            "service_unavailable",
+            "tls",
+            "proxy_auth",
+            "proxy_refused",
+            "redirect",
+            "key_invalid",
+            "account_blocked",
+            "admin_scope",
+            "license_uploads",
+            "license_all",
+            "client_too_old"
+          ]
+        }
+      ],
+      "name": "hold.lifted",
+      "priority": "core",
+      "purpose": "Zeigt, dass eine Anhaltebedingung endete, wie lange sie dauerte und was sie beendete."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "basic",
+          "type": "flag"
+        },
+        {
+          "name": "digest",
+          "type": "flag"
+        },
+        {
+          "name": "negotiate",
+          "type": "flag"
+        },
+        {
+          "name": "ntlm",
+          "type": "flag"
+        },
+        {
+          "name": "unknown",
+          "type": "flag"
+        }
+      ],
+      "name": "proxy.auth_required",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein Proxy eine Anmeldung verlangte und welche Verfahren er anbot."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "issuer_is_enterprise",
+          "type": "flag"
+        }
+      ],
+      "name": "tls.untrusted",
+      "priority": "core",
+      "purpose": "Zeigt, dass einer gesicherten Verbindung nicht vertraut wurde."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "folder_id",
+          "type": "id"
+        }
+      ],
+      "name": "watch_marker.conflict",
+      "priority": "core",
+      "purpose": "Zeigt, dass zwei Installationen denselben Ordner überwachen."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "attempt",
+          "type": "number"
+        },
+        {
+          "name": "http_status",
+          "type": "number"
+        },
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "validation",
+            "not_found",
+            "conflict",
+            "hold",
+            "disk_full",
+            "storage_unavailable",
+            "contract",
+            "internal",
+            "panic"
+          ]
+        },
+        {
+          "name": "reportable",
+          "type": "flag"
+        }
+      ],
+      "name": "app.error",
+      "priority": "core",
+      "purpose": "Zeigt die Art eines internen Fehlers, nie dessen Text."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "none",
+            "found",
+            "error"
+          ]
+        },
+        {
+          "name": "to",
+          "type": "version"
+        },
+        {
+          "name": "trigger",
+          "type": "choice",
+          "values": [
+            "schedule",
+            "manual",
+            "start"
+          ]
+        }
+      ],
+      "name": "update.check",
+      "priority": "core",
+      "purpose": "Zeigt das Ergebnis der Suche nach einer neuen Version."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "bytes",
+          "type": "number"
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "to",
+          "type": "version"
+        }
+      ],
+      "name": "update.downloaded",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein Update geladen und geprüft wurde."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "reason",
+          "type": "choice",
+          "values": [
+            "upload",
+            "open_batch",
+            "probe",
+            "report",
+            "user_active",
+            "notifications_off"
+          ]
+        }
+      ],
+      "name": "update.deferred",
+      "priority": "core",
+      "purpose": "Zeigt, warum ein automatisches Update verschoben wurde."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "from",
+          "type": "version"
+        },
+        {
+          "name": "to",
+          "type": "version"
+        },
+        {
+          "name": "trigger",
+          "type": "choice",
+          "values": [
+            "user",
+            "quit",
+            "idle_auto",
+            "forced"
+          ]
+        }
+      ],
+      "name": "update.install_started",
+      "priority": "core",
+      "purpose": "Zeigt, dass eine Update-Installation gestartet wurde und wie."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "from",
+          "type": "version"
+        },
+        {
+          "name": "to",
+          "type": "version"
+        }
+      ],
+      "name": "update.applied",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein Update angewendet wurde und wie lange es dauerte."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "from",
+          "type": "version"
+        },
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "network",
+            "verify",
+            "disk",
+            "other"
+          ]
+        },
+        {
+          "name": "stage",
+          "type": "choice",
+          "values": [
+            "download",
+            "signature",
+            "authenticode",
+            "install",
+            "relaunch"
+          ]
+        },
+        {
+          "name": "to",
+          "type": "version"
+        }
+      ],
+      "name": "update.failed",
+      "priority": "core",
+      "purpose": "Zeigt, in welcher Phase ein Update fehlschlug."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "min",
+          "type": "version"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "blocked",
+            "warned"
+          ]
+        }
+      ],
+      "name": "update.min_version",
+      "priority": "core",
+      "purpose": "Zeigt, dass der Server eine neuere App-Version verlangt."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "welcome",
+            "overview",
+            "history",
+            "single_images",
+            "new_folder",
+            "folder",
+            "folder_settings",
+            "series",
+            "settings"
+          ]
+        }
+      ],
+      "name": "ui.view",
+      "priority": "interaction",
+      "purpose": "Zeigt, welcher Bildschirm geöffnet wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "cold",
+          "type": "flag"
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "source",
+          "type": "choice",
+          "values": [
+            "tray",
+            "notification",
+            "sendto",
+            "launch",
+            "instance"
+          ]
+        }
+      ],
+      "name": "window.shown",
+      "priority": "interaction",
+      "purpose": "Zeigt, wie das Hauptfenster geöffnet wurde und wie schnell es erschien."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "channel",
+          "type": "choice",
+          "values": [
+            "os",
+            "in_app"
+          ]
+        },
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "report_saved",
+            "report_problem",
+            "upload_problem",
+            "update",
+            "other"
+          ]
+        }
+      ],
+      "name": "notification.shown",
+      "priority": "interaction",
+      "purpose": "Zeigt, dass eine Benachrichtigung erschien und welcher Art."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "channel",
+          "type": "choice",
+          "values": [
+            "os",
+            "in_app"
+          ]
+        },
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "report_saved",
+            "report_problem",
+            "upload_problem",
+            "update",
+            "other"
+          ]
+        }
+      ],
+      "name": "notification.clicked",
+      "priority": "interaction",
+      "purpose": "Zeigt, dass auf eine Benachrichtigung geklickt wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "count",
+          "type": "choice",
+          "values": [
+            "0",
+            "1-9",
+            "10-99",
+            "100-999",
+            "1000+"
+          ]
+        },
+        {
+          "name": "duration_ms",
+          "type": "number"
+        }
+      ],
+      "name": "history.search",
+      "priority": "interaction",
+      "purpose": "Zeigt, wie viele Treffer eine Suche im Verlauf ergab, als Bereich, nie den Suchtext."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "format",
+          "type": "choice",
+          "values": [
+            "csv",
+            "xlsx"
+          ]
+        }
+      ],
+      "name": "history.export",
+      "priority": "core",
+      "purpose": "Zeigt, dass der Verlauf exportiert wurde und in welchem Format."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "joined_pending",
+          "type": "flag"
+        },
+        {
+          "name": "not_included",
+          "type": "number"
+        },
+        {
+          "name": "origin",
+          "type": "choice",
+          "values": [
+            "sendto",
+            "verb",
+            "folder_verb",
+            "drop",
+            "add_images"
+          ]
+        }
+      ],
+      "name": "sendto.request",
+      "priority": "core",
+      "purpose": "Zeigt, wie Bilder an die App übergeben wurden, etwa über Senden an oder Ziehen und Ablegen."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "hold_shown",
+          "type": "flag"
+        },
+        {
+          "name": "model_choices",
+          "type": "number"
+        },
+        {
+          "name": "preselection_kept",
+          "type": "flag"
+        },
+        {
+          "name": "remembered",
+          "type": "flag"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "analyze",
+            "cancel",
+            "no_usable_files"
+          ]
+        }
+      ],
+      "name": "oneoff.dialog",
+      "priority": "core",
+      "purpose": "Zeigt, wie der Dialog zur Modellauswahl für Einzelbilder geschlossen wurde."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "duration_ms",
+          "type": "number"
+        },
+        {
+          "name": "model_id",
+          "type": "id"
+        }
+      ],
+      "name": "preview.opened",
+      "priority": "core",
+      "purpose": "Zeigt, dass eine Ergebnisvorschau geöffnet wurde und für welches Modell."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "tier",
+          "type": "number"
+        }
+      ],
+      "name": "preview.zoom_max_tier",
+      "priority": "interaction",
+      "purpose": "Zeigt die höchste Zoomstufe, die in einer Ergebnisvorschau erreicht wurde."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "trigger",
+          "type": "choice",
+          "values": [
+            "manual",
+            "error",
+            "crash"
+          ]
+        }
+      ],
+      "name": "problem_report.offered",
+      "priority": "core",
+      "purpose": "Zeigt, dass die App angeboten hat, einen Problembericht zu senden."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "names_included",
+          "type": "flag"
+        },
+        {
+          "name": "state",
+          "type": "choice",
+          "values": [
+            "sent",
+            "saved",
+            "queued",
+            "failed"
+          ]
+        }
+      ],
+      "name": "problem_report.sent",
+      "priority": "core",
+      "purpose": "Zeigt das Ergebnis eines Problemberichts und ob Namen enthalten waren."
+    },
+    {
+      "category": "diagnostics",
+      "fields": [
+        {
+          "name": "kind",
+          "type": "choice",
+          "values": [
+            "wake",
+            "spool"
+          ]
+        }
+      ],
+      "name": "instance.handoff",
+      "priority": "core",
+      "purpose": "Zeigt, dass ein zweiter Start an die laufende App übergeben hat."
+    },
+    {
+      "category": "usage",
+      "fields": [
+        {
+          "name": "what",
+          "type": "choice",
+          "values": [
+            "what_is_sent",
+            "view_sent_data"
+          ]
+        }
+      ],
+      "name": "privacy.viewed",
+      "priority": "core",
+      "purpose": "Zeigt, dass eine Datenschutzansicht geöffnet wurde."
+    }
+  ],
+  "retentionDays": 400,
+  "schema": 1
+}
