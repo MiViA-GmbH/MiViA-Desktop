@@ -16,5 +16,6 @@ pub mod settings;
 pub mod setup;
 pub mod spool;
 pub mod telemetry;
+pub mod update;
 pub mod watch_marker;
 pub mod worker;

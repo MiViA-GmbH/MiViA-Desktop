@@ -1193,7 +1193,7 @@
 				{
 					"name": "stage",
 					"type": "choice",
-					"values": ["download", "signature", "authenticode", "install", "relaunch"]
+					"values": ["manifest", "download", "signature", "authenticode", "install", "relaunch"]
 				},
 				{
 					"name": "to",

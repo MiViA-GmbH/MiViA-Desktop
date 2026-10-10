@@ -8,5 +8,6 @@ mod outages;
 mod recovery;
 mod reports;
 mod setup;
+mod update;
 mod worker;
 mod world;

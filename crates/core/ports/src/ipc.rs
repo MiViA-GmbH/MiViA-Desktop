@@ -8,4 +8,5 @@ pub mod privacy;
 pub mod screens;
 pub mod setup;
 pub mod support;
+pub mod update;
 pub mod views;

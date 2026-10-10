@@ -1,5 +1,10 @@
+use async_trait::async_trait;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
+use mivia_domain::update::{Channel, Offer};
+use mivia_ports::server::ServerVersion;
+use mivia_ports::update::{Activity, UpdateEnv, UpdateError, Updater};
+use parking_lot::Mutex;
 use ring::signature::{Ed25519KeyPair, KeyPair as _};
 
 pub struct TestUpdateKey {
@@ -75,4 +80,62 @@ pub fn trusted_comment(version: Option<&str>) -> String {
         comment.push_str(version);
     }
     comment
+}
+
+#[derive(Default)]
+pub struct FakeUpdater {
+    pub offer: Mutex<Option<Offer>>,
+    pub download_error: Mutex<Option<UpdateError>>,
+    pub checks: Mutex<Vec<Channel>>,
+    pub downloads: Mutex<Vec<String>>,
+    pub installs: Mutex<Vec<String>>,
+}
+
+impl FakeUpdater {
+    pub fn offer(&self, version: &str, url: &str) {
+        *self.offer.lock() = Some(Offer {
+            version: version.to_owned(),
+            url: url.to_owned(),
+        });
+    }
+}
+
+#[async_trait]
+impl Updater for FakeUpdater {
+    async fn check(&self, channel: Channel) -> Result<Option<Offer>, UpdateError> {
+        self.checks.lock().push(channel);
+        Ok(self.offer.lock().clone())
+    }
+
+    async fn download(&self, offer: &Offer) -> Result<u64, UpdateError> {
+        self.downloads.lock().push(offer.version.clone());
+        self.download_error.lock().map_or(Ok(1024), Err)
+    }
+
+    async fn install(&self, version: &str) -> Result<(), UpdateError> {
+        self.installs.lock().push(version.to_owned());
+        Ok(())
+    }
+}
+
+#[derive(Default)]
+pub struct FakeUpdateEnv {
+    pub server: Mutex<ServerVersion>,
+    pub activity: Mutex<Activity>,
+    pub held: Mutex<Vec<bool>>,
+}
+
+#[async_trait]
+impl UpdateEnv for FakeUpdateEnv {
+    async fn server_version(&self) -> Option<ServerVersion> {
+        Some(self.server.lock().clone())
+    }
+
+    async fn activity(&self) -> Activity {
+        self.activity.lock().clone()
+    }
+
+    async fn hold_too_old(&self, held: bool) {
+        self.held.lock().push(held);
+    }
 }

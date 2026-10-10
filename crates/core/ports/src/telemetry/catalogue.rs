@@ -96,7 +96,7 @@ tags! {
     CheckTrigger { Schedule "schedule", Manual "manual", Start "start" }
     DeferReason { Upload "upload", OpenBatch "open_batch", Probe "probe", Report "report", UserActive "user_active", NotificationsOff "notifications_off" }
     InstallTrigger { User "user", Quit "quit", IdleAuto "idle_auto", Forced "forced" }
-    UpdateStage { Download "download", Signature "signature", Authenticode "authenticode", Install "install", Relaunch "relaunch" }
+    UpdateStage { Manifest "manifest", Download "download", Signature "signature", Authenticode "authenticode", Install "install", Relaunch "relaunch" }
     UpdateFailure { Network "network", Verify "verify", Disk "disk", Other "other" }
     MinVersionState { Blocked "blocked", Warned "warned" }
     View { Welcome "welcome", Overview "overview", History "history", SingleImages "single_images", NewFolder "new_folder", Folder "folder", FolderSettings "folder_settings", Series "series", Settings "settings" }

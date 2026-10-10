@@ -11,4 +11,5 @@ pub mod server;
 pub mod store;
 pub mod telemetry;
 pub mod time;
+pub mod update;
 pub mod watch;

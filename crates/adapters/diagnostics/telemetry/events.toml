@@ -391,7 +391,7 @@ category = "diagnostics"
 priority = "core"
 purpose_en = "Shows at which stage an update failed."
 purpose_de = "Zeigt, in welcher Phase ein Update fehlschlug."
-fields = { stage = { enum = ["download", "signature", "authenticode", "install", "relaunch"] }, from = "version", to = "version", kind = { enum = ["network", "verify", "disk", "other"] } }
+fields = { stage = { enum = ["manifest", "download", "signature", "authenticode", "install", "relaunch"] }, from = "version", to = "version", kind = { enum = ["network", "verify", "disk", "other"] } }
 
 [[event]]
 name = "update.min_version"

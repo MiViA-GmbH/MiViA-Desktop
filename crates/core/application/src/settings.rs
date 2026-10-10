@@ -9,6 +9,8 @@ use mivia_ports::store::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::update::UpdateSettings;
+
 pub const GLOBAL_VERSION: u32 = 1;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -27,6 +29,7 @@ pub struct GlobalSettings {
     pub backup_copied_at: Option<i64>,
     pub proxy: ProxySetting,
     pub watch_marker_id: Option<String>,
+    pub update: UpdateSettings,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
