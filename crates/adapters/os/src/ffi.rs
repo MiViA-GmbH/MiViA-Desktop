@@ -2,6 +2,7 @@ mod files;
 mod pipe;
 mod process;
 mod security;
+mod shell;
 mod window;
 
 pub(crate) use files::{file_times, final_path_of, free_bytes, local_civil, set_hidden};
@@ -14,6 +15,7 @@ pub use process::{
 pub use security::{
     ProcessIdentity, create_user_only, current_user_sid, is_elevated, process_identity,
 };
+pub use shell::{memory_is_low, open_file, reveal_file, set_webview_visible, user_locale_name};
 pub use window::{show_error, spawn_session_watcher};
 
 fn wide(text: &str) -> Vec<u16> {
