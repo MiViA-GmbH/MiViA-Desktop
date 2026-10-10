@@ -9,6 +9,7 @@ pub mod legacy;
 pub mod one_off;
 pub mod pipeline;
 pub mod policy;
+pub mod report_offer;
 pub mod report_settings;
 pub mod settings;
 pub mod setup;

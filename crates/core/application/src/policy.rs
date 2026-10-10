@@ -1,5 +1,8 @@
 use mivia_ports::ipc::screens::LanguageSetting;
+use mivia_ports::ipc::support::{PolicyRow, PolicySource};
 use mivia_ports::policy::{Hive, PolicyValue, RegistryValue};
+
+pub use mivia_ports::ipc::support::IssueReporting;
 
 pub const KEY: &str = r"Software\Policies\MiViA\Desktop";
 
@@ -19,13 +22,6 @@ pub const NAMES: [&str; 14] = [
     "MaxUploadMbps",
     "DisableWatchMarker",
 ];
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum IssueReporting {
-    On,
-    MailtoOnly,
-    Off,
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AutoUpdate {
@@ -196,4 +192,56 @@ pub fn parse(values: &[PolicyValue]) -> (Policies, Vec<Ignored>) {
         }
     }
     (policies, ignored)
+}
+
+fn shown(value: &RegistryValue) -> Option<String> {
+    match value {
+        RegistryValue::Text(text) | RegistryValue::Expandable(text) => Some(text.trim().to_owned()),
+        RegistryValue::Number(number) => Some(number.to_string()),
+        RegistryValue::Other => None,
+    }
+}
+
+pub fn rows(values: &[PolicyValue]) -> Vec<PolicyRow> {
+    NAMES
+        .iter()
+        .map(|name| {
+            let applied = values
+                .iter()
+                .filter(|entry| entry.name == *name)
+                .filter(|entry| apply(&mut Policies::default(), entry))
+                .min_by_key(|entry| entry.hive);
+            PolicyRow {
+                name: (*name).to_owned(),
+                value: applied.and_then(|entry| shown(&entry.value)),
+                source: applied.map(|entry| match entry.hive {
+                    Hive::Machine => PolicySource::Machine,
+                    Hive::User => PolicySource::User,
+                }),
+            }
+        })
+        .collect()
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ReportPaths {
+    pub dialog: bool,
+    pub send: bool,
+}
+
+pub const fn report_paths(mode: Option<IssueReporting>, signed_in: bool) -> ReportPaths {
+    match mode {
+        None | Some(IssueReporting::On) => ReportPaths {
+            dialog: true,
+            send: signed_in,
+        },
+        Some(IssueReporting::MailtoOnly) => ReportPaths {
+            dialog: true,
+            send: false,
+        },
+        Some(IssueReporting::Off) => ReportPaths {
+            dialog: false,
+            send: false,
+        },
+    }
 }

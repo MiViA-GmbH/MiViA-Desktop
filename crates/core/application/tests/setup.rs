@@ -1,6 +1,7 @@
 use mivia_application::legacy::{LegacyConfig, LegacyError, blank_access_token, parse};
 use mivia_application::policy::{self, AutoUpdate, IssueReporting};
 use mivia_ports::ipc::screens::LanguageSetting;
+use mivia_ports::ipc::support::PolicySource;
 use mivia_ports::policy::{Hive, PolicyValue, RegistryValue};
 
 const CONFIG: &str = "\u{FEFF}<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n\
@@ -254,4 +255,28 @@ mod draft {
         );
         assert_eq!(check(r"D:\Labor\Bilder"), (None, Vec::new()));
     }
+}
+
+#[test]
+fn policy_rows_list_every_name_with_the_effective_value_and_source() {
+    let values = [
+        value(Hive::User, "IssueReporting", text("off")),
+        value(Hive::Machine, "IssueReporting", text("mailto-only")),
+        value(Hive::User, "SupportContact", text("mailto:it@lab.example")),
+        value(Hive::User, "ServerUrl", text("https://lab.example")),
+        value(Hive::Machine, "Autostart", text("maybe")),
+        value(Hive::User, "Autostart", RegistryValue::Number(0)),
+    ];
+    let rows = policy::rows(&values);
+    assert_eq!(rows.len(), policy::NAMES.len());
+    let row = |name: &str| rows.iter().find(|row| row.name == name).unwrap().clone();
+    let issue = row("IssueReporting");
+    assert_eq!(issue.value.as_deref(), Some("mailto-only"));
+    assert_eq!(issue.source, Some(PolicySource::Machine));
+    assert_eq!(row("SupportContact").source, Some(PolicySource::User));
+    assert_eq!(row("ServerUrl").source, None);
+    let autostart = row("Autostart");
+    assert_eq!(autostart.value.as_deref(), Some("0"));
+    assert_eq!(autostart.source, Some(PolicySource::User));
+    assert_eq!(row("Language").value, None);
 }
