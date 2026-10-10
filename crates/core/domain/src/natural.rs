@@ -24,6 +24,29 @@ pub fn compare(left: &str, right: &str) -> Ordering {
     }
 }
 
+pub fn sort_key(text: &str) -> Vec<u8> {
+    let mut key = Vec::with_capacity(text.len() * 5 + 1);
+    for token in tokens(text) {
+        key.push(1);
+        match token {
+            Token::Digits(run) => {
+                let number = run.trim_start_matches('0');
+                key.extend_from_slice(&u32::from('0').to_be_bytes());
+                key.extend_from_slice(
+                    &u32::try_from(number.len())
+                        .unwrap_or(u32::MAX)
+                        .to_be_bytes(),
+                );
+                key.extend_from_slice(number.as_bytes());
+            }
+            Token::Char(c) => key.extend_from_slice(&u32::from(fold_char(c)).to_be_bytes()),
+        }
+    }
+    key.push(0);
+    key.extend_from_slice(text.as_bytes());
+    key
+}
+
 fn compare_tokens(left: Token<'_>, right: Token<'_>) -> Ordering {
     match (left, right) {
         (Token::Digits(a), Token::Digits(b)) => compare_numbers(a, b),

@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use mivia_domain::natural::compare;
+use mivia_domain::natural::{compare, sort_key};
 use mivia_domain::path::fold;
 use proptest::prelude::*;
 
@@ -46,6 +46,11 @@ fn equal_only_when_identical() {
 }
 
 proptest! {
+    #[test]
+    fn sort_key_orders_like_compare(a in label(), b in label()) {
+        prop_assert_eq!(sort_key(&a).cmp(&sort_key(&b)), compare(&a, &b));
+    }
+
     #[test]
     fn antisymmetric_and_reflexive(a in label(), b in label()) {
         prop_assert_eq!(compare(&a, &b), compare(&b, &a).reverse());
