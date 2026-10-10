@@ -122,12 +122,67 @@
 				"stale": "A report does not include the latest results.",
 				"problems_one": "1 image could not be analyzed and is not in the reports.",
 				"problems_other": "{{count}} images could not be analyzed and are not in the reports."
-			}
+			},
+			"rename": "Rename image series",
+			"renameLocked": "A report was already created with this name. Use Create report again to choose another name.",
+			"renameSave": "Save",
+			"nameLabel": "Name of the image series",
+			"nameRequired": "Enter a name.",
+			"update": "Update report",
+			"keep": "Keep as is",
+			"moveReplaced": "Move to Replaced",
+			"restore": "Restore to report folder"
 		},
 		"history": {
 			"meta": "Kept on this PC only.",
 			"emptyTitle": "No image series yet",
-			"emptyText": "New images in your input folders appear here as image series."
+			"emptyText": "New images in your input folders appear here as image series.",
+			"search": "Search series, images or reports",
+			"searchCustom": "Search custom reports",
+			"searchHint": "Type at least 3 characters",
+			"clearSearch": "Clear search",
+			"folderFilter": "Input folder",
+			"allFolders": "All input folders",
+			"analysisFilter": "Analysis",
+			"allAnalyses": "All analyses",
+			"dates": "Finished between",
+			"from": "From",
+			"to": "To",
+			"statusAll": "All",
+			"statusProblems": "Problems",
+			"statusStale": "Newer results",
+			"columns": {
+				"series": "Image series",
+				"images": "Images",
+				"analyses": "Analyses",
+				"status": "Status",
+				"finished": "Finished",
+				"reports": "Reports",
+				"name": "Name",
+				"created": "Created"
+			},
+			"since": "since {{date}}",
+			"matchedImage": "matched image {{name}}",
+			"matchedReport": "matched report {{name}}",
+			"selectRow": "Select {{label}}",
+			"menu": "More actions",
+			"more": "Show more",
+			"nothingTitle": "Nothing found",
+			"nothingText": "No image series matches these filters.",
+			"clearFilters": "Clear filters",
+			"viewSeries": "Image series",
+			"viewCustom": "Custom reports",
+			"selected_one": "1 image series selected",
+			"selected_other": "{{count}} image series selected",
+			"clearSelection": "Clear selection",
+			"createReport": "Create custom report",
+			"export": "Export list",
+			"exportSeries": "Export this series",
+			"exported_one": "Exported 1 file to {{folder}}",
+			"exported_other": "Exported {{count}} files to {{folder}}",
+			"customEmptyTitle": "No custom reports yet",
+			"customEmptyText": "Select image series in History and choose Create custom report.",
+			"moreFilters": "More filters"
 		},
 		"singleImages": {
 			"meta": "Images you sent from Explorer.",
@@ -160,7 +215,9 @@
 				"notSaved": "Report not saved",
 				"failed": "Report could not be created",
 				"stale": "Newer results available",
-				"nothing": "No report"
+				"nothing": "No report",
+				"replaced": "Replaced",
+				"updated": "Updated"
 			},
 			"sourceFile": {
 				"detected": "Being copied",
@@ -187,7 +244,16 @@
 			"notFoundText": "This page does not exist any more.",
 			"toOverview": "Back to Overview",
 			"loadFailedTitle": "Could not load",
-			"loadFailedText": "MiViA Desktop could not read its data. Close the window and open it again."
+			"loadFailedText": "MiViA Desktop could not read its data. Close the window and open it again.",
+			"stillAnalyzing": "Some images are still being analyzed. Try again when they are done.",
+			"notReplaceable": "Nothing was moved. These report files are missing or were changed: {{missing}}",
+			"changedAfterMove": "Nothing was moved, because a report file changed while it was moved.",
+			"notMoved": "This report is not in the Replaced folder.",
+			"renameLocked": "A report was already created with this name.",
+			"noImages": "None of the selected images has a result yet.",
+			"tooMany": "Select at most 1000 images.",
+			"backupInvalid": "This backup cannot be restored. It is damaged or comes from another version.",
+			"pickExpired": "The chosen folder is no longer valid. Choose it again."
 		},
 		"oneOff": {
 			"title_one": "Analyze {{count}} image",
@@ -226,6 +292,88 @@
 			"cancelled": "Nothing was analyzed. Your images are unchanged.",
 			"waitingForSetup": "Finish setup to analyze the images you sent.",
 			"dropHere": "Drop images here to analyze them"
+		},
+		"custom": {
+			"title": "Create custom report",
+			"creates_one": "This creates 1 report.",
+			"creates_other": "This creates {{count}} reports.",
+			"included_one": "1 image included",
+			"included_other": "{{count}} images included",
+			"notIncluded_one": "1 image not included",
+			"notIncluded_other": "{{count}} images not included",
+			"parts_one": "1 part",
+			"parts_other": "{{count}} parts, at most 100 images each",
+			"tooMany": "Select at most 1000 images.",
+			"name": "Name",
+			"nameRequired": "Enter a name for the report.",
+			"includeImages": "Include images in the data file",
+			"decimalComma": "Decimal comma in the data file",
+			"order": "Order",
+			"byName": "By file name",
+			"byDate": "By analysis date",
+			"folder": "Report folder",
+			"create": "Create report",
+			"cancel": "Cancel",
+			"created": "The custom report is being created. It appears under Custom reports.",
+			"reasons": {
+				"FAILED": "Analysis not possible",
+				"REJECTED": "Image not usable",
+				"UNAVAILABLE": "Model no longer available",
+				"LOST": "No longer on the MiViA server",
+				"CANCELLED": "Cancelled"
+			}
+		},
+		"changes": {
+			"title": "Changes",
+			"empty": "No changes recorded yet.",
+			"renamed": "{{before}} to {{after}}",
+			"actions": {
+				"series_opened": "Image series started",
+				"series_closed": "Image series finished",
+				"series_renamed": "Image series renamed",
+				"report_saved": "Report saved",
+				"report_updated": "Report updated",
+				"custom_report_created": "Custom report created",
+				"moved_to_replaced": "Report moved to Replaced",
+				"restored_from_replaced": "Report restored to the report folder",
+				"attention_cleared": "Removed from Needs attention",
+				"history_exported": "History exported",
+				"backup_restored": "History restored from a backup"
+			},
+			"reasons": {
+				"quiet_period": "No new images arrived for a while",
+				"cap": "The series reached its size or time limit",
+				"manual": "Finished by hand",
+				"restart": "Finished when MiViA started again, because no new images had arrived",
+				"account_switch": "Finished when the account was switched",
+				"one_off": "Sent as single images"
+			},
+			"how": {
+				"opened": "The image series was opened",
+				"dismissed": "Dismissed",
+				"kept": "Kept as is"
+			},
+			"triggers": {
+				"automatic": "MiViA Desktop",
+				"folder": "Input folder",
+				"sendTo": "Single images"
+			}
+		},
+		"backup": {
+			"title": "History backup",
+			"noFolder": "Daily backups are kept on this PC only.",
+			"lastCopy": "Last copy: {{date}}",
+			"choose": "Choose backup folder",
+			"remove": "Stop copying",
+			"restore": "Restore history from backup",
+			"restoreTitle": "Restore history from backup",
+			"restoreText": "The current history is kept as a file next to it. Afterwards MiViA Desktop shows the history of the chosen backup.",
+			"restoreAction": "Restore",
+			"none": "No backup yet. MiViA Desktop makes one each day.",
+			"onThisPc": "On this PC",
+			"inFolder": "In the backup folder",
+			"series_one": "1 image series",
+			"series_other": "{{count}} image series"
 		}
 	}
 }

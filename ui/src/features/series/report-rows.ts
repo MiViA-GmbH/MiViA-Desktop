@@ -1,7 +1,14 @@
 import type { TFunction } from 'i18next';
 
 import type { ReportPartView, ReportView } from '../../shared/ipc/bindings';
-import { DoneIcon, ImageProblemIcon, ReportFailureIcon, WaitingIcon, WorkingIcon } from '../../shared/ui/icons';
+import {
+	DoneIcon,
+	ImageProblemIcon,
+	ReplacedIcon,
+	ReportFailureIcon,
+	WaitingIcon,
+	WorkingIcon,
+} from '../../shared/ui/icons';
 import type { Status } from '../../shared/ui/tone';
 
 export type ReportRow = {
@@ -51,6 +58,22 @@ function partRows(report: ReportView): ReportRow[] {
 	});
 }
 
+export type ReportCommand = 'update' | 'keep' | 'move' | 'restore';
+
+export function reportCommands(row: ReportRow): ReportCommand[] {
+	const { report } = row;
+	if (row.partNo !== 1) {
+		return [];
+	}
+	if (report.moved) {
+		return ['restore'];
+	}
+	if (report.replacedBy) {
+		return ['move'];
+	}
+	return report.stale && row.state === 'saved' ? ['update', 'keep'] : [];
+}
+
 export function reportRows(reports: ReportView[]): ReportRow[] {
 	return reports.flatMap((report) =>
 		report.parts.length > 0
@@ -60,6 +83,12 @@ export function reportRows(reports: ReportView[]): ReportRow[] {
 }
 
 export function reportStatus(row: ReportRow, t: TFunction): Status {
+	if (row.report.moved) {
+		return { tone: 'off', icon: ReplacedIcon, label: t('desktop.status.report.replaced') };
+	}
+	if (row.report.replacedBy) {
+		return { tone: 'off', icon: ReplacedIcon, label: t('desktop.status.report.updated') };
+	}
 	if (row.state === 'failed') {
 		return { tone: 'problem', icon: ReportFailureIcon, label: t('desktop.status.report.failed') };
 	}

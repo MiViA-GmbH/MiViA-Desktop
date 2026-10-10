@@ -1,13 +1,14 @@
 import { Anchor, Button, Group, Stack, Tabs, Text } from '@mantine/core';
 import { ICON_STROKE } from '@mivia-ai/theme';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createLazyRoute, Link, useNavigate, useParams } from '@tanstack/react-router';
+import { createLazyRoute, useNavigate, useParams } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { foldersQuery } from '../entities/folder/queries';
 import { useOrigin } from '../entities/series/origin';
 import { historyQuery } from '../entities/series/queries';
+import { NO_FILTER } from '../entities/series/search';
 import { OpenSeriesCard } from '../features/folders/open-series-card';
 import { SeriesTable } from '../features/series/series-table';
 import { commands } from '../shared/ipc';
@@ -86,10 +87,10 @@ function useFolder(): { folder: FolderView | undefined; loaded: boolean } {
 
 function EarlierSeries({ folder }: { folder: FolderView }) {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
 	const origin = useOrigin([folder]);
-	const rows = (useQuery(historyQuery).data?.rows ?? [])
-		.filter((row) => row.origin.kind === 'folder' && row.origin.folderId === folder.id)
-		.slice(0, EARLIER);
+	const filter = { ...NO_FILTER, folder: folder.id };
+	const rows = (useQuery(historyQuery(filter)).data?.rows ?? []).slice(0, EARLIER).map((row) => row.summary);
 	if (!folder.openSeries && rows.length === 0) {
 		return <EmptyState text={t('desktop.folder.noSeriesText')} title={t('desktop.folder.noSeriesTitle')} />;
 	}
@@ -99,7 +100,11 @@ function EarlierSeries({ folder }: { folder: FolderView }) {
 	return (
 		<Panel
 			extra={
-				<Anchor component={Link} size="sm" to="/history">
+				<Anchor
+					component="button"
+					onClick={() => navigate({ to: '/history', search: { folder: folder.id } })}
+					size="sm"
+				>
 					{t('desktop.overview.allInHistory')}
 				</Anchor>
 			}

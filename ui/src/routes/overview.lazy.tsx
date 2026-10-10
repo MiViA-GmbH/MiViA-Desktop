@@ -77,7 +77,7 @@ function Overview() {
 	const folders = useQuery(foldersQuery).data?.folders;
 	const attention = useQuery(attentionQuery).data;
 	const offline = (useQuery(holdsQuery).data?.holds ?? []).length > 0;
-	const recent = (useQuery(historyQuery).data?.rows ?? []).slice(0, RECENT);
+	const recent = (useQuery(historyQuery()).data?.rows ?? []).slice(0, RECENT).map((row) => row.summary);
 	const origin = useOrigin(folders ?? []);
 	const header = useMeta(folders ?? [], attention?.total ?? 0);
 	if (!folders) {

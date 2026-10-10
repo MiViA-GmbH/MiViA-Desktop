@@ -122,12 +122,67 @@
 				"stale": "Ein Bericht enthält nicht die neuesten Ergebnisse.",
 				"problems_one": "1 Bild konnte nicht ausgewertet werden und fehlt in den Berichten.",
 				"problems_other": "{{count}} Bilder konnten nicht ausgewertet werden und fehlen in den Berichten."
-			}
+			},
+			"rename": "Bildserie umbenennen",
+			"renameLocked": "Mit diesem Namen wurde bereits ein Bericht erstellt. Wählen Sie mit Bericht neu erstellen einen anderen Namen.",
+			"renameSave": "Speichern",
+			"nameLabel": "Name der Bildserie",
+			"nameRequired": "Geben Sie einen Namen ein.",
+			"update": "Bericht aktualisieren",
+			"keep": "Unverändert lassen",
+			"moveReplaced": "Nach Ersetzt verschieben",
+			"restore": "In den Berichtsordner zurücklegen"
 		},
 		"history": {
 			"meta": "Nur auf diesem PC gespeichert.",
 			"emptyTitle": "Noch keine Bildserie",
-			"emptyText": "Neue Bilder in Ihren Eingangsordnern erscheinen hier als Bildserien."
+			"emptyText": "Neue Bilder in Ihren Eingangsordnern erscheinen hier als Bildserien.",
+			"search": "Bildserien, Bilder oder Berichte suchen",
+			"searchCustom": "Eigene Berichte suchen",
+			"searchHint": "Geben Sie mindestens 3 Zeichen ein",
+			"clearSearch": "Suche leeren",
+			"folderFilter": "Eingangsordner",
+			"allFolders": "Alle Eingangsordner",
+			"analysisFilter": "Auswertung",
+			"allAnalyses": "Alle Auswertungen",
+			"dates": "Abgeschlossen zwischen",
+			"from": "Von",
+			"to": "Bis",
+			"statusAll": "Alle",
+			"statusProblems": "Probleme",
+			"statusStale": "Neuere Ergebnisse",
+			"columns": {
+				"series": "Bildserie",
+				"images": "Bilder",
+				"analyses": "Auswertungen",
+				"status": "Status",
+				"finished": "Abgeschlossen",
+				"reports": "Berichte",
+				"name": "Name",
+				"created": "Erstellt"
+			},
+			"since": "seit {{date}}",
+			"matchedImage": "gefunden im Bild {{name}}",
+			"matchedReport": "gefunden im Bericht {{name}}",
+			"selectRow": "{{label}} auswählen",
+			"menu": "Weitere Aktionen",
+			"more": "Mehr anzeigen",
+			"nothingTitle": "Nichts gefunden",
+			"nothingText": "Keine Bildserie passt zu diesen Filtern.",
+			"clearFilters": "Filter zurücksetzen",
+			"viewSeries": "Bildserien",
+			"viewCustom": "Eigene Berichte",
+			"selected_one": "1 Bildserie ausgewählt",
+			"selected_other": "{{count}} Bildserien ausgewählt",
+			"clearSelection": "Auswahl aufheben",
+			"createReport": "Eigenen Bericht erstellen",
+			"export": "Liste exportieren",
+			"exportSeries": "Diese Bildserie exportieren",
+			"exported_one": "1 Datei nach {{folder}} exportiert",
+			"exported_other": "{{count}} Dateien nach {{folder}} exportiert",
+			"customEmptyTitle": "Noch keine eigenen Berichte",
+			"customEmptyText": "Wählen Sie im Verlauf Bildserien aus und dann Eigenen Bericht erstellen.",
+			"moreFilters": "Weitere Filter"
 		},
 		"singleImages": {
 			"meta": "Bilder, die Sie aus dem Explorer gesendet haben.",
@@ -160,7 +215,9 @@
 				"notSaved": "Bericht nicht gespeichert",
 				"failed": "Bericht konnte nicht erstellt werden",
 				"stale": "Neuere Ergebnisse vorhanden",
-				"nothing": "Kein Bericht"
+				"nothing": "Kein Bericht",
+				"replaced": "Ersetzt",
+				"updated": "Aktualisiert"
 			},
 			"sourceFile": {
 				"detected": "Wird kopiert",
@@ -187,7 +244,16 @@
 			"notFoundText": "Diese Seite gibt es nicht mehr.",
 			"toOverview": "Zurück zur Übersicht",
 			"loadFailedTitle": "Laden nicht möglich",
-			"loadFailedText": "MiViA Desktop konnte seine Daten nicht lesen. Schließen Sie das Fenster und öffnen Sie es erneut."
+			"loadFailedText": "MiViA Desktop konnte seine Daten nicht lesen. Schließen Sie das Fenster und öffnen Sie es erneut.",
+			"stillAnalyzing": "Einige Bilder werden noch ausgewertet. Versuchen Sie es erneut, wenn sie fertig sind.",
+			"notReplaceable": "Nichts wurde verschoben. Diese Berichtsdateien fehlen oder wurden geändert: {{missing}}",
+			"changedAfterMove": "Nichts wurde verschoben, weil sich eine Berichtsdatei beim Verschieben geändert hat.",
+			"notMoved": "Dieser Bericht liegt nicht im Ordner Ersetzt.",
+			"renameLocked": "Mit diesem Namen wurde bereits ein Bericht erstellt.",
+			"noImages": "Keines der ausgewählten Bilder hat schon ein Ergebnis.",
+			"tooMany": "Wählen Sie höchstens 1000 Bilder aus.",
+			"backupInvalid": "Diese Sicherung lässt sich nicht wiederherstellen. Sie ist beschädigt oder stammt aus einer anderen Version.",
+			"pickExpired": "Der gewählte Ordner gilt nicht mehr. Wählen Sie ihn erneut."
 		},
 		"oneOff": {
 			"title_one": "{{count}} Bild auswerten",
@@ -226,6 +292,88 @@
 			"cancelled": "Es wurde nichts ausgewertet. Ihre Bilder bleiben unverändert.",
 			"waitingForSetup": "Schließen Sie die Einrichtung ab, um die gesendeten Bilder auszuwerten.",
 			"dropHere": "Bilder hier ablegen, um sie auszuwerten"
+		},
+		"custom": {
+			"title": "Eigenen Bericht erstellen",
+			"creates_one": "Dadurch entsteht 1 Bericht.",
+			"creates_other": "Dadurch entstehen {{count}} Berichte.",
+			"included_one": "1 Bild enthalten",
+			"included_other": "{{count}} Bilder enthalten",
+			"notIncluded_one": "1 Bild nicht enthalten",
+			"notIncluded_other": "{{count}} Bilder nicht enthalten",
+			"parts_one": "1 Teil",
+			"parts_other": "{{count}} Teile, höchstens 100 Bilder je Teil",
+			"tooMany": "Wählen Sie höchstens 1000 Bilder aus.",
+			"name": "Name",
+			"nameRequired": "Geben Sie einen Namen für den Bericht ein.",
+			"includeImages": "Bilder in die Datendatei aufnehmen",
+			"decimalComma": "Dezimalkomma in der Datendatei",
+			"order": "Reihenfolge",
+			"byName": "Nach Dateiname",
+			"byDate": "Nach Auswertungsdatum",
+			"folder": "Berichtsordner",
+			"create": "Bericht erstellen",
+			"cancel": "Abbrechen",
+			"created": "Der eigene Bericht wird erstellt. Er erscheint unter Eigene Berichte.",
+			"reasons": {
+				"FAILED": "Auswertung nicht möglich",
+				"REJECTED": "Bild nicht verwendbar",
+				"UNAVAILABLE": "Modell nicht mehr verfügbar",
+				"LOST": "Nicht mehr auf dem MiViA-Server",
+				"CANCELLED": "Abgebrochen"
+			}
+		},
+		"changes": {
+			"title": "Änderungen",
+			"empty": "Noch keine Änderungen aufgezeichnet.",
+			"renamed": "{{before}} zu {{after}}",
+			"actions": {
+				"series_opened": "Bildserie begonnen",
+				"series_closed": "Bildserie abgeschlossen",
+				"series_renamed": "Bildserie umbenannt",
+				"report_saved": "Bericht gespeichert",
+				"report_updated": "Bericht aktualisiert",
+				"custom_report_created": "Eigener Bericht erstellt",
+				"moved_to_replaced": "Bericht nach Ersetzt verschoben",
+				"restored_from_replaced": "Bericht in den Berichtsordner zurückgelegt",
+				"attention_cleared": "Aus Bitte prüfen entfernt",
+				"history_exported": "Verlauf exportiert",
+				"backup_restored": "Verlauf aus einer Sicherung wiederhergestellt"
+			},
+			"reasons": {
+				"quiet_period": "Eine Zeit lang kamen keine neuen Bilder",
+				"cap": "Die Bildserie hat ihre Größen- oder Zeitgrenze erreicht",
+				"manual": "Von Hand abgeschlossen",
+				"restart": "Beim erneuten Start von MiViA abgeschlossen, weil keine neuen Bilder mehr kamen",
+				"account_switch": "Beim Kontowechsel abgeschlossen",
+				"one_off": "Als Einzelbilder gesendet"
+			},
+			"how": {
+				"opened": "Die Bildserie wurde geöffnet",
+				"dismissed": "Ausgeblendet",
+				"kept": "Unverändert gelassen"
+			},
+			"triggers": {
+				"automatic": "MiViA Desktop",
+				"folder": "Eingangsordner",
+				"sendTo": "Einzelbilder"
+			}
+		},
+		"backup": {
+			"title": "Sicherung des Verlaufs",
+			"noFolder": "Tägliche Sicherungen liegen nur auf diesem PC.",
+			"lastCopy": "Letzte Kopie: {{date}}",
+			"choose": "Sicherungsordner wählen",
+			"remove": "Nicht mehr kopieren",
+			"restore": "Verlauf aus Sicherung wiederherstellen",
+			"restoreTitle": "Verlauf aus Sicherung wiederherstellen",
+			"restoreText": "Der aktuelle Verlauf bleibt als Datei daneben erhalten. Danach zeigt MiViA Desktop den Verlauf der gewählten Sicherung.",
+			"restoreAction": "Wiederherstellen",
+			"none": "Noch keine Sicherung. MiViA Desktop erstellt jeden Tag eine.",
+			"onThisPc": "Auf diesem PC",
+			"inFolder": "Im Sicherungsordner",
+			"series_one": "1 Bildserie",
+			"series_other": "{{count}} Bildserien"
 		}
 	}
 }

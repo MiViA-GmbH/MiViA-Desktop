@@ -1,9 +1,10 @@
-import { Button, Checkbox, Group, Select, Stack } from '@mantine/core';
+import { Button, Group, Select, Stack } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { commands } from '../../shared/ipc';
 import type { FolderPick, Language, OneOffView } from '../../shared/ipc/bindings';
+import { FormatChoice } from '../../shared/ui/format-choice';
 import { Notice } from '../../shared/ui/notice';
 import { PathText } from '../../shared/ui/path-text';
 
@@ -32,14 +33,7 @@ function ReportSettingsFields({ view, form, update }: ReportProps) {
 	});
 	return (
 		<Stack gap="sm">
-			<Group gap="lg">
-				<Checkbox checked={form.pdf} label="PDF" onChange={(event) => update({ pdf: event.currentTarget.checked })} />
-				<Checkbox
-					checked={form.csv}
-					label={t('desktop.oneOff.formatCsv')}
-					onChange={(event) => update({ csv: event.currentTarget.checked })}
-				/>
-			</Group>
+			<FormatChoice form={form} update={update} />
 			<Select
 				allowDeselect={false}
 				data={LANGUAGES}

@@ -10,7 +10,30 @@ import type { AnalysisView, Language, OpenTarget, ReportView } from '../../share
 import { OpenIcon, ReportIcon, ShowInFolderIcon } from '../../shared/ui/icons';
 import { Panel } from '../../shared/ui/panel';
 import { StatusBadge } from '../../shared/ui/status-badge';
-import { type ReportRow, reportRows, reportStatus } from './report-rows';
+import { type ReportCommand, type ReportRow, reportCommands, reportRows, reportStatus } from './report-rows';
+
+const COMMANDS = {
+	update: { label: 'desktop.series.update', run: commands.updateReport },
+	keep: { label: 'desktop.series.keep', run: commands.keepReport },
+	move: { label: 'desktop.series.moveReplaced', run: commands.moveReportToReplaced },
+	restore: { label: 'desktop.series.restore', run: commands.restoreReport },
+} as const;
+
+function ReportCommands({ row }: { row: ReportRow }) {
+	const { t } = useTranslation();
+	const run = useMutation({ mutationFn: (command: ReportCommand) => COMMANDS[command].run(row.report.id) });
+	return reportCommands(row).map((command) => (
+		<Button
+			key={command}
+			loading={run.isPending && run.variables === command}
+			onClick={() => run.mutate(command)}
+			size="xs"
+			variant={command === 'keep' ? 'subtle' : 'default'}
+		>
+			{t(COMMANDS[command].label)}
+		</Button>
+	));
+}
 
 function RowActions({ row }: { row: ReportRow }) {
 	const { t } = useTranslation();
@@ -18,7 +41,8 @@ function RowActions({ row }: { row: ReportRow }) {
 	const retry = useMutation({ mutationFn: (id: string) => commands.tryAgainReportPart(id) });
 	const partId = row.open;
 	return (
-		<Group gap="xs" justify="flex-end" w={250} wrap="nowrap">
+		<Group gap="xs" justify="flex-end" maw={420} wrap="wrap">
+			<ReportCommands row={row} />
 			{partId && (
 				<>
 					<Button

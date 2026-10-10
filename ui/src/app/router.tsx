@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router';
 
 import { accountQuery } from '../entities/account/queries';
+import { parseHistorySearch } from '../entities/series/search';
 import { setupQuery } from '../entities/setup/queries';
 import { NotFound, RouteError } from '../routes/errors';
 import { loadSetupTexts } from '../shared/i18n/i18n';
@@ -39,13 +40,15 @@ const overview = createRoute({ getParentRoute: () => app, path: '/' }).lazy(() =
 	import('../routes/overview.lazy').then((module) => module.OverviewRoute),
 );
 
-const history = createRoute({ getParentRoute: () => app, path: '/history' }).lazy(() =>
-	import('../routes/history.lazy').then((module) => module.HistoryRoute),
+const history = createRoute({ getParentRoute: () => app, path: '/history', validateSearch: parseHistorySearch }).lazy(
+	() => import('../routes/history.lazy').then((module) => module.HistoryRoute),
 );
 
-const singleImages = createRoute({ getParentRoute: () => app, path: '/single-images' }).lazy(() =>
-	import('../routes/history.lazy').then((module) => module.SingleImagesRoute),
-);
+const singleImages = createRoute({
+	getParentRoute: () => app,
+	path: '/single-images',
+	validateSearch: parseHistorySearch,
+}).lazy(() => import('../routes/history.lazy').then((module) => module.SingleImagesRoute));
 
 const newFolder = createRoute({ getParentRoute: () => app, path: '/folders/new', loader: loadSetupTexts }).lazy(() =>
 	import('../routes/new-folder.lazy').then((module) => module.NewFolderRoute),

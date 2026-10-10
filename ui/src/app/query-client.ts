@@ -6,6 +6,15 @@ import { isAppError } from '../shared/ipc';
 const MESSAGES = {
 	reportChanged: 'desktop.errors.reportChanged',
 	reportMissing: 'desktop.errors.reportMissing',
+	stillAnalyzing: 'desktop.errors.stillAnalyzing',
+	notReplaceable: 'desktop.errors.notReplaceable',
+	changedAfterMove: 'desktop.errors.changedAfterMove',
+	notMoved: 'desktop.errors.notMoved',
+	renameLocked: 'desktop.errors.renameLocked',
+	noImages: 'desktop.errors.noImages',
+	tooMany: 'desktop.errors.tooMany',
+	backupInvalid: 'desktop.errors.backupInvalid',
+	pickExpired: 'desktop.errors.pickExpired',
 } as const;
 
 function isKnown(code: string | null | undefined): code is keyof typeof MESSAGES {
@@ -14,7 +23,8 @@ function isKnown(code: string | null | undefined): code is keyof typeof MESSAGES
 
 function showFailure(error: unknown): void {
 	const code = isAppError(error) ? error.code : null;
-	const message = i18n.t(isKnown(code) ? MESSAGES[code] : 'desktop.errors.actionFailed');
+	const missing = isAppError(error) ? (error.fields?.missing ?? '') : '';
+	const message = i18n.t(isKnown(code) ? MESSAGES[code] : 'desktop.errors.actionFailed', { missing });
 	import('@mantine/notifications').then(({ notifications }) =>
 		notifications.show({ color: 'red', message, role: 'alert' }),
 	);

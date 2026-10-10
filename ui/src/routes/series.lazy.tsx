@@ -1,15 +1,22 @@
-import { Button, Text } from '@mantine/core';
+import '../features/history/history.css';
+
+import { ActionIcon, Button, Group, Menu, Text } from '@mantine/core';
 import { ICON_STROKE } from '@mivia-ai/theme';
+import { IconDots } from '@tabler/icons-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyRoute, useParams } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { localeQuery } from '../entities/account/queries';
 import { foldersQuery } from '../entities/folder/queries';
 import { useOrigin } from '../entities/series/origin';
-import { seriesItemsQuery, seriesQuery, seriesReportsQuery } from '../entities/series/queries';
+import { seriesEventsQuery, seriesItemsQuery, seriesQuery, seriesReportsQuery } from '../entities/series/queries';
+import { CustomReportDialog } from '../features/history/custom-report-dialog';
+import { useExport } from '../features/history/use-export';
+import { ChangesPanel } from '../features/series/changes-panel';
 import { ImagesPanel } from '../features/series/images-panel';
+import { RenameSeries } from '../features/series/rename-series';
 import { ReportsPanel } from '../features/series/reports-panel';
 import { SeriesSummary } from '../features/series/series-summary';
 import { commands } from '../shared/ipc';
@@ -62,22 +69,55 @@ function useOpened(series: BatchSummary | undefined): void {
 	}, [id]);
 }
 
+function SeriesMenu({ id }: { id: string }) {
+	const { t } = useTranslation();
+	const exporter = useExport();
+	const [custom, setCustom] = useState(false);
+	return (
+		<>
+			<Menu position="bottom-end" withinPortal>
+				<Menu.Target>
+					<ActionIcon aria-label={t('desktop.history.menu')} color="stone" size="lg" variant="default">
+						<IconDots size={18} stroke={ICON_STROKE} />
+					</ActionIcon>
+				</Menu.Target>
+				<Menu.Dropdown>
+					<Menu.Item onClick={() => exporter.mutate({ filter: null, series: id })}>
+						{t('desktop.history.exportSeries')}
+					</Menu.Item>
+					<Menu.Item onClick={() => setCustom(true)}>{t('desktop.history.createReport')}</Menu.Item>
+				</Menu.Dropdown>
+			</Menu>
+			{custom && <CustomReportDialog onClose={() => setCustom(false)} series={[id]} />}
+		</>
+	);
+}
+
 function SeriesContent({ series, id }: { series: BatchSummary; id: string }) {
 	const language = useQuery(localeQuery).data?.language ?? 'en';
 	const view = useQuery(seriesQuery(id)).data;
 	const reports = useQuery(seriesReportsQuery(id)).data;
 	const items = useQuery(seriesItemsQuery(id)).data;
+	const events = useQuery(seriesEventsQuery(id)).data;
 	const analyses = view?.analyses ?? [];
+	const actions = (
+		<Group gap="sm" wrap="nowrap">
+			<ShowReports partId={firstSaved(reports)} />
+			<SeriesMenu id={id} />
+		</Group>
+	);
 	return (
 		<>
 			<PageHeader
-				actions={<ShowReports partId={firstSaved(reports)} />}
+				actions={actions}
 				meta={<Text inherit>{useMeta(series)}</Text>}
 				title={series.label}
+				titleExtra={<RenameSeries renamable={view?.renamable ?? false} series={series} />}
 			/>
 			<SeriesSummary series={series} />
 			<ReportsPanel analyses={analyses} language={language} reports={reports?.reports ?? []} />
 			<ImagesPanel analyses={analyses} items={items?.items ?? []} language={language} />
+			<ChangesPanel events={events?.events ?? []} />
 		</>
 	);
 }

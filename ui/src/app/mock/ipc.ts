@@ -1,7 +1,8 @@
 import { mockIPC } from '@tauri-apps/api/mocks';
 
 import type { FolderView } from '../../shared/ipc/bindings';
-import { ATTENTION, BATCH, FOLDERS, HISTORY, HOLDS, ITEMS, ONE_OFF, REPORTS } from './fixtures';
+import { ATTENTION, BATCH, FOLDERS, HOLDS, ITEMS, ONE_OFF, REPORTS } from './fixtures';
+import { historyResponses } from './history';
 import { setupResponses, setupView } from './setup';
 
 const params = new URLSearchParams(window.location.search);
@@ -31,7 +32,6 @@ const responses: Record<string, unknown> = {
 	list_folders: { revision: '9', folders: folders() },
 	list_holds: calm ? { revision: '9', holds: [] } : HOLDS,
 	list_needs_attention: calm ? { revision: '9', total: 0, items: [] } : ATTENTION,
-	list_history: HISTORY,
 	get_batch: BATCH,
 	list_batch_items: ITEMS,
 	list_series_reports: REPORTS,
@@ -39,7 +39,7 @@ const responses: Record<string, unknown> = {
 	get_remaining_uploads: 1176,
 };
 
-const setup = setupResponses(setupView(scenario));
+const setup = { ...setupResponses(setupView(scenario)), ...historyResponses(scenario) };
 
 mockIPC((command, args) => setup[command]?.((args ?? {}) as Record<string, unknown>) ?? responses[command] ?? null, {
 	shouldMockEvents: true,

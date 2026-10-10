@@ -1,5 +1,5 @@
 import { Anchor, Badge } from '@mantine/core';
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import type { NeedsAttentionView } from '../../shared/ipc/bindings';
@@ -10,6 +10,7 @@ const SHOWN = 5;
 
 export function NeedsAttentionPanel({ view }: { view: NeedsAttentionView }) {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
 	if (view.items.length === 0) {
 		return null;
 	}
@@ -24,7 +25,11 @@ export function NeedsAttentionPanel({ view }: { view: NeedsAttentionView }) {
 		>
 			<AttentionRows items={view.items.slice(0, SHOWN)} />
 			{view.total > SHOWN && (
-				<Anchor component={Link} size="sm" to="/history">
+				<Anchor
+					component="button"
+					onClick={() => navigate({ to: '/history', search: { status: 'problems' } })}
+					size="sm"
+				>
 					{t('desktop.attention.showAll', { count: view.total })}
 				</Anchor>
 			)}

@@ -3,7 +3,6 @@ import type {
 	BatchItem,
 	BatchSummary,
 	FolderView,
-	HistoryPage,
 	HoldsView,
 	NeedsAttentionView,
 	OneOffView,
@@ -126,16 +125,16 @@ export const ATTENTION: NeedsAttentionView = {
 	],
 };
 
-export const HISTORY: HistoryPage = { revision: '9', head: [OPEN_4711, OPEN_88231], rows: RECENT, next: null };
+export const HISTORY_SERIES = { head: [OPEN_4711, OPEN_88231], rows: RECENT };
 
 const SERIES_214 = RECENT[5] ?? OPEN_4711;
 
-const ANALYSES = [
+export const ANALYSES = [
 	{ key: 'grain:', modelId: 'grain', names: { en: 'Grain size', de: 'Korngröße' } },
 	{ key: 'incl:', modelId: 'incl', names: { en: 'Inclusions', de: 'Einschlüsse' } },
 ];
 
-export const BATCH = { revision: '9', summary: SERIES_214, analyses: ANALYSES };
+export const BATCH = { revision: '9', summary: SERIES_214, analyses: ANALYSES, renamable: false };
 
 function part(id: string, partNo: number, format: string, state: string): ReportPartView {
 	const [from, to] = partNo === 1 ? [0, 100] : [100, 132];
@@ -160,6 +159,8 @@ export const REPORTS: SeriesReportsView = {
 			analysisKey: 'grain:',
 			state: 'creating',
 			stale: false,
+			replacedBy: null,
+			moved: false,
 			parts: [
 				part('11', 1, 'pdf', 'saved'),
 				part('12', 1, 'csv', 'saved'),
@@ -172,6 +173,8 @@ export const REPORTS: SeriesReportsView = {
 			analysisKey: 'incl:',
 			state: 'creating',
 			stale: true,
+			replacedBy: null,
+			moved: false,
 			parts: [
 				part('21', 1, 'pdf', 'saved'),
 				part('22', 1, 'csv', 'saved'),

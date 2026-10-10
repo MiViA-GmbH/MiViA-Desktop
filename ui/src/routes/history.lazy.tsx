@@ -1,54 +1,90 @@
-import { Button, Paper } from '@mantine/core';
+import '../features/history/history.css';
+
+import { Button, Group, SegmentedControl, TextInput } from '@mantine/core';
+import { useDebouncedCallback } from '@mantine/hooks';
 import { ICON_STROKE } from '@mivia-ai/theme';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { createLazyRoute } from '@tanstack/react-router';
-import type { ReactNode } from 'react';
+import { IconDownload, IconSearch } from '@tabler/icons-react';
+import { useMutation } from '@tanstack/react-query';
+import { createLazyRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
-import { foldersQuery } from '../entities/folder/queries';
-import { useOrigin } from '../entities/series/origin';
-import { historyQuery } from '../entities/series/queries';
-import { SeriesTable } from '../features/series/series-table';
+import { type HistorySearch, historyFilter } from '../entities/series/search';
+import { CustomReportsList } from '../features/history/custom-reports-list';
+import { HistoryToolbar } from '../features/history/history-toolbar';
+import { SeriesList } from '../features/history/series-list';
+import { useExport } from '../features/history/use-export';
 import { commands } from '../shared/ipc';
-import type { BatchSummary } from '../shared/ipc/bindings';
-import { EmptyState } from '../shared/ui/empty-state';
 import { AddImagesIcon } from '../shared/ui/icons';
 import { PageHeader } from '../shared/ui/page-header';
 
-type ListProps = {
-	title: string;
-	meta: string;
-	empty: { title: string; text: string };
-	keep: (row: BatchSummary) => boolean;
-	actions?: ReactNode;
-};
+const SEARCH_DELAY = 250;
 
-function SeriesList({ title, meta, empty, keep, actions }: ListProps) {
-	const page = useQuery(historyQuery).data;
-	const origin = useOrigin(useQuery(foldersQuery).data?.folders ?? []);
-	const rows = [...(page?.head ?? []), ...(page?.rows ?? [])].filter(keep);
+function ExportList({ search }: { search: HistorySearch }) {
+	const { t } = useTranslation();
+	const exporter = useExport();
 	return (
-		<>
-			<PageHeader actions={actions} meta={meta} title={title} />
-			{page && rows.length === 0 && <EmptyState text={empty.text} title={empty.title} />}
-			{rows.length > 0 && (
-				<Paper withBorder>
-					<SeriesTable origin={origin} rows={rows} />
-				</Paper>
-			)}
-		</>
+		<Button
+			leftSection={<IconDownload size={16} stroke={ICON_STROKE} />}
+			loading={exporter.isPending}
+			onClick={() => exporter.mutate({ filter: historyFilter(search), series: null })}
+			variant="default"
+		>
+			{t('desktop.history.export')}
+		</Button>
 	);
+}
+
+function CustomSearch({ search, onSearch }: { search: HistorySearch; onSearch: (next: HistorySearch) => void }) {
+	const { t } = useTranslation();
+	const commit = useDebouncedCallback(
+		(value: string) => onSearch({ ...search, q: value.trim() || undefined }),
+		SEARCH_DELAY,
+	);
+	return (
+		<TextInput
+			aria-label={t('desktop.history.searchCustom')}
+			defaultValue={search.q ?? ''}
+			leftSection={<IconSearch size={16} stroke={ICON_STROKE} />}
+			maw={420}
+			onChange={(event) => commit(event.currentTarget.value)}
+			placeholder={t('desktop.history.searchCustom')}
+		/>
+	);
+}
+
+function useHistorySearch(from: '/app/history' | '/app/single-images') {
+	const search = useSearch({ from });
+	const navigate = useNavigate({ from: from === '/app/history' ? '/history' : '/single-images' });
+	return { search, onSearch: (next: HistorySearch) => navigate({ search: next, replace: true }) };
 }
 
 function History() {
 	const { t } = useTranslation();
+	const { search, onSearch } = useHistorySearch('/app/history');
+	const custom = search.view === 'custom';
+	const views = [
+		{ value: 'series', label: t('desktop.history.viewSeries') },
+		{ value: 'custom', label: t('desktop.history.viewCustom') },
+	];
+	const empty = { title: t('desktop.history.emptyTitle'), text: t('desktop.history.emptyText') };
+	const actions = (
+		<Group gap="sm" wrap="nowrap">
+			<SegmentedControl
+				data={views}
+				onChange={(value) => onSearch(value === 'custom' ? { view: 'custom' } : {})}
+				value={custom ? 'custom' : 'series'}
+			/>
+			<ExportList search={search} />
+		</Group>
+	);
 	return (
-		<SeriesList
-			empty={{ title: t('desktop.history.emptyTitle'), text: t('desktop.history.emptyText') }}
-			keep={() => true}
-			meta={t('desktop.history.meta')}
-			title={t('desktop.nav.history')}
-		/>
+		<>
+			<PageHeader actions={actions} meta={t('desktop.history.meta')} title={t('desktop.nav.history')} />
+			{custom && <CustomSearch onSearch={onSearch} search={search} />}
+			{custom && <CustomReportsList q={search.q ?? null} />}
+			{!custom && <HistoryToolbar onChange={onSearch} search={search} />}
+			{!custom && <SeriesList empty={empty} onSearch={onSearch} search={search} />}
+		</>
 	);
 }
 
@@ -68,14 +104,15 @@ function AddImages() {
 
 function SingleImages() {
 	const { t } = useTranslation();
+	const { search, onSearch } = useHistorySearch('/app/single-images');
+	const manual: HistorySearch = { ...search, origin: 'manual' };
+	const empty = { title: t('desktop.singleImages.emptyTitle'), text: t('desktop.singleImages.emptyText') };
 	return (
-		<SeriesList
-			actions={<AddImages />}
-			empty={{ title: t('desktop.singleImages.emptyTitle'), text: t('desktop.singleImages.emptyText') }}
-			keep={(row) => row.origin.kind === 'oneOff'}
-			meta={t('desktop.singleImages.meta')}
-			title={t('desktop.nav.singleImages')}
-		/>
+		<>
+			<PageHeader actions={<AddImages />} meta={t('desktop.singleImages.meta')} title={t('desktop.nav.singleImages')} />
+			<HistoryToolbar manualOnly onChange={onSearch} search={manual} />
+			<SeriesList empty={empty} onSearch={onSearch} search={manual} />
+		</>
 	);
 }
 

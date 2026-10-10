@@ -1,6 +1,7 @@
 export {
 	IconAlertTriangle as ImageProblemIcon,
 	IconAlertTriangle as WarningIcon,
+	IconArchive as ReplacedIcon,
 	IconCheck as CheckIcon,
 	IconCircleCheck as SuccessIcon,
 	IconCircleCheck as DoneIcon,

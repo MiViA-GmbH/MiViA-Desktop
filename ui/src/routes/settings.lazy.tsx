@@ -1,10 +1,11 @@
-import { Group, NavLink, Stack } from '@mantine/core';
+import { Divider, Group, NavLink, Stack } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { createLazyRoute, Link, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import { localeQuery } from '../entities/account/queries';
 import { AccountPanel } from '../features/settings/account-panel';
+import { BackupPanel } from '../features/settings/backup-panel';
 import { AutostartSwitch, ExplorerSwitch } from '../features/settings/integration-panel';
 import { LanguageSelect } from '../features/settings/language-select';
 import { PageHeader } from '../shared/ui/page-header';
@@ -29,6 +30,8 @@ function General() {
 		<Stack gap="md">
 			{locale && <LanguageSelect setting={locale.setting} />}
 			<AutostartSwitch />
+			<Divider />
+			<BackupPanel />
 		</Stack>
 	);
 }
