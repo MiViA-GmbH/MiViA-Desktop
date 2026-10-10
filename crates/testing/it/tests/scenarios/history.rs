@@ -1,14 +1,16 @@
 use std::sync::Arc;
 
-use mivia_application::history::{ExportJob, History};
+use mivia_application::history::{CustomRequest, ExportJob, History, HistoryError};
 use mivia_domain::computation::ComputationEvent;
 use mivia_domain::history::csv_separator;
 use mivia_domain::ids::{BatchId, ComputationId, MINUTE_MS, ReportId, SECOND_MS, SourceFileId};
-use mivia_domain::naming::Stamp;
+use mivia_domain::naming::{Language, Stamp};
+use mivia_domain::output::Format;
 use mivia_ports::export::{BOM, ExportRequest, ExportSelection};
 use mivia_ports::fs::FileSystem;
 use mivia_ports::ipc::history::HistoryFilter;
 use mivia_ports::queries::Queries;
+use mivia_ports::store::reports::ReportSpec;
 use mivia_ports::store::{NewComputation, StoreExt};
 
 use super::line::Line;
@@ -227,5 +229,59 @@ async fn an_updated_report_moves_the_old_files_to_replaced_and_back() {
         .await
         .unwrap();
     assert_eq!(found.rows.len(), 1);
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn a_custom_report_over_two_series_is_saved_under_its_name() {
+    let line = Line::new().await;
+    closed_series(&line, 2).await;
+    line.files(1).await;
+    line.run_for(3 * MINUTE_MS, SECOND_MS).await;
+    let history = history(&line);
+    let series = vec![BatchId(1), BatchId(2)];
+    let draft = history.custom_report_draft(series.clone()).await.unwrap();
+    assert_eq!(draft.analyses.len(), 2);
+    assert!(draft.analyses.iter().all(|analysis| analysis.included == 2));
+    assert!(!draft.too_many);
+    line.world.fs.mkdir(&win(r"E:\Kunde"));
+    let request = |name: &str| CustomRequest {
+        series: series.clone(),
+        name: name.to_owned(),
+        spec: ReportSpec {
+            formats: vec![Format::Pdf],
+            language: Language::De,
+            decimal_comma: true,
+            include_images: false,
+            timezone: "Europe/Berlin".to_owned(),
+        },
+        by_date: false,
+        folder: win(r"E:\Kunde"),
+        app_version: "2.0.0".to_owned(),
+        now: line.now(),
+    };
+    assert_eq!(
+        history.create_custom_reports(request("  ")).await,
+        Err(HistoryError::NameRequired)
+    );
+    let created = history
+        .create_custom_reports(request("Kunde Müller"))
+        .await
+        .unwrap();
+    assert_eq!(created.len(), 2);
+    line.run_for(MINUTE_MS, SECOND_MS).await;
+    let saved = names(&line, r"E:\Kunde").await;
+    assert_eq!(saved.len(), 2, "{saved:?}");
+    assert!(
+        saved.iter().all(|name| name.contains(" Kunde Müller - ")),
+        "{saved:?}"
+    );
+    let listed = line
+        .world
+        .store
+        .list_custom_reports(line.world.scope, Some("muller".to_owned()), None)
+        .await
+        .unwrap();
+    assert_eq!(listed.rows.len(), 2);
     line.finish().await;
 }

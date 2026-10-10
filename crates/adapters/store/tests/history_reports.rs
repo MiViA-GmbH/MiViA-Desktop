@@ -347,3 +347,30 @@ async fn exports_stream_every_image_report_part_and_change() {
     assert_eq!(report[21], Cell::Text("09".repeat(32)));
     fx.store.close().await.unwrap();
 }
+
+#[tokio::test]
+async fn keeping_a_stale_report_clears_attention_but_keeps_it_out_of_date() {
+    let fx = fixture(StoreConfig::for_tests()).await;
+    let (batch, kept) = seed(&fx.store, |tx| {
+        account(tx, "a");
+        let (batch, first) = report_with_saved_part(tx, "Run");
+        tx.computations(SCOPE)
+            .apply(first, ComputationEvent::RunAgain, NOW)
+            .unwrap();
+        let kept = tx.history(SCOPE).keep_as_is(ReportId(1), NOW).unwrap();
+        (batch, kept)
+    })
+    .await;
+    assert_eq!(kept, Some(batch));
+    let view = fx.store.get_batch(SCOPE, batch).await.unwrap().unwrap();
+    assert!(!view.summary.needs_attention);
+    assert_eq!(view.summary.counts.reports_stale, 1);
+    let events = fx
+        .store
+        .list_batch_events(SCOPE, batch, None)
+        .await
+        .unwrap()
+        .events;
+    assert_eq!(events[0].after.as_deref(), Some("{\"how\":\"kept\"}"));
+    fx.store.close().await.unwrap();
+}
