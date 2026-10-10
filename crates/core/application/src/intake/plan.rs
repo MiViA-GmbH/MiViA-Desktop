@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use mivia_domain::ids::{BatchId, SourceFileId, Timestamp};
 use mivia_domain::intake::{BatchKey, batch_key, is_candidate, stem};
 use mivia_domain::label::{member_label, series_label};
+use mivia_domain::output::is_inside;
 use mivia_domain::path::WinPath;
 use mivia_domain::readiness::QUIET_FLOOR_MS;
 use mivia_ports::store::intake::{Detection, FolderRow, Member};
@@ -28,6 +29,11 @@ pub(super) enum Action {
 enum Arrival {
     Live(Timestamp),
     CatchUp,
+}
+
+pub(super) fn accepts(folder: &FolderRow, relative: &[String]) -> bool {
+    let excluded = folder.report_folder.excluded(&folder.path);
+    is_candidate(relative) && !excluded.is_some_and(|prefix| is_inside(relative, &prefix))
 }
 
 pub(super) struct Plan<'a> {
@@ -80,7 +86,7 @@ impl<'a> Plan<'a> {
         let Some(rel) = relative(&self.folder.path, path) else {
             return;
         };
-        if !is_candidate(&rel) || self.member_at(path).is_some() {
+        if !accepts(self.folder, &rel) || self.member_at(path).is_some() {
             return;
         }
         if !self.detected.insert(path.key()) {
@@ -127,7 +133,7 @@ impl<'a> Plan<'a> {
             };
             moved = true;
             let rel = relative(&self.folder.path, &path).unwrap_or_default();
-            if !is_candidate(&rel) {
+            if !accepts(self.folder, &rel) {
                 self.actions.push(Action::Remove(member.id));
                 continue;
             }

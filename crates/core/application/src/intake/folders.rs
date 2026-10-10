@@ -1,6 +1,7 @@
 use mivia_domain::batch::ClosureReason;
 use mivia_domain::ids::{FolderId, ModelChoice, Timestamp};
 use mivia_domain::label::LabelRule;
+use mivia_domain::output::{ProbeResult, ReportFolder};
 use mivia_domain::path::WinPath;
 use mivia_ports::fs::FsError;
 use mivia_ports::store::NewFolder;
@@ -10,12 +11,14 @@ use super::closer::{Closure, close_series};
 use super::plan::Plan;
 use super::scan::Mode;
 use super::{Intake, IntakeError};
+use crate::report_settings::ReportSettings;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FolderProblem {
     NotFound,
     NotAFolder,
     Overlaps,
+    ReportFolderDenied,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -25,6 +28,8 @@ pub struct AddFolder {
     pub quiet_ms: i64,
     pub label_rule: LabelRule,
     pub include_existing: bool,
+    pub report_settings: ReportSettings,
+    pub report_folder: ReportFolder,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -44,6 +49,7 @@ const fn folder_error(error: FsError) -> IntakeError {
         | FsError::CloudOnly
         | FsError::Changed
         | FsError::Link
+        | FsError::Exists
         | FsError::Io => FolderProblem::NotAFolder,
     })
 }
@@ -76,6 +82,37 @@ impl Intake {
         Ok(root)
     }
 
+    async fn probe(
+        &self,
+        root: &WinPath,
+        folder: &ReportFolder,
+    ) -> Result<ProbeResult, IntakeError> {
+        let base = folder.base(root);
+        let result = self
+            .ports
+            .fs
+            .probe_folder(&base, folder.creates())
+            .await
+            .unwrap_or(ProbeResult::Denied);
+        if result == ProbeResult::Denied {
+            return Err(IntakeError::Folder(FolderProblem::ReportFolderDenied));
+        }
+        Ok(result)
+    }
+
+    pub async fn probe_report_folder(&self, id: FolderId) -> Result<ProbeResult, IntakeError> {
+        let row = self.folder(id).await?;
+        let base = row.report_folder.base(&row.path);
+        let result = self
+            .ports
+            .fs
+            .probe_folder(&base, row.report_folder.creates())
+            .await
+            .unwrap_or(ProbeResult::Denied);
+        self.change(id, FolderChange::Probe(result)).await?;
+        Ok(result)
+    }
+
     async fn folder(&self, id: FolderId) -> Result<FolderRow, IntakeError> {
         self.write(move |tx, scope| tx.folders(scope).get(id)).await
     }
@@ -91,17 +128,21 @@ impl Intake {
     pub async fn add_folder(&self, input: AddFolder) -> Result<FolderId, IntakeError> {
         let _serial = self.serial.lock().await;
         let root = self.checked_root(&input.path, None).await?;
+        let probe = self.probe(&root, &input.report_folder).await?;
         let id = self
             .write(move |tx, scope| {
                 let position = u32::try_from(tx.folders(scope).list()?.len()).unwrap_or(u32::MAX);
-                tx.folders(scope).add(&NewFolder {
+                let id = tx.folders(scope).add(&NewFolder {
                     path: root,
                     position,
                     quiet_period_ms: input.quiet_ms,
                     label_rule: input.label_rule,
-                    report_settings_json: "{}".to_owned(),
+                    report_settings_json: input.report_settings.json(),
+                    report_folder: input.report_folder,
                     model_choices: input.model_choices,
-                })
+                })?;
+                tx.folders(scope).update(id, &FolderChange::Probe(probe))?;
+                Ok(id)
             })
             .await?;
         let row = self.folder(id).await?;

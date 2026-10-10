@@ -29,6 +29,7 @@ const fn open_failure(error: FsError) -> Option<OpenFailure> {
         | FsError::NetworkUnavailable
         | FsError::CloudOnly
         | FsError::Changed
+        | FsError::Exists
         | FsError::Io => None,
     }
 }

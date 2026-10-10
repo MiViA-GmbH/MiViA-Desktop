@@ -1,11 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use mivia_domain::ids::{FolderId, Timestamp};
-use mivia_domain::intake::is_candidate;
 use mivia_ports::fs::{FsError, WalkEntry};
 use mivia_ports::store::intake::{FolderChange, FolderRow, KnownPath};
 
-use super::plan::Plan;
+use super::plan::{Plan, accepts};
 use super::{Intake, IntakeError, LOCAL_RECONCILE_MS, NETWORK_RECONCILE_MS};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -109,7 +108,7 @@ impl Intake {
             .filter(|entry| {
                 row.path
                     .relative_components(&entry.path)
-                    .is_some_and(is_candidate)
+                    .is_some_and(|rel| accepts(row, rel))
                     && !live.contains(&entry.path.key())
                     && !unchanged(&known, entry)
             })

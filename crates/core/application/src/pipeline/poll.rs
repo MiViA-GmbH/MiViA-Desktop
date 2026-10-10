@@ -143,6 +143,7 @@ impl Pipeline {
         })
         .await?;
         self.wakers.submitter.notify_one();
+        self.wakers.reports.notify_one();
         Ok(())
     }
 }

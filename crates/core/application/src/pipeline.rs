@@ -6,6 +6,9 @@ mod outcome;
 mod poll;
 mod probe;
 mod recovery;
+mod report;
+mod report_poll;
+mod report_save;
 mod submit;
 mod upload;
 
@@ -14,6 +17,8 @@ use std::sync::Arc;
 
 use mivia_domain::hold::{Access, Gate, HoldReason};
 use mivia_domain::ids::{ComputationId, MINUTE_MS, SECOND_MS, SourceFileId, Timestamp};
+use mivia_domain::path::WinPath;
+use mivia_domain::report::REPORTS_V2_MIN_SERVER_VERSION;
 use mivia_domain::retry::RetryPolicy;
 use mivia_ports::auth::Authorizer;
 use mivia_ports::clock::Clock;
@@ -49,6 +54,7 @@ pub struct PipelinePorts {
     pub authorizer: Arc<dyn Authorizer>,
     pub clock: Arc<dyn Clock>,
     pub ids: Arc<dyn IdGen>,
+    pub staging: WinPath,
 }
 
 #[derive(Default)]
@@ -58,6 +64,8 @@ pub struct PipelineWakers {
     pub poller: Notify,
     pub recovery: Notify,
     pub probe: Notify,
+    pub reports: Notify,
+    pub saver: Notify,
 }
 
 impl PipelineWakers {
@@ -68,6 +76,8 @@ impl PipelineWakers {
             &self.poller,
             &self.recovery,
             &self.probe,
+            &self.reports,
+            &self.saver,
         ] {
             notify.notify_one();
         }
@@ -79,6 +89,22 @@ struct InFlight {
     uploads: BTreeSet<SourceFileId>,
     submits: BTreeSet<ComputationId>,
     recovery: BTreeSet<String>,
+}
+
+struct ReportState {
+    v2_min: Mutex<Option<String>>,
+    server_version: Mutex<Option<(String, Timestamp)>>,
+    paused_until: Mutex<Option<Timestamp>>,
+}
+
+impl Default for ReportState {
+    fn default() -> Self {
+        Self {
+            v2_min: Mutex::new(REPORTS_V2_MIN_SERVER_VERSION.map(str::to_owned)),
+            server_version: Mutex::new(None),
+            paused_until: Mutex::new(None),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -95,6 +121,7 @@ pub struct Pipeline {
     in_flight: Mutex<InFlight>,
     schedule: Mutex<Schedule>,
     holds: holds::HoldState,
+    reports: ReportState,
     pub wakers: Arc<PipelineWakers>,
 }
 
@@ -107,6 +134,7 @@ impl Pipeline {
             in_flight: Mutex::new(InFlight::default()),
             schedule: Mutex::new(Schedule::default()),
             holds: holds::HoldState::default(),
+            reports: ReportState::default(),
             wakers: Arc::new(PipelineWakers::default()),
         }
     }
@@ -125,8 +153,11 @@ impl Pipeline {
             poll_until: now.plus_ms(MAX_POLL_GAP_MS),
             probe_until: now.plus_ms(MAX_PROBE_GAP_MS),
         };
-        self.write(move |tx, scope| tx.pipeline(scope).clamp_schedule(clamp))
-            .await?;
+        self.write(move |tx, scope| {
+            tx.pipeline(scope).clamp_schedule(clamp)?;
+            tx.reports(scope).recover_parts(now)
+        })
+        .await?;
         let mut schedule = self.schedule.lock();
         schedule.due.clear();
         schedule.last_status_request = None;

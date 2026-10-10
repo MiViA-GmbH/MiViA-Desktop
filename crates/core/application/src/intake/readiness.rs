@@ -25,6 +25,7 @@ const fn failure(error: FsError) -> Failure {
         | FsError::DiskFull
         | FsError::NotADirectory
         | FsError::InvalidName
+        | FsError::Exists
         | FsError::Io => Failure::Busy,
     }
 }
