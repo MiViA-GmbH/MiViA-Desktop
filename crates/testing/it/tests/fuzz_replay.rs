@@ -7,6 +7,8 @@ const TARGETS: &[(&str, Target)] = &[
     ("label_sort", mivia_domain::fuzz::label_sort),
     ("image_format_check", mivia_domain::fuzz::image_format_check),
     ("launch_args", mivia_application::fuzz::launch_args),
+    ("spool_file", mivia_application::fuzz::spool_file),
+    ("watch_marker", mivia_application::fuzz::watch_marker),
 ];
 
 fn fuzz_dir() -> PathBuf {

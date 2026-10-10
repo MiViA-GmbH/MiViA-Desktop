@@ -417,6 +417,9 @@ dependencies = [
  "mivia-domain",
  "mivia-ports",
  "proptest",
+ "serde",
+ "serde_json",
+ "uuid",
 ]
 
 [[package]]

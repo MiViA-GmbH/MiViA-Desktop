@@ -42,3 +42,17 @@ path = "fuzz_targets/image_format_check.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "spool_file"
+path = "fuzz_targets/spool_file.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "watch_marker"
+path = "fuzz_targets/watch_marker.rs"
+test = false
+doc = false
+bench = false
