@@ -1,0 +1,3 @@
+# One report per batch and model choice
+
+A batch produces one report per model choice, split into numbered parts of at most 100 computations, instead of one report per image (v1) or one report across all models. Results of different models in one CSV aggregate table would mix columns that have nothing in common, and one report per model choice also keeps most batches under the server's 100-job cap. Images are ordered by a natural sort of their file names (digit runs compared as numbers), fixed when the first part is requested. Users' downstream scripts will depend on this, so changing it later is expensive.

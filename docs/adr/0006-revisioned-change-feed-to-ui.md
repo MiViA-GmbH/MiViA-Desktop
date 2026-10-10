@@ -1,0 +1,3 @@
+# The UI follows a revisioned change feed, not domain events
+
+Every write transaction that records events bumps a revision; every query result carries the revision it was read at; the shell sends one coalesced `StoreChanged { from_revision, to_revision, changes }` event at most every 100 ms while the window exists. The UI subscribes first, fetches, drops older events and refetches on a gap or a `Resync`. Sending domain events to the UI was rejected because the webview is created lazily and destroyed when hidden, so it would need replay, and per-event IPC would exceed the 10 messages per second budget during large batches.
