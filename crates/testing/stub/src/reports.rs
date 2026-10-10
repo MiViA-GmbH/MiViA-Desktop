@@ -27,6 +27,7 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/api/reports/{id}", get(status).post(create))
         .route("/api/reports/{id}/download", get(link))
         .route("/__stub/files/{id}", get(file))
+        .route("/__stub/served", get(served))
 }
 
 #[derive(Deserialize)]
@@ -162,7 +163,20 @@ async fn link(State(stub): State<Stub>, headers: HeaderMap, Path(id): Path<Strin
 async fn file(State(stub): State<Stub>, Path(id): Path<String>) -> Response {
     let found = stub.files.lock().remove(&id);
     match found {
-        Some(bytes) => bytes.into_response(),
+        Some(bytes) => {
+            stub.served.lock().push(bytes.clone());
+            bytes.into_response()
+        }
         None => StatusCode::NOT_FOUND.into_response(),
     }
+}
+
+async fn served(State(stub): State<Stub>) -> Response {
+    let bodies: Vec<String> = stub
+        .served
+        .lock()
+        .iter()
+        .map(|bytes| String::from_utf8_lossy(bytes).into_owned())
+        .collect();
+    Json(bodies).into_response()
 }

@@ -16,6 +16,7 @@ pub struct Stub {
     pub engine: Arc<FakeServerApi>,
     pub key: String,
     files: Arc<Mutex<BTreeMap<String, Vec<u8>>>>,
+    served: Arc<Mutex<Vec<Vec<u8>>>>,
 }
 
 impl Stub {
@@ -24,6 +25,7 @@ impl Stub {
             engine: Arc::new(FakeServerApi::default()),
             key: key.to_owned(),
             files: Arc::default(),
+            served: Arc::default(),
         }
     }
 
