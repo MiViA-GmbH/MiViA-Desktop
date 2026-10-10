@@ -1,0 +1,195 @@
+use mivia_domain::hold::{HoldReason, KeyProblem, LicenseScope};
+use mivia_domain::ids::{HOUR_MS, MINUTE_MS, SECOND_MS};
+use mivia_domain::retry::RetryPolicy;
+use mivia_ports::auth::AuthError;
+use mivia_ports::id_gen::IdGen;
+use mivia_ports::server::ServerError;
+use mivia_testkit::id_gen::SeededIdGen;
+use mivia_testkit::server::{Licence, Op};
+
+use super::line::{Line, with_clock};
+use super::world::jpeg;
+
+const API: [Op; 7] = [
+    Op::Upload,
+    Op::Submit,
+    Op::Status,
+    Op::Find,
+    Op::Exists,
+    Op::License,
+    Op::Catalogue,
+];
+
+fn none_failed(states: &[String]) -> bool {
+    states
+        .iter()
+        .all(|state| state != "failed" && state != "lost")
+}
+
+#[tokio::test]
+async fn an_unreachable_server_raises_offline_and_work_resumes_when_it_returns() {
+    let line = Line::new().await;
+    let mut everything = API.to_vec();
+    everything.push(Op::Version);
+    line.server
+        .set_down(&everything, Some(&ServerError::Unreachable));
+    line.files(2).await;
+    line.run_for(10 * MINUTE_MS, 5 * SECOND_MS).await;
+    assert_eq!(line.holds().await, [HoldReason::Offline]);
+    assert_eq!(line.file_states().await, ["ready"; 2]);
+    let probes = line.server.count(Op::Version);
+    assert!(probes < 40, "{probes} probes in 10 minutes");
+
+    line.server.set_down(&everything, None);
+    line.run_for(6 * MINUTE_MS, 5 * SECOND_MS).await;
+    assert_eq!(line.holds().await, []);
+    assert!(line.states().await.iter().all(|state| state == "done"));
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn an_hour_of_service_errors_fails_nothing_and_stays_within_the_request_budget() {
+    let line = Line::new().await;
+    line.server
+        .set_down(&API, Some(&ServerError::Unavailable { status: 503 }));
+    line.files(4).await;
+    let start = line.now();
+    line.run_for(HOUR_MS, 5 * SECOND_MS).await;
+    assert_eq!(line.holds().await, [HoldReason::ServiceUnavailable]);
+    assert!(none_failed(&line.states().await));
+    let requests = line
+        .server
+        .journal()
+        .into_iter()
+        .filter(|(_, at)| *at >= start)
+        .count();
+    assert!(requests < 150, "{requests} requests in one hour");
+
+    line.server.set_down(&API, None);
+    line.run_for(10 * MINUTE_MS, 5 * SECOND_MS).await;
+    assert_eq!(line.holds().await, []);
+    assert!(line.states().await.iter().all(|state| state == "done"));
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn a_rejected_access_key_holds_work_until_the_key_is_accepted_again() {
+    let line = Line::new().await;
+    let invalid = ServerError::Unauthorized(KeyProblem::Invalid);
+    line.server.set_down(&[Op::Upload], Some(&invalid));
+    line.auth
+        .set_problem(Some(AuthError::Rejected(KeyProblem::Invalid)));
+    line.files(1).await;
+    line.run_for(40 * MINUTE_MS, 30 * SECOND_MS).await;
+    let invalid_hold = HoldReason::AccessKeyInvalid(KeyProblem::Invalid);
+    assert_eq!(line.holds().await, [invalid_hold]);
+    assert_eq!(line.server.count(Op::Upload), 1);
+    assert!(line.auth.checks() >= 1);
+
+    line.server.set_down(&[Op::Upload], None);
+    line.auth.set_problem(None);
+    line.run_for(40 * MINUTE_MS, 30 * SECOND_MS).await;
+    assert_eq!(line.holds().await, []);
+    assert!(line.states().await.iter().all(|state| state == "done"));
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn a_license_canary_keeps_the_hold_until_uploads_are_accepted() {
+    let line = Line::new().await;
+    line.files(1).await;
+    with_clock(&line.world.clock, line.pipeline.upload_tick())
+        .await
+        .unwrap();
+    line.server
+        .with_sim(|sim| sim.licence = Licence::NoNewImages);
+    line.world.drop_file(r"D:\Lab\later.jpg", &jpeg(77));
+    line.world.pass(2 * SECOND_MS).await;
+    line.run_for(45 * MINUTE_MS, 30 * SECOND_MS).await;
+    let held = HoldReason::LicenseInvalid(LicenseScope::Uploads);
+    assert_eq!(line.holds().await, [held]);
+    assert_eq!(line.file_states().await, ["uploaded", "ready"]);
+    let done = line.states().await.iter().filter(|s| *s == "done").count();
+    assert_eq!(done, 2, "the uploaded image was not analysed");
+    assert!(line.server.count(Op::Upload) >= 3);
+
+    line.server.with_sim(|sim| sim.licence = Licence::Valid);
+    line.run_for(35 * MINUTE_MS, 30 * SECOND_MS).await;
+    assert_eq!(line.holds().await, []);
+    assert!(line.states().await.iter().all(|state| state == "done"));
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn a_flapping_connection_does_not_count_attempts_against_the_files() {
+    let line = Line::new().await;
+    let mut everything = API.to_vec();
+    everything.push(Op::Version);
+    line.server
+        .set_down(&everything, Some(&ServerError::Unreachable));
+    line.files(1).await;
+    line.run_for(MINUTE_MS, SECOND_MS).await;
+    assert_eq!(line.holds().await, [HoldReason::Offline]);
+    for _ in 0..10 {
+        line.server.set_down(&[Op::Version], None);
+        while !line.holds().await.is_empty() {
+            line.run_for(SECOND_MS, SECOND_MS).await;
+        }
+        line.server
+            .set_down(&[Op::Version], Some(&ServerError::Unreachable));
+        line.run_for(10 * SECOND_MS, SECOND_MS).await;
+        assert_eq!(line.holds().await, [HoldReason::Offline]);
+    }
+    line.server.set_down(&everything, None);
+    assert_eq!(line.upload_attempts().await, [0]);
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn a_small_series_is_not_starved_by_a_large_one() {
+    let line = Line::new().await;
+    for n in 0..120_u8 {
+        line.world
+            .drop_file(&format!(r"D:\Lab\big\image_{n:03}.jpg"), &jpeg(n));
+    }
+    line.world.pass(2 * SECOND_MS).await;
+    for n in 0..3_u8 {
+        line.world
+            .drop_file(&format!(r"D:\Lab\small\image_{n}.jpg"), &jpeg(200 + n));
+    }
+    line.world.pass(2 * SECOND_MS).await;
+    with_clock(&line.world.clock, line.pipeline.upload_tick())
+        .await
+        .unwrap();
+    let series = line.world.series().await;
+    let small = series
+        .iter()
+        .find(|s| s.label.starts_with("small"))
+        .unwrap();
+    let small_states = line.world.states(small).await;
+    assert_eq!(
+        small_states.iter().filter(|(_, s)| s == "uploaded").count(),
+        1
+    );
+    line.finish().await;
+}
+
+#[test]
+fn a_thousand_installs_resuming_together_spread_their_first_probes() {
+    let spread = RetryPolicy::probe(30 * SECOND_MS, 30 * SECOND_MS);
+    let delays: Vec<i64> = (0..1_000_u64)
+        .map(|seed| {
+            let random = SeededIdGen::new(seed).uuid().as_u64_pair().1;
+            spread.delay_ms(1, random)
+        })
+        .collect();
+    let first = delays.iter().min().copied().unwrap_or_default();
+    let last = delays.iter().max().copied().unwrap_or_default();
+    assert!(first >= 0 && last <= 30 * SECOND_MS);
+    assert!(last - first >= 29 * SECOND_MS, "spread {first}..{last}");
+    let early = delays.iter().filter(|d| **d < 10 * SECOND_MS).count();
+    assert!(
+        (250..420).contains(&early),
+        "{early} of 1000 probe in the first 10 s"
+    );
+}
