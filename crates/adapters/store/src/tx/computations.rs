@@ -89,6 +89,9 @@ impl ComputationRepo for SqlTx<'_> {
             counters::computation(Some(after)),
         );
         self.batch_changed(batch_id, change, now)?;
+        if after == ComputationState::Superseded {
+            self.stale_after_run_again(id)?;
+        }
         Ok(after)
     }
 

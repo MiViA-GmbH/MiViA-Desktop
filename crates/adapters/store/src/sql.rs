@@ -1,4 +1,5 @@
 pub(crate) mod pipeline;
+pub(crate) mod reports;
 
 use mivia_domain::hold::Gate;
 
@@ -76,26 +77,6 @@ pub(crate) fn computation_due_poll() -> String {
     )
 }
 
-pub(crate) fn part_due_request() -> String {
-    format!(
-        "SELECT p.id FROM report_part p JOIN report r ON r.id = p.report_id \
-         WHERE p.state = 'requested' AND p.server_report_id IS NULL AND r.account_id = ?1 \
-         AND p.id NOT IN (SELECT value FROM json_each(?3)) AND {} \
-         ORDER BY p.id LIMIT ?4",
-        gate_open(Gate::ReportRequest)
-    )
-}
-
-pub(crate) fn part_due_poll() -> String {
-    format!(
-        "SELECT p.id FROM report_part p JOIN report r ON r.id = p.report_id \
-         WHERE p.state = 'requested' AND p.server_report_id IS NOT NULL AND p.next_poll_at <= ?2 \
-         AND r.account_id = ?1 AND p.id NOT IN (SELECT value FROM json_each(?3)) AND {} \
-         ORDER BY p.next_poll_at, p.id LIMIT ?4",
-        gate_open(Gate::ReportDownload)
-    )
-}
-
 pub(crate) const HOLD_DUE_PROBE: &str = "SELECT reason FROM account_hold \
      WHERE account_id = ?1 AND next_probe_at <= ?2 ORDER BY next_probe_at";
 
@@ -151,12 +132,19 @@ pub(crate) const ITEM_COMPUTATIONS: &str = "SELECT id, model_choice_key, state F
 pub(crate) const FOLDERS: &str = "SELECT id, path, position, active FROM watched_folder \
      WHERE account_id = ?1 AND removed_at IS NULL ORDER BY position, id";
 
-pub(crate) const FOLDER_ROWS: &str = "SELECT id, path, active, quiet_period, label_rule, \
-     missing_since FROM watched_folder WHERE account_id = ?1 AND removed_at IS NULL \
-     ORDER BY position, id";
+const FOLDER_COLUMNS: &str = "id, path, active, quiet_period, label_rule, missing_since, \
+     report_folder_mode, report_folder_name, report_folder_path, probe_result";
 
-pub(crate) const FOLDER_BY_ID: &str = "SELECT id, path, active, quiet_period, label_rule, \
-     missing_since FROM watched_folder WHERE account_id = ?1 AND id = ?2";
+pub(crate) fn folder_rows() -> String {
+    format!(
+        "SELECT {FOLDER_COLUMNS} FROM watched_folder \
+         WHERE account_id = ?1 AND removed_at IS NULL ORDER BY position, id"
+    )
+}
+
+pub(crate) fn folder_by_id() -> String {
+    format!("SELECT {FOLDER_COLUMNS} FROM watched_folder WHERE account_id = ?1 AND id = ?2")
+}
 
 pub(crate) const FOLDER_CHOICES: &str = "SELECT model_id, customization_id \
      FROM folder_model_choice WHERE folder_id = ?1 ORDER BY position";
@@ -260,8 +248,6 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("claim source upload", source_due_upload()),
         ("claim computation submit", computation_due_submit()),
         ("claim computation poll", computation_due_poll()),
-        ("claim report request", part_due_request()),
-        ("claim report poll", part_due_poll()),
         ("claim hold probe", HOLD_DUE_PROBE.to_owned()),
         ("claim open batches", BATCH_OPEN.to_owned()),
         ("list history body", history_body()),
@@ -272,7 +258,7 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("list batch items", batch_items()),
         ("list item computations", ITEM_COMPUTATIONS.to_owned()),
         ("list folders", FOLDERS.to_owned()),
-        ("list folder rows", FOLDER_ROWS.to_owned()),
+        ("list folder rows", folder_rows()),
         ("list live members", LIVE_MEMBERS.to_owned()),
         ("find open batch by key", OPEN_BATCH_BY_KEY.to_owned()),
         ("claim readiness probes", CLAIM_PROBES.to_owned()),
@@ -288,5 +274,6 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("list detected members", DETECTED_IN_BATCH.to_owned()),
     ];
     queries.extend(pipeline::planned());
+    queries.extend(reports::planned());
     queries
 }

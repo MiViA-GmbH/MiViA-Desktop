@@ -2,6 +2,7 @@ use mivia_domain::computation::{ComputationEvent, JobOutcome};
 use mivia_domain::hold::{Access, Gate, HoldReason};
 use mivia_domain::ids::{BatchId, Timestamp};
 use mivia_domain::label::LabelRule;
+use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_domain::source_file::SourceFileEvent;
 use mivia_ports::queries::Queries;
@@ -85,6 +86,7 @@ async fn folders_list_by_position_and_claims_follow_holds() {
                     quiet_period_ms: 2_000,
                     label_rule: LabelRule::Auto,
                     report_settings_json: "{}".to_owned(),
+                    report_folder: ReportFolder::BesideSeries,
                     model_choices: Vec::new(),
                 })
                 .unwrap();
@@ -177,16 +179,18 @@ async fn claims_follow_state_and_skip_in_flight_ids() {
             })
             .unwrap();
         let parts = tx.reports(scope).parts(report).unwrap();
-        let request = tx.reports(scope).due_for_request(&[]).unwrap();
-        let excluded = tx.reports(scope).due_for_request(&parts).unwrap();
-        let report_poll = tx.reports(scope).due_for_poll(now, &[]).unwrap();
+        let request = tx.reports(scope).next_request(now).unwrap().map(|r| r.id);
+        let idle_poll = tx.reports(scope).poll_due(now).unwrap().is_empty();
+        tx.reports(scope).requested(parts[0], "srv-1", now).unwrap();
+        let busy = tx.reports(scope).in_flight().unwrap();
+        let report_poll = tx.reports(scope).poll_due(now).unwrap();
         (
             submit == [computation],
             in_flight.is_empty(),
             poll == [computation],
-            request == parts,
-            excluded.is_empty(),
-            report_poll.is_empty(),
+            request == Some(parts[0]),
+            idle_poll && busy,
+            report_poll.len() == 1 && report_poll[0].server_id == "srv-1",
         )
     })
     .await;

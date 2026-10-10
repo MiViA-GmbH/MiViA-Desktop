@@ -28,22 +28,6 @@ claim computation poll:
   CREATE BLOOM FILTER
   SCALAR SUBQUERY 2
   SEARCH h USING PRIMARY KEY (account_id=?)
-claim report request:
-  SEARCH p USING INDEX report_part_queue (state=?)
-  LIST SUBQUERY 1
-  SCAN json_each VIRTUAL TABLE INDEX 1:
-  CREATE BLOOM FILTER
-  SCALAR SUBQUERY 2
-  SEARCH h USING PRIMARY KEY (account_id=?)
-  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
-claim report poll:
-  SEARCH p USING INDEX report_part_due (state=? AND next_poll_at<?)
-  LIST SUBQUERY 1
-  SCAN json_each VIRTUAL TABLE INDEX 1:
-  CREATE BLOOM FILTER
-  SCALAR SUBQUERY 2
-  SEARCH h USING PRIMARY KEY (account_id=?)
-  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
 claim hold probe:
   SEARCH account_hold USING COVERING INDEX account_hold_probe (account_id=? AND next_probe_at<?)
 claim open batches:
@@ -180,3 +164,58 @@ list uploading files:
   SEARCH source_file USING COVERING INDEX source_file_due (account_id=? AND state=?)
 list queued choices:
   SEARCH computation USING INDEX computation_claim (state=?)
+list waiting reports:
+  SEARCH r USING INDEX report_waiting (account_id=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+  CORRELATED SCALAR SUBQUERY 1
+  SEARCH s USING INDEX source_file_by_batch (batch_id=?)
+  CORRELATED SCALAR SUBQUERY 2
+  SEARCH c USING COVERING INDEX computation_by_batch (batch_id=? AND model_choice_key=? AND state=?)
+list build members:
+  SEARCH c USING INDEX computation_by_batch (batch_id=? AND model_choice_key=?)
+  SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+find report in flight:
+  SEARCH report_part USING INDEX report_part_due (state=?)
+claim report part request:
+  SEARCH p USING INDEX report_part_queue (state=?)
+  SCALAR SUBQUERY 1
+  SEARCH h USING PRIMARY KEY (account_id=?)
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+list part members:
+  SEARCH m USING PRIMARY KEY (report_id=? AND seq>? AND seq<?)
+  SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH o USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+list omitted members:
+  SEARCH report_member USING PRIMARY KEY (report_id=?)
+claim report part poll:
+  SEARCH p USING INDEX report_part_due (state=? AND next_poll_at<?)
+  SCALAR SUBQUERY 1
+  SEARCH h USING PRIMARY KEY (account_id=?)
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+next report part poll:
+  SEARCH p USING INDEX report_part_due (state=?)
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+claim report part save:
+  SEARCH p USING INDEX report_part_save (next_attempt_at<?)
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+next report part save:
+  SEARCH p USING INDEX report_part_save
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+get save row:
+  SEARCH p USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH m USING PRIMARY KEY (batch_id=? AND model_choice_key=?)
+  SEARCH f USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+  CORRELATED SCALAR SUBQUERY 1
+  SEARCH k USING PRIMARY KEY (account_id=? AND model_id=? AND customization_id=?)
+  CORRELATED SCALAR SUBQUERY 2
+  SEARCH k USING PRIMARY KEY (account_id=? AND model_id=? AND customization_id=?)
+  CORRELATED SCALAR SUBQUERY 3
+  SEARCH x USING PRIMARY KEY (batch_id=?)
+  CORRELATED SCALAR SUBQUERY 4
+  SEARCH s USING INDEX source_file_by_batch (batch_id=?)
+find stale candidates:
+  SEARCH m USING COVERING INDEX report_member_by_comp (computation_id=?)
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH p EXISTS USING INDEX sqlite_autoindex_report_part_1 (report_id=?)

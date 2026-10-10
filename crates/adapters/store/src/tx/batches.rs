@@ -130,6 +130,7 @@ impl BatchRepo for SqlTx<'_> {
             )
             .tx()?;
         write_search_doc(self.tx, id.0).tx()?;
+        self.insert_waiting(id.0, closed_at)?;
         self.record(Change::History);
         Ok(())
     }

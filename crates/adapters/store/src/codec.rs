@@ -2,6 +2,7 @@ use mivia_domain::batch::ClosureReason;
 use mivia_domain::computation::{ComputationState, FailReason};
 use mivia_domain::hold::{HoldReason, KeyProblem, LicenseScope, NetworkBlock};
 use mivia_domain::label::LabelRule;
+use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_domain::report::{PartFailure, PartState};
 use mivia_domain::source_file::{RejectReason, SourceFileState, UnreadableReason};
@@ -160,6 +161,29 @@ pub(crate) fn parse_label_rule(text: &str) -> Result<LabelRule, TxError> {
         .into_iter()
         .find(|rule| label_rule(*rule) == text)
         .ok_or_else(|| corrupt("label rule", text, None))
+}
+
+pub(crate) fn report_folder_columns(
+    folder: &ReportFolder,
+) -> (&'static str, Option<&str>, Option<String>) {
+    match folder {
+        ReportFolder::Subfolder(name) => ("subfolder", Some(name), None),
+        ReportFolder::BesideSeries => ("beside-series", None, None),
+        ReportFolder::Custom(path) => ("custom", None, Some(path.to_string())),
+    }
+}
+
+pub(crate) fn report_folder(
+    mode: &str,
+    name: Option<String>,
+    custom: Option<&str>,
+) -> Result<ReportFolder, TxError> {
+    match (mode, name, custom) {
+        ("subfolder", Some(name), _) => Ok(ReportFolder::Subfolder(name)),
+        ("beside-series", _, _) => Ok(ReportFolder::BesideSeries),
+        ("custom", _, Some(path)) => Ok(ReportFolder::Custom(parse_path(path)?)),
+        _ => Err(corrupt("report folder", mode, None)),
+    }
 }
 
 pub(crate) fn parse_path(text: &str) -> Result<WinPath, TxError> {

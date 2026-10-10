@@ -257,6 +257,7 @@ CREATE TABLE report (
 ) STRICT;
 
 CREATE INDEX report_by_batch ON report(batch_id) WHERE batch_id IS NOT NULL;
+CREATE INDEX report_waiting ON report(account_id) WHERE state = 'waiting';
 CREATE INDEX report_custom ON report(account_id, created_at DESC, id DESC) WHERE kind = 'custom';
 CREATE INDEX report_stale_open ON report(account_id) WHERE stale = 1 AND replaced_by IS NULL AND attention_cleared_at IS NULL;
 
@@ -265,6 +266,7 @@ CREATE TABLE report_member (
   seq INTEGER NOT NULL,
   computation_id INTEGER NOT NULL REFERENCES computation(id),
   label TEXT NOT NULL,
+  omitted TEXT,
   PRIMARY KEY (report_id, seq)
 ) STRICT, WITHOUT ROWID;
 
@@ -282,8 +284,10 @@ CREATE TABLE report_part (
   state TEXT NOT NULL,
   attempts INTEGER NOT NULL DEFAULT 0,
   rerequests INTEGER NOT NULL DEFAULT 0,
+  split INTEGER NOT NULL DEFAULT 0 CHECK (split IN (0, 1)),
   requested_at INTEGER,
   next_poll_at INTEGER,
+  next_attempt_at INTEGER NOT NULL DEFAULT 0,
   intended_name TEXT,
   staging_path TEXT,
   sha256 BLOB CHECK (sha256 IS NULL OR length(sha256) = 32),
@@ -294,13 +298,15 @@ CREATE TABLE report_part (
   saved_at INTEGER,
   moved_to_replaced_at INTEGER,
   error TEXT,
+  save_problem TEXT,
   app_version TEXT NOT NULL,
   server_version TEXT,
   UNIQUE (report_id, part_no, format)
 ) STRICT;
 
 CREATE INDEX report_part_due ON report_part(state, next_poll_at) WHERE server_report_id IS NOT NULL;
-CREATE INDEX report_part_queue ON report_part(state, id) WHERE server_report_id IS NULL;
+CREATE INDEX report_part_queue ON report_part(state, part_no, report_id, format DESC) WHERE server_report_id IS NULL;
+CREATE INDEX report_part_save ON report_part(next_attempt_at) WHERE staging_path IS NOT NULL AND state IN ('requested', 'not_saved');
 CREATE INDEX report_part_server_id ON report_part(server_report_id) WHERE server_report_id IS NOT NULL;
 CREATE INDEX report_part_problem ON report_part(state) WHERE state IN ('not_saved', 'failed');
 

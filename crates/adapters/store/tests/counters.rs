@@ -1,7 +1,7 @@
 use mivia_domain::batch::ClosureReason;
 use mivia_domain::computation::{ComputationEvent, FailReason, JobOutcome};
 use mivia_domain::ids::{BatchId, ComputationId, ReportId, ReportPartId, SourceFileId, Timestamp};
-use mivia_domain::report::{PartEvent, SaveError};
+use mivia_domain::report::{PartEvent, SaveError, SaveProblem};
 use mivia_domain::source_file::{Classification, OpenFailure, SourceFileEvent, UnreadableReason};
 use mivia_ports::store::{AccountScope, NewComputation, NewReport, StoreExt, TxError};
 use mivia_store::{SqliteStore, StoreConfig};
@@ -40,7 +40,7 @@ const COMPUTATION_EVENTS: [ComputationEvent; 9] = [
 
 const PART_EVENTS: [PartEvent; 6] = [
     PartEvent::Saved,
-    PartEvent::SaveFailed(SaveError::Retryable),
+    PartEvent::SaveFailed(SaveError::Retryable(SaveProblem::Busy)),
     PartEvent::PendingTooLong,
     PartEvent::TryAgain,
     PartEvent::Discard,
