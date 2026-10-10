@@ -3,6 +3,7 @@ mod counters;
 mod history;
 mod history_reports;
 mod lifecycle;
+mod perf;
 mod queries;
 mod reports;
 mod screens;
