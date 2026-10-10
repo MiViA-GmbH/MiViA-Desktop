@@ -3,9 +3,10 @@ use mivia_domain::ids::{HOUR_MS, MINUTE_MS, SECOND_MS};
 use mivia_domain::retry::RetryPolicy;
 use mivia_ports::auth::AuthError;
 use mivia_ports::id_gen::IdGen;
+use mivia_ports::server::CatalogueModel;
 use mivia_ports::server::ServerError;
 use mivia_testkit::id_gen::SeededIdGen;
-use mivia_testkit::server::{Licence, Op};
+use mivia_testkit::server::{Fault, Licence, Op};
 
 use super::line::{Line, with_clock};
 use super::world::jpeg;
@@ -192,4 +193,43 @@ fn a_thousand_installs_resuming_together_spread_their_first_probes() {
         (250..420).contains(&early),
         "{early} of 1000 probe in the first 10 s"
     );
+}
+
+fn grain_only() -> Vec<CatalogueModel> {
+    vec![CatalogueModel {
+        model_id: "grain".to_owned(),
+        display_name: "Grain size".to_owned(),
+        customizations: Vec::new(),
+    }]
+}
+
+#[tokio::test]
+async fn choices_missing_from_the_catalogue_become_unavailable() {
+    let line = Line::new().await;
+    line.server.with_sim(|sim| sim.catalogue = grain_only());
+    line.files(1).await;
+    let available = line.pipeline.refresh_catalogue().await.unwrap().unwrap();
+    assert_eq!(available.into_iter().collect::<Vec<_>>(), ["grain:"]);
+    let mut states = line.states().await;
+    states.sort();
+    assert_eq!(states, ["queued", "unavailable"]);
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn a_refused_submit_checks_the_catalogue_before_failing() {
+    let line = Line::new().await;
+    line.server.with_sim(|sim| sim.catalogue = grain_only());
+    let refused = ServerError::Forbidden {
+        code: "ACCESS_DENIED".to_owned(),
+    };
+    line.server
+        .fail_next(Op::Submit, Fault::Before(refused.clone()));
+    line.server.fail_next(Op::Submit, Fault::Before(refused));
+    line.files(1).await;
+    line.run_for(MINUTE_MS, SECOND_MS).await;
+    let mut states = line.states().await;
+    states.sort();
+    assert_eq!(states, ["failed", "unavailable"]);
+    line.finish().await;
 }
