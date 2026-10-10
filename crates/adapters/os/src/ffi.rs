@@ -6,6 +6,7 @@ mod proxy;
 mod security;
 mod shell;
 mod system;
+mod trust;
 mod window;
 
 pub use com::{pick_files, pick_folder, read_link, save_link};
@@ -26,10 +27,14 @@ pub use security::{
     windows_user,
 };
 pub use shell::{memory_is_low, open_file, reveal_file, set_webview_visible, user_locale_name};
-pub use system::{KnownFolder, clear_clipboard, clipboard_text, confirm, known_folder};
+pub use system::{
+    KnownFolder, accepts_notifications, clear_clipboard, clipboard_text, confirm, known_folder,
+    user_idle_ms,
+};
 pub(crate) use system::{
     drive_is_remote, expand_environment, notify_associations_changed, processes_named, terminate,
 };
+pub(crate) use trust::signer_facts;
 pub use window::{SystemSignal, show_error, spawn_session_watcher};
 
 fn wide(text: &str) -> Vec<u16> {

@@ -15,15 +15,18 @@ use windows_sys::Win32::System::Environment::ExpandEnvironmentStringsW;
 use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleW, GetProcAddress};
 use windows_sys::Win32::System::Memory::{GlobalLock, GlobalSize, GlobalUnlock};
 use windows_sys::Win32::System::Ole::CF_UNICODETEXT;
+use windows_sys::Win32::System::SystemInformation::GetTickCount;
 use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_TERMINATE, TerminateProcess};
 use windows_sys::Win32::System::WindowsProgramming::DRIVE_REMOTE;
 use windows_sys::Win32::UI::Controls::{TASKDIALOG_BUTTON, TASKDIALOGCONFIG};
+use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO};
 use windows_sys::Win32::UI::Shell::{
     FOLDERID_CommonPrograms, FOLDERID_CommonStartup, FOLDERID_Desktop, FOLDERID_Documents,
     FOLDERID_Downloads, FOLDERID_LocalAppData, FOLDERID_Pictures, FOLDERID_Profile,
     FOLDERID_ProgramFiles, FOLDERID_ProgramFilesX86, FOLDERID_Programs, FOLDERID_PublicDesktop,
     FOLDERID_RoamingAppData, FOLDERID_SendTo, FOLDERID_Startup, FOLDERID_Windows,
-    SHCNE_ASSOCCHANGED, SHCNF_IDLIST, SHChangeNotify, SHGetKnownFolderPath,
+    QUNS_ACCEPTS_NOTIFICATIONS, SHCNE_ASSOCCHANGED, SHCNF_IDLIST, SHChangeNotify,
+    SHGetKnownFolderPath, SHQueryUserNotificationState,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     IDYES, MB_DEFBUTTON2, MB_ICONWARNING, MB_YESNO, MessageBoxW,
@@ -260,4 +263,23 @@ pub fn confirm(owner: isize, title: &str, text: &str, buttons: [&str; 2]) -> boo
     // SAFETY: the config and every string it points to outlive the modal call.
     let shown = unsafe { show(&raw const config, &raw mut pressed, null_mut(), null_mut()) };
     shown >= 0 && pressed == SWITCH
+}
+
+pub fn user_idle_ms() -> Option<u64> {
+    let mut info = LASTINPUTINFO {
+        cbSize: u32::try_from(size_of::<LASTINPUTINFO>()).unwrap_or(u32::MAX),
+        dwTime: 0,
+    };
+    // SAFETY: the struct is a live local with cbSize set.
+    check(unsafe { GetLastInputInfo(&raw mut info) }).ok()?;
+    // SAFETY: takes no arguments.
+    let now = unsafe { GetTickCount() };
+    Some(u64::from(now.wrapping_sub(info.dwTime)))
+}
+
+pub fn accepts_notifications() -> bool {
+    let mut state = 0;
+    // SAFETY: the out pointer is a live local.
+    let read = unsafe { SHQueryUserNotificationState(&raw mut state) } >= 0;
+    read && state == QUNS_ACCEPTS_NOTIFICATIONS
 }
