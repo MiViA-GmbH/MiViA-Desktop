@@ -31,6 +31,7 @@ fn license(dto: &LicenseDto) -> License {
 fn model(dto: &ModelDto) -> CatalogueModel {
     CatalogueModel {
         model_id: dto.id.to_string(),
+        internal_name: dto.name.clone(),
         display_name: dto.display_name.clone(),
         customizations: Vec::new(),
     }

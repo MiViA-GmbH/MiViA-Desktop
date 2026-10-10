@@ -76,6 +76,7 @@ impl Default for ServerSim {
             max_upload_bytes: 300 * 1024 * 1024,
             catalogue: vec![CatalogueModel {
                 model_id: sim_id(9, 1),
+                internal_name: "GRAIN".to_owned(),
                 display_name: "Grain size".to_owned(),
                 customizations: Vec::new(),
             }],

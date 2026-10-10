@@ -198,6 +198,7 @@ fn a_thousand_installs_resuming_together_spread_their_first_probes() {
 fn grain_only() -> Vec<CatalogueModel> {
     vec![CatalogueModel {
         model_id: "grain".to_owned(),
+        internal_name: "GRAIN".to_owned(),
         display_name: "Grain size".to_owned(),
         customizations: Vec::new(),
     }]

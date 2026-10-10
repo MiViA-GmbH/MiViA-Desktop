@@ -68,10 +68,24 @@ impl ConnectionAuthorizer {
         if !same {
             return Err(CredentialStoreError::NotVerified);
         }
+        self.remember(key);
+        Ok(())
+    }
+
+    pub fn remember(&self, key: SecretString) {
         let mut current = self.current.write();
         let version = current.as_ref().map_or(0, |(_, version)| *version) + 1;
         *current = Some((key, version));
-        Ok(())
+    }
+
+    pub async fn forget(&self) -> Result<(), CredentialStoreError> {
+        *self.current.write() = None;
+        let origin = &self.connection.origin;
+        self.store.delete(origin).await?;
+        match self.store.load(origin).await? {
+            None => Ok(()),
+            Some(_) => Err(CredentialStoreError::NotVerified),
+        }
     }
 
     fn version(&self) -> u64 {
