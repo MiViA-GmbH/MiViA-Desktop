@@ -9,6 +9,7 @@ use mivia_domain::image_format::{ByteSource, check_source};
 use mivia_domain::output::ProbeResult;
 use mivia_domain::path::WinPath;
 use mivia_domain::sanitise::is_reserved;
+use mivia_ports::export::ExportSink;
 use mivia_ports::fs::{
     ByteSink, ChunkSource, Expected, FileStat, FileSystem, FsError, ImageRead, SaveTarget, Walk,
     WalkEntry,
@@ -20,7 +21,7 @@ use windows_sys::Win32::Storage::FileSystem::{
 };
 
 use crate::reports::{self, bounded, native};
-use crate::{ffi, upload};
+use crate::{export, ffi, upload};
 
 const SHARE_ALL: u32 = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 const READ_CHUNK: usize = 1024 * 1024;
@@ -257,6 +258,21 @@ impl FileSystem for OsFileSystem {
     ) -> Result<WinPath, FsError> {
         let (staging, target) = (staging.clone(), target.clone());
         bounded(move || reports::save(&staging, &target)).await
+    }
+    async fn move_report(&self, from: &WinPath, target: &SaveTarget) -> Result<WinPath, FsError> {
+        let (from, target) = (from.clone(), target.clone());
+        bounded(move || export::move_report(&from, &target)).await
+    }
+
+    async fn export_sink(
+        &self,
+        dir: &WinPath,
+        stem: &str,
+        separator: char,
+    ) -> Result<Box<dyn ExportSink>, FsError> {
+        let (dir, stem) = (dir.clone(), stem.to_owned());
+        let sink = bounded(move || export::FileExport::create(&dir, &stem, separator)).await?;
+        Ok(Box::new(sink))
     }
 
     async fn digest(&self, path: &WinPath) -> Result<(u64, Fingerprint), FsError> {

@@ -8,6 +8,7 @@ use std::ptr::null_mut;
 use windows_sys::Win32::Foundation::{
     GENERIC_READ, GENERIC_WRITE, HANDLE, INVALID_HANDLE_VALUE, LocalFree,
 };
+use windows_sys::Win32::Security::Authentication::Identity::{GetUserNameExW, NameSamCompatible};
 use windows_sys::Win32::Security::Authorization::{
     ConvertSidToStringSidW, ConvertStringSecurityDescriptorToSecurityDescriptorW, SDDL_REVISION_1,
 };
@@ -33,6 +34,18 @@ pub struct ProcessIdentity {
 pub fn current_user_sid() -> io::Result<String> {
     // SAFETY: the pseudo handle of the current process needs no closing.
     token_sid(&token_of(unsafe { GetCurrentProcess() })?)
+}
+
+pub fn windows_user() -> io::Result<String> {
+    let mut size: u32 = 256;
+    let mut buffer = vec![0_u16; 256];
+    // SAFETY: the buffer holds `size` UTF-16 units and `size` is a writable u32.
+    let ok = unsafe { GetUserNameExW(NameSamCompatible, buffer.as_mut_ptr(), &raw mut size) };
+    if !ok {
+        return Err(io::Error::last_os_error());
+    }
+    buffer.truncate(usize::try_from(size).unwrap_or_default());
+    Ok(String::from_utf16_lossy(&buffer))
 }
 
 pub fn is_elevated() -> io::Result<bool> {

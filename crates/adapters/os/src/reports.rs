@@ -97,7 +97,7 @@ pub(crate) fn list_names(folder: &WinPath) -> Result<Vec<String>, FsError> {
         .collect())
 }
 
-fn no_links_below(base: &WinPath, folder: &WinPath) -> Result<(), FsError> {
+pub(crate) fn no_links_below(base: &WinPath, folder: &WinPath) -> Result<(), FsError> {
     let Some(parts) = base.relative_components(folder) else {
         return Err(FsError::Link);
     };
@@ -156,7 +156,7 @@ fn prepare(staging: &WinPath, target: &SaveTarget) -> Result<(PathBuf, u64), FsE
     Ok((folder, size))
 }
 
-fn next(clash: Option<u32>) -> Result<Option<u32>, FsError> {
+pub(crate) fn next(clash: Option<u32>) -> Result<Option<u32>, FsError> {
     let counter = clash.map_or(2, |counter| counter + 1);
     if counter > MAX_CLASH {
         return Err(FsError::Exists);

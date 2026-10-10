@@ -6,7 +6,8 @@ use windows_sys::Win32::Foundation::{FILETIME, SYSTEMTIME};
 use windows_sys::Win32::Storage::FileSystem::{
     FILE_ATTRIBUTE_HIDDEN, FILE_BASIC_INFO, FILE_NAME_NORMALIZED, FileBasicInfo,
     GetDiskFreeSpaceExW, GetFileAttributesW, GetFileInformationByHandleEx,
-    GetFinalPathNameByHandleW, INVALID_FILE_ATTRIBUTES, SetFileAttributesW, VOLUME_NAME_DOS,
+    GetFinalPathNameByHandleW, INVALID_FILE_ATTRIBUTES, MoveFileExW, SetFileAttributesW,
+    VOLUME_NAME_DOS,
 };
 use windows_sys::Win32::System::Time::{FileTimeToSystemTime, SystemTimeToTzSpecificLocalTime};
 
@@ -67,6 +68,12 @@ pub(crate) fn free_bytes(path: &str) -> io::Result<u64> {
         )
     };
     check(ok).map(|()| free)
+}
+
+pub(crate) fn move_without_replace(from: &str, to: &str) -> io::Result<()> {
+    let (from, to) = (wide(from), wide(to));
+    // SAFETY: both names are NUL-terminated UTF-16 paths.
+    check(unsafe { MoveFileExW(from.as_ptr(), to.as_ptr(), 0) })
 }
 
 pub(crate) fn set_hidden(path: &str, hidden: bool) -> io::Result<()> {
