@@ -1,0 +1,41 @@
+engine biome(1.0)
+language js(typescript, jsx)
+
+JsConditionalExpression(test=$test, consequent=$cons, alternate=$alt) as $ternary where {
+	or {
+		$test <: contains JsLogicalExpression(left=contains JsLogicalExpression()),
+		$test <: contains JsLogicalExpression(right=contains JsLogicalExpression()),
+		$cons <: contains or {
+			JsArrowFunctionExpression(),
+			JsFunctionExpression(),
+			JsConditionalExpression()
+		} until JsxTagExpression(),
+		$alt <: contains or {
+			JsArrowFunctionExpression(),
+			JsFunctionExpression(),
+			JsConditionalExpression()
+		} until JsxTagExpression(),
+		$cons <: contains or {
+			JsObjectExpression(),
+			JsArrayExpression()
+		} as $lit where { $lit <: r"(?s).*\n.*" },
+		$alt <: contains or {
+			JsObjectExpression(),
+			JsArrayExpression()
+		} as $lit where { $lit <: r"(?s).*\n.*" },
+		and {
+			$ternary <: r"(?s).*\n.*\n.*\n.*",
+			not and {
+				$cons <: or {
+					JsxTagExpression(),
+					JsParenthesizedExpression(expression=JsxTagExpression())
+				},
+				$alt <: or {
+					JsxTagExpression(),
+					JsParenthesizedExpression(expression=JsxTagExpression())
+				}
+			}
+		}
+	},
+	register_diagnostic(span=$ternary, message="Ternary hurts readability: use if/return, a lookup map or a component")
+}

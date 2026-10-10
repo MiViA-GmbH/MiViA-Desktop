@@ -1,0 +1,874 @@
+# Performance budgets (reference laptop: 4C/8T 2021 mobile CPU, 8 GB, iGPU, NVMe).
+# A tbc row stays report-only until 14 nightly samples on one CPU model, then it is set once
+# to min(provisional, measured p90 x 1.25) and switched to block or two-night. Budgets only go down.
+
+["start.tray.median"]
+metric = "process creation to tray_ready, warm"
+unit = "ms"
+direction = "max"
+statistic = "median"
+n = 30
+budget = 150
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["start.tray.p90"]
+metric = "process creation to tray_ready, warm"
+unit = "ms"
+direction = "max"
+statistic = "p90"
+n = 30
+budget = 300
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["start.tray_cold"]
+metric = "process creation to tray_ready, standby purged"
+unit = "ms"
+direction = "max"
+statistic = "p90"
+n = 30
+budget = 800
+tier = "nightly"
+mode = "trend"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["start.tray_logon"]
+metric = "logon autostart to tray_ready"
+unit = "ms"
+direction = "max"
+statistic = "p90"
+n = 3
+budget = 800
+tier = "release"
+mode = "report-only"
+basis = "tbc"
+machine = "laptop"
+owner = "desktop-maintainers"
+
+["start.db"]
+metric = "tray_ready to db_ready"
+unit = "ms"
+direction = "max"
+statistic = "median"
+n = 30
+budget = 100
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["start.armed"]
+metric = "10 folders x 10k files armed plus catch-up"
+unit = "ms"
+direction = "max"
+statistic = "median"
+n = 10
+budget = 5000
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["idle.floor.commit"]
+metric = "tray-only, 0 folders, empty DB, e2e build, 20 s settle: commit"
+unit = "MB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 12
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["idle.floor.threads"]
+metric = "tray-only, 0 folders, empty DB, e2e build, 20 s settle: threads"
+unit = "count"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 12
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["idle.webview"]
+metric = "WebView2 processes before first open"
+unit = "count"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 0
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["idle.exercised"]
+metric = "tray-only after 20 folders x 10k reconciled, 100 Computing polled, a history read and a window destroy: app commit"
+unit = "MB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 40
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["idle.cpu"]
+metric = "tray-only CPU time over 30 min"
+unit = "s"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 1.8
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["idle.switches"]
+metric = "tray-only context switches"
+unit = "per_s"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 12
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["idle.timer"]
+metric = "timer resolution tray-only and 60 s after hide"
+unit = "ms"
+direction = "min"
+statistic = "value"
+n = 1
+budget = 15.625
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["idle.handles"]
+metric = "handles with 20 folders"
+unit = "count"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 400
+tier = "nightly"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["idle.log_io"]
+metric = "log bytes per tray-only idle hour"
+unit = "KB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 100
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.open.median"]
+metric = "first open, request to ui_ready, warm EBWebView"
+unit = "ms"
+direction = "max"
+statistic = "median"
+n = 20
+budget = 700
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.open.p90"]
+metric = "first open, request to ui_ready, warm EBWebView"
+unit = "ms"
+direction = "max"
+statistic = "p90"
+n = 20
+budget = 1000
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.open_fresh"]
+metric = "first open, EBWebView deleted"
+unit = "ms"
+direction = "max"
+statistic = "p90"
+n = 20
+budget = 1300
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.build_block"]
+metric = "WebviewWindowBuilder::build main-thread block"
+unit = "ms"
+direction = "max"
+statistic = "p90"
+n = 20
+budget = 1200
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.ui_stall"]
+metric = "max UI-thread stall outside build"
+unit = "ms"
+direction = "max"
+statistic = "max"
+n = 20
+budget = 100
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.reshow"]
+metric = "request to first rAF after visibilitychange visible"
+unit = "ms"
+direction = "max"
+statistic = "p90"
+n = 20
+budget = 100
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.visible"]
+metric = "visible, idle, history-10k loaded: tree commit"
+unit = "MB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 250
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.hidden.commit"]
+metric = "60 s after hide: tree commit"
+unit = "MB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 200
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.hidden.cpu"]
+metric = "hidden tree CPU over 10 min"
+unit = "percent_core"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 0.2
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.ipc_payload"]
+metric = "largest IPC response in the E2E run"
+unit = "KB"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 64
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["win.ipc_rate"]
+metric = "IPC messages per active job"
+unit = "per_s"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 10
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["active.switches"]
+metric = "window hidden, 500 Computing polled: app context switches"
+unit = "per_s"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 20
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["burst.5000.lost"]
+metric = "5000 x 1 MiB in 2 s: lost files"
+unit = "count"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 0
+tier = "nightly"
+mode = "block"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["burst.5000.ready"]
+metric = "5000 x 1 MiB in 2 s: all Ready after last write"
+unit = "s"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 30
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["burst.5000.channel"]
+metric = "5000 x 1 MiB in 2 s: channel high-water"
+unit = "count"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 32767
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["burst.5000.commit"]
+metric = "5000 x 1 MiB in 2 s: app commit peak"
+unit = "MB"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 80
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["burst.5000.threads"]
+metric = "5000 x 1 MiB in 2 s: threads peak"
+unit = "count"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 24
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["upload.cpu"]
+metric = "loopback https stub, 2 x 300 MB: core-seconds per 100 MB"
+unit = "s"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 1.0
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["upload.rate"]
+metric = "loopback https stub, 2 x 300 MB: aggregate rate"
+unit = "MB_per_s"
+direction = "min"
+statistic = "value"
+n = 1
+budget = 200
+tier = "nightly"
+mode = "trend"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["upload.shaped"]
+metric = "shaped link, files >= 10 MB: link use"
+unit = "percent"
+direction = "min"
+statistic = "value"
+n = 1
+budget = 90
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["upload.mem"]
+metric = "500-file upload, window hidden: app commit peak"
+unit = "MB"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 150
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["db.commit"]
+metric = "small write transaction, synchronous FULL"
+unit = "ms"
+direction = "max"
+statistic = "p95"
+n = 100
+budget = 10
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["db.catchup"]
+metric = "chunked intake inserts"
+unit = "rows_per_s"
+direction = "min"
+statistic = "value"
+n = 1
+budget = 5000
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["db.checkpoint"]
+metric = "wal_checkpoint stall"
+unit = "ms"
+direction = "max"
+statistic = "p99"
+n = 100
+budget = 50
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["hist.page"]
+metric = "ListHistory page on history-10k and history-1m, warm"
+unit = "ms"
+direction = "max"
+statistic = "p95"
+n = 100
+budget = 5
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["hist.page_cold"]
+metric = "ListHistory page, standby purged"
+unit = "ms"
+direction = "max"
+statistic = "p95"
+n = 100
+budget = 20
+tier = "nightly"
+mode = "trend"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["hist.ipc"]
+metric = "invoke to 100 rows in JS"
+unit = "ms"
+direction = "max"
+statistic = "p95"
+n = 100
+budget = 30
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["hist.items"]
+metric = "ListBatchItems page of a 1000-member batch"
+unit = "ms"
+direction = "max"
+statistic = "p95"
+n = 100
+budget = 5
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["hist.plan"]
+metric = "plan shape on history-10k: SCAN, temp B-tree, auto index"
+unit = "count"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 0
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["ui.scroll.dom"]
+metric = "U2 10k scroll: DOM nodes"
+unit = "count"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 1500
+tier = "pr"
+mode = "block"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["ui.scroll.heap"]
+metric = "U2 10k scroll: JS heap"
+unit = "MB"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 80
+tier = "pr"
+mode = "block"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["ui.scroll.loaf"]
+metric = "U2 10k scroll: long animation frames over 50 ms"
+unit = "count"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 2
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["prev.cached"]
+metric = "cached display tier, click to decoded pixels"
+unit = "ms"
+direction = "max"
+statistic = "p90"
+n = 20
+budget = 500
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["prev.render"]
+metric = "uncached display tier of an 8k PNG, render and open"
+unit = "ms"
+direction = "max"
+statistic = "p90"
+n = 20
+budget = 1500
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["prev.mem"]
+metric = "per open, R1 tiers: tree commit increase"
+unit = "MB"
+direction = "max"
+statistic = "max"
+n = 20
+budget = 250
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["prev.soak.plateau"]
+metric = "60 distinct images, window visible: plateau increase"
+unit = "MB"
+direction = "max"
+statistic = "value"
+n = 2
+budget = 700
+tier = "nightly"
+mode = "report-only"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["prev.soak.slope"]
+metric = "60 distinct images: Theil-Sen slope of the last 30 opens"
+unit = "MB_per_open"
+direction = "max"
+statistic = "slope"
+n = 2
+budget = 1
+tier = "nightly"
+mode = "report-only"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["report.save"]
+metric = "50 MB part, temp + flush + rename, local SSD"
+unit = "ms"
+direction = "max"
+statistic = "p95"
+n = 20
+budget = 300
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["io.catchup"]
+metric = "reconcile of 10k known files: file-body bytes read"
+unit = "bytes"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 0
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["size.exe"]
+metric = "release exe"
+unit = "MB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 22
+tier = "nightly"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["size.installer"]
+metric = "NSIS installer"
+unit = "MB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 10
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["size.install"]
+metric = "installed directory"
+unit = "MB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 30
+tier = "nightly"
+mode = "report-only"
+basis = "tbc"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["size.js"]
+metric = "startup JS, minified, no gzip"
+unit = "KB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 560
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["size.css"]
+metric = "startup CSS"
+unit = "KB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 300
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["size.fonts"]
+metric = "fonts"
+unit = "KB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 120
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["size.chunk"]
+metric = "any lazy chunk"
+unit = "KB"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 400
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["size.chunk_preview"]
+metric = "preview chunk"
+unit = "KB"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 1000
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["bench.instr"]
+metric = "gungraun instruction counts vs baseline"
+unit = "percent"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 3
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["bench.wall"]
+metric = "criterion benches vs last release baseline, same CPU model"
+unit = "percent"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 10
+tier = "nightly"
+mode = "two-night"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["ipc.bytes"]
+metric = "generated bindings exposing number[] from Vec<u8>"
+unit = "count"
+direction = "max"
+statistic = "value"
+n = 1
+budget = 0
+tier = "pr"
+mode = "block"
+basis = "measured"
+machine = "windows-2025"
+owner = "desktop-maintainers"
+
+["gpu.mem"]
+metric = "preview on iGPU: shared GPU memory of the tree"
+unit = "MB"
+direction = "max"
+statistic = "max"
+n = 1
+budget = 300
+tier = "release"
+mode = "report-only"
+basis = "tbc"
+machine = "laptop"
+owner = "desktop-maintainers"
+
+["frame.60hz"]
+metric = "pan and zoom on a 4096 tier at 60 Hz: p95 frame interval"
+unit = "ms"
+direction = "max"
+statistic = "p95"
+n = 1
+budget = 17.5
+tier = "release"
+mode = "report-only"
+basis = "tbc"
+machine = "laptop"
+owner = "desktop-maintainers"

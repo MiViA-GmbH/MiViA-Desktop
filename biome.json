@@ -1,0 +1,144 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+	"files": {
+		"includes": ["**"]
+	},
+	"plugins": ["./ui/quality/ternary.grit"],
+	"formatter": { "indentStyle": "tab", "lineEnding": "lf", "lineWidth": 120 },
+	"javascript": { "formatter": { "quoteStyle": "single", "semicolons": "always", "trailingCommas": "all" } },
+	"linter": {
+		"rules": {
+			"preset": "recommended",
+			"complexity": {
+				"noExcessiveCognitiveComplexity": { "level": "error", "options": { "maxAllowedComplexity": 10 } },
+				"noExcessiveLinesPerFunction": {
+					"level": "error",
+					"options": { "maxLines": 40, "skipBlankLines": true, "skipIifes": false }
+				},
+				"useMaxParams": { "level": "error", "options": { "max": 4 } },
+				"noExcessiveNestedTestSuites": "error",
+				"noUselessFragments": "error",
+				"noUselessTernary": "error"
+			},
+			"style": {
+				"noNestedTernary": "error",
+				"noParameterAssign": "error",
+				"useBlockStatements": "error",
+				"noUselessElse": "error",
+				"noNegationElse": "error",
+				"useCollapsedElseIf": "error",
+				"useCollapsedIf": "error",
+				"noNonNullAssertion": "error",
+				"noDefaultExport": "error",
+				"useFilenamingConvention": { "level": "error", "options": { "filenameCases": ["kebab-case"] } },
+				"useConst": "error",
+				"useTemplate": "error",
+				"useImportType": "error",
+				"useExportType": "error",
+				"noRestrictedImports": {
+					"level": "error",
+					"options": {
+						"paths": { "zod": "Validation lives in Rust; the UI trusts the generated bindings." },
+						"patterns": [
+							{
+								"group": ["@tauri-apps/**"],
+								"message": "Tauri APIs are reached only through src/shared/ipc, src/shared/lib/log and src/app."
+							},
+							{
+								"group": ["@mivia-ai/viz-kit", "@mivia-ai/viz-kit/*"],
+								"message": "viz-kit is used only in src/features/result-preview."
+							}
+						]
+					}
+				}
+			},
+			"suspicious": {
+				"noExplicitAny": "error",
+				"noTsIgnore": "error",
+				"noConsole": "error",
+				"noDoubleEquals": "error",
+				"noAssignInExpressions": "error",
+				"noArrayIndexKey": "error"
+			},
+			"correctness": {
+				"noUnusedVariables": "error",
+				"noUnusedImports": "error",
+				"noUndeclaredVariables": "error",
+				"noUnreachable": "error"
+			},
+			"performance": {
+				"noReExportAll": "error",
+				"noAccumulatingSpread": "error",
+				"noDelete": "error",
+				"noBarrelFile": "off"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "error",
+				"noGlobalEval": "error"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.tsx"],
+			"linter": {
+				"rules": {
+					"complexity": {
+						"noExcessiveCognitiveComplexity": { "level": "error", "options": { "maxAllowedComplexity": 15 } }
+					}
+				}
+			}
+		},
+		{
+			"includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "ui/e2e/**"],
+			"linter": {
+				"rules": {
+					"complexity": { "noExcessiveLinesPerFunction": "off", "noExcessiveCognitiveComplexity": "off" }
+				}
+			}
+		},
+		{
+			"includes": ["ui/src/routes/**"],
+			"linter": { "rules": { "style": { "useFilenamingConvention": "off" } } }
+		},
+		{
+			"includes": ["**/*.config.ts", "ui/wdio.conf.ts"],
+			"linter": { "rules": { "style": { "noDefaultExport": "off" } } }
+		},
+		{
+			"includes": ["ui/src/shared/ipc/**", "ui/src/shared/lib/log*", "ui/src/app/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": { "paths": { "zod": "Validation lives in Rust; the UI trusts the generated bindings." } }
+						}
+					}
+				}
+			}
+		},
+		{
+			"includes": ["ui/src/features/result-preview/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"paths": { "zod": "Validation lives in Rust; the UI trusts the generated bindings." },
+								"patterns": [
+									{
+										"group": ["@tauri-apps/**"],
+										"message": "Tauri APIs are reached only through src/shared/ipc, src/shared/lib/log and src/app."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		}
+	]
+}

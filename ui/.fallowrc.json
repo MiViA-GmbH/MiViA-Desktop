@@ -1,0 +1,47 @@
+{
+	"$schema": "./node_modules/fallow/schema.json",
+	"entry": ["src/main.ts"],
+	"ignorePatterns": [],
+	"rules": {
+		"unused-files": "error",
+		"unused-exports": "error",
+		"unused-types": "error",
+		"unused-enum-members": "error",
+		"unused-class-members": "error",
+		"unused-dependencies": "error",
+		"unused-dev-dependencies": "error",
+		"unresolved-imports": "error",
+		"unlisted-dependencies": "error",
+		"duplicate-exports": "error",
+		"circular-dependencies": "error",
+		"re-export-cycle": "error",
+		"boundary-violation": "error",
+		"complexity-cyclomatic": "off",
+		"complexity-cognitive": "off",
+		"complexity-crap": "off"
+	},
+	"duplicates": {
+		"mode": "mild",
+		"minTokens": 50,
+		"minLines": 5,
+		"threshold": 0.001,
+		"ignore": ["**/*.test.*", "e2e/**", "src/test/**"]
+	},
+	"boundaries": {
+		"zones": [
+			{ "name": "app", "patterns": ["src/main.ts", "src/app/**"] },
+			{ "name": "routes", "patterns": ["src/routes/**"] },
+			{ "name": "features", "patterns": ["src/features/**"], "autoDiscover": ["src/features"] },
+			{ "name": "entities", "patterns": ["src/entities/**"], "autoDiscover": ["src/entities"] },
+			{ "name": "shared", "patterns": ["src/shared/**"] }
+		],
+		"rules": [
+			{ "from": "app", "allow": ["routes", "features", "entities", "shared"] },
+			{ "from": "routes", "allow": ["features", "entities", "shared"] },
+			{ "from": "features", "allow": ["entities", "shared"] },
+			{ "from": "entities", "allow": ["shared"] },
+			{ "from": "shared", "allow": [] }
+		],
+		"coverage": { "requireAllFiles": true }
+	}
+}

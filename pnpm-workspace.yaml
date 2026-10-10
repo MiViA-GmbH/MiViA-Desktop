@@ -1,0 +1,7 @@
+packages:
+  - ui
+minimumReleaseAge: 10080
+trustPolicy: no-downgrade
+blockExoticSubdeps: true
+allowBuilds:
+  lefthook: false

@@ -1,0 +1,20 @@
+{
+	"name": "mivia-desktop",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@12.10.1",
+	"scripts": {
+		"prepare": "lefthook install",
+		"check": "node scripts/check.mjs check",
+		"check:full": "node scripts/check.mjs full",
+		"fix": "node scripts/check.mjs fix",
+		"floors:lower": "cargo xtask floors-lower",
+		"why": "cargo xtask why"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.15",
+		"lefthook": "2.1.16",
+		"jscpd": "5.4.0"
+	}
+}
