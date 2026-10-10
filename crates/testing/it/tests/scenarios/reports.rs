@@ -338,10 +338,10 @@ async fn opening_a_saved_report_checks_its_hash() {
     closed_series(&line, 1).await;
     let part = kept_parts(&line).await.remove(0).id;
     line.run_for(6 * MINUTE_MS, 30 * SECOND_MS).await;
-    assert_eq!(
+    assert!(matches!(
         line.pipeline.check_saved_report(part).await.unwrap(),
-        SavedCheck::Intact
-    );
+        SavedCheck::Intact(_)
+    ));
     let saved = names(&line, REPORTS).await;
     let path = saved
         .iter()
@@ -354,10 +354,10 @@ async fn opening_a_saved_report_checks_its_hash() {
     for path in saved.iter().map(|name| win(REPORTS).join(name).unwrap()) {
         line.world.fs.put(&path, b"%PDF-1.7 edited");
     }
-    assert_eq!(
+    assert!(matches!(
         line.pipeline.check_saved_report(part).await.unwrap(),
-        SavedCheck::Changed
-    );
+        SavedCheck::Changed(_)
+    ));
     line.world.fs.vanish(&path);
     line.world.fs.vanish(&win(REPORTS));
     assert_eq!(

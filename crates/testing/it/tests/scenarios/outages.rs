@@ -233,3 +233,24 @@ async fn a_refused_submit_checks_the_catalogue_before_failing() {
     assert_eq!(states, ["failed", "unavailable"]);
     line.finish().await;
 }
+
+#[tokio::test]
+async fn check_now_probes_at_once_instead_of_waiting_for_the_backoff() {
+    let line = Line::new().await;
+    let mut everything = API.to_vec();
+    everything.push(Op::Version);
+    line.server
+        .set_down(&everything, Some(&ServerError::Unreachable));
+    line.files(1).await;
+    line.run_for(10 * MINUTE_MS, 5 * SECOND_MS).await;
+    assert_eq!(line.holds().await, [HoldReason::Offline]);
+    line.server.set_down(&everything, None);
+    let probes = line.server.count(Op::Version);
+    line.pipeline.probe_now().await.unwrap();
+    with_clock(&line.world.clock, line.pipeline.probe_tick())
+        .await
+        .unwrap();
+    assert_eq!(line.server.count(Op::Version), probes + 1);
+    assert_eq!(line.holds().await, []);
+    line.finish().await;
+}

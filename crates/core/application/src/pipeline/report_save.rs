@@ -10,10 +10,10 @@ use mivia_ports::store::reports::{Rerequest, SaveRow};
 
 use super::{Pipeline, PipelineError, Tick};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SavedCheck {
-    Intact,
-    Changed,
+    Intact(WinPath),
+    Changed(WinPath),
     Missing,
 }
 
@@ -114,11 +114,11 @@ impl Pipeline {
             return Ok(SavedCheck::Missing);
         };
         let check = match self.ports.fs.digest(&saved.path).await {
-            Ok(found) if found == (saved.size, saved.sha256) => SavedCheck::Intact,
-            Ok(_) => SavedCheck::Changed,
+            Ok(found) if found == (saved.size, saved.sha256) => SavedCheck::Intact(saved.path),
+            Ok(_) => SavedCheck::Changed(saved.path),
             Err(_) => SavedCheck::Missing,
         };
-        if check == SavedCheck::Changed {
+        if matches!(check, SavedCheck::Changed(_)) {
             tracing::warn!(part = id.0, "report.changedAfterSave");
         }
         Ok(check)

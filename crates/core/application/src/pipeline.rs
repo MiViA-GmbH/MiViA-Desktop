@@ -192,6 +192,18 @@ impl Pipeline {
         Ok(())
     }
 
+    pub async fn probe_now(&self) -> Result<(), PipelineError> {
+        let now = self.now();
+        let held = self.active_holds().await?;
+        self.write(move |tx, scope| {
+            held.iter()
+                .try_for_each(|reason| tx.holds(scope).raise(*reason, now, Some(now)))
+        })
+        .await?;
+        self.wakers.probe.notify_one();
+        Ok(())
+    }
+
     fn now(&self) -> Timestamp {
         self.ports.clock.now()
     }
