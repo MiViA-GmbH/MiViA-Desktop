@@ -32,6 +32,7 @@ mivia-server = { path = "crates/adapters/server" }
 mivia-os = { path = "crates/adapters/os" }
 mivia-diagnostics = { path = "crates/adapters/diagnostics" }
 mivia-testkit = { path = "crates/testing/testkit" }
+mivia-stub = { path = "crates/testing/stub" }
 
 [workspace.lints.rust]
 unsafe_code = "deny"
