@@ -30,6 +30,8 @@ async function start(root: HTMLElement): Promise<void> {
 	await events.navigate.listen(({ payload }) => {
 		if (payload.route === 'problemReport') {
 			requestReport(queryClient, { trigger: 'manual', signature: null });
+		} else if (payload.route === 'updates') {
+			router.navigate({ to: '/settings/$section', params: { section: 'updates' } });
 		} else {
 			router.navigate({ to: '/' });
 		}

@@ -71,9 +71,7 @@
 				"title": "Your MiViA license is not valid.",
 				"text": "Images are safe and wait here. Ask the MiViA contact in your lab."
 			},
-			"clientTooOld": {
-				"title": "This version is too old for the server."
-			},
+			"updateRequired": "Update required.",
 			"continues": "Images are safe and continue automatically.",
 			"safe": "Images are safe and wait here.",
 			"checkNow": "Check connection now",
@@ -211,7 +209,30 @@
 			"languageAuto": "Automatic (Windows)",
 			"explorer": "Explorer integration",
 			"support": "Support",
-			"privacy": "Privacy"
+			"privacy": "Privacy",
+			"updates": "Updates"
+		},
+		"update": {
+			"current": "Installed version: {{version}}",
+			"channel": "Update channel",
+			"stable": "Stable",
+			"beta": "Beta",
+			"channelNote": "Switching from Beta to Stable keeps the beta version until a newer stable version is released.",
+			"automatic": "Download and install updates automatically",
+			"checking": "Checking for updates…",
+			"upToDate": "MiViA Desktop is up to date.",
+			"available": "Version {{version}} is available.",
+			"downloading": "Downloading version {{version}}…",
+			"ready": "Version {{version}} is ready to install.",
+			"failed": "The check for updates failed.",
+			"lastCheck": "Last checked: {{time}}",
+			"check": "Check for updates",
+			"restart": "Restart and update",
+			"installFailed": "Installing version {{version}} failed. This version keeps running.",
+			"report": "Report a problem",
+			"requiredTitle": "A newer version is required.",
+			"requiredText": "No update is available yet. Uploads continue.",
+			"releases": "Releases page"
 		},
 		"status": {
 			"batch": {

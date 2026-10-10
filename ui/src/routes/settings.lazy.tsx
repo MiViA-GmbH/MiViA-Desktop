@@ -10,6 +10,7 @@ import { BackupPanel } from '../features/settings/backup-panel';
 import { AutostartSwitch, ExplorerSwitch } from '../features/settings/integration-panel';
 import { LanguageSelect } from '../features/settings/language-select';
 import { SupportPanel } from '../features/support/support-panel';
+import { UpdatesPanel } from '../features/updates/updates-panel';
 import { PageHeader } from '../shared/ui/page-header';
 import { Panel } from '../shared/ui/panel';
 import { NotFound } from './errors';
@@ -18,6 +19,7 @@ const SECTIONS = {
 	account: 'desktop.settings.account',
 	general: 'desktop.settings.general',
 	explorer: 'desktop.settings.explorer',
+	updates: 'desktop.settings.updates',
 	privacy: 'desktop.settings.privacy',
 	support: 'desktop.settings.support',
 } as const;
@@ -44,6 +46,7 @@ const PANELS = {
 	account: { title: 'desktop.settings.account', body: AccountPanel },
 	general: { title: 'desktop.settings.general', body: General },
 	explorer: { title: 'desktop.settings.explorer', body: ExplorerSwitch },
+	updates: { title: 'desktop.settings.updates', body: UpdatesPanel },
 	privacy: { title: 'desktop.settings.privacy', body: PrivacyPanel },
 	support: { title: 'desktop.settings.support', body: SupportPanel },
 } as const;

@@ -71,9 +71,7 @@
 				"title": "Ihre MiViA-Lizenz ist nicht gültig.",
 				"text": "Die Bilder sind sicher und warten hier. Fragen Sie die MiViA-Ansprechperson im Labor."
 			},
-			"clientTooOld": {
-				"title": "Diese Version ist zu alt für den Server."
-			},
+			"updateRequired": "Update erforderlich.",
 			"continues": "Die Bilder sind sicher, es geht automatisch weiter.",
 			"safe": "Die Bilder sind sicher und warten hier.",
 			"checkNow": "Verbindung jetzt prüfen",
@@ -211,7 +209,30 @@
 			"languageAuto": "Automatisch (Windows)",
 			"explorer": "Explorer-Integration",
 			"support": "Support",
-			"privacy": "Datenschutz"
+			"privacy": "Datenschutz",
+			"updates": "Updates"
+		},
+		"update": {
+			"current": "Installierte Version: {{version}}",
+			"channel": "Update-Kanal",
+			"stable": "Stabil",
+			"beta": "Beta",
+			"channelNote": "Beim Wechsel von Beta zu Stabil bleibt die Beta-Version installiert, bis eine neuere stabile Version erscheint.",
+			"automatic": "Updates automatisch herunterladen und installieren",
+			"checking": "Suche nach Updates…",
+			"upToDate": "MiViA Desktop ist aktuell.",
+			"available": "Version {{version}} ist verfügbar.",
+			"downloading": "Version {{version}} wird heruntergeladen…",
+			"ready": "Version {{version}} ist bereit zur Installation.",
+			"failed": "Die Suche nach Updates ist fehlgeschlagen.",
+			"lastCheck": "Zuletzt geprüft: {{time}}",
+			"check": "Nach Updates suchen",
+			"restart": "Neu starten und aktualisieren",
+			"installFailed": "Die Installation von Version {{version}} ist fehlgeschlagen. Diese Version läuft weiter.",
+			"report": "Problem melden",
+			"requiredTitle": "Eine neuere Version ist erforderlich.",
+			"requiredText": "Noch ist kein Update verfügbar. Uploads laufen weiter.",
+			"releases": "Release-Seite"
 		},
 		"status": {
 			"batch": {

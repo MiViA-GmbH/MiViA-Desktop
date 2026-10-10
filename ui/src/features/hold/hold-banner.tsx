@@ -1,12 +1,13 @@
 import { Alert, Button, Group, Text } from '@mantine/core';
 import { ICON_STROKE } from '@mivia-ai/theme';
 import type { Icon } from '@tabler/icons-react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { holdsQuery, networkQuery } from '../../entities/hold/queries';
+import { UPDATE } from '../../entities/update/queries';
 import { commands } from '../../shared/ipc';
 import type { BlockKind, HoldKind, HoldView, NetworkView } from '../../shared/ipc/bindings';
 import { formatTime } from '../../shared/lib/format';
@@ -42,7 +43,7 @@ const LOOK = {
 		icon: TooOldIcon,
 		color: 'red',
 		rank: 4,
-		title: 'desktop.hold.clientTooOld.title',
+		title: 'desktop.hold.updateRequired',
 		text: 'desktop.hold.safe',
 	},
 	networkBlocked: {
@@ -114,6 +115,11 @@ function HoldAction({ kind }: { kind: HoldKind }) {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const check = useMutation({ mutationFn: () => commands.checkConnectionNow() });
+	const client = useQueryClient();
+	const install = useMutation({
+		mutationFn: () => commands.installUpdate(),
+		onSuccess: (next) => client.setQueryData(UPDATE, next),
+	});
 	if (LOOK[kind].color === 'orange') {
 		return (
 			<Button flex="none" loading={check.isPending} onClick={() => check.mutate()} size="xs" variant="default">
@@ -129,6 +135,13 @@ function HoldAction({ kind }: { kind: HoldKind }) {
 				size="xs"
 			>
 				{t('desktop.hold.enterKey')}
+			</Button>
+		);
+	}
+	if (kind === 'clientTooOld') {
+		return (
+			<Button flex="none" loading={install.isPending} onClick={() => install.mutate()} size="xs">
+				{t('desktop.update.restart')}
 			</Button>
 		);
 	}

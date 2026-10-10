@@ -3,6 +3,7 @@ import { useMediaQuery } from '@mantine/hooks';
 import { Outlet } from '@tanstack/react-router';
 
 import { HoldBanner } from '../../features/hold/hold-banner';
+import { RequiredBanner } from '../../features/hold/required-banner';
 import { DropOverlay } from './drop-overlay';
 import { OneOffHost } from './one-off-host';
 import { ReportHost } from './report-host';
@@ -18,6 +19,7 @@ export function Shell() {
 			<AppShell.Main bg="stone.1">
 				<Stack gap={0} h="100dvh">
 					<HoldBanner />
+					<RequiredBanner />
 					<ScrollArea flex={1} type="hover">
 						<Stack gap="lg" maw={1000} px="xl" py="lg">
 							<Outlet />
