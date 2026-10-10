@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use mivia_domain::ids::Fingerprint;
 use mivia_domain::image_format::{FormatCheck, ImageFormat};
 use mivia_domain::path::WinPath;
-use mivia_ports::fs::{FileSystem, FsError};
+use mivia_ports::fs::{ChunkSource, Expected, FileSystem, FsError};
 use sha2::{Digest, Sha256};
 
 use super::{Capability, CaseResult, check, check_eq};
@@ -210,6 +210,52 @@ pub async fn fs_write_atomic_refuses_reserved_names(harness: &impl FsHarness) ->
     )
 }
 
+fn expected(bytes: &[u8]) -> Expected {
+    Expected {
+        len: u64::try_from(bytes.len()).unwrap_or(u64::MAX),
+        fingerprint: Fingerprint(Sha256::digest(bytes).into()),
+    }
+}
+
+async fn drain(mut source: Box<dyn ChunkSource>) -> Result<Vec<u8>, FsError> {
+    let mut all = Vec::new();
+    while let Some(chunk) = source.next_chunk().await? {
+        all.extend(chunk);
+    }
+    Ok(all)
+}
+
+pub async fn fs_upload_streams_the_expected_content(harness: &impl FsHarness) -> CaseResult {
+    let path = child(harness, "upload.jpg")?;
+    let bytes: Vec<u8> = (0..3_000_000_u32)
+        .map(|n| u8::try_from(n % 251).unwrap_or_default())
+        .collect();
+    harness.put(&path, &bytes).await;
+    let sut = harness.sut();
+    let source = shown(
+        sut.open_upload(&path, &harness.root(), expected(&bytes))
+            .await,
+    )?;
+    check(
+        drain(source).await.as_deref() == Ok(bytes.as_slice()),
+        "uploaded bytes differ",
+    )
+}
+
+pub async fn fs_upload_refuses_changed_content(harness: &impl FsHarness) -> CaseResult {
+    let path = child(harness, "changed.jpg")?;
+    harness.put(&path, b"first").await;
+    let sut = harness.sut();
+    let opened = sut
+        .open_upload(&path, &harness.root(), expected(b"other"))
+        .await;
+    let outcome = match opened {
+        Ok(source) => drain(source).await.map(drop),
+        Err(error) => Err(error),
+    };
+    check_eq(&outcome, &Err(FsError::Changed), "changed content")
+}
+
 #[macro_export]
 macro_rules! fs_contract_tests {
     ($harness:expr) => {
@@ -229,6 +275,8 @@ macro_rules! fs_contract_tests {
             fs_write_atomic_replaces_content,
             fs_write_atomic_fails_on_locked_target,
             fs_write_atomic_refuses_reserved_names,
+            fs_upload_streams_the_expected_content,
+            fs_upload_refuses_changed_content,
         );
     };
 }

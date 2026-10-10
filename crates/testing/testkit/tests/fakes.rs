@@ -5,11 +5,13 @@ use mivia_domain::path::WinPath;
 use mivia_ports::clock::Clock;
 use mivia_ports::fs::{FileSystem, FsError};
 use mivia_ports::id_gen::IdGen;
-use mivia_ports::server::{ServerApi, ServerError, UploadRequest};
+use mivia_ports::server::{ServerApi, ServerError, ServerJobStatus, SubmitRequest};
 use mivia_testkit::clock::ManualClock;
+use mivia_testkit::contract::server::{grain, upload_request};
 use mivia_testkit::fs::{FsOp, InMemoryFs};
 use mivia_testkit::id_gen::SeqIdGen;
-use mivia_testkit::server::{FakeServerApi, Request};
+use mivia_testkit::server::{FakeServerApi, Fault, Op};
+use uuid::Uuid;
 
 fn path(text: &str) -> WinPath {
     WinPath::parse(text).unwrap()
@@ -80,23 +82,56 @@ async fn memory_fs_models_windows_names_and_faults() {
 #[tokio::test]
 async fn fake_server_injects_faults_and_journals_requests() {
     let server = FakeServerApi::default();
-    server.fail_next(ServerError::Unreachable);
-    assert_eq!(server.whoami().await, Err(ServerError::Unreachable));
-    assert_eq!(server.whoami().await.unwrap().account_id, "acc-1");
+    server.fail_next(Op::Version, Fault::Before(ServerError::Unreachable));
+    assert_eq!(server.version().await, Err(ServerError::Unreachable));
+    assert_eq!(server.version().await.unwrap().version, "2.45.0");
     server.with_sim(|sim| sim.max_upload_bytes = 1);
-    let upload = UploadRequest {
-        file_name: "big.tif".to_owned(),
-        bytes: vec![0; 2],
-    };
-    assert_eq!(server.upload(upload).await, Err(ServerError::TooLarge));
-    let journal = server.with_sim(|sim| sim.journal().to_vec());
+    let upload = upload_request("big.tif", &[0; 2]);
     assert_eq!(
-        journal,
-        [
-            Request::Whoami,
-            Request::Upload {
-                file_name: "big.tif".to_owned()
-            }
-        ]
+        server.upload(upload).await,
+        Err(ServerError::TooLarge { by_proxy: false })
+    );
+    server.set_down(
+        &[Op::Upload],
+        Some(&ServerError::Unavailable { status: 503 }),
+    );
+    let upload = upload_request("small.tif", &[0]);
+    assert_eq!(
+        server.upload(upload).await,
+        Err(ServerError::Unavailable { status: 503 })
+    );
+    let ops: Vec<Op> = server.journal().into_iter().map(|(op, _)| op).collect();
+    assert_eq!(ops, [Op::Version, Op::Version, Op::Upload, Op::Upload]);
+}
+
+#[tokio::test]
+async fn partial_submit_creates_some_jobs_and_fails_the_last() {
+    let server = FakeServerApi::default();
+    let mut images = Vec::new();
+    for bytes in [b"a", b"b", b"c"] {
+        images.push(
+            server
+                .upload(upload_request("x.png", bytes))
+                .await
+                .unwrap()
+                .image_id,
+        );
+    }
+    server.fail_next(Op::Submit, Fault::PartialSubmit { created: 2 });
+    let request = SubmitRequest {
+        key: Uuid::from_u128(1),
+        choice: grain(),
+        image_ids: images,
+        force: false,
+    };
+    assert_eq!(
+        server.submit(request).await,
+        Err(ServerError::Unavailable { status: 500 })
+    );
+    let statuses: Vec<ServerJobStatus> =
+        server.with_sim(|sim| sim.jobs().iter().map(|job| job.status.clone()).collect());
+    assert_eq!(
+        statuses,
+        [ServerJobStatus::Pending, ServerJobStatus::Failed]
     );
 }

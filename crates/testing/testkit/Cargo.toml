@@ -13,6 +13,7 @@ async-trait = "=0.1.92"
 mivia-domain.workspace = true
 mivia-ports.workspace = true
 parking_lot = "=0.12.5"
+secrecy = "=0.10.3"
 sha2 = "=0.11.0"
 tokio = { version = "=1.53.1", features = ["rt", "time"] }
 uuid = { version = "=1.26.1", default-features = false }

@@ -1,186 +1,240 @@
+mod sim;
+
 use std::collections::{BTreeMap, VecDeque};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicI64, Ordering};
 
 use async_trait::async_trait;
+use mivia_domain::ids::Timestamp;
+use mivia_ports::clock::Clock;
 use mivia_ports::server::{
-    ImageRef, JobStatus, MAX_STATUS_IDS, ServerApi, ServerError, ServerJobStatus, SubmitItem,
-    SubmitOutcome, UploadRequest, Whoami,
+    CatalogueModel, FindJobs, ImageRef, LabelsFetch, License, ServerApi, ServerError, ServerJob,
+    ServerVersion, SubmitRequest, UploadRequest,
 };
 use parking_lot::Mutex;
-use sha2::{Digest, Sha256};
-use uuid::Uuid;
+
+pub use sim::{Licence, ServerSim, SimJob, sim_id};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Op {
+    Version,
+    License,
+    Catalogue,
+    Labels,
+    Upload,
+    Submit,
+    Status,
+    Find,
+    Exists,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Request {
-    Whoami,
-    Upload { file_name: String },
-    Submit { count: usize },
-    Statuses { count: usize },
+pub enum Fault {
+    Before(ServerError),
+    After(ServerError),
+    PartialSubmit { created: usize },
+    Omit,
+    Hang,
 }
 
-#[derive(Clone, Debug)]
-struct Job {
-    polls_left: u32,
-    result_id: String,
-}
-
-pub struct ServerSim {
-    pub account: Whoami,
-    pub max_upload_bytes: usize,
-    pub polls_until_done: u32,
-    images: BTreeMap<[u8; 32], String>,
-    jobs: BTreeMap<String, Job>,
-    keys: BTreeMap<Uuid, String>,
-    journal: Vec<Request>,
-}
-
-impl Default for ServerSim {
-    fn default() -> Self {
-        Self {
-            account: Whoami {
-                account_id: "acc-1".to_owned(),
-                display_name: "Lab".to_owned(),
-            },
-            max_upload_bytes: 300 * 1024 * 1024,
-            polls_until_done: 2,
-            images: BTreeMap::new(),
-            jobs: BTreeMap::new(),
-            keys: BTreeMap::new(),
-            journal: Vec::new(),
-        }
-    }
-}
-
-impl ServerSim {
-    pub fn journal(&self) -> &[Request] {
-        &self.journal
-    }
-
-    pub fn job_count(&self) -> usize {
-        self.jobs.len()
-    }
-
-    pub fn finish_all(&mut self) {
-        self.jobs.values_mut().for_each(|job| job.polls_left = 0);
-    }
-
-    pub fn whoami(&mut self) -> Whoami {
-        self.journal.push(Request::Whoami);
-        self.account.clone()
-    }
-
-    pub fn upload(&mut self, request: &UploadRequest) -> Result<ImageRef, ServerError> {
-        self.journal.push(Request::Upload {
-            file_name: request.file_name.clone(),
-        });
-        if request.bytes.len() > self.max_upload_bytes {
-            return Err(ServerError::TooLarge);
-        }
-        let content: [u8; 32] = Sha256::digest(&request.bytes).into();
-        let fresh = format!("img-{}", self.images.len() + 1);
-        let duplicate = self.images.contains_key(&content);
-        let image_id = self.images.entry(content).or_insert(fresh).clone();
-        Ok(ImageRef {
-            image_id,
-            duplicate,
-        })
-    }
-
-    pub fn submit(&mut self, items: &[SubmitItem]) -> Result<Vec<SubmitOutcome>, ServerError> {
-        self.journal.push(Request::Submit { count: items.len() });
-        let known = |item: &SubmitItem| self.images.values().any(|id| *id == item.image_id);
-        if !items.iter().all(known) {
-            return Err(ServerError::NotFound);
-        }
-        Ok(items.iter().map(|item| self.job_for(item)).collect())
-    }
-
-    fn job_for(&mut self, item: &SubmitItem) -> SubmitOutcome {
-        let next = format!("job-{}", self.jobs.len() + 1);
-        let job_id = self
-            .keys
-            .entry(item.idempotency_key)
-            .or_insert(next)
-            .clone();
-        let polls_left = self.polls_until_done;
-        self.jobs.entry(job_id.clone()).or_insert_with(|| Job {
-            polls_left,
-            result_id: format!("res-{job_id}"),
-        });
-        SubmitOutcome {
-            idempotency_key: item.idempotency_key,
-            job_id,
-        }
-    }
-
-    pub fn job_statuses(&mut self, job_ids: &[String]) -> Result<Vec<JobStatus>, ServerError> {
-        self.journal.push(Request::Statuses {
-            count: job_ids.len(),
-        });
-        if job_ids.len() > MAX_STATUS_IDS {
-            return Err(ServerError::BadRequest {
-                code: "TOO_MANY_IDS".to_owned(),
-            });
-        }
-        Ok(job_ids
-            .iter()
-            .filter_map(|id| self.jobs.get_mut(id).map(|job| poll(id, job)))
-            .collect())
-    }
-}
-
-fn poll(job_id: &str, job: &mut Job) -> JobStatus {
-    let done = job.polls_left == 0;
-    job.polls_left = job.polls_left.saturating_sub(1);
-    JobStatus {
-        job_id: job_id.to_owned(),
-        status: if done {
-            ServerJobStatus::New
-        } else {
-            ServerJobStatus::Pending
-        },
-        result_id: done.then(|| job.result_id.clone()),
-    }
+#[derive(Default)]
+struct Faults {
+    queued: BTreeMap<Op, VecDeque<Fault>>,
+    down: BTreeMap<Op, ServerError>,
 }
 
 #[derive(Default)]
 pub struct FakeServerApi {
     sim: Mutex<ServerSim>,
-    faults: Mutex<VecDeque<ServerError>>,
+    faults: Mutex<Faults>,
+    journal: Mutex<Vec<(Op, Timestamp)>>,
+    clock: Option<Arc<dyn Clock>>,
+    skew_ms: AtomicI64,
 }
 
 impl FakeServerApi {
+    pub fn new(clock: Arc<dyn Clock>) -> Self {
+        Self {
+            clock: Some(clock),
+            ..Self::default()
+        }
+    }
+
     pub fn with_sim<R>(&self, work: impl FnOnce(&mut ServerSim) -> R) -> R {
         work(&mut self.sim.lock())
     }
 
-    pub fn fail_next(&self, error: ServerError) {
-        self.faults.lock().push_back(error);
+    pub fn fail_next(&self, op: Op, fault: Fault) {
+        self.faults
+            .lock()
+            .queued
+            .entry(op)
+            .or_default()
+            .push_back(fault);
     }
 
-    fn fault(&self) -> Result<(), ServerError> {
-        self.faults.lock().pop_front().map_or(Ok(()), Err)
+    pub fn set_down(&self, ops: &[Op], error: Option<&ServerError>) {
+        let mut faults = self.faults.lock();
+        for op in ops {
+            match error {
+                Some(error) => faults.down.insert(*op, error.clone()),
+                None => faults.down.remove(op),
+            };
+        }
     }
+
+    pub fn set_skew_ms(&self, skew: i64) {
+        self.skew_ms.store(skew, Ordering::Relaxed);
+    }
+
+    pub fn journal(&self) -> Vec<(Op, Timestamp)> {
+        self.journal.lock().clone()
+    }
+
+    pub fn count(&self, op: Op) -> usize {
+        self.journal
+            .lock()
+            .iter()
+            .filter(|(seen, _)| *seen == op)
+            .count()
+    }
+
+    fn server_now(&self) -> Timestamp {
+        let local = self
+            .clock
+            .as_ref()
+            .map_or(Timestamp(0), |clock| clock.now());
+        local.plus_ms(self.skew_ms.load(Ordering::Relaxed))
+    }
+
+    fn enter(&self, op: Op) -> Result<Option<Fault>, ServerError> {
+        let at = self
+            .clock
+            .as_ref()
+            .map_or(Timestamp(0), |clock| clock.now());
+        self.journal.lock().push((op, at));
+        let mut faults = self.faults.lock();
+        if let Some(error) = faults.down.get(&op) {
+            return Err(error.clone());
+        }
+        match faults.queued.get_mut(&op).and_then(VecDeque::pop_front) {
+            Some(Fault::Before(error)) => Err(error),
+            other => Ok(other),
+        }
+    }
+
+    async fn after<T>(fault: Option<Fault>, value: T) -> Result<T, ServerError> {
+        match fault {
+            Some(Fault::After(error)) => Err(error),
+            Some(Fault::Hang) => std::future::pending().await,
+            Some(Fault::Before(_) | Fault::PartialSubmit { .. } | Fault::Omit) | None => Ok(value),
+        }
+    }
+
+    fn partial(&self, request: &SubmitRequest, created: usize) -> Result<(), ServerError> {
+        let now = self.server_now();
+        let mut sim = self.sim.lock();
+        sim.check_submit(request)?;
+        let ids = sim.create_jobs(request, created, now);
+        if let Some(last) = ids.last() {
+            sim.fail_job(last);
+        }
+        Err(ServerError::Unavailable { status: 500 })
+    }
+}
+
+async fn drain(mut request: UploadRequest) -> Result<Vec<u8>, ServerError> {
+    let mut bytes = Vec::new();
+    while let Some(chunk) = request
+        .source
+        .next_chunk()
+        .await
+        .map_err(ServerError::Source)?
+    {
+        bytes.extend_from_slice(&chunk);
+    }
+    Ok(bytes)
 }
 
 #[async_trait]
 impl ServerApi for FakeServerApi {
-    async fn whoami(&self) -> Result<Whoami, ServerError> {
-        self.fault()?;
-        Ok(self.sim.lock().whoami())
+    async fn version(&self) -> Result<ServerVersion, ServerError> {
+        let fault = self.enter(Op::Version)?;
+        let version = self.sim.lock().version.clone();
+        Self::after(fault, version).await
+    }
+
+    async fn license(&self) -> Result<License, ServerError> {
+        let fault = self.enter(Op::License)?;
+        let license = self.sim.lock().license.clone();
+        Self::after(fault, license).await
+    }
+
+    async fn catalogue(&self) -> Result<Vec<CatalogueModel>, ServerError> {
+        let fault = self.enter(Op::Catalogue)?;
+        let catalogue = self.sim.lock().catalogue.clone();
+        Self::after(fault, catalogue).await
+    }
+
+    async fn model_labels(
+        &self,
+        lang: &str,
+        etag: Option<String>,
+    ) -> Result<LabelsFetch, ServerError> {
+        let fault = self.enter(Op::Labels)?;
+        let stored = self.sim.lock().labels.get(lang).cloned();
+        let fetch = match stored {
+            Some((_, current)) if etag.as_deref() == Some(current.as_str()) => {
+                LabelsFetch::NotModified
+            }
+            Some((body, current)) => LabelsFetch::Fresh {
+                body,
+                etag: Some(current),
+            },
+            None => return Err(ServerError::Gone),
+        };
+        Self::after(fault, fetch).await
     }
 
     async fn upload(&self, request: UploadRequest) -> Result<ImageRef, ServerError> {
-        self.fault()?;
-        self.sim.lock().upload(&request)
+        let fault = self.enter(Op::Upload)?;
+        let bytes = drain(request).await?;
+        let image = self.sim.lock().upload(&bytes)?;
+        Self::after(fault, image).await
     }
 
-    async fn submit(&self, items: Vec<SubmitItem>) -> Result<Vec<SubmitOutcome>, ServerError> {
-        self.fault()?;
-        self.sim.lock().submit(&items)
+    async fn submit(&self, request: SubmitRequest) -> Result<Vec<ServerJob>, ServerError> {
+        let fault = self.enter(Op::Submit)?;
+        if let Some(Fault::PartialSubmit { created }) = fault {
+            return self.partial(&request, created).map(|()| Vec::new());
+        }
+        let now = self.server_now();
+        let jobs = self.sim.lock().submit(&request, now)?;
+        Self::after(fault, jobs).await
     }
 
-    async fn job_statuses(&self, job_ids: Vec<String>) -> Result<Vec<JobStatus>, ServerError> {
-        self.fault()?;
-        self.sim.lock().job_statuses(&job_ids)
+    async fn job_statuses(&self, job_ids: Vec<String>) -> Result<Vec<ServerJob>, ServerError> {
+        let fault = self.enter(Op::Status)?;
+        let mut found = self.sim.lock().statuses(&job_ids)?;
+        if fault == Some(Fault::Omit) && !found.is_empty() {
+            found.remove(0);
+        }
+        Self::after(fault, found).await
+    }
+
+    async fn find_jobs(&self, query: FindJobs) -> Result<Vec<ServerJob>, ServerError> {
+        let fault = self.enter(Op::Find)?;
+        let found = self.sim.lock().find(&query);
+        Self::after(fault, found).await
+    }
+
+    async fn job_exists(&self, job_id: &str) -> Result<bool, ServerError> {
+        let fault = self.enter(Op::Exists)?;
+        let exists = self.sim.lock().job_exists(job_id);
+        Self::after(fault, exists).await
+    }
+
+    fn server_offset_ms(&self) -> Option<i64> {
+        Some(self.skew_ms.load(Ordering::Relaxed))
     }
 }

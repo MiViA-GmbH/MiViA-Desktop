@@ -1,4 +1,5 @@
 pub mod clock;
+pub mod credentials;
 pub mod fs;
 pub mod server;
 pub mod watch;

@@ -5,7 +5,12 @@ use mivia_domain::ids::{Fingerprint, Timestamp};
 use mivia_domain::image_format::check_format;
 use mivia_domain::path::{WinPath, fold};
 use mivia_domain::sanitise::is_reserved;
-use mivia_ports::fs::{FileStat, FileSystem, FsError, ImageRead, Walk, WalkEntry};
+mod nodes;
+
+use mivia_ports::fs::{
+    ChunkSource, Expected, FileStat, FileSystem, FsError, ImageRead, Walk, WalkEntry,
+};
+use nodes::{MemoryUpload, file, stat_of, under_link};
 use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
 
@@ -18,6 +23,7 @@ pub enum FsOp {
     FinalPath,
     Write,
     FreeSpace,
+    OpenUpload,
 }
 
 type Key = Vec<String>;
@@ -191,38 +197,6 @@ impl InMemoryFs {
     }
 }
 
-fn stat_of(node: &Node) -> FileStat {
-    FileStat {
-        size: node
-            .bytes
-            .as_ref()
-            .map_or(0, |bytes| u64::try_from(bytes.len()).unwrap_or(u64::MAX)),
-        mtime: node.mtime,
-        change_time: node.mtime,
-        is_dir: node.bytes.is_none(),
-    }
-}
-
-fn file<'a>(state: &'a State, path: &WinPath) -> Result<&'a Node, FsError> {
-    let key = key(path);
-    if state.locked.contains(&key) {
-        return Err(FsError::SharingViolation);
-    }
-    let node = state.nodes.get(&key).ok_or(FsError::NotFound)?;
-    if node.bytes.is_none() {
-        return Err(FsError::AccessDenied);
-    }
-    Ok(node)
-}
-
-fn under_link(state: &State, node: &Key, root: &Key) -> bool {
-    (root.len() + 1..node.len()).any(|depth| {
-        node.get(..depth)
-            .and_then(|prefix| state.nodes.get(prefix))
-            .is_some_and(|ancestor| ancestor.link)
-    })
-}
-
 #[async_trait]
 impl FileSystem for InMemoryFs {
     async fn stat(&self, path: &WinPath) -> Result<FileStat, FsError> {
@@ -279,6 +253,23 @@ impl FileSystem for InMemoryFs {
             format: check_format(bytes),
             stat: stat_of(node),
         })
+    }
+
+    async fn open_upload(
+        &self,
+        path: &WinPath,
+        within: &WinPath,
+        expected: Expected,
+    ) -> Result<Box<dyn ChunkSource>, FsError> {
+        let state = self.begin(FsOp::OpenUpload)?;
+        if !within.contains(path) {
+            return Err(FsError::Link);
+        }
+        let bytes = file(&state, path)?.bytes.clone().unwrap_or_default();
+        Ok(Box::new(MemoryUpload {
+            bytes: Some(bytes),
+            expected,
+        }))
     }
 
     async fn final_path(&self, path: &WinPath) -> Result<WinPath, FsError> {

@@ -3,13 +3,16 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mivia_domain::ids::Timestamp;
 use mivia_domain::path::WinPath;
+use mivia_ports::auth::{CredentialStore, ServerOrigin};
 use mivia_ports::clock::Clock;
 use mivia_ports::fs::FileSystem;
 use mivia_ports::server::ServerApi;
 use mivia_ports::watch::{FolderWatcher, FsSignal, SignalKind};
+use mivia_testkit::auth::FakeCredentialStore;
 use mivia_testkit::clock::ManualClock;
 use mivia_testkit::contract::Capability;
 use mivia_testkit::contract::clock::ClockHarness;
+use mivia_testkit::contract::credentials::CredentialHarness;
 use mivia_testkit::contract::fs::FsHarness;
 use mivia_testkit::contract::server::ServerHarness;
 use mivia_testkit::contract::watch::WatchHarness;
@@ -17,7 +20,8 @@ use mivia_testkit::fs::InMemoryFs;
 use mivia_testkit::server::{FakeServerApi, ServerSim};
 use mivia_testkit::watch::{FakeFolderWatcher, RecordingSink};
 use mivia_testkit::{
-    clock_contract_tests, fs_contract_tests, server_contract_tests, watch_contract_tests,
+    clock_contract_tests, credentials_contract_tests, fs_contract_tests, server_contract_tests,
+    watch_contract_tests,
 };
 
 struct ManualClockHarness(Arc<ManualClock>);
@@ -145,9 +149,24 @@ impl ServerHarness for FakeServerHarness {
     }
 }
 
+struct FakeCredentialHarness(Arc<FakeCredentialStore>);
+
+impl CredentialHarness for FakeCredentialHarness {
+    fn sut(&self) -> Arc<dyn CredentialStore> {
+        Arc::clone(&self.0) as _
+    }
+
+    fn origin(&self, case: &str) -> ServerOrigin {
+        ServerOrigin(format!("https://{case}.example.invalid:443"))
+    }
+}
+
 clock_contract_tests!(ManualClockHarness(Arc::new(ManualClock::new(Timestamp(
     1_000
 )))));
 fs_contract_tests!(MemoryFsHarness::new());
 server_contract_tests!(FakeServerHarness(Arc::new(FakeServerApi::default())));
 watch_contract_tests!(FakeWatchHarness::new());
+credentials_contract_tests!(FakeCredentialHarness(Arc::new(
+    FakeCredentialStore::default()
+)));
