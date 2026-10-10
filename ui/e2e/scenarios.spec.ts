@@ -8,6 +8,8 @@ const TARGET = join(REPO, 'target', 'e2e');
 const RUN = join(REPO, 'target', 'e2e-run', String(Date.now()));
 const WATCHED = join(RUN, 'Mikroskop');
 const REPORTS = join(WATCHED, 'MiViA reports');
+const SENT = join(RUN, 'Gesendet');
+const SENT_REPORTS = join(SENT, 'MiViA reports');
 const CDP_PORT = 9333;
 const STUB_KEY = 'stub-access-key-0123456789-abcdefghijkl';
 const MODEL = '00000009-0000-4000-8000-000000000001';
@@ -84,24 +86,26 @@ function jpeg(seed: number): Buffer {
 	return Buffer.from([0xff, 0xd8, 0xff, 0xe0, seed, 0x00, 0x10, seed, 0xff, 0xd9]);
 }
 
-function reports(): string[] {
+function pdfs(folder: string): string[] {
 	try {
-		return readdirSync(REPORTS).filter((name) => name.endsWith('.pdf'));
+		return readdirSync(folder).filter((name) => name.endsWith('.pdf'));
 	} catch {
 		return [];
 	}
 }
 
+const reports = () => pdfs(REPORTS);
+
 const FRESH = join(RUN, 'fresh');
 const FRESH_WATCHED = join(FRESH, 'Labor');
 const FRESH_REPORTS = join(FRESH_WATCHED, 'MiViA reports');
 
-function freshReports(): string[] {
-	try {
-		return readdirSync(FRESH_REPORTS).filter((name) => name.endsWith('.pdf'));
-	} catch {
-		return [];
-	}
+const freshReports = () => pdfs(FRESH_REPORTS);
+
+function sendTo(paths: string[]): number | null {
+	const env = { ...process.env, LOCALAPPDATA: join(RUN, 'appdata') };
+	const args = ['--open-paths', '--', ...paths];
+	return spawnSync(join(TARGET, 'mivia-desktop.exe'), args, { env, timeout: 30_000 }).status;
 }
 
 async function next(page: Page, name = 'Next'): Promise<void> {
@@ -178,6 +182,24 @@ test.describe
 			expect(served).toContain(saved);
 		});
 
+		test('scenario 3: images sent from a second process end in a report beside them', async () => {
+			const { page } = running;
+			mkdirSync(SENT, { recursive: true });
+			const sent = [join(SENT, 'probe_002.jpg'), join(SENT, 'probe_001.jpg')];
+			for (const [index, path] of sent.entries()) {
+				writeFileSync(path, jpeg(20 + index));
+			}
+			expect(sendTo(sent)).toBe(0);
+			const dialog = page.getByRole('dialog', { name: 'Analyze 2 images' });
+			await expect(dialog).toBeVisible({ timeout: 30_000 });
+			await expect(dialog.getByText('probe_001.jpg')).toBeVisible();
+			await expect(dialog.getByRole('checkbox', { name: 'Grain size' })).toBeChecked({ timeout: 20_000 });
+			await dialog.getByRole('button', { name: 'Analyze 2 images' }).click();
+			await expect(dialog).toBeHidden();
+			await expect.poll(() => pdfs(SENT_REPORTS), { timeout: 120_000, intervals: [1000] }).toHaveLength(1);
+			expect(pdfs(SENT_REPORTS)[0]).toMatch(/ probe_001 \+1 - Grain size\.pdf$/);
+		});
+
 		test('scenario 5: every query command answers through real IPC', async () => {
 			const { page } = running;
 			const outcomes = await page.evaluate(async () => {
@@ -195,6 +217,8 @@ test.describe
 					['get_batch', { id }],
 					['list_batch_items', { id, after: null }],
 					['list_series_reports', { id }],
+					['get_one_off', {}],
+					['get_remaining_uploads', {}],
 				];
 				const results: Record<string, string> = {};
 				for (const [command, args] of calls) {
@@ -205,6 +229,6 @@ test.describe
 				}
 				return results;
 			});
-			expect(Object.values(outcomes)).toEqual(Array(9).fill('ok'));
+			expect(Object.values(outcomes)).toEqual(Array(11).fill('ok'));
 		});
 	});
