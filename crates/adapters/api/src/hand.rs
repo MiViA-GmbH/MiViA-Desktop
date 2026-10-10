@@ -1,4 +1,4 @@
-use reqwest::header::{ACCEPT, AUTHORIZATION, HeaderValue, IF_NONE_MATCH};
+use reqwest::header::{ACCEPT, ACCEPT_LANGUAGE, AUTHORIZATION, HeaderValue, IF_NONE_MATCH};
 use reqwest::multipart::{Form, Part};
 use reqwest::{Body, Client, RequestBuilder};
 use serde::Deserialize;
@@ -39,6 +39,12 @@ pub struct AccessKeyCurrent {
     pub key: AccessKeyInfo,
     #[serde(default)]
     pub admin_scope: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ReportCreated {
+    pub report_id: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
@@ -94,4 +100,19 @@ pub fn upload_image(
         .header(ACCEPT, JSON)
         .header(AUTHORIZATION, authorization)
         .multipart(Form::new().part("files", part))
+}
+
+pub fn create_report(
+    client: &Client,
+    base_url: &str,
+    authorization: HeaderValue,
+    report: (&str, &str, &serde_json::Value),
+) -> RequestBuilder {
+    let (format, language, body) = report;
+    client
+        .post(format!("{base_url}/api/reports/{format}"))
+        .header(ACCEPT, JSON)
+        .header(ACCEPT_LANGUAGE, language)
+        .header(AUTHORIZATION, authorization)
+        .json(body)
 }

@@ -18,6 +18,7 @@ const PROXY_REFUSED_TEXT: &str = "unsuccessful";
 pub(crate) enum Call {
     Submit,
     Upload,
+    Report,
     Other,
 }
 
@@ -105,7 +106,9 @@ fn client_error(status: StatusCode, bytes: &[u8], call: Call) -> ServerError {
     match status.as_u16() {
         403 if is_license(bytes) => ServerError::LicenseInvalid,
         403 => ServerError::Forbidden { code: code(bytes) },
-        404 if call == Call::Submit => ServerError::NotFound { image_id: None },
+        404 if matches!(call, Call::Submit | Call::Report) => {
+            ServerError::NotFound { image_id: None }
+        }
         404 | 410 => ServerError::Gone,
         409 if code(bytes) == IN_PROGRESS => ServerError::InProgress,
         413 => ServerError::TooLarge {

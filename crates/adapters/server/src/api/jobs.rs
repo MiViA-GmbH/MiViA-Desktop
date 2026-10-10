@@ -32,7 +32,7 @@ fn status(raw: &str) -> ServerJobStatus {
     }
 }
 
-fn uuid(text: &str) -> Result<Uuid, ServerError> {
+pub(super) fn uuid(text: &str) -> Result<Uuid, ServerError> {
     Uuid::parse_str(text).map_err(|_| ServerError::BadRequest {
         code: "INVALID_ID".to_owned(),
     })

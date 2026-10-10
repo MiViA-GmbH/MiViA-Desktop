@@ -1,5 +1,6 @@
 mod jobs;
 mod plain;
+mod reports;
 mod upload;
 
 use std::collections::BTreeSet;
@@ -10,9 +11,10 @@ use async_trait::async_trait;
 use mivia_api::{Call as ApiCall, Client, Error as ApiError, ResponseValue};
 use mivia_domain::ids::AccountId;
 use mivia_ports::auth::{AuthError, Authorization, Authorizer, ServerOrigin};
+use mivia_ports::fs::ByteSink;
 use mivia_ports::server::{
-    CatalogueModel, FindJobs, ImageRef, LabelsFetch, License, ServerApi, ServerError, ServerJob,
-    ServerVersion, SubmitRequest, UploadRequest,
+    CatalogueModel, Download, FindJobs, ImageRef, LabelsFetch, License, ReportProgress,
+    ReportRequest, ServerApi, ServerError, ServerJob, ServerVersion, SubmitRequest, UploadRequest,
 };
 use parking_lot::Mutex;
 use reqwest::StatusCode;
@@ -229,6 +231,22 @@ impl ServerApi for HttpServerApi {
 
     async fn job_exists(&self, job_id: &str) -> Result<bool, ServerError> {
         self.exists(job_id).await
+    }
+
+    async fn request_report(&self, request: ReportRequest) -> Result<String, ServerError> {
+        self.create_report(&request).await
+    }
+
+    async fn report_status(&self, report_id: &str) -> Result<ReportProgress, ServerError> {
+        self.status_of_report(report_id).await
+    }
+
+    async fn download_report(
+        &self,
+        report_id: &str,
+        sink: Box<dyn ByteSink>,
+    ) -> Result<Download, ServerError> {
+        self.fetch_report(report_id, sink).await
     }
 
     fn server_offset_ms(&self) -> Option<i64> {
