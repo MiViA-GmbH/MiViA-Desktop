@@ -5,7 +5,7 @@ use axum::body::Bytes;
 use axum::extract::{DefaultBodyLimit, Multipart, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
-use axum::routing::post;
+use axum::routing::{get, post};
 use axum::{Json, Router};
 use mivia_testkit::ports::server::{ProblemReportForm, ServerApi};
 use serde_json::{Value, json};
@@ -23,6 +23,7 @@ pub(crate) fn routes() -> Router<Stub> {
             post(create).layer(DefaultBodyLimit::max(BODY_LIMIT)),
         )
         .route("/api/client-diagnostics/telemetry", post(telemetry))
+        .route("/__stub/telemetry", get(received))
 }
 
 const DECODED_LIMIT: u64 = 100_000;
@@ -145,4 +146,14 @@ async fn create(
         }
         Err(error) => response(&error),
     }
+}
+
+async fn received(State(stub): State<Stub>) -> Response {
+    let batches: Vec<Value> = stub
+        .engine
+        .telemetry_batches()
+        .iter()
+        .filter_map(|(_, body)| decoded(body))
+        .collect();
+    Json(batches).into_response()
 }

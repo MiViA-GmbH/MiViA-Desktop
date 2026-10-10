@@ -149,6 +149,39 @@ test.describe
 			await page.getByRole('button', { name: 'Finish series now' }).first().click();
 			await expect.poll(freshReports, { timeout: 120_000, intervals: [1000] }).toHaveLength(1);
 		});
+
+		test('scenario 7: the setup events reach the server without names, then the switch turns telemetry off', async () => {
+			const { page, origin } = running;
+			const received = async () => {
+				const batches: { events: { name: string }[] }[] = await (await fetch(`${origin}/__stub/telemetry`)).json();
+				return batches;
+			};
+			await expect
+				.poll(async () => (await received()).flatMap((batch) => batch.events.map((event) => event.name)), {
+					timeout: 60_000,
+					intervals: [1000],
+				})
+				.toEqual(expect.arrayContaining(['wizard.finished', 'account.connected', 'folder.added', 'session.start']));
+			const text = JSON.stringify(await received());
+			for (const secret of [FRESH_WATCHED, 'Labor', STUB_KEY, 'probe_001']) {
+				expect(text).not.toContain(secret);
+			}
+			await page
+				.getByRole('link', { name: /Settings/ })
+				.first()
+				.click();
+			await page.getByRole('link', { name: 'Privacy' }).click();
+			const sw = page.getByRole('switch');
+			await expect(sw).toBeChecked();
+			await expect(page.getByText(/^[0-9a-f]{32}$/)).toBeVisible();
+			await page.getByRole('button', { name: 'View sent data' }).click();
+			const sent = page.getByRole('dialog', { name: 'View sent data' });
+			await expect(sent.getByRole('button', { name: /events?$/ }).first()).toBeVisible();
+			await page.keyboard.press('Escape');
+			await sw.click({ force: true });
+			await expect(sw).not.toBeChecked();
+			await expect(page.getByText('nothing is recorded or sent', { exact: false })).toBeVisible();
+		});
 	});
 
 test.describe
