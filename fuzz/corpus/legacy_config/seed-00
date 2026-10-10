@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <appSettings>
+    <add key="Models" value="GRAIN,PHASES" />
+    <add key="AccessToken" value="mv-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789" />
+    <add key="InputDirectory" value="E:\Mikroskop" />
+    <add key="Customizations" value="GRAIN:11111111-2222-4333-8444-555555555555" />
+  </appSettings>
+</configuration>

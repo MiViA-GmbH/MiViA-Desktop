@@ -1,0 +1,1 @@
+<configuration><appSettings><add key="AccessToken" value="a&amp;b&#x41;"></add></appSettings></configuration>

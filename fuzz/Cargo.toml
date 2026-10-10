@@ -56,3 +56,10 @@ path = "fuzz_targets/watch_marker.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "legacy_config"
+path = "fuzz_targets/legacy_config.rs"
+test = false
+doc = false
+bench = false

@@ -4,8 +4,8 @@ use mivia_domain::label::LabelRule;
 use mivia_domain::output::{ProbeResult, ReportFolder};
 use mivia_domain::path::WinPath;
 use mivia_ports::fs::FsError;
-use mivia_ports::store::NewFolder;
 use mivia_ports::store::intake::{FolderChange, FolderRow};
+use mivia_ports::store::{AccountScope, NewFolder, TxError, WriteTx};
 
 use super::closer::{Closure, close_series};
 use super::plan::Plan;
@@ -30,6 +30,28 @@ pub struct AddFolder {
     pub include_existing: bool,
     pub report_settings: ReportSettings,
     pub report_folder: ReportFolder,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PreparedFolder {
+    pub folder: NewFolder,
+    pub probe: ProbeResult,
+    pub include_existing: bool,
+}
+
+pub fn insert_folder(
+    tx: &mut dyn WriteTx,
+    scope: AccountScope,
+    prepared: &PreparedFolder,
+) -> Result<FolderId, TxError> {
+    let position = u32::try_from(tx.folders(scope).list()?.len()).unwrap_or(u32::MAX);
+    let id = tx.folders(scope).add(&NewFolder {
+        position,
+        ..prepared.folder.clone()
+    })?;
+    tx.folders(scope)
+        .update(id, &FolderChange::Probe(prepared.probe))?;
+    Ok(id)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -125,31 +147,45 @@ impl Intake {
         .await
     }
 
-    pub async fn add_folder(&self, input: AddFolder) -> Result<FolderId, IntakeError> {
-        let _serial = self.serial.lock().await;
+    pub async fn prepare_folder(&self, input: AddFolder) -> Result<PreparedFolder, IntakeError> {
         let root = self.checked_root(&input.path, None).await?;
         let probe = self.probe(&root, &input.report_folder).await?;
-        let id = self
-            .write(move |tx, scope| {
-                let position = u32::try_from(tx.folders(scope).list()?.len()).unwrap_or(u32::MAX);
-                let id = tx.folders(scope).add(&NewFolder {
-                    path: root,
-                    position,
-                    quiet_period_ms: input.quiet_ms,
-                    label_rule: input.label_rule,
-                    report_settings_json: input.report_settings.json(),
-                    report_folder: input.report_folder,
-                    model_choices: input.model_choices,
-                })?;
-                tx.folders(scope).update(id, &FolderChange::Probe(probe))?;
-                Ok(id)
-            })
-            .await?;
+        Ok(PreparedFolder {
+            folder: NewFolder {
+                path: root,
+                position: 0,
+                quiet_period_ms: input.quiet_ms,
+                label_rule: input.label_rule,
+                report_settings_json: input.report_settings.json(),
+                report_folder: input.report_folder,
+                model_choices: input.model_choices,
+            },
+            probe,
+            include_existing: input.include_existing,
+        })
+    }
+
+    pub async fn start_folder(
+        &self,
+        id: FolderId,
+        include_existing: bool,
+    ) -> Result<(), IntakeError> {
+        let _serial = self.serial.lock().await;
         let row = self.folder(id).await?;
         self.scan(&row, Mode::Baseline).await?;
-        if input.include_existing {
+        if include_existing {
             self.detect_existing(&row, Timestamp(0)).await?;
         }
+        Ok(())
+    }
+
+    pub async fn add_folder(&self, input: AddFolder) -> Result<FolderId, IntakeError> {
+        let prepared = self.prepare_folder(input).await?;
+        let include_existing = prepared.include_existing;
+        let id = self
+            .write(move |tx, scope| insert_folder(tx, scope, &prepared))
+            .await?;
+        self.start_folder(id, include_existing).await?;
         Ok(id)
     }
 

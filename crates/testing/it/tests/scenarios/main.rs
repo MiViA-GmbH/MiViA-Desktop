@@ -4,5 +4,6 @@ mod line;
 mod outages;
 mod recovery;
 mod reports;
+mod setup;
 mod worker;
 mod world;

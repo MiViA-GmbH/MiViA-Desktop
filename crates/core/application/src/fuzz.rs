@@ -3,7 +3,7 @@ use mivia_domain::sanitise::is_hidden_format;
 
 use crate::launch::parse;
 use crate::watch_marker::MAX_FIELD_CHARS;
-use crate::{spool, watch_marker};
+use crate::{legacy, spool, watch_marker};
 
 pub fn launch_args(data: &[u8]) -> Result<(), String> {
     let text = String::from_utf8_lossy(data);
@@ -58,4 +58,22 @@ pub fn watch_marker(data: &[u8]) -> Result<(), String> {
         (false, _) => Err(format!("field over the cap: {marker:?}")),
         (_, false) => Err(format!("field keeps hidden characters: {marker:?}")),
     }
+}
+
+pub fn legacy_config(bytes: &[u8]) -> Result<(), String> {
+    let Ok(config) = legacy::parse(bytes) else {
+        return Ok(());
+    };
+    let blanked = legacy::blank_access_token(bytes).map_err(|error| format!("{error:?}"))?;
+    let again = legacy::parse(&blanked).map_err(|error| format!("reparse {error:?}"))?;
+    if again.access_token.is_some() {
+        return Err("token survived".to_owned());
+    }
+    let kept = legacy::LegacyConfig {
+        access_token: None,
+        ..config
+    };
+    (again == kept)
+        .then_some(())
+        .ok_or_else(|| "settings changed".to_owned())
 }

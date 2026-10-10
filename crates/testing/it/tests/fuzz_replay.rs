@@ -9,6 +9,7 @@ const TARGETS: &[(&str, Target)] = &[
     ("launch_args", mivia_application::fuzz::launch_args),
     ("spool_file", mivia_application::fuzz::spool_file),
     ("watch_marker", mivia_application::fuzz::watch_marker),
+    ("legacy_config", mivia_application::fuzz::legacy_config),
 ];
 
 fn fuzz_dir() -> PathBuf {

@@ -20,7 +20,8 @@ use tokio::sync::Notify;
 use tokio::sync::mpsc::Receiver;
 
 pub use crate::worker::{Tick, run};
-pub use folders::{AddFolder, FolderProblem, Resumed};
+pub use closer::close_all_series;
+pub use folders::{AddFolder, FolderProblem, PreparedFolder, Resumed, insert_folder};
 pub use sink::{IntakeSink, SIGNAL_CAPACITY};
 
 pub const LOCAL_RECONCILE_MS: i64 = 10 * MINUTE_MS;

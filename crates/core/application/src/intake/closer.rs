@@ -119,3 +119,20 @@ impl Intake {
         Ok(())
     }
 }
+
+pub fn close_all_series(
+    tx: &mut dyn WriteTx,
+    scope: AccountScope,
+    reason: ClosureReason,
+    now: Timestamp,
+) -> Result<(), TxError> {
+    for batch in tx.intake(scope).open_batches()? {
+        close_series(
+            tx,
+            scope,
+            Closure::plain(batch.id, batch.folder, reason),
+            now,
+        )?;
+    }
+    Ok(())
+}

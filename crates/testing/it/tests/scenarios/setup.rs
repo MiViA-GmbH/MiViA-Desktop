@@ -1,0 +1,130 @@
+use mivia_application::intake::{AddFolder, PreparedFolder};
+use mivia_application::report_settings::ReportSettings;
+use mivia_application::settings::{GlobalSettings, Integration};
+use mivia_application::setup::{Completion, SetupDraft, complete, read_draft, write_draft};
+use mivia_domain::label::LabelRule;
+use mivia_domain::output::ReportFolder;
+use mivia_ports::ipc::setup::SetupStep;
+use mivia_ports::queries::Queries;
+use mivia_ports::store::{AccountScope, NewAccount, SettingsScope, StoreExt, TxError};
+
+use super::world::{World, choice, win};
+
+async fn prepared(world: &World) -> PreparedFolder {
+    world
+        .intake
+        .prepare_folder(AddFolder {
+            path: win(r"D:\Lab"),
+            model_choices: vec![choice("grain")],
+            quiet_ms: 5 * 60_000,
+            label_rule: LabelRule::Auto,
+            include_existing: false,
+            report_settings: ReportSettings::default(),
+            report_folder: ReportFolder::Subfolder("MiViA reports".to_owned()),
+        })
+        .await
+        .unwrap()
+}
+
+fn completion(folder: PreparedFolder) -> Completion {
+    Completion {
+        account: NewAccount {
+            server_url: "https://app.mivia.ai".to_owned(),
+            server_account_id: "new".to_owned(),
+            display_name: "New Lab".to_owned(),
+            email: "lab@example.invalid".to_owned(),
+        },
+        folder: Some(folder),
+        telemetry: true,
+        integration: Integration {
+            autostart: true,
+            explorer: false,
+        },
+    }
+}
+
+async fn write_step(world: &World, step: SetupStep) {
+    let draft = SetupDraft {
+        step,
+        ..SetupDraft::default()
+    };
+    world
+        .store
+        .write(move |tx| write_draft(tx, &draft))
+        .await
+        .unwrap();
+}
+
+async fn global(world: &World) -> GlobalSettings {
+    let json = world.store.settings(SettingsScope::Global).await.unwrap();
+    GlobalSettings::parse(json.as_deref())
+}
+
+#[tokio::test]
+async fn completing_setup_writes_account_folder_and_settings_together() {
+    let world = World::new().await;
+    write_step(&world, SetupStep::Finish).await;
+    let completion = completion(prepared(&world).await);
+    let (scope, folder) = world
+        .store
+        .write(move |tx| complete(tx, &completion))
+        .await
+        .unwrap();
+    assert!(folder.is_some());
+    assert_ne!(scope, world.scope);
+    let active = world
+        .store
+        .write(|tx| tx.accounts().active())
+        .await
+        .unwrap();
+    assert_eq!(active.map(AccountScope), Some(scope));
+    let account = world.store.get_account(scope).await.unwrap().unwrap();
+    assert_eq!(account.email, "lab@example.invalid");
+    let folders = world.store.list_folders(scope).await.unwrap().folders;
+    assert_eq!(folders.len(), 1);
+    let settings = global(&world).await;
+    assert!(settings.setup_completed && settings.telemetry);
+    assert!(settings.integration.autostart && !settings.integration.explorer);
+    let draft = world
+        .store
+        .settings(SettingsScope::SetupDraft)
+        .await
+        .unwrap();
+    assert_eq!(draft, None);
+    world.finish().await;
+}
+
+#[tokio::test]
+async fn a_completion_that_fails_late_leaves_the_draft_and_no_account() {
+    let world = World::new().await;
+    write_step(&world, SetupStep::Finish).await;
+    let completion = completion(prepared(&world).await);
+    let failed = world
+        .store
+        .write(move |tx| {
+            complete(tx, &completion)?;
+            Err::<(), _>(TxError::Conflict)
+        })
+        .await;
+    assert!(failed.is_err());
+    let found = world
+        .store
+        .write(|tx| tx.accounts().find("https://app.mivia.ai", "new"))
+        .await
+        .unwrap();
+    assert_eq!(found, None);
+    assert!(!global(&world).await.setup_completed);
+    let draft = world.store.write(read_draft).await.unwrap();
+    assert_eq!(draft.step, SetupStep::Finish);
+    assert_eq!(
+        world
+            .store
+            .list_folders(world.scope)
+            .await
+            .unwrap()
+            .folders
+            .len(),
+        0
+    );
+    world.finish().await;
+}
