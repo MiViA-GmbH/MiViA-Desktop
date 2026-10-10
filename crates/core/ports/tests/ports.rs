@@ -117,6 +117,7 @@ fn views_round_trip_with_camel_case_fields() {
             position: 0,
             paused: false,
             missing: false,
+            waiting_since: Some("2026-10-12T08:30:00.000Z".to_owned()),
             quiet_seconds: 60,
             report_folder: None,
             open_series: None,

@@ -2,7 +2,7 @@ use mivia_domain::ids::{FolderId, Timestamp};
 use mivia_domain::output::ProbeResult;
 use mivia_domain::path::WinPath;
 use mivia_ports::ipc::change::Change;
-use mivia_ports::store::intake::{FolderChange, FolderRow};
+use mivia_ports::store::intake::{FolderChange, FolderRow, MarkerPeer};
 use mivia_ports::store::{FolderRepo, NewFolder, TxError};
 use rusqlite::{Row, params};
 
@@ -23,6 +23,7 @@ const INSERT_CHOICE: &str = "INSERT INTO folder_model_choice (folder_id, model_c
 type RawFolder = (
     (i64, String, bool, i64, String, Option<i64>),
     (String, Option<String>, Option<String>, Option<String>),
+    (Option<i64>, Option<String>, String),
 );
 
 fn raw_folder(row: &Row<'_>) -> rusqlite::Result<RawFolder> {
@@ -36,11 +37,13 @@ fn raw_folder(row: &Row<'_>) -> rusqlite::Result<RawFolder> {
             row.get(5)?,
         ),
         (row.get(6)?, row.get(7)?, row.get(8)?, row.get(9)?),
+        (row.get(10)?, row.get(11)?, row.get(12)?),
     ))
 }
 
 fn folder_row(raw: RawFolder) -> Result<FolderRow, TxError> {
-    let ((id, path, active, quiet_ms, rule, missing), (mode, name, custom, probe)) = raw;
+    let ((id, path, active, quiet_ms, rule, missing), (mode, name, custom, probe), marker) = raw;
+    let (waiting, conflict, dismissed) = marker;
     Ok(FolderRow {
         id: FolderId(id),
         path: parse_path(&path)?,
@@ -48,8 +51,11 @@ fn folder_row(raw: RawFolder) -> Result<FolderRow, TxError> {
         quiet_ms,
         label_rule: parse_label_rule(&rule)?,
         missing_since: missing.map(Timestamp),
+        waiting_since: waiting.map(Timestamp),
         report_folder: report_folder(&mode, name, custom.as_deref())?,
         probe: probe.as_deref().and_then(ProbeResult::from_code),
+        marker_conflict: conflict.and_then(|json| serde_json::from_str(&json).ok()),
+        marker_dismissed: serde_json::from_str(&dismissed).unwrap_or_default(),
     })
 }
 
@@ -96,6 +102,37 @@ impl SqlTx<'_> {
             .execute(
                 "UPDATE watched_folder SET probe_result = ?3 WHERE id = ?1 AND account_id = ?2",
                 params![id.0, self.account(), result.code()],
+            )
+            .tx()?;
+        self.record(Change::Folder { id: id.to_string() });
+        Ok(())
+    }
+
+    fn set_marker(&mut self, id: FolderId, peer: Option<&MarkerPeer>) -> Result<(), TxError> {
+        let json = peer.and_then(|peer| serde_json::to_string(peer).ok());
+        self.tx
+            .execute(
+                "UPDATE watched_folder SET marker_conflict = ?3 WHERE id = ?1 AND account_id = ?2",
+                params![id.0, self.account(), json],
+            )
+            .tx()?;
+        self.record(Change::Folder { id: id.to_string() });
+        Ok(())
+    }
+
+    fn dismiss_marker(&mut self, id: FolderId) -> Result<(), TxError> {
+        let row = self.get_folder(id)?;
+        let Some(peer) = row.marker_conflict else {
+            return Ok(());
+        };
+        let mut dismissed = row.marker_dismissed;
+        dismissed.push(peer.marker_id);
+        let json = serde_json::to_string(&dismissed).map_err(|_| TxError::Conflict)?;
+        self.tx
+            .execute(
+                "UPDATE watched_folder SET marker_conflict = NULL, marker_dismissed = ?3 \
+                 WHERE id = ?1 AND account_id = ?2",
+                params![id.0, self.account(), json],
             )
             .tx()?;
         self.record(Change::Folder { id: id.to_string() });
@@ -172,13 +209,23 @@ impl FolderRepo for SqlTx<'_> {
         let (set, value): (&str, Option<i64>) = match change {
             FolderChange::Probe(result) => return self.set_probe(id, *result),
             FolderChange::Active(active) => ("active = ?3", Some(i64::from(*active))),
-            FolderChange::Missing(since) => ("missing_since = ?3", since.map(|at| at.0)),
+            FolderChange::Missing(Some(at)) => ("missing_since = ?3", Some(at.0)),
+            FolderChange::Missing(None) => {
+                ("missing_since = ?3, waiting_network_since = NULL", None)
+            }
+            FolderChange::Waiting(since) => (
+                "waiting_network_since = ?3, missing_since = NULL",
+                since.map(|at| at.0),
+            ),
+            FolderChange::Marker(peer) => return self.set_marker(id, peer.as_ref()),
+            FolderChange::DismissMarker => return self.dismiss_marker(id),
             FolderChange::Removed(at) => ("removed_at = ?3, active = 0", Some(at.0)),
             FolderChange::Relocated(path) => {
                 self.rebase_folder(id, path)?;
                 self.tx
                     .execute(
-                        "UPDATE watched_folder SET path = ?3, path_key = ?4, missing_since = NULL \
+                        "UPDATE watched_folder SET path = ?3, path_key = ?4, missing_since = NULL, \
+                         waiting_network_since = NULL \
                          WHERE id = ?1 AND account_id = ?2",
                         params![id.0, self.account(), path.to_string(), path.key()],
                     )

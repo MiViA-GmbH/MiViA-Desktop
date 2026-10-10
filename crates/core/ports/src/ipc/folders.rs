@@ -28,6 +28,7 @@ pub enum FolderNote {
     OneDrive,
     Network,
     MappedDrive { letter: String, unc: String },
+    WatchedElsewhere { machine: String, user: String },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

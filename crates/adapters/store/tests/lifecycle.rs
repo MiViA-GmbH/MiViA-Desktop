@@ -44,7 +44,7 @@ async fn schema_matches_snapshot_and_file_settings() {
     insta::assert_snapshot!("schema", schema.join("\n"));
     assert_eq!(pragma(&conn, "auto_vacuum"), "Integer(2)");
     assert_eq!(pragma(&conn, "journal_mode"), r#"Text("wal")"#);
-    assert_eq!(pragma(&conn, "user_version"), "Integer(2)");
+    assert_eq!(pragma(&conn, "user_version"), "Integer(3)");
     let options: Vec<String> = conn
         .prepare("PRAGMA compile_options")
         .unwrap()
@@ -72,7 +72,7 @@ async fn newer_schema_opens_only_when_readable() {
     let path = fx.db();
     drop(fx.store);
     let conn = Connection::open(&path).unwrap();
-    conn.execute_batch("PRAGMA user_version = 3; UPDATE meta SET min_reader_major = 1;")
+    conn.execute_batch("PRAGMA user_version = 4; UPDATE meta SET min_reader_major = 1;")
         .unwrap();
     let observer = Arc::new(Recorder::default());
     assert!(

@@ -25,6 +25,7 @@ use crate::{export, ffi, upload};
 
 const SHARE_ALL: u32 = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 const READ_CHUNK: usize = 1024 * 1024;
+const ROOT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -36,7 +37,9 @@ pub(crate) fn fs_error(error: &io::Error) -> FsError {
         Some(2 | 3) => FsError::NotFound,
         Some(5 | 19) => FsError::AccessDenied,
         Some(32 | 33) => FsError::SharingViolation,
-        Some(53 | 55 | 59 | 64 | 67 | 121 | 1231) => FsError::NetworkUnavailable,
+        Some(53 | 55 | 59 | 64 | 67 | 86 | 121 | 1222 | 1231 | 1244 | 1311 | 1326) => {
+            FsError::NetworkUnavailable
+        }
         Some(39 | 112) => FsError::DiskFull,
         Some(80 | 183) => FsError::Exists,
         Some(123 | 206) => FsError::InvalidName,
@@ -227,7 +230,23 @@ impl FileSystem for OsFileSystem {
 
     async fn final_path(&self, path: &WinPath) -> Result<WinPath, FsError> {
         let path = path.clone();
-        blocking(move || final_of(&open_shared(&path, FILE_FLAG_BACKUP_SEMANTICS)?)).await
+        let work = blocking(move || final_of(&open_shared(&path, FILE_FLAG_BACKUP_SEMANTICS)?));
+        tokio::time::timeout(ROOT_TIMEOUT, work)
+            .await
+            .unwrap_or(Err(FsError::NetworkUnavailable))
+    }
+
+    async fn read_small(&self, path: &WinPath, max: u64) -> Result<Vec<u8>, FsError> {
+        let path = path.clone();
+        bounded(move || {
+            let mut bytes = Vec::new();
+            open_shared(&path, 0)?
+                .take(max)
+                .read_to_end(&mut bytes)
+                .map_err(|error| fs_error(&error))?;
+            Ok(bytes)
+        })
+        .await
     }
 
     async fn write_atomic(&self, path: &WinPath, bytes: &[u8]) -> Result<(), FsError> {

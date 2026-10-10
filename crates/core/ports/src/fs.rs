@@ -100,6 +100,7 @@ pub trait FileSystem: Send + Sync {
     ) -> Result<Box<dyn ChunkSource>, FsError>;
     async fn final_path(&self, path: &WinPath) -> Result<WinPath, FsError>;
     async fn write_atomic(&self, path: &WinPath, bytes: &[u8]) -> Result<(), FsError>;
+    async fn read_small(&self, path: &WinPath, max: u64) -> Result<Vec<u8>, FsError>;
     async fn free_space(&self, path: &WinPath) -> Result<u64, FsError>;
     async fn create_staging(&self, path: &WinPath) -> Result<Box<dyn ByteSink>, FsError>;
     async fn list_names(&self, folder: &WinPath) -> Result<Vec<String>, FsError>;

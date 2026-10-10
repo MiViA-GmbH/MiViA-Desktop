@@ -123,7 +123,8 @@ pub(crate) const ITEM_COMPUTATIONS: &str = "SELECT id, model_choice_key, state, 
      WHERE source_file_id = ?1 ORDER BY model_choice_key, id";
 
 const FOLDER_COLUMNS: &str = "id, path, active, quiet_period, label_rule, missing_since, \
-     report_folder_mode, report_folder_name, report_folder_path, probe_result";
+     report_folder_mode, report_folder_name, report_folder_path, probe_result, \
+     waiting_network_since, marker_conflict, marker_dismissed";
 
 pub(crate) fn folder_rows() -> String {
     format!(

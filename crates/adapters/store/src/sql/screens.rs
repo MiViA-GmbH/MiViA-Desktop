@@ -1,8 +1,8 @@
 use super::BATCH_COLUMNS;
 
 pub(crate) const FOLDER_VIEWS: &str = "SELECT id, path, position, active, missing_since, \
-     quiet_period, report_folder_mode, report_folder_name, report_folder_path \
-     FROM watched_folder WHERE account_id = ?1 AND removed_at IS NULL ORDER BY position, id";
+     quiet_period, report_folder_mode, report_folder_name, report_folder_path, \
+     waiting_network_since, marker_conflict FROM watched_folder WHERE account_id = ?1 AND removed_at IS NULL ORDER BY position, id";
 
 pub(crate) fn last_closed_of_folder() -> String {
     format!(

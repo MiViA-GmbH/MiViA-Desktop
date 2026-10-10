@@ -58,6 +58,15 @@ impl InMemoryFs {
         }
     }
 
+    pub fn set_offline(&self, share: &WinPath, offline: bool) {
+        let mut state = self.state.lock();
+        if offline {
+            state.offline.insert(key(share));
+        } else {
+            state.offline.remove(&key(share));
+        }
+    }
+
     pub fn fail_next(&self, op: FsOp, error: FsError) {
         self.state.lock().failures.push((op, error));
     }

@@ -6,6 +6,7 @@ use mivia_ports::ipc::screens::{
 };
 use mivia_ports::ipc::views::{BatchSummary, FolderView, OriginView};
 use mivia_ports::store::AccountScope;
+use mivia_ports::store::intake::MarkerPeer;
 use mivia_ports::time::iso_utc;
 use rusqlite::{Row, Transaction, params};
 
@@ -25,6 +26,8 @@ struct FolderRow {
     missing: bool,
     quiet_ms: i64,
     report: (String, Option<String>, Option<String>),
+    waiting_since: Option<i64>,
+    marker: Option<MarkerPeer>,
 }
 
 fn folder_row(row: &Row<'_>) -> rusqlite::Result<FolderRow> {
@@ -36,6 +39,10 @@ fn folder_row(row: &Row<'_>) -> rusqlite::Result<FolderRow> {
         missing: row.get::<_, Option<i64>>(4)?.is_some(),
         quiet_ms: row.get(5)?,
         report: (row.get(6)?, row.get(7)?, row.get(8)?),
+        waiting_since: row.get(9)?,
+        marker: row
+            .get::<_, Option<String>>(10)?
+            .and_then(|json| serde_json::from_str(&json).ok()),
     })
 }
 
@@ -81,6 +88,10 @@ fn folder_view(
         position: row.position,
         paused: !row.active,
         missing: row.missing,
+        waiting_since: row
+            .waiting_since
+            .filter(|_| !row.missing)
+            .map(|at| iso_utc(Timestamp(at))),
         quiet_seconds: u32::try_from(row.quiet_ms / 1000).unwrap_or(u32::MAX),
         open_series,
         last_series,
@@ -95,14 +106,17 @@ fn latest_part(tx: &Transaction<'_>, series: &BatchSummary) -> rusqlite::Result<
     Ok(id.map(|id| id.to_string()))
 }
 
+fn folder_rows(tx: &Transaction<'_>, scope: AccountScope) -> rusqlite::Result<Vec<FolderRow>> {
+    tx.prepare_cached(screens::FOLDER_VIEWS)?
+        .query_map([scope.0.0], folder_row)?
+        .collect()
+}
+
 pub(crate) fn folders(
     tx: &Transaction<'_>,
     scope: AccountScope,
 ) -> rusqlite::Result<Vec<FolderView>> {
-    let rows = tx
-        .prepare_cached(screens::FOLDER_VIEWS)?
-        .query_map([scope.0.0], folder_row)?
-        .collect::<rusqlite::Result<Vec<_>>>()?;
+    let rows = folder_rows(tx, scope)?;
     let open = summaries(tx, &sql::history_head(), [scope.0.0])?;
     rows.into_iter()
         .map(|row| folder_view(tx, scope, row, &open))
@@ -158,17 +172,35 @@ fn series_item(tx: &Transaction<'_>, summary: &BatchSummary) -> rusqlite::Result
     })
 }
 
+fn folder_attention(row: FolderRow) -> Option<NeedsAttention> {
+    let name = WinPath::parse(&row.path)
+        .ok()
+        .and_then(|path| path.file_name().map(str::to_owned))
+        .unwrap_or_else(|| row.path.clone());
+    if row.missing {
+        return Some(NeedsAttention::FolderNotFound {
+            folder_id: row.id.to_string(),
+            folder_name: name,
+            unreachable_since: row.waiting_since.map(|at| iso_utc(Timestamp(at))),
+            path: row.path,
+        });
+    }
+    let peer = row.marker.filter(|_| row.active)?;
+    Some(NeedsAttention::WatchedElsewhere {
+        folder_id: row.id.to_string(),
+        folder_name: name,
+        machine: peer.machine,
+        user: peer.user,
+    })
+}
+
 pub(crate) fn attention(
     tx: &Transaction<'_>,
     scope: AccountScope,
 ) -> rusqlite::Result<(Vec<NeedsAttention>, u32)> {
-    let missing: Vec<NeedsAttention> = folders(tx, scope)?
+    let missing: Vec<NeedsAttention> = folder_rows(tx, scope)?
         .into_iter()
-        .filter(|folder| folder.missing)
-        .map(|folder| NeedsAttention::FolderNotFound {
-            folder_id: folder.id,
-            folder_name: folder.name,
-        })
+        .filter_map(folder_attention)
         .collect();
     let series = summaries(tx, &sql::attention_series(), [scope.0.0])?;
     let counted: u32 = tx.query_row(sql::ATTENTION_COUNT, [scope.0.0], |row| row.get(0))?;
@@ -181,6 +213,7 @@ pub(crate) fn attention(
         !matches!(
             item,
             NeedsAttention::FolderNotFound { .. }
+                | NeedsAttention::WatchedElsewhere { .. }
                 | NeedsAttention::ReportNotSaved { .. }
                 | NeedsAttention::ReportFailed { .. }
         )

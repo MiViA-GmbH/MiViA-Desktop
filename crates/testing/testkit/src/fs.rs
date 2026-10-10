@@ -57,6 +57,7 @@ struct State {
     failures: Vec<(FsOp, FsError)>,
     finals: BTreeMap<Key, WinPath>,
     probes: BTreeMap<Key, ProbeResult>,
+    offline: BTreeSet<Key>,
     free_space: u64,
     clock: i64,
 }
@@ -87,6 +88,7 @@ impl InMemoryFs {
                 failures: Vec::new(),
                 finals: BTreeMap::new(),
                 probes: BTreeMap::new(),
+                offline: BTreeSet::new(),
                 free_space: u64::MAX,
                 clock: 1_790_000_000_000,
             })),
@@ -208,6 +210,9 @@ impl FileSystem for InMemoryFs {
     async fn final_path(&self, path: &WinPath) -> Result<WinPath, FsError> {
         let state = self.begin(FsOp::FinalPath)?;
         let key = key(path);
+        if state.offline.iter().any(|share| key.starts_with(share)) {
+            return Err(FsError::NetworkUnavailable);
+        }
         if !state.nodes.contains_key(&key) {
             return Err(FsError::NotFound);
         }
@@ -248,6 +253,13 @@ impl FileSystem for InMemoryFs {
         drop(state);
         self.put(path, bytes);
         Ok(())
+    }
+
+    async fn read_small(&self, path: &WinPath, max: u64) -> Result<Vec<u8>, FsError> {
+        let state = self.begin(FsOp::Read)?;
+        let bytes = file(&state, path)?.bytes.as_deref().unwrap_or_default();
+        let max = usize::try_from(max).unwrap_or(usize::MAX);
+        Ok(bytes.iter().take(max).copied().collect())
     }
 
     async fn free_space(&self, _path: &WinPath) -> Result<u64, FsError> {

@@ -103,6 +103,7 @@ pub struct FolderView {
     pub position: u32,
     pub paused: bool,
     pub missing: bool,
+    pub waiting_since: Option<String>,
     pub quiet_seconds: u32,
     pub report_folder: Option<String>,
     pub open_series: Option<BatchSummary>,

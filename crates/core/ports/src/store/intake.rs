@@ -17,8 +17,19 @@ pub struct FolderRow {
     pub quiet_ms: i64,
     pub label_rule: LabelRule,
     pub missing_since: Option<Timestamp>,
+    pub waiting_since: Option<Timestamp>,
     pub report_folder: ReportFolder,
     pub probe: Option<ProbeResult>,
+    pub marker_conflict: Option<MarkerPeer>,
+    pub marker_dismissed: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MarkerPeer {
+    pub marker_id: String,
+    pub machine: String,
+    pub user: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -26,6 +37,9 @@ pub enum FolderChange {
     Active(bool),
     Probe(ProbeResult),
     Missing(Option<Timestamp>),
+    Waiting(Option<Timestamp>),
+    Marker(Option<MarkerPeer>),
+    DismissMarker,
     Relocated(WinPath),
     Removed(Timestamp),
 }

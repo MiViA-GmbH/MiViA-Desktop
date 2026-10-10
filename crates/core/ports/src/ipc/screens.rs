@@ -67,6 +67,14 @@ pub enum NeedsAttention {
     FolderNotFound {
         folder_id: String,
         folder_name: String,
+        path: String,
+        unreachable_since: Option<String>,
+    },
+    WatchedElsewhere {
+        folder_id: String,
+        folder_name: String,
+        machine: String,
+        user: String,
     },
     ReportNotSaved {
         series: AttentionSeries,
