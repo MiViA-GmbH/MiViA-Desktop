@@ -103,6 +103,7 @@ proptest! {
         let child = path.join(&name).expect("valid component");
         prop_assert!(path.contains(&child));
         prop_assert!(!child.contains(&path));
+        prop_assert_eq!(child.parent(), Some(path));
     }
 
     #[test]

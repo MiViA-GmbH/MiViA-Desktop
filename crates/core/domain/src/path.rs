@@ -50,6 +50,14 @@ impl WinPath {
         self.components.last().map(String::as_str)
     }
 
+    pub fn parent(&self) -> Option<Self> {
+        let (_, rest) = self.components.split_last()?;
+        Some(Self {
+            root: self.root.clone(),
+            components: rest.to_vec(),
+        })
+    }
+
     pub fn join(&self, name: &str) -> Result<Self, PathError> {
         let mut joined = self.clone();
         joined.components.push(component(name)?);
