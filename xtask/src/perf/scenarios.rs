@@ -103,14 +103,38 @@ fn require_quiet(options: &Options, run: &mut Run) {
 }
 
 fn idle(options: &Options, budgets: &Budgets, run: &mut Run) -> Result<()> {
-    let session = seeded(options, "idle")?;
-    let mut app = session.launch(&["--minimized"], &[])?;
-    app.marker("db_ready", 0.0, LONG)?;
+    floor(options, budgets, run)?;
+    if options.idle_minutes > 0 {
+        let session = seeded(options, "idle")?;
+        let mut app = session.launch(&["--minimized"], &[])?;
+        app.marker("db_ready", 0.0, LONG)?;
+        sleep(SETTLE);
+        let first = usage(app.pid())?;
+        let (cpu, switches, elapsed, top) = idle_window(&app, &first, options.idle_minutes)?;
+        run.notes.push(format!("busiest threads: {top}"));
+        put(run, budgets, "idle.cpu", vec![cpu])?;
+        put(run, budgets, "idle.switches", vec![switches])?;
+        run.notes.push(format!(
+            "idle window {elapsed:.0} s, tray-only with one watched folder, cpu scaled to 30 min"
+        ));
+        app.stop();
+    }
+    Ok(())
+}
+
+fn floor(options: &Options, budgets: &Budgets, run: &mut Run) -> Result<()> {
+    let floor = Session::new(options, "idle-floor")?;
+    let mut bare = floor.launch(&["--minimized"], &[("MIVIA_E2E_FOLDER", "")])?;
+    bare.marker("db_ready", 0.0, LONG)?;
     require_quiet(options, run);
     sleep(SETTLE);
-    let first = usage(app.pid())?;
-    run.notes
-        .push(format!("threads at settle: {}", thread_names(&first)));
+    let first = usage(bare.pid())?;
+    run.notes.push(format!(
+        "threads at settle, 0 folders: {}",
+        thread_names(&first)
+    ));
+    bare.stop();
+    drop(floor);
     put(
         run,
         budgets,
@@ -130,16 +154,6 @@ fn idle(options: &Options, budgets: &Budgets, run: &mut Run) -> Result<()> {
         "idle.handles",
         vec![f64::from(first.handles_root)],
     )?;
-    if options.idle_minutes > 0 {
-        let (cpu, switches, elapsed, top) = idle_window(&app, &first, options.idle_minutes)?;
-        run.notes.push(format!("busiest threads: {top}"));
-        put(run, budgets, "idle.cpu", vec![cpu])?;
-        put(run, budgets, "idle.switches", vec![switches])?;
-        run.notes.push(format!(
-            "idle window {elapsed:.0} s, tray-only with one watched folder, cpu scaled to 30 min"
-        ));
-    }
-    app.stop();
     Ok(())
 }
 

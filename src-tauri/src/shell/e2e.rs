@@ -22,7 +22,7 @@ const SECOND_MS: i64 = 1000;
 pub(crate) struct Seed {
     origin: String,
     key: String,
-    folder: String,
+    folder: Option<String>,
     model: String,
     quiet_secs: i64,
 }
@@ -35,7 +35,7 @@ pub(crate) fn seed_from_env() -> Option<Seed> {
     Some(Seed {
         origin: var("MIVIA_E2E_SERVER_ORIGIN")?,
         key: var("MIVIA_E2E_ACCESS_KEY")?,
-        folder: var("MIVIA_E2E_FOLDER")?,
+        folder: var("MIVIA_E2E_FOLDER"),
         model: var("MIVIA_E2E_MODEL")?,
         quiet_secs: var("MIVIA_E2E_QUIET_SECS")?.parse().ok()?,
     })
@@ -105,6 +105,9 @@ pub(crate) async fn seed(
     version: &str,
 ) -> Result<(), String> {
     let scope = account(store, seed).await?;
+    let Some(path) = &seed.folder else {
+        return Ok(());
+    };
     let known = store
         .list_folders(scope)
         .await
@@ -113,7 +116,7 @@ pub(crate) async fn seed(
         return Ok(());
     }
     let folder = AddFolder {
-        path: WinPath::parse(&seed.folder).map_err(|error| format!("{error:?}"))?,
+        path: WinPath::parse(path).map_err(|error| format!("{error:?}"))?,
         model_choices: vec![ModelChoice {
             model_id: seed.model.clone(),
             customization_id: None,
