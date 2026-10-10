@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
 use mivia_application::intake::{AddFolder, Intake, IntakeSink, Ports, SIGNAL_CAPACITY, Tick};
+use mivia_application::report_settings::ReportSettings;
 use mivia_domain::ids::{BatchId, FolderId, ModelChoice, Timestamp};
 use mivia_domain::label::LabelRule;
+use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_ports::clock::Clock;
 use mivia_ports::ipc::views::{BatchItem, BatchSummary};
@@ -99,6 +101,16 @@ impl World {
     }
 
     pub(crate) async fn add(&self, quiet_ms: i64, include_existing: bool) -> FolderId {
+        self.add_with(quiet_ms, include_existing, ReportSettings::default())
+            .await
+    }
+
+    pub(crate) async fn add_with(
+        &self,
+        quiet_ms: i64,
+        include_existing: bool,
+        report_settings: ReportSettings,
+    ) -> FolderId {
         self.intake
             .add_folder(AddFolder {
                 path: win(r"D:\Lab"),
@@ -106,6 +118,8 @@ impl World {
                 quiet_ms,
                 label_rule: LabelRule::Auto,
                 include_existing,
+                report_settings,
+                report_folder: ReportFolder::Subfolder("MiViA reports".to_owned()),
             })
             .await
             .unwrap()

@@ -2,6 +2,7 @@ use std::future::Future;
 use std::sync::Arc;
 
 use mivia_application::pipeline::{Pipeline, PipelinePorts, Tick};
+use mivia_application::report_settings::ReportSettings;
 use mivia_domain::hold::HoldReason;
 use mivia_domain::ids::{MINUTE_MS, SECOND_MS, Timestamp};
 use mivia_ports::clock::Clock;
@@ -11,9 +12,10 @@ use mivia_testkit::clock::ManualClock;
 use mivia_testkit::id_gen::SeededIdGen;
 use mivia_testkit::server::{FakeServerApi, Fault, Op};
 
-use super::world::{World, jpeg};
+use super::world::{World, jpeg, win};
 
 const ROUNDS: usize = 400;
+pub(crate) const STAGING: &str = r"C:\App\reports\staging";
 const CRASH_POLLS: usize = 100_000;
 
 pub(crate) async fn with_clock<F: Future>(clock: &ManualClock, work: F) -> F::Output {
@@ -40,8 +42,12 @@ pub(crate) struct Line {
 
 impl Line {
     pub(crate) async fn new() -> Self {
+        Self::with_reports(ReportSettings::default()).await
+    }
+
+    pub(crate) async fn with_reports(settings: ReportSettings) -> Self {
         let world = World::new().await;
-        world.add(MINUTE_MS, false).await;
+        world.add_with(MINUTE_MS, false, settings).await;
         let server = Arc::new(FakeServerApi::new(Arc::clone(&world.clock) as _));
         let auth = Arc::new(FakeAuthorizer::new(world.scope.0));
         let pipeline = pipeline(&world, &server, &auth, 1);
@@ -88,7 +94,7 @@ impl Line {
         self.world.pass(2 * SECOND_MS).await;
     }
 
-    pub(crate) async fn tick(&self) -> [Tick; 5] {
+    pub(crate) async fn tick(&self) -> [Tick; 7] {
         let pipeline = &self.pipeline;
         let clock = &self.world.clock;
         [
@@ -97,6 +103,8 @@ impl Line {
             with_clock(clock, pipeline.recovery_tick()).await.unwrap(),
             with_clock(clock, pipeline.poll_tick()).await.unwrap(),
             with_clock(clock, pipeline.probe_tick()).await.unwrap(),
+            with_clock(clock, pipeline.report_tick()).await.unwrap(),
+            with_clock(clock, pipeline.save_tick()).await.unwrap(),
         ]
     }
 
@@ -178,6 +186,7 @@ fn pipeline(
         authorizer: Arc::clone(auth) as _,
         clock: Arc::clone(&world.clock) as _,
         ids: Arc::new(SeededIdGen::new(seed)),
+        staging: win(STAGING),
     };
     Pipeline::new(ports, world.scope, 2)
 }

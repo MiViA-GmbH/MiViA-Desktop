@@ -1,6 +1,8 @@
 use mivia_application::intake::{AddFolder, FolderProblem, IntakeError};
+use mivia_application::report_settings::ReportSettings;
 use mivia_domain::ids::{MINUTE_MS, SECOND_MS};
 use mivia_domain::label::LabelRule;
+use mivia_domain::output::ReportFolder;
 use mivia_ports::clock::Clock;
 use mivia_ports::queries::Queries;
 
@@ -74,6 +76,8 @@ async fn folders_never_nest() {
             quiet_ms: MINUTE_MS,
             label_rule: LabelRule::Auto,
             include_existing: false,
+            report_settings: ReportSettings::default(),
+            report_folder: ReportFolder::Subfolder("MiViA reports".to_owned()),
         })
         .await;
     assert_eq!(nested, Err(IntakeError::Folder(FolderProblem::Overlaps)));

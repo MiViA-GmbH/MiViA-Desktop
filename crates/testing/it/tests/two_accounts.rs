@@ -6,6 +6,7 @@ use mivia_domain::computation::ComputationEvent;
 use mivia_domain::hold::{Access, Gate, HoldReason};
 use mivia_domain::ids::{BatchId, ComputationId, ModelChoice, Timestamp};
 use mivia_domain::label::LabelRule;
+use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{
@@ -39,6 +40,7 @@ fn seed_account(tx: &mut dyn WriteTx, name: &str) -> Result<Seeded, TxError> {
         quiet_period_ms: 2_000,
         label_rule: LabelRule::Auto,
         report_settings_json: "{}".to_owned(),
+        report_folder: ReportFolder::BesideSeries,
         model_choices: Vec::new(),
     })?;
     let batch = |label: &str| NewBatch {
