@@ -30,7 +30,7 @@ const LOOSENED: &[(&str, &str, &str)] = &[
         "\"BSL-1.0\"]",
         "\"BSL-1.0\", \"GPL-3.0\"]",
     ),
-    ("quality/floors.toml", "rust = 1", "rust = 9"),
+    ("quality/floors.toml", "rust = 2", "rust = 9"),
     (
         "rustfmt.toml",
         "use_try_shorthand = true",
