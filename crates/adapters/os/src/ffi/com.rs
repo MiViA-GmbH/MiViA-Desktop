@@ -6,12 +6,13 @@ use windows::Win32::System::Com::{
     CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED, CoCreateInstance, CoInitializeEx,
     CoTaskMemFree, CoUninitialize, IPersistFile, STGM_READ,
 };
+use windows::Win32::UI::Shell::Common::COMDLG_FILTERSPEC;
 use windows::Win32::UI::Shell::{
-    EXP_SZ_LINK, EXP_SZ_LINK_SIG, FOS_FORCEFILESYSTEM, FOS_PICKFOLDERS, FileOpenDialog,
-    IFileOpenDialog, IShellLinkDataList, IShellLinkW, SIGDN_FILESYSPATH, SLDF_HAS_EXP_SZ,
-    SLGP_RAWPATH, ShellLink,
+    EXP_SZ_LINK, EXP_SZ_LINK_SIG, FOS_ALLOWMULTISELECT, FOS_FILEMUSTEXIST, FOS_FORCEFILESYSTEM,
+    FOS_PICKFOLDERS, FileOpenDialog, IFileOpenDialog, IShellItem, IShellLinkDataList, IShellLinkW,
+    SIGDN_FILESYSPATH, SLDF_HAS_EXP_SZ, SLGP_RAWPATH, ShellLink,
 };
-use windows::core::{HSTRING, Interface, PWSTR};
+use windows::core::{HSTRING, Interface, PCWSTR, PWSTR};
 
 const MAX_LINK_TEXT: usize = 1024;
 const LINK_TARGET_CHARS: usize = 260;
@@ -105,22 +106,51 @@ pub fn read_link(file: &Path) -> io::Result<(String, String)> {
     Ok((text(&target), text(&arguments)))
 }
 
+fn item_path(item: &IShellItem) -> io::Result<String> {
+    // SAFETY: the item is a live COM object; the returned path is freed with CoTaskMemFree.
+    unsafe {
+        let name: PWSTR = item.GetDisplayName(SIGDN_FILESYSPATH)?;
+        let path = name
+            .to_string()
+            .map_err(|_| io::Error::from(io::ErrorKind::InvalidData));
+        CoTaskMemFree(Some(name.0.cast_const().cast()));
+        path
+    }
+}
+
 pub fn pick_folder(owner: isize, title: &str) -> io::Result<Option<String>> {
     let _apartment = Apartment::enter();
     let dialog: IFileOpenDialog = create(&FileOpenDialog)?;
-    // SAFETY: the dialog is a live COM object; the returned path is freed with CoTaskMemFree.
+    // SAFETY: the dialog is a live COM object used on the thread that created it.
     unsafe {
         dialog.SetOptions(dialog.GetOptions()? | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM)?;
         dialog.SetTitle(&HSTRING::from(title))?;
         if dialog.Show(Some(HWND(owner as *mut _))).is_err() {
             return Ok(None);
         }
-        let item = dialog.GetResult()?;
-        let name: PWSTR = item.GetDisplayName(SIGDN_FILESYSPATH)?;
-        let path = name
-            .to_string()
-            .map_err(|_| io::Error::from(io::ErrorKind::InvalidData));
-        CoTaskMemFree(Some(name.0.cast_const().cast()));
-        path.map(Some)
+        item_path(&dialog.GetResult()?).map(Some)
+    }
+}
+
+pub fn pick_files(owner: isize, filter: (&str, &str)) -> io::Result<Vec<String>> {
+    let _apartment = Apartment::enter();
+    let dialog: IFileOpenDialog = create(&FileOpenDialog)?;
+    let (name, spec) = (HSTRING::from(filter.0), HSTRING::from(filter.1));
+    let types = [COMDLG_FILTERSPEC {
+        pszName: PCWSTR(name.as_ptr()),
+        pszSpec: PCWSTR(spec.as_ptr()),
+    }];
+    // SAFETY: a live COM object on its creating thread; the filter strings outlive the call.
+    unsafe {
+        let options = FOS_ALLOWMULTISELECT | FOS_FILEMUSTEXIST | FOS_FORCEFILESYSTEM;
+        dialog.SetOptions(dialog.GetOptions()? | options)?;
+        dialog.SetFileTypes(&types)?;
+        if dialog.Show(Some(HWND(owner as *mut _))).is_err() {
+            return Ok(Vec::new());
+        }
+        let items = dialog.GetResults()?;
+        (0..items.GetCount()?)
+            .map(|index| item_path(&items.GetItemAt(index)?))
+            .collect()
     }
 }
