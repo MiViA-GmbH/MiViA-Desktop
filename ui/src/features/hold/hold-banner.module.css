@@ -1,0 +1,3 @@
+.root {
+	border-bottom: 1px solid color-mix(in srgb, var(--alert-color) 35%, transparent);
+}

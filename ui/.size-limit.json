@@ -1,1 +1,58 @@
-[{ "name": "startup js", "path": "src/main.ts", "limit": "560 KB", "gzip": false, "brotli": false }]
+[
+	{
+		"name": "startup js",
+		"path": ["dist/startup.bundle.js"],
+		"limit": "560 KB",
+		"gzip": false,
+		"brotli": false
+	},
+	{
+		"name": "startup css",
+		"path": ["dist/assets/*.css"],
+		"limit": "260 KB",
+		"gzip": false,
+		"brotli": false
+	},
+	{
+		"name": "fonts",
+		"path": ["dist/assets/*.woff2"],
+		"limit": "120 KB",
+		"gzip": false,
+		"brotli": false
+	},
+	{
+		"name": "lazy series",
+		"path": ["dist/assets/lazy-series.lazy-*.js"],
+		"limit": "400 KB",
+		"gzip": false,
+		"brotli": false
+	},
+	{
+		"name": "lazy folder",
+		"path": ["dist/assets/lazy-folder.lazy-*.js"],
+		"limit": "400 KB",
+		"gzip": false,
+		"brotli": false
+	},
+	{
+		"name": "lazy settings",
+		"path": ["dist/assets/lazy-settings.lazy-*.js"],
+		"limit": "400 KB",
+		"gzip": false,
+		"brotli": false
+	},
+	{
+		"name": "lazy history",
+		"path": ["dist/assets/lazy-history.lazy-*.js"],
+		"limit": "400 KB",
+		"gzip": false,
+		"brotli": false
+	},
+	{
+		"name": "lazy overview",
+		"path": ["dist/assets/lazy-overview.lazy-*.js"],
+		"limit": "400 KB",
+		"gzip": false,
+		"brotli": false
+	}
+]

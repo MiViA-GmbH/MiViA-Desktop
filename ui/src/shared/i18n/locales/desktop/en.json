@@ -1,0 +1,191 @@
+{
+	"desktop": {
+		"nav": {
+			"overview": "Overview",
+			"history": "History",
+			"singleImages": "Single images",
+			"inputFolders": "Input folders",
+			"settings": "Settings",
+			"account": "Account"
+		},
+		"overview": {
+			"title": "Overview",
+			"attentionMeta_one": "1 thing needs you. Everything else keeps running.",
+			"attentionMeta_other": "{{count}} things need you. Everything else keeps running.",
+			"calm": "Everything works.",
+			"calmSaved": "Everything works. Last report saved {{time}}.",
+			"pausedMeta": "All input folders are paused. New images wait in the folders.",
+			"resumeAll": "Resume all",
+			"recentSeries": "Recent image series",
+			"allInHistory": "All in History",
+			"emptyTitle": "No input folder yet",
+			"emptyText": "Choose the folder where your microscope saves images. MiViA analyzes each new image and saves the report. Images are never moved or deleted.",
+			"emptyHint": "Single images: right-click them in Explorer and choose Analyze with MiViA."
+		},
+		"attention": {
+			"title": "Needs attention",
+			"showAll": "Show all ({{count}})",
+			"dismiss": "Dismiss",
+			"tryAgain": "Try again",
+			"openSeries": "Open series",
+			"openFolder": "Open folder",
+			"folderNotFound": "The folder was moved or renamed. Settings are kept.",
+			"reportNotSaved": "The report is ready but not saved. It is kept.",
+			"reportFailed": "The report could not be created. The results are kept.",
+			"reportStale": "A report does not include the latest results.",
+			"seriesProblems_one": "1 image could not be analyzed.",
+			"seriesProblems_other": "{{count}} images could not be analyzed."
+		},
+		"hold": {
+			"offline": {
+				"title": "No connection since {{time}}."
+			},
+			"serviceUnavailable": {
+				"title": "MiViA service unavailable since {{time}}."
+			},
+			"networkBlocked": {
+				"title": "The network has blocked MiViA since {{time}}."
+			},
+			"accessKey": {
+				"title": "The access key no longer works."
+			},
+			"accountBlocked": {
+				"title": "Your MiViA account is blocked.",
+				"text": "Contact MiViA support."
+			},
+			"adminScope": {
+				"title": "This key has administrator rights.",
+				"text": "Use an access key of a normal account."
+			},
+			"license": {
+				"title": "Your MiViA license is not valid.",
+				"text": "Images are safe and wait here. Ask the MiViA contact in your lab."
+			},
+			"clientTooOld": {
+				"title": "This version is too old for the server."
+			},
+			"continues": "Images are safe and continue automatically.",
+			"safe": "Images are safe and wait here.",
+			"checkNow": "Check connection now",
+			"enterKey": "Enter new access key"
+		},
+		"folder": {
+			"state": {
+				"collecting": "Collecting images",
+				"notFound": "Folder not found",
+				"paused": "Paused",
+				"reportSaved": "Report saved {{time}}",
+				"waitingConnection": "Waiting for connection",
+				"waitingImages": "Waiting for new images"
+			},
+			"progress": "{{label}}: {{done}} of {{files}} done",
+			"doneOf": "{{done}} of {{files}} done",
+			"quietHint": "The report follows {{minutes}} min after the last new image.",
+			"finishSeries": "Finish series now",
+			"resume": "Resume",
+			"pause": "Pause",
+			"latestReport": "Latest report",
+			"seriesTab": "Image series",
+			"settingsTab": "Settings",
+			"earlierSeries": "Earlier image series",
+			"noSeriesTitle": "No image series yet",
+			"noSeriesText": "Waiting for new images. Images already in the folder are not analyzed.",
+			"reportsPanel": "Reports",
+			"reportFolder": "Report folder",
+			"pathWithReports": "{{path}} → reports in {{reports}}",
+			"besideImages": "Next to the images",
+			"seriesPanel": "Image series",
+			"quietSetting": "A series ends {{minutes}} min after the last new image."
+		},
+		"series": {
+			"meta_one": "{{origin}}, {{span}}, 1 image",
+			"meta_other": "{{origin}}, {{span}}, {{count}} images",
+			"span": "{{from}} to {{to}}",
+			"since": "since {{from}}",
+			"showReports": "Show reports in folder",
+			"reports": "Reports",
+			"images": "Images",
+			"image": "Image",
+			"splitHint": "Split into parts of 100 images",
+			"noReportsYet": "Reports follow when the series is finished.",
+			"part": "{{name}}, part {{part}} of {{parts}}",
+			"range": "images {{from}} to {{to}} · {{formats}}",
+			"open": "Open",
+			"showInFolder": "Show in folder",
+			"reportsCount": "Reports ({{count}})",
+			"filterAll": "All",
+			"filterProblems": "Problems only ({{count}})",
+			"summary": {
+				"complete": "All reports saved and complete.",
+				"reportProblem": "A report could not be saved or created.",
+				"stale": "A report does not include the latest results.",
+				"problems_one": "1 image could not be analyzed and is not in the reports.",
+				"problems_other": "{{count}} images could not be analyzed and are not in the reports."
+			}
+		},
+		"history": {
+			"meta": "Kept on this PC only.",
+			"emptyTitle": "No image series yet",
+			"emptyText": "New images in your input folders appear here as image series."
+		},
+		"singleImages": {
+			"meta": "Images you sent from Explorer.",
+			"emptyTitle": "No images sent yet",
+			"emptyText": "Right-click images in Explorer and choose Analyze with MiViA. They appear here."
+		},
+		"settings": {
+			"general": "General",
+			"account": "Account",
+			"language": "Language",
+			"languageAuto": "Automatic (Windows)",
+			"noAccount": "No account connected yet."
+		},
+		"status": {
+			"batch": {
+				"collecting": "Collecting images",
+				"analyzing": "Analyzing",
+				"creatingReport": "Creating report",
+				"done": "Done",
+				"saved": "Saved",
+				"newerResults": "Newer results available",
+				"imageProblems": "Image not usable",
+				"reportProblem": "Report not saved"
+			},
+			"report": {
+				"saved": "Saved",
+				"creating": "Creating report",
+				"waiting": "Waiting",
+				"notSaved": "Report not saved",
+				"failed": "Report could not be created",
+				"stale": "Newer results available",
+				"nothing": "No report"
+			},
+			"sourceFile": {
+				"detected": "Being copied",
+				"ready": "Waiting",
+				"uploading": "Uploading",
+				"rejected": "Image not usable",
+				"vanished": "Removed"
+			},
+			"computation": {
+				"queued": "Waiting",
+				"computing": "Analyzing",
+				"done": "Done",
+				"reused": "Done (result taken over)",
+				"failed": "Analysis not possible",
+				"unavailable": "Model no longer available",
+				"cancelled": "Cancelled"
+			}
+		},
+		"errors": {
+			"actionFailed": "That did not work. Try again in a moment.",
+			"reportChanged": "This file was changed after MiViA Desktop saved it.",
+			"reportMissing": "The report file is no longer in its folder.",
+			"notFoundTitle": "Not found",
+			"notFoundText": "This page does not exist any more.",
+			"toOverview": "Back to Overview",
+			"loadFailedTitle": "Could not load",
+			"loadFailedText": "MiViA Desktop could not read its data. Close the window and open it again."
+		}
+	}
+}

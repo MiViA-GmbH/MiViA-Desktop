@@ -22,7 +22,9 @@
 		"skipLibCheck": true,
 		"noEmit": true,
 		"incremental": true,
-		"tsBuildInfoFile": "node_modules/.cache/tsc/tsconfig.tsbuildinfo"
+		"tsBuildInfoFile": "node_modules/.cache/tsc/tsconfig.tsbuildinfo",
+		"types": ["vite/client", "node"],
+		"resolveJsonModule": true
 	},
-	"include": ["src"]
+	"include": ["src", "e2e", "vite.config.ts", "playwright.config.ts", "vitest.config.ts"]
 }

@@ -1,0 +1,51 @@
+@layer mantine, app;
+
+@import "@mantine/core/styles/baseline.layer.css";
+@import "@mantine/core/styles/default-css-variables.layer.css";
+@import "@mantine/core/styles/global.layer.css";
+@import "@mantine/core/styles/ScrollArea.layer.css";
+@import "@mantine/core/styles/UnstyledButton.layer.css";
+@import "@mantine/core/styles/VisuallyHidden.layer.css";
+@import "@mantine/core/styles/Paper.layer.css";
+@import "@mantine/core/styles/Popover.layer.css";
+@import "@mantine/core/styles/CloseButton.layer.css";
+@import "@mantine/core/styles/Group.layer.css";
+@import "@mantine/core/styles/Loader.layer.css";
+@import "@mantine/core/styles/Overlay.layer.css";
+@import "@mantine/core/styles/ModalBase.layer.css";
+@import "@mantine/core/styles/Input.layer.css";
+@import "@mantine/core/styles/InlineInput.layer.css";
+@import "@mantine/core/styles/Flex.layer.css";
+@import "@mantine/core/styles/FloatingIndicator.layer.css";
+@import "@mantine/core/styles/ActionIcon.layer.css";
+@import "@mantine/core/styles/Alert.layer.css";
+@import "@mantine/core/styles/Anchor.layer.css";
+@import "@mantine/core/styles/AppShell.layer.css";
+@import "@mantine/core/styles/Avatar.layer.css";
+@import "@mantine/core/styles/Badge.layer.css";
+@import "@mantine/core/styles/Button.layer.css";
+@import "@mantine/core/styles/Center.layer.css";
+@import "@mantine/core/styles/Chip.layer.css";
+@import "@mantine/core/styles/Checkbox.layer.css";
+@import "@mantine/core/styles/Combobox.layer.css";
+@import "@mantine/core/styles/Divider.layer.css";
+@import "@mantine/core/styles/NavLink.layer.css";
+@import "@mantine/core/styles/Notification.layer.css";
+@import "@mantine/core/styles/Progress.layer.css";
+@import "@mantine/core/styles/Skeleton.layer.css";
+@import "@mantine/core/styles/Stack.layer.css";
+@import "@mantine/core/styles/Table.layer.css";
+@import "@mantine/core/styles/Tabs.layer.css";
+@import "@mantine/core/styles/Text.layer.css";
+@import "@mantine/core/styles/ThemeIcon.layer.css";
+@import "@mantine/core/styles/Title.layer.css";
+@import "@mantine/core/styles/Tooltip.layer.css";
+@import "@mantine/notifications/styles.layer.css";
+@import "@mivia-ai/theme/fonts.css";
+
+@layer app {
+	html,
+	body {
+		background: var(--mantine-color-stone-1);
+	}
+}

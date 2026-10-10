@@ -1,0 +1,191 @@
+{
+	"desktop": {
+		"nav": {
+			"overview": "Übersicht",
+			"history": "Verlauf",
+			"singleImages": "Einzelbilder",
+			"inputFolders": "Eingangsordner",
+			"settings": "Einstellungen",
+			"account": "Konto"
+		},
+		"overview": {
+			"title": "Übersicht",
+			"attentionMeta_one": "1 Punkt braucht Sie. Alles andere läuft weiter.",
+			"attentionMeta_other": "{{count}} Punkte brauchen Sie. Alles andere läuft weiter.",
+			"calm": "Alles funktioniert.",
+			"calmSaved": "Alles funktioniert. Letzter Bericht gespeichert um {{time}}.",
+			"pausedMeta": "Alle Eingangsordner sind pausiert. Neue Bilder warten in den Ordnern.",
+			"resumeAll": "Alle fortsetzen",
+			"recentSeries": "Letzte Bildserien",
+			"allInHistory": "Alle im Verlauf",
+			"emptyTitle": "Noch kein Eingangsordner",
+			"emptyText": "Wählen Sie den Ordner, in dem Ihr Mikroskop Bilder speichert. MiViA wertet jedes neue Bild aus und speichert den Bericht. Bilder werden nie verschoben oder gelöscht.",
+			"emptyHint": "Einzelbilder: Klicken Sie sie im Explorer mit der rechten Maustaste an und wählen Sie Mit MiViA auswerten."
+		},
+		"attention": {
+			"title": "Bitte prüfen",
+			"showAll": "Alle anzeigen ({{count}})",
+			"dismiss": "Ausblenden",
+			"tryAgain": "Erneut versuchen",
+			"openSeries": "Bildserie öffnen",
+			"openFolder": "Ordner öffnen",
+			"folderNotFound": "Der Ordner wurde verschoben oder umbenannt. Die Einstellungen bleiben erhalten.",
+			"reportNotSaved": "Der Bericht ist fertig, aber nicht gespeichert. Er bleibt erhalten.",
+			"reportFailed": "Der Bericht konnte nicht erstellt werden. Die Ergebnisse bleiben erhalten.",
+			"reportStale": "Ein Bericht enthält nicht die neuesten Ergebnisse.",
+			"seriesProblems_one": "1 Bild konnte nicht ausgewertet werden.",
+			"seriesProblems_other": "{{count}} Bilder konnten nicht ausgewertet werden."
+		},
+		"hold": {
+			"offline": {
+				"title": "Keine Verbindung seit {{time}}."
+			},
+			"serviceUnavailable": {
+				"title": "MiViA-Dienst nicht verfügbar seit {{time}}."
+			},
+			"networkBlocked": {
+				"title": "Das Netzwerk blockiert MiViA seit {{time}}."
+			},
+			"accessKey": {
+				"title": "Der Zugangsschlüssel funktioniert nicht mehr."
+			},
+			"accountBlocked": {
+				"title": "Ihr MiViA-Konto ist gesperrt.",
+				"text": "Wenden Sie sich an den MiViA-Support."
+			},
+			"adminScope": {
+				"title": "Dieser Schlüssel hat Administratorrechte.",
+				"text": "Verwenden Sie einen Zugangsschlüssel eines normalen Kontos."
+			},
+			"license": {
+				"title": "Ihre MiViA-Lizenz ist nicht gültig.",
+				"text": "Die Bilder sind sicher und warten hier. Fragen Sie die MiViA-Ansprechperson im Labor."
+			},
+			"clientTooOld": {
+				"title": "Diese Version ist zu alt für den Server."
+			},
+			"continues": "Die Bilder sind sicher, es geht automatisch weiter.",
+			"safe": "Die Bilder sind sicher und warten hier.",
+			"checkNow": "Verbindung jetzt prüfen",
+			"enterKey": "Neuen Zugangsschlüssel eingeben"
+		},
+		"folder": {
+			"state": {
+				"collecting": "Bilder werden gesammelt",
+				"notFound": "Ordner nicht gefunden",
+				"paused": "Pausiert",
+				"reportSaved": "Bericht gespeichert {{time}}",
+				"waitingConnection": "Wartet auf Verbindung",
+				"waitingImages": "Wartet auf neue Bilder"
+			},
+			"progress": "{{label}}: {{done}} von {{files}} fertig",
+			"doneOf": "{{done}} von {{files}} fertig",
+			"quietHint": "Der Bericht folgt {{minutes}} Min. nach dem letzten neuen Bild.",
+			"finishSeries": "Bildserie jetzt abschließen",
+			"resume": "Fortsetzen",
+			"pause": "Pausieren",
+			"latestReport": "Letzter Bericht",
+			"seriesTab": "Bildserien",
+			"settingsTab": "Einstellungen",
+			"earlierSeries": "Frühere Bildserien",
+			"noSeriesTitle": "Noch keine Bildserie",
+			"noSeriesText": "Wartet auf neue Bilder. Bilder, die bereits im Ordner liegen, werden nicht ausgewertet.",
+			"reportsPanel": "Berichte",
+			"reportFolder": "Berichtsordner",
+			"pathWithReports": "{{path}} → Berichte in {{reports}}",
+			"besideImages": "Neben den Bildern",
+			"seriesPanel": "Bildserie",
+			"quietSetting": "Eine Bildserie endet {{minutes}} Min. nach dem letzten neuen Bild."
+		},
+		"series": {
+			"meta_one": "{{origin}}, {{span}}, 1 Bild",
+			"meta_other": "{{origin}}, {{span}}, {{count}} Bilder",
+			"span": "{{from}} bis {{to}}",
+			"since": "seit {{from}}",
+			"showReports": "Berichte im Ordner anzeigen",
+			"reports": "Berichte",
+			"images": "Bilder",
+			"image": "Bild",
+			"splitHint": "In Teile zu je 100 Bildern aufgeteilt",
+			"noReportsYet": "Berichte folgen, wenn die Bildserie abgeschlossen ist.",
+			"part": "{{name}}, Teil {{part}} von {{parts}}",
+			"range": "Bilder {{from}} bis {{to}} · {{formats}}",
+			"open": "Öffnen",
+			"showInFolder": "Im Ordner anzeigen",
+			"reportsCount": "Berichte ({{count}})",
+			"filterAll": "Alle",
+			"filterProblems": "Nur Probleme ({{count}})",
+			"summary": {
+				"complete": "Alle Berichte sind gespeichert und vollständig.",
+				"reportProblem": "Ein Bericht konnte nicht gespeichert oder erstellt werden.",
+				"stale": "Ein Bericht enthält nicht die neuesten Ergebnisse.",
+				"problems_one": "1 Bild konnte nicht ausgewertet werden und fehlt in den Berichten.",
+				"problems_other": "{{count}} Bilder konnten nicht ausgewertet werden und fehlen in den Berichten."
+			}
+		},
+		"history": {
+			"meta": "Nur auf diesem PC gespeichert.",
+			"emptyTitle": "Noch keine Bildserie",
+			"emptyText": "Neue Bilder in Ihren Eingangsordnern erscheinen hier als Bildserien."
+		},
+		"singleImages": {
+			"meta": "Bilder, die Sie aus dem Explorer gesendet haben.",
+			"emptyTitle": "Noch keine Bilder gesendet",
+			"emptyText": "Klicken Sie Bilder im Explorer mit der rechten Maustaste an und wählen Sie Mit MiViA auswerten. Sie erscheinen dann hier."
+		},
+		"settings": {
+			"general": "Allgemein",
+			"account": "Konto",
+			"language": "Sprache",
+			"languageAuto": "Automatisch (Windows)",
+			"noAccount": "Noch kein Konto verbunden."
+		},
+		"status": {
+			"batch": {
+				"collecting": "Bilder werden gesammelt",
+				"analyzing": "Wird ausgewertet",
+				"creatingReport": "Bericht wird erstellt",
+				"done": "Fertig",
+				"saved": "Gespeichert",
+				"newerResults": "Neuere Ergebnisse vorhanden",
+				"imageProblems": "Bild nicht verwendbar",
+				"reportProblem": "Bericht nicht gespeichert"
+			},
+			"report": {
+				"saved": "Gespeichert",
+				"creating": "Bericht wird erstellt",
+				"waiting": "Wartet",
+				"notSaved": "Bericht nicht gespeichert",
+				"failed": "Bericht konnte nicht erstellt werden",
+				"stale": "Neuere Ergebnisse vorhanden",
+				"nothing": "Kein Bericht"
+			},
+			"sourceFile": {
+				"detected": "Wird kopiert",
+				"ready": "Wartet",
+				"uploading": "Wird hochgeladen",
+				"rejected": "Bild nicht verwendbar",
+				"vanished": "Entfernt"
+			},
+			"computation": {
+				"queued": "Wartet",
+				"computing": "Wird ausgewertet",
+				"done": "Fertig",
+				"reused": "Fertig (Ergebnis übernommen)",
+				"failed": "Auswertung nicht möglich",
+				"unavailable": "Modell nicht mehr verfügbar",
+				"cancelled": "Abgebrochen"
+			}
+		},
+		"errors": {
+			"actionFailed": "Das hat nicht funktioniert. Versuchen Sie es gleich noch einmal.",
+			"reportChanged": "Diese Datei wurde geändert, nachdem MiViA Desktop sie gespeichert hat.",
+			"reportMissing": "Die Berichtsdatei liegt nicht mehr in ihrem Ordner.",
+			"notFoundTitle": "Nicht gefunden",
+			"notFoundText": "Diese Seite gibt es nicht mehr.",
+			"toOverview": "Zurück zur Übersicht",
+			"loadFailedTitle": "Laden nicht möglich",
+			"loadFailedText": "MiViA Desktop konnte seine Daten nicht lesen. Schließen Sie das Fenster und öffnen Sie es erneut."
+		}
+	}
+}
