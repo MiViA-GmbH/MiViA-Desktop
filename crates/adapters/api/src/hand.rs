@@ -1,4 +1,7 @@
-use reqwest::header::{ACCEPT, ACCEPT_LANGUAGE, AUTHORIZATION, HeaderValue, IF_NONE_MATCH};
+use reqwest::header::{
+    ACCEPT, ACCEPT_LANGUAGE, AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE, HeaderValue,
+    IF_NONE_MATCH,
+};
 use reqwest::multipart::{Form, Part};
 use reqwest::{Body, Client, RequestBuilder};
 use serde::Deserialize;
@@ -142,4 +145,21 @@ pub fn issue_report(
         .header(AUTHORIZATION, authorization)
         .header("x-client-session-id", report.session_id)
         .multipart(form)
+}
+
+pub fn telemetry_batch(
+    client: &Client,
+    base_url: &str,
+    authorization: HeaderValue,
+    batch: (&str, Vec<u8>),
+) -> RequestBuilder {
+    let (session_id, body) = batch;
+    client
+        .post(format!("{base_url}/api/client-diagnostics/telemetry"))
+        .header(ACCEPT, JSON)
+        .header(CONTENT_TYPE, JSON)
+        .header(CONTENT_ENCODING, "gzip")
+        .header(AUTHORIZATION, authorization)
+        .header("x-client-session-id", session_id)
+        .body(body)
 }

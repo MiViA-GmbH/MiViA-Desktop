@@ -7,7 +7,10 @@ use crate::backup;
 
 pub const SCHEMA_MAJOR: i64 = 1;
 
-const MIGRATION_SQL: &[&str] = &[include_str!("../migrations/0001_init.sql")];
+const MIGRATION_SQL: &[&str] = &[
+    include_str!("../migrations/0001_init.sql"),
+    include_str!("../migrations/0002_telemetry.sql"),
+];
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OpenError {

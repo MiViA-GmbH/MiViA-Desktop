@@ -171,6 +171,13 @@ pub struct ProblemReportForm {
     pub session_id: String,
 }
 
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct TelemetryAck {
+    pub accepted: u32,
+    pub rejected: Vec<(i64, String)>,
+    pub min_interval_s: Option<u32>,
+}
+
 #[async_trait]
 pub trait ServerApi: Send + Sync {
     async fn version(&self) -> Result<ServerVersion, ServerError>;
@@ -198,5 +205,10 @@ pub trait ServerApi: Send + Sync {
         form: &ProblemReportForm,
         bundle: Vec<u8>,
     ) -> Result<(), ServerError>;
+    async fn send_telemetry(
+        &self,
+        session_id: &str,
+        body: Vec<u8>,
+    ) -> Result<TelemetryAck, ServerError>;
     fn server_offset_ms(&self) -> Option<i64>;
 }

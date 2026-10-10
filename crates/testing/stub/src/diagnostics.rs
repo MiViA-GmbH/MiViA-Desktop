@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
+use std::io::Read;
 
+use axum::body::Bytes;
 use axum::extract::{DefaultBodyLimit, Multipart, State};
-use axum::http::{HeaderMap, StatusCode};
+use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
 use axum::{Json, Router};
@@ -15,10 +17,59 @@ use crate::errors::response;
 const BODY_LIMIT: usize = 11 * 1024 * 1024;
 
 pub(crate) fn routes() -> Router<Stub> {
-    Router::new().route(
-        "/api/client-diagnostics/issue-reports",
-        post(create).layer(DefaultBodyLimit::max(BODY_LIMIT)),
-    )
+    Router::new()
+        .route(
+            "/api/client-diagnostics/issue-reports",
+            post(create).layer(DefaultBodyLimit::max(BODY_LIMIT)),
+        )
+        .route("/api/client-diagnostics/telemetry", post(telemetry))
+}
+
+const DECODED_LIMIT: u64 = 100_000;
+const MAX_EVENTS: usize = 500;
+
+fn decoded(body: &[u8]) -> Option<Value> {
+    let mut text = Vec::new();
+    flate2::read::GzDecoder::new(body)
+        .take(DECODED_LIMIT + 1)
+        .read_to_end(&mut text)
+        .ok()?;
+    serde_json::from_slice(&text).ok()
+}
+
+fn telemetry_invalid() -> Response {
+    let payload = json!({ "statusCode": 400, "code": "TELEMETRY_INVALID", "message": "Invalid" });
+    (StatusCode::BAD_REQUEST, Json(payload)).into_response()
+}
+
+async fn telemetry(State(stub): State<Stub>, headers: HeaderMap, body: Bytes) -> Response {
+    if let Some(denied) = denied(&stub, &headers) {
+        return denied;
+    }
+    if headers.get(header::CONTENT_ENCODING) != Some(&HeaderValue::from_static("gzip")) {
+        return telemetry_invalid();
+    }
+    let events = decoded(&body)
+        .and_then(|batch| batch.get("events").and_then(Value::as_array).map(Vec::len))
+        .filter(|count| (1..=MAX_EVENTS).contains(count));
+    let Some(events) = events else {
+        return telemetry_invalid();
+    };
+    let session_id = headers
+        .get("x-client-session-id")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or_default();
+    match stub.engine.send_telemetry(session_id, body.to_vec()).await {
+        Ok(_) => {
+            let mut response = Json(json!({ "accepted": events, "rejected": [] })).into_response();
+            response.headers_mut().insert(
+                "x-telemetry-min-interval-s",
+                HeaderValue::from_static("300"),
+            );
+            response
+        }
+        Err(error) => response(&error),
+    }
 }
 
 fn form(fields: &BTreeMap<String, String>, session_id: String) -> Option<ProblemReportForm> {

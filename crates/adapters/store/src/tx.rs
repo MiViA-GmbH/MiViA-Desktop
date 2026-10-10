@@ -20,6 +20,7 @@ mod report_repo;
 mod report_save;
 mod reports;
 mod series;
+mod telemetry;
 mod upkeep;
 
 use mivia_domain::ids::{AccountId, Timestamp};
@@ -27,6 +28,7 @@ use mivia_ports::ipc::change::Change;
 use mivia_ports::store::history::{Actor, HistoryRepo};
 use mivia_ports::store::intake::IntakeRepo;
 use mivia_ports::store::pipeline::PipelineRepo;
+use mivia_ports::store::telemetry::TelemetryRepo;
 use mivia_ports::store::{
     AccountRepo, AccountScope, BatchRepo, ComputationRepo, FolderRepo, HoldRepo, ReportRepo,
     SentImages, SettingsScope, SourceFileRepo, TxError, WriteTx,
@@ -126,6 +128,10 @@ impl WriteTx for SqlTx<'_> {
 
     fn history(&mut self, scope: AccountScope) -> &mut dyn HistoryRepo {
         self.scoped(scope)
+    }
+
+    fn telemetry(&mut self) -> &mut dyn TelemetryRepo {
+        self
     }
 
     fn settings(&mut self, scope: SettingsScope) -> Result<Option<String>, TxError> {

@@ -116,6 +116,15 @@ index sqlite_autoindex_account_1
 index sqlite_autoindex_report_part_1
 
 
+index telemetry_sent
+CREATE INDEX telemetry_sent ON telemetry_event(sent_at) WHERE sent_at IS NOT NULL
+
+index telemetry_unsent
+CREATE INDEX telemetry_unsent ON telemetry_event(seq) WHERE sent_at IS NULL
+
+index telemetry_unsent_order
+CREATE INDEX telemetry_unsent_order ON telemetry_event(priority, seq) WHERE sent_at IS NULL
+
 index watched_folder_by_account
 CREATE INDEX watched_folder_by_account ON watched_folder(account_id, position) WHERE removed_at IS NULL
 
@@ -421,6 +430,14 @@ CREATE TABLE submit_attempt (
   server_offset_ms INTEGER,
   outcome TEXT
 ) STRICT, WITHOUT ROWID
+
+table telemetry_counter
+CREATE TABLE telemetry_counter (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  seq INTEGER NOT NULL,
+  day INTEGER NOT NULL,
+  day_events INTEGER NOT NULL
+) STRICT
 
 table telemetry_event
 CREATE TABLE telemetry_event (

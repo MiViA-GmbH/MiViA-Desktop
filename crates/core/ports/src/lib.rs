@@ -8,5 +8,6 @@ pub mod policy;
 pub mod queries;
 pub mod server;
 pub mod store;
+pub mod telemetry;
 pub mod time;
 pub mod watch;

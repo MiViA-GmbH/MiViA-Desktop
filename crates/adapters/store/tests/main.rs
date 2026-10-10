@@ -6,3 +6,4 @@ mod lifecycle;
 mod queries;
 mod reports;
 mod screens;
+mod telemetry;

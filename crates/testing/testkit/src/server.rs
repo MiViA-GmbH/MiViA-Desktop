@@ -12,7 +12,7 @@ use mivia_ports::fs::ByteSink;
 use mivia_ports::server::{
     CatalogueModel, Download, FindJobs, ImageRef, LabelsFetch, License, ProblemReportForm,
     ReportProgress, ReportRequest, ServerApi, ServerError, ServerJob, ServerVersion, SubmitRequest,
-    UploadRequest,
+    TelemetryAck, UploadRequest,
 };
 use parking_lot::Mutex;
 
@@ -36,6 +36,7 @@ pub enum Op {
     ReportStatus,
     ReportDownload,
     ProblemReport,
+    Telemetry,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -59,6 +60,7 @@ pub struct FakeServerApi {
     faults: Mutex<Faults>,
     journal: Mutex<Vec<(Op, Timestamp)>>,
     problem_reports: Mutex<BTreeMap<String, ProblemReportForm>>,
+    telemetry: Mutex<Vec<(String, Vec<u8>)>>,
     clock: Option<Arc<dyn Clock>>,
     skew_ms: AtomicI64,
 }
@@ -104,6 +106,10 @@ impl FakeServerApi {
 
     pub fn problem_reports(&self) -> Vec<ProblemReportForm> {
         self.problem_reports.lock().values().cloned().collect()
+    }
+
+    pub fn telemetry_batches(&self) -> Vec<(String, Vec<u8>)> {
+        self.telemetry.lock().clone()
     }
 
     pub fn count(&self, op: Op) -> usize {
@@ -296,6 +302,16 @@ impl ServerApi for FakeServerApi {
             .entry(form.report_id.clone())
             .or_insert_with(|| form.clone());
         Self::after(fault, ()).await
+    }
+
+    async fn send_telemetry(
+        &self,
+        session_id: &str,
+        body: Vec<u8>,
+    ) -> Result<TelemetryAck, ServerError> {
+        let fault = self.enter(Op::Telemetry)?;
+        self.telemetry.lock().push((session_id.to_owned(), body));
+        Self::after(fault, TelemetryAck::default()).await
     }
 
     fn server_offset_ms(&self) -> Option<i64> {

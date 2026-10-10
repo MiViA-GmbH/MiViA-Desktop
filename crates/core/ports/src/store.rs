@@ -3,6 +3,7 @@ pub mod intake;
 pub mod pipeline;
 pub mod reports;
 mod repos;
+pub mod telemetry;
 
 use std::any::Any;
 
@@ -14,6 +15,7 @@ use crate::ipc::change::Change;
 use history::HistoryRepo;
 use intake::IntakeRepo;
 use pipeline::PipelineRepo;
+use telemetry::TelemetryRepo;
 
 pub use reports::{NewReport, ReportRepo};
 pub use repos::{
@@ -65,6 +67,7 @@ pub trait WriteTx {
     fn intake(&mut self, scope: AccountScope) -> &mut dyn IntakeRepo;
     fn pipeline(&mut self, scope: AccountScope) -> &mut dyn PipelineRepo;
     fn history(&mut self, scope: AccountScope) -> &mut dyn HistoryRepo;
+    fn telemetry(&mut self) -> &mut dyn TelemetryRepo;
     fn settings(&mut self, scope: SettingsScope) -> Result<Option<String>, TxError>;
     fn set_settings(
         &mut self,
