@@ -23,6 +23,8 @@
 		"allow-finish-series",
 		"allow-pause-folder",
 		"allow-resume-folder",
+		"allow-check-folder-again",
+		"allow-dismiss-watched-elsewhere",
 		"allow-clear-series-attention",
 		"allow-try-again-report-part",
 		"allow-check-connection-now",

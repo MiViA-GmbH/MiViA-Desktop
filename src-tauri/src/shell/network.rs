@@ -7,16 +7,21 @@ use mivia_application::network::{
 };
 use mivia_application::policy::Policies;
 use mivia_application::settings::{global_settings, update_global};
-use mivia_os::SystemClock;
+use mivia_os::{SystemClock, SystemSignal};
 use mivia_ports::clock::Clock;
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
 use mivia_ports::ipc::network::{NetworkView, ProxySetting};
 use mivia_ports::time::{iso_with_offset, offset_minutes, utc_stamp};
 
+use tauri::{AppHandle, Manager};
+use tokio::sync::mpsc::UnboundedReceiver;
+
 use super::cx::{Cx, Ready, Services, now};
 use super::start::agent;
 
 const REFRESH: Duration = Duration::from_mins(30);
+const SETTLE: Duration = Duration::from_secs(2);
+const RESUME_SPREAD_MS: u64 = 30_000;
 
 fn env(names: [&str; 2]) -> Option<String> {
     names
@@ -50,6 +55,34 @@ pub(super) async fn begin(services: &Arc<Services>) -> Route {
         }
     });
     route
+}
+
+pub(super) async fn follow(app: AppHandle, mut signals: UnboundedReceiver<SystemSignal>) {
+    while let Some(first) = signals.recv().await {
+        tokio::time::sleep(SETTLE).await;
+        let mut resumed = first == SystemSignal::Resumed;
+        while let Ok(next) = signals.try_recv() {
+            resumed |= next == SystemSignal::Resumed;
+        }
+        tracing::info!(resumed, "system.networkChanged");
+        react(&*app.state::<Cx>().ready().await, resumed).await;
+    }
+}
+
+async fn react(ready: &Ready, resumed: bool) {
+    let network = Arc::clone(&ready.services.network);
+    tauri::async_runtime::spawn(async move { network.refresh(true).await });
+    if let Some(intake) = &ready.intake
+        && let Err(error) = intake.network_changed(resumed).await
+    {
+        tracing::warn!(?error, "intake.networkChangedFailed");
+    }
+    let spread = if resumed { RESUME_SPREAD_MS } else { 0 };
+    if let Some(pipeline) = &ready.pipeline
+        && let Err(error) = pipeline.probe_within(spread).await
+    {
+        tracing::warn!(?error, "pipeline.probeFailed");
+    }
 }
 
 fn issuer(services: &Services) -> Option<String> {

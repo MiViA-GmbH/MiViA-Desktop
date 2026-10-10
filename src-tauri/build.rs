@@ -15,6 +15,8 @@ const COMMANDS: &[&str] = &[
     "finish_series",
     "pause_folder",
     "resume_folder",
+    "check_folder_again",
+    "dismiss_watched_elsewhere",
     "clear_series_attention",
     "try_again_report_part",
     "check_connection_now",

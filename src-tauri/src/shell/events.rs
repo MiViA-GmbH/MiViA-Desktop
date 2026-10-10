@@ -49,6 +49,8 @@ macro_rules! app_commands {
             actions::finish_series,
             actions::pause_folder,
             actions::resume_folder,
+            actions::check_folder_again,
+            actions::dismiss_watched_elsewhere,
             actions::clear_series_attention,
             actions::try_again_report_part,
             actions::check_connection_now,

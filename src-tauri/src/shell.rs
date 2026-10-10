@@ -38,13 +38,13 @@ use mivia_diagnostics::{
     DiagnosticsContext, Logging, PreviousSession, install_panic_hook, previous_session,
     start_logging, write_marker,
 };
-use mivia_os::SystemClock;
+use mivia_os::{SystemClock, SystemSignal};
 use mivia_ports::clock::Clock;
 use mivia_ports::store::history::Actor;
 use mivia_ports::telemetry::{HandoffKind, InstanceHandoff};
 use mivia_store::{SqliteStore, StoreConfig};
 use tauri::{AppHandle, Manager, RunEvent};
-use tokio::sync::mpsc::{Receiver, channel};
+use tokio::sync::mpsc::{Receiver, UnboundedReceiver, channel, unbounded_channel};
 
 use crate::instance::{self, Primary};
 use cx::Cx;
@@ -62,6 +62,20 @@ pub(crate) fn run(primary: Primary, hardening: Option<&io::Result<()>>) -> ExitC
             ExitCode::FAILURE
         }
     }
+}
+
+fn watch_session(shutdown: &Arc<Shutdown>) -> io::Result<UnboundedReceiver<SystemSignal>> {
+    let watcher = Arc::clone(shutdown);
+    let (signal, signals) = unbounded_channel();
+    mivia_os::spawn_session_watcher(move |event| match event {
+        SystemSignal::SessionEnding => watcher.session_ending(),
+        other @ (SystemSignal::Resumed | SystemSignal::NetworkChanged) => {
+            if signal.send(other).is_err() {
+                tracing::debug!("system.signalDropped");
+            }
+        }
+    })?;
+    Ok(signals)
 }
 
 fn start(
@@ -90,8 +104,7 @@ fn start(
     let minimized = primary.launch.minimized;
     primary.serve(handoffs)?;
     let shutdown = Arc::new(Shutdown::new(runtime, Arc::clone(&logging), logs));
-    let watcher = Arc::clone(&shutdown);
-    mivia_os::spawn_session_watcher(move || watcher.session_ending())?;
+    let signals = watch_session(&shutdown)?;
     let launch = Launch {
         data_dir,
         version,
@@ -100,7 +113,7 @@ fn start(
         logging,
         previous_unclean,
     };
-    let app = builder(Arc::clone(&shutdown), launch, received).build(tauri_context)?;
+    let app = builder(Arc::clone(&shutdown), launch, (received, signals)).build(tauri_context)?;
     app.run(move |_, event| on_event(&shutdown, &event));
     Ok(())
 }
@@ -108,7 +121,7 @@ fn start(
 fn builder(
     shutdown: Arc<Shutdown>,
     launch: Launch,
-    received: Receiver<Handoff>,
+    (received, signals): (Receiver<Handoff>, UnboundedReceiver<SystemSignal>),
 ) -> tauri::Builder<tauri::Wry> {
     let specta = events::builder();
     tauri::Builder::default()
@@ -122,6 +135,7 @@ fn builder(
             let inbox = launch.data_dir.clone();
             tauri::async_runtime::spawn(init(app.handle().clone(), shutdown, launch));
             tauri::async_runtime::spawn(receive(app.handle().clone(), received, inbox));
+            tauri::async_runtime::spawn(network::follow(app.handle().clone(), signals));
             Ok(())
         })
 }

@@ -2,20 +2,35 @@ use std::io;
 use std::ptr::null_mut;
 use std::sync::OnceLock;
 
-use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
+use windows_sys::Win32::Foundation::{HANDLE, HWND, LPARAM, LRESULT, WPARAM};
+use windows_sys::Win32::NetworkManagement::IpHelper::{
+    MIB_IPINTERFACE_ROW, MIB_NOTIFICATION_TYPE, NotifyIpInterfaceChange,
+};
+use windows_sys::Win32::Networking::WinSock::AF_UNSPEC;
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, MB_ICONERROR, MB_OK,
-    MB_SETFOREGROUND, MSG, MessageBoxW, RegisterClassW, WM_ENDSESSION, WM_QUERYENDSESSION,
-    WNDCLASSW, WS_EX_TOOLWINDOW, WS_OVERLAPPED,
+    MB_SETFOREGROUND, MSG, MessageBoxW, PBT_APMRESUMEAUTOMATIC, RegisterClassW, WM_ENDSESSION,
+    WM_POWERBROADCAST, WM_QUERYENDSESSION, WNDCLASSW, WS_EX_TOOLWINDOW, WS_OVERLAPPED,
 };
 
 use super::wide;
 
 const CLASS: &str = "MiViASessionWatcher";
 
-type Callback = Box<dyn Fn() + Send + Sync>;
-static ON_SESSION_END: OnceLock<Callback> = OnceLock::new();
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SystemSignal {
+    SessionEnding,
+    Resumed,
+    NetworkChanged,
+}
+
+type Callback = Box<dyn Fn(SystemSignal) + Send + Sync>;
+static ON_SIGNAL: OnceLock<Callback> = OnceLock::new();
+
+fn emit(signal: SystemSignal) -> bool {
+    ON_SIGNAL.get().map(|callback| callback(signal)).is_some()
+}
 
 unsafe extern "system" fn session_proc(
     hwnd: HWND,
@@ -24,20 +39,52 @@ unsafe extern "system" fn session_proc(
     lparam: LPARAM,
 ) -> LRESULT {
     let ending = msg == WM_QUERYENDSESSION || (msg == WM_ENDSESSION && wparam != 0);
-    match (ending, ON_SESSION_END.get()) {
-        (true, Some(callback)) => {
-            callback();
-            LRESULT::from(msg == WM_QUERYENDSESSION)
-        }
-        // SAFETY: forwards the arguments the system passed to this window procedure.
-        _ => unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) },
+    if ending && emit(SystemSignal::SessionEnding) {
+        return LRESULT::from(msg == WM_QUERYENDSESSION);
+    }
+    if msg == WM_POWERBROADCAST && wparam == PBT_APMRESUMEAUTOMATIC as usize {
+        emit(SystemSignal::Resumed);
+    }
+    // SAFETY: forwards the arguments the system passed to this window procedure.
+    unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) }
+}
+
+unsafe extern "system" fn interface_changed(
+    _context: *const core::ffi::c_void,
+    _row: *const MIB_IPINTERFACE_ROW,
+    _kind: MIB_NOTIFICATION_TYPE,
+) {
+    emit(SystemSignal::NetworkChanged);
+}
+
+fn watch_interfaces() -> io::Result<()> {
+    let mut handle: HANDLE = null_mut();
+    // SAFETY: the callback is a plain function and the registration lives for the whole process.
+    let status = unsafe {
+        NotifyIpInterfaceChange(
+            AF_UNSPEC,
+            Some(interface_changed),
+            null_mut(),
+            false,
+            &raw mut handle,
+        )
+    };
+    if status == 0 {
+        Ok(())
+    } else {
+        Err(io::Error::from_raw_os_error(
+            i32::try_from(status).unwrap_or(i32::MAX),
+        ))
     }
 }
 
-pub fn spawn_session_watcher(on_session_end: impl Fn() + Send + Sync + 'static) -> io::Result<()> {
-    if ON_SESSION_END.set(Box::new(on_session_end)).is_err() {
+pub fn spawn_session_watcher(
+    on_signal: impl Fn(SystemSignal) + Send + Sync + 'static,
+) -> io::Result<()> {
+    if ON_SIGNAL.set(Box::new(on_signal)).is_err() {
         return Ok(());
     }
+    watch_interfaces()?;
     std::thread::Builder::new()
         .name("mivia-session".to_owned())
         .spawn(run_session_window)

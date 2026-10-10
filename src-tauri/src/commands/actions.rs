@@ -38,6 +38,21 @@ pub(crate) async fn finish_series(cx: State<'_, Cx>, id: String) -> Result<(), A
 
 #[tauri::command]
 #[specta::specta]
+pub(crate) async fn check_folder_again(cx: State<'_, Cx>, id: String) -> Result<(), AppError> {
+    series_actions::check_folder_again(&cx, &id).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn dismiss_watched_elsewhere(
+    cx: State<'_, Cx>,
+    id: String,
+) -> Result<(), AppError> {
+    series_actions::dismiss_watched_elsewhere(&cx, &id).await
+}
+
+#[tauri::command]
+#[specta::specta]
 pub(crate) async fn pause_folder(cx: State<'_, Cx>, id: String) -> Result<(), AppError> {
     series_actions::pause_folder(&cx, &id).await
 }

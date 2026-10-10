@@ -30,7 +30,7 @@ pub use system::{KnownFolder, clear_clipboard, clipboard_text, confirm, known_fo
 pub(crate) use system::{
     drive_is_remote, expand_environment, notify_associations_changed, processes_named, terminate,
 };
-pub use window::{show_error, spawn_session_watcher};
+pub use window::{SystemSignal, show_error, spawn_session_watcher};
 
 fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(std::iter::once(0)).collect()

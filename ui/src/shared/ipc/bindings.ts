@@ -46,6 +46,8 @@ export const commands = {
 	finishSeries: (id: string) => __TAURI_INVOKE<null>("finish_series", { id }),
 	pauseFolder: (id: string) => __TAURI_INVOKE<null>("pause_folder", { id }),
 	resumeFolder: (id: string) => __TAURI_INVOKE<number>("resume_folder", { id }),
+	checkFolderAgain: (id: string) => __TAURI_INVOKE<null>("check_folder_again", { id }),
+	dismissWatchedElsewhere: (id: string) => __TAURI_INVOKE<null>("dismiss_watched_elsewhere", { id }),
 	clearSeriesAttention: (id: string, how: AttentionCleared) => __TAURI_INVOKE<null>("clear_series_attention", { id, how }),
 	tryAgainReportPart: (id: string) => __TAURI_INVOKE<null>("try_again_report_part", { id }),
 	checkConnectionNow: () => __TAURI_INVOKE<null>("check_connection_now"),
@@ -333,7 +335,7 @@ export type ExportView = {
 
 export type FolderBlock = { kind: "notFound" } | { kind: "tooBroad" } | { kind: "nested"; name: string } | { kind: "insideReports" };
 
-export type FolderNote = { kind: "general" } | { kind: "oneDrive" } | { kind: "network" } | { kind: "mappedDrive"; letter: string; unc: string };
+export type FolderNote = { kind: "general" } | { kind: "oneDrive" } | { kind: "network" } | { kind: "mappedDrive"; letter: string; unc: string } | { kind: "watchedElsewhere"; machine: string; user: string };
 
 export type FolderPick = {
 	pickId: string,
@@ -357,6 +359,7 @@ export type FolderView = {
 	position: number,
 	paused: boolean,
 	missing: boolean,
+	waitingSince: string | null,
 	quietSeconds: number,
 	reportFolder: string | null,
 	openSeries: BatchSummary | null,
@@ -491,7 +494,7 @@ export type Navigate = {
 	route: Route,
 };
 
-export type NeedsAttention = { kind: "folderNotFound"; folderId: string; folderName: string } | { kind: "reportNotSaved"; series: AttentionSeries; partId: string } | { kind: "reportFailed"; series: AttentionSeries; partId: string } | { kind: "reportStale"; series: AttentionSeries } | { kind: "seriesProblems"; series: AttentionSeries; problems: number };
+export type NeedsAttention = { kind: "folderNotFound"; folderId: string; folderName: string; path: string; unreachableSince: string | null } | { kind: "watchedElsewhere"; folderId: string; folderName: string; machine: string; user: string } | { kind: "reportNotSaved"; series: AttentionSeries; partId: string } | { kind: "reportFailed"; series: AttentionSeries; partId: string } | { kind: "reportStale"; series: AttentionSeries } | { kind: "seriesProblems"; series: AttentionSeries; problems: number };
 
 export type NeedsAttentionView = {
 	revision: string,

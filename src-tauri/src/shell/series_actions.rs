@@ -23,6 +23,24 @@ pub(crate) async fn finish_series(cx: &Cx, id: &str) -> Result<(), AppError> {
     Ok(())
 }
 
+pub(crate) async fn check_folder_again(cx: &Cx, id: &str) -> Result<(), AppError> {
+    let ready = cx.ready().await;
+    let folder = FolderId(parse_id(id, "check_folder_again")?);
+    ready.intake()?.check_again(folder);
+    Ok(())
+}
+
+pub(crate) async fn dismiss_watched_elsewhere(cx: &Cx, id: &str) -> Result<(), AppError> {
+    const SITE: &str = "dismiss_watched_elsewhere";
+    let ready = cx.ready().await;
+    let folder = FolderId(parse_id(id, SITE)?);
+    ready
+        .intake()?
+        .dismiss_marker(folder)
+        .await
+        .map_err(|error| intake_error(&error, SITE))
+}
+
 pub(crate) async fn pause_folder(cx: &Cx, id: &str) -> Result<(), AppError> {
     const SITE: &str = "pause_folder";
     let ready = cx.ready().await;
