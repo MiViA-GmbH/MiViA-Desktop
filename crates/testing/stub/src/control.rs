@@ -31,6 +31,7 @@ fn op(name: &str) -> Option<Op> {
         "status" => Op::Status,
         "find" => Op::Find,
         "exists" => Op::Exists,
+        "problemReport" => Op::ProblemReport,
         _ => return None,
     })
 }

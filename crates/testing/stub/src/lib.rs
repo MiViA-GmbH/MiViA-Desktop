@@ -1,5 +1,6 @@
 mod api;
 mod control;
+mod diagnostics;
 mod errors;
 mod reports;
 
@@ -33,6 +34,7 @@ impl Stub {
         api::routes()
             .merge(control::routes())
             .merge(reports::routes())
+            .merge(diagnostics::routes())
             .with_state(self.clone())
     }
 

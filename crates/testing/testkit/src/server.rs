@@ -10,8 +10,9 @@ use mivia_domain::ids::Timestamp;
 use mivia_ports::clock::Clock;
 use mivia_ports::fs::ByteSink;
 use mivia_ports::server::{
-    CatalogueModel, Download, FindJobs, ImageRef, LabelsFetch, License, ReportProgress,
-    ReportRequest, ServerApi, ServerError, ServerJob, ServerVersion, SubmitRequest, UploadRequest,
+    CatalogueModel, Download, FindJobs, ImageRef, LabelsFetch, License, ProblemReportForm,
+    ReportProgress, ReportRequest, ServerApi, ServerError, ServerJob, ServerVersion, SubmitRequest,
+    UploadRequest,
 };
 use parking_lot::Mutex;
 
@@ -34,6 +35,7 @@ pub enum Op {
     ReportRequest,
     ReportStatus,
     ReportDownload,
+    ProblemReport,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -56,6 +58,7 @@ pub struct FakeServerApi {
     sim: Mutex<ServerSim>,
     faults: Mutex<Faults>,
     journal: Mutex<Vec<(Op, Timestamp)>>,
+    problem_reports: Mutex<BTreeMap<String, ProblemReportForm>>,
     clock: Option<Arc<dyn Clock>>,
     skew_ms: AtomicI64,
 }
@@ -97,6 +100,10 @@ impl FakeServerApi {
 
     pub fn journal(&self) -> Vec<(Op, Timestamp)> {
         self.journal.lock().clone()
+    }
+
+    pub fn problem_reports(&self) -> Vec<ProblemReportForm> {
+        self.problem_reports.lock().values().cloned().collect()
     }
 
     pub fn count(&self, op: Op) -> usize {
@@ -271,6 +278,24 @@ impl ServerApi for FakeServerApi {
         }
         let staged = sink.finish().await.map_err(ServerError::Source)?;
         Self::after(fault, Download::Staged(staged)).await
+    }
+
+    async fn send_problem_report(
+        &self,
+        form: &ProblemReportForm,
+        bundle: Vec<u8>,
+    ) -> Result<(), ServerError> {
+        let fault = self.enter(Op::ProblemReport)?;
+        if !bundle.starts_with(b"PK\x03\x04") {
+            return Err(ServerError::BadRequest {
+                code: "ISSUE_REPORT_INVALID".to_owned(),
+            });
+        }
+        self.problem_reports
+            .lock()
+            .entry(form.report_id.clone())
+            .or_insert_with(|| form.clone());
+        Self::after(fault, ()).await
     }
 
     fn server_offset_ms(&self) -> Option<i64> {
