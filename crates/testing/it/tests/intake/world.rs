@@ -38,13 +38,13 @@ pub(crate) fn choice(model: &str) -> ModelChoice {
 }
 
 pub(crate) struct World {
-    _dir: TempDir,
     pub(crate) store: Arc<SqliteStore>,
     pub(crate) fs: Arc<InMemoryFs>,
     pub(crate) watcher: Arc<FakeFolderWatcher>,
     pub(crate) clock: Arc<ManualClock>,
     pub(crate) intake: Intake,
     pub(crate) scope: AccountScope,
+    _dir: TempDir,
 }
 
 impl World {
@@ -88,13 +88,13 @@ impl World {
         };
         let intake = Intake::new(ports, scope, "2.0.0", (sink, receiver));
         Self {
-            _dir: dir,
             store,
             fs,
             watcher,
             clock,
             intake,
             scope,
+            _dir: dir,
         }
     }
 
@@ -109,6 +109,10 @@ impl World {
             })
             .await
             .unwrap()
+    }
+
+    pub(crate) async fn finish(self) {
+        self.store.close().await.unwrap();
     }
 
     pub(crate) fn drop_file(&self, path: &str, bytes: &[u8]) {

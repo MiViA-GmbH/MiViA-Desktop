@@ -25,6 +25,8 @@ async fn existing_images_are_baseline_unless_included() {
     let series = other.series().await;
     assert_eq!(series.len(), 1);
     assert_eq!(series[0].closure_reason.as_deref(), Some("manual"));
+    world.finish().await;
+    other.finish().await;
 }
 
 #[tokio::test]
@@ -56,6 +58,7 @@ async fn paused_folders_take_nothing_and_resume_asks_about_waiting_images() {
         .find(|s| s.closure_reason.as_deref() == Some("manual"))
         .unwrap();
     assert_eq!(catch_up.label, "while_paused");
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -74,6 +77,7 @@ async fn folders_never_nest() {
         })
         .await;
     assert_eq!(nested, Err(IntakeError::Folder(FolderProblem::Overlaps)));
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -107,6 +111,7 @@ async fn a_moved_folder_goes_missing_and_relocate_keeps_its_ledger() {
     assert_eq!(items[0].state, "known_file");
     let folders = world.store.list_folders(world.scope).await.unwrap();
     assert_eq!(folders.folders[0].path, r"D:\Moved");
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -120,6 +125,7 @@ async fn removing_a_folder_closes_its_series_and_stops_watching() {
     assert!(!world.series().await[0].open);
     let folders = world.store.list_folders(world.scope).await.unwrap();
     assert_eq!(folders.folders, []);
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -155,6 +161,7 @@ async fn start_up_joins_files_within_the_quiet_period_and_closes_stale_series() 
     let fresh = series.iter().find(|s| s.open).unwrap();
     assert_eq!(world.items(fresh).await[0].label, "s3.jpg");
     assert!(world.clock.now() > START);
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -166,4 +173,5 @@ async fn files_reached_through_links_are_refused() {
     world.pass(2 * SECOND_MS).await;
     let series = world.series().await.remove(0);
     assert_eq!(world.items(&series).await[0].state, "unreadable");
+    world.finish().await;
 }

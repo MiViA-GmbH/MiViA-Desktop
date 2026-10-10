@@ -191,6 +191,6 @@ async fn burst_of_5000_files_loses_nothing() {
         worker.abort();
         drop(worker.await);
     }
+    store.close().await.unwrap();
     drop((intake, store));
-    tokio::time::sleep(Duration::from_millis(500)).await;
 }

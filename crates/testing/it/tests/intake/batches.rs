@@ -39,6 +39,7 @@ async fn files_become_ready_and_the_series_closes_after_the_quiet_period() {
     assert!(!closed[0].open);
     assert_eq!(closed[0].label, "Probe");
     assert_eq!(closed[0].closure_reason.as_deref(), Some("quiet_period"));
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -102,6 +103,7 @@ async fn copies_known_files_and_known_content_are_classified() {
     let items = world.items(&third).await;
     assert_eq!(items[0].state, "known_file");
     assert_eq!(items[0].computations, []);
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -133,6 +135,7 @@ async fn busy_and_incomplete_files_wait_then_give_up_at_the_lock_cap() {
         owned(&[("held.jpg", "unreadable"), ("cut.jpg", "ready")])
     );
     assert!(series.counts.problems > 0);
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -156,6 +159,7 @@ async fn subfolders_open_their_own_series_and_removed_members_vanish() {
     let items = world.items(probe13).await;
     assert_eq!(items[1].state, "vanished");
     assert!(items[1].computations.iter().all(|c| c.state == "cancelled"));
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -179,6 +183,7 @@ async fn a_renamed_subfolder_rebases_members_and_renames_the_series() {
         world.states(&series).await,
         owned(&[("Probe7/a.jpg", "ready")])
     );
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -209,6 +214,7 @@ async fn manual_series_wait_for_finish_and_caps_close_at_eight_hours() {
         world.series().await[0].closure_reason.as_deref(),
         Some("cap")
     );
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -223,6 +229,7 @@ async fn an_overflow_rescans_the_folder_and_finds_lost_files() {
         world.states(&series).await,
         owned(&[("lost.jpg", "detected")])
     );
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -240,6 +247,7 @@ async fn a_full_series_closes_at_one_thousand_files() {
     assert_eq!(series[0].counts.files, 1);
     assert_eq!(series[1].counts.files, 1000);
     assert_eq!(series[1].closure_reason.as_deref(), Some("cap"));
+    world.finish().await;
 }
 
 #[tokio::test]
@@ -261,4 +269,5 @@ async fn a_file_still_waiting_at_the_time_cap_moves_to_the_next_series() {
         owned(&[("late.jpg", "detected")])
     );
     assert_eq!(series[1].closure_reason.as_deref(), Some("cap"));
+    world.finish().await;
 }
