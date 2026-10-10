@@ -1,0 +1,18 @@
+[package]
+name = "mivia-desktop"
+edition.workspace = true
+version.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+mivia-domain.workspace = true
+mivia-ports.workspace = true
+mivia-application.workspace = true
+mivia-store.workspace = true
+mivia-server.workspace = true
+mivia-os.workspace = true
+mivia-diagnostics.workspace = true

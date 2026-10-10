@@ -1,0 +1,53 @@
+cognitive-complexity-threshold = 15
+too-many-lines-threshold = 40
+too-many-arguments-threshold = 4
+excessive-nesting-threshold = 5
+max-fn-params-bools = 1
+max-struct-bools = 2
+type-complexity-threshold = 200
+disallowed-types = [
+    { path = "std::sync::Mutex", reason = "parking_lot::Mutex has no poisoning, so no unwrap" },
+    { path = "std::sync::RwLock", reason = "parking_lot::RwLock has no poisoning, so no unwrap" },
+    { path = "std::fs::File", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::OpenOptions", reason = "file IO goes through the FileSystem port" },
+    { path = "std::time::Instant", reason = "time comes from the Clock port" },
+    { path = "std::time::SystemTime", reason = "time comes from the Clock port" },
+    { path = "std::path::Path", reason = "core uses WinPath, host independent" },
+    { path = "std::path::PathBuf", reason = "core uses WinPath, host independent" },
+    { path = "tokio::fs::File", reason = "file IO goes through the FileSystem port", allow-invalid = true },
+    { path = "tokio::runtime::Handle", reason = "core never owns the runtime", allow-invalid = true },
+    { path = "tokio::time::Instant", reason = "time comes from the Clock port", allow-invalid = true },
+    { path = "tokio::time::Sleep", reason = "sleeping goes through the Clock port", allow-invalid = true },
+    { path = "tokio::time::Interval", reason = "sleeping goes through the Clock port", allow-invalid = true },
+    { path = "rand::rngs::ThreadRng", reason = "ids and randomness come from the IdGen port", allow-invalid = true },
+]
+disallowed-methods = [
+    { path = "std::fs::read", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::read_to_string", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::write", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::metadata", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::read_dir", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::create_dir_all", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::remove_file", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::remove_dir_all", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::rename", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::copy", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::canonicalize", reason = "file IO goes through the FileSystem port" },
+    { path = "std::fs::exists", reason = "file IO goes through the FileSystem port" },
+    { path = "std::path::Path::exists", reason = "file IO goes through the FileSystem port" },
+    { path = "std::path::Path::metadata", reason = "file IO goes through the FileSystem port" },
+    { path = "std::path::Path::is_file", reason = "file IO goes through the FileSystem port" },
+    { path = "std::path::Path::is_dir", reason = "file IO goes through the FileSystem port" },
+    { path = "std::env::var", reason = "configuration is injected, never read from the environment" },
+    { path = "std::env::vars", reason = "configuration is injected, never read from the environment" },
+    { path = "std::process::Command::new", reason = "core never starts processes" },
+    { path = "std::thread::spawn", reason = "threads belong to adapters and the supervisor" },
+    { path = "std::thread::sleep", reason = "sleeping goes through the Clock port" },
+    { path = "tokio::spawn", reason = "tasks are spawned only by the supervisor", allow-invalid = true },
+    { path = "tokio::task::spawn_blocking", reason = "blocking work belongs to adapters", allow-invalid = true },
+    { path = "tokio::task::JoinSet::spawn", reason = "tasks are spawned only by the supervisor", allow-invalid = true },
+    { path = "tokio::time::Instant::now", reason = "time comes from the Clock port", allow-invalid = true },
+    { path = "tokio::time::sleep", reason = "sleeping goes through the Clock port", allow-invalid = true },
+    { path = "uuid::Uuid::new_v4", reason = "ids come from the IdGen port", allow-invalid = true },
+    { path = "uuid::Uuid::now_v7", reason = "ids come from the IdGen port", allow-invalid = true },
+]

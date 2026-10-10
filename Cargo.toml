@@ -1,0 +1,109 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/core/domain",
+    "crates/core/ports",
+    "crates/core/application",
+    "crates/adapters/store",
+    "crates/adapters/api",
+    "crates/adapters/server",
+    "crates/adapters/os",
+    "crates/adapters/diagnostics",
+    "crates/testing/testkit",
+    "crates/testing/it",
+    "crates/testing/stub",
+    "src-tauri",
+    "xtask",
+]
+
+[workspace.package]
+edition = "2024"
+version = "0.0.0"
+publish = false
+rust-version = "1.99.0"
+
+[workspace.dependencies]
+mivia-domain = { path = "crates/core/domain" }
+mivia-ports = { path = "crates/core/ports" }
+mivia-application = { path = "crates/core/application" }
+mivia-store = { path = "crates/adapters/store" }
+mivia-api = { path = "crates/adapters/api" }
+mivia-server = { path = "crates/adapters/server" }
+mivia-os = { path = "crates/adapters/os" }
+mivia-diagnostics = { path = "crates/adapters/diagnostics" }
+mivia-testkit = { path = "crates/testing/testkit" }
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+unreachable_pub = "deny"
+unfulfilled_lint_expectations = "deny"
+unused_qualifications = "deny"
+unused_lifetimes = "deny"
+redundant_lifetimes = "deny"
+let_underscore_drop = "deny"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+cognitive_complexity = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+unreachable = "deny"
+indexing_slicing = "deny"
+string_slice = "deny"
+get_unwrap = "deny"
+unwrap_in_result = "deny"
+wildcard_enum_match_arm = "deny"
+allow_attributes = "deny"
+allow_attributes_without_reason = "deny"
+dbg_macro = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+exit = "deny"
+mem_forget = "deny"
+mod_module_files = "deny"
+clone_on_ref_ptr = "deny"
+rc_mutex = "deny"
+undocumented_unsafe_blocks = "deny"
+str_to_string = "deny"
+lossy_float_literal = "deny"
+float_cmp_const = "deny"
+let_underscore_must_use = "deny"
+if_then_some_else_none = "deny"
+empty_structs_with_brackets = "deny"
+rest_pat_in_fully_bound_structs = "deny"
+try_err = "deny"
+verbose_file_reads = "deny"
+use_self = "deny"
+redundant_clone = "deny"
+needless_pass_by_ref_mut = "deny"
+or_fun_call = "deny"
+
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+opt-level = 1
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "unwind"
+strip = "symbols"
+
+[profile.ci]
+inherits = "dev"
+debug = 0
+incremental = false
+
+[profile.e2e]
+inherits = "release"
+lto = false
+codegen-units = 16
+incremental = false
