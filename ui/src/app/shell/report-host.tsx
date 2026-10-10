@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { lazy, Suspense } from 'react';
 
-import { supportQuery, useReportRequest } from '../../entities/support/queries';
+import { useReportRequest } from '../../entities/support/hooks';
+import { supportQuery } from '../../entities/support/queries';
 
 const ReportDialog = lazy(() =>
 	import('../../features/support/report-dialog').then((module) => ({ default: module.ReportDialog })),

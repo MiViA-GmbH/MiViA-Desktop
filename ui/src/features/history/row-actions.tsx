@@ -5,7 +5,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
-import { requestReport, useReporting } from '../../entities/support/queries';
+import { useReporting } from '../../entities/support/hooks';
+import { requestReport } from '../../entities/support/queries';
 import { commands } from '../../shared/ipc';
 import type { HistoryRow } from '../../shared/ipc/bindings';
 import { ShowInFolderIcon } from '../../shared/ui/icons';

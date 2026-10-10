@@ -1,4 +1,4 @@
-import { type QueryClient, queryOptions, useQuery } from '@tanstack/react-query';
+import { type QueryClient, queryOptions } from '@tanstack/react-query';
 
 import { commands } from '../../shared/ipc';
 import type { ReportTrigger } from '../../shared/ipc/bindings';
@@ -19,17 +19,8 @@ export function contactText(contact: string): string {
 
 export type ReportRequest = { trigger: ReportTrigger; signature: string | null };
 
-const REPORT_REQUEST = ['reportRequest'] as const;
+export const REPORT_REQUEST = ['reportRequest'] as const;
 
 export function requestReport(client: QueryClient, request: ReportRequest | null): void {
 	client.setQueryData(REPORT_REQUEST, request);
-}
-
-export function useReportRequest(): ReportRequest | null {
-	return useQuery<ReportRequest | null>({ queryKey: REPORT_REQUEST, queryFn: () => null, enabled: false }).data ?? null;
-}
-
-export function useReporting(): boolean {
-	const view = useQuery(supportQuery).data;
-	return view !== undefined && view.reporting !== 'off';
 }
