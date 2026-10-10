@@ -3,7 +3,7 @@ use mivia_domain::update::{
     Channel, Offer, Refusal, Rules, after_check, next_check, parse, satisfies, too_old, vet,
 };
 
-const PREFIX: &str = "https://github.com/MiViA-GmbH/mivia-desktop/releases/download/";
+const PREFIX: &str = "https://github.com/MiViA-GmbH/MiViA-API/releases/download/";
 
 fn offer(version: &str, url: &str) -> Offer {
     Offer {
@@ -61,7 +61,7 @@ fn the_trust_rules_refuse_each_case() {
         (
             offer(
                 "2.1.0",
-                "https://github.com/evil/mivia-desktop/releases/download/x.exe",
+                "https://github.com/evil/MiViA-API/releases/download/x.exe",
             ),
             "2.0.0",
             Channel::Stable,
@@ -70,7 +70,7 @@ fn the_trust_rules_refuse_each_case() {
         (
             offer(
                 "2.1.0",
-                "http://github.com/MiViA-GmbH/mivia-desktop/releases/download/v2.1.0/a.exe",
+                "http://github.com/MiViA-GmbH/MiViA-API/releases/download/v2.1.0/a.exe",
             ),
             "2.0.0",
             Channel::Stable,

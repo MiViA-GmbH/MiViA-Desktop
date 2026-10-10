@@ -10,7 +10,7 @@ use mivia_ports::ipc::support::KnownLink;
 use super::cx::{Ready, parse_id};
 
 const SITE: &str = "open_target";
-const RELEASES: &str = "https://github.com/MiViA-GmbH/mivia-desktop/releases";
+const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-API/releases";
 
 fn opened(result: Result<io::Result<()>, tokio::task::JoinError>) -> Result<(), AppError> {
     match result {

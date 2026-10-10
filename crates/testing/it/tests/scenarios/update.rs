@@ -21,7 +21,7 @@ use mivia_testkit::update::{FakeUpdateEnv, FakeUpdater};
 use tempfile::TempDir;
 
 const START: Timestamp = Timestamp(1_800_000_000_000);
-const PREFIX: &str = "https://github.com/MiViA-GmbH/mivia-desktop/releases/download/";
+const PREFIX: &str = "https://github.com/MiViA-GmbH/MiViA-API/releases/download/";
 
 struct Bench {
     _dir: TempDir,
