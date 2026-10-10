@@ -1,0 +1,161 @@
+mod shutdown;
+mod tray;
+
+use std::io::{self, Read};
+use std::path::{Path, PathBuf};
+use std::process::ExitCode;
+use std::sync::Arc;
+use std::time::Duration;
+
+use mivia_application::handoff::Handoff;
+use mivia_application::spool::{self, MAX_SPOOL_BYTES};
+use mivia_diagnostics::{
+    DiagnosticsContext, PreviousSession, install_panic_hook, previous_session, start_logging,
+    write_marker,
+};
+use mivia_ports::store::{CommitObserver, Committed};
+use mivia_store::{SqliteStore, StoreConfig};
+use tauri::RunEvent;
+use tokio::sync::mpsc::{Receiver, channel};
+
+use crate::instance::{self, Primary};
+use shutdown::Shutdown;
+
+const HANDOFF_QUEUE: usize = 64;
+
+struct NoChanges;
+
+impl CommitObserver for NoChanges {
+    fn committed(&self, _committed: &Committed) {}
+}
+
+pub(crate) fn run(primary: Primary, hardening: Option<&io::Result<()>>) -> ExitCode {
+    match start(primary, hardening) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            tracing::error!(%error, "session.startFailed");
+            mivia_os::show_error("MiViA Desktop", "MiViA Desktop could not start.");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn start(
+    primary: Primary,
+    hardening: Option<&io::Result<()>>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(2)
+        .max_blocking_threads(8)
+        .thread_keep_alive(Duration::from_secs(5))
+        .enable_all()
+        .build()?;
+    tauri::async_runtime::set(runtime.handle().clone());
+    let tauri_context = tauri::generate_context!();
+    let version = tauri_context.package_info().version.to_string();
+    let logs = primary.data_dir.join("logs");
+    let context = DiagnosticsContext::load(&primary.data_dir, &version)?;
+    let previous = previous_session(&logs, mivia_os::boot_time_unix_ms(), &version);
+    let logging = Arc::new(start_logging(&logs)?);
+    install_panic_hook(logs.clone(), context.clone(), Arc::clone(&logging));
+    write_marker(&logs, &context)?;
+    log_start(&context, &primary, previous, hardening);
+    let (handoffs, received) = channel(HANDOFF_QUEUE);
+    let data_dir = primary.data_dir.clone();
+    primary.serve(handoffs)?;
+    let shutdown = Arc::new(Shutdown::new(runtime, logging, logs));
+    let watcher = Arc::clone(&shutdown);
+    mivia_os::spawn_session_watcher(move || watcher.session_ending())?;
+    let setup = Arc::clone(&shutdown);
+    let app = tauri::Builder::default()
+        .setup(move |app| {
+            tray::build(app.handle())?;
+            mark("tray_ready");
+            tauri::async_runtime::spawn(init(setup, data_dir.clone()));
+            tauri::async_runtime::spawn(receive(received, data_dir));
+            Ok(())
+        })
+        .build(tauri_context)?;
+    app.run(move |_, event| on_event(&shutdown, &event));
+    Ok(())
+}
+
+fn on_event(shutdown: &Shutdown, event: &RunEvent) {
+    if let RunEvent::ExitRequested {
+        code: None, api, ..
+    } = event
+    {
+        api.prevent_exit();
+    }
+    if matches!(event, RunEvent::Exit) {
+        shutdown.finish();
+    }
+}
+
+fn log_start(
+    context: &DiagnosticsContext,
+    primary: &Primary,
+    previous: PreviousSession,
+    hardening: Option<&io::Result<()>>,
+) {
+    tracing::info!(
+        session_id = %context.session_id,
+        install_id = %context.install_id,
+        machine_id = %context.machine_id,
+        version = %context.version,
+        dev = tauri::is_dev(),
+        minimized = primary.launch.minimized,
+        ignored_args = primary.launch.ignored.len(),
+        hardened = hardening.map(Result::is_ok),
+        "session.start"
+    );
+    if let PreviousSession::Unclean { started_at_ms } = previous {
+        tracing::warn!(started_at_ms, "session.unclean");
+    }
+    if let Some(Err(error)) = hardening {
+        tracing::warn!(%error, "process.hardeningFailed");
+    }
+}
+
+fn mark(name: &str) {
+    tracing::info!(target: "perf", ms_since_process_create = mivia_os::process_age_ms(), "{name}");
+}
+
+async fn init(shutdown: Arc<Shutdown>, data_dir: PathBuf) {
+    let path = data_dir.join("mivia.db");
+    match SqliteStore::open(&path, StoreConfig::production(), Arc::new(NoChanges)).await {
+        Ok(store) => {
+            shutdown.attach_store(store);
+            mark("db_ready");
+        }
+        Err(error) => tracing::error!(?error, "store.openFailed"),
+    }
+    let pending = std::fs::read_dir(instance::inbox(&data_dir)).map_or(0, Iterator::count);
+    tracing::info!(count = pending, "instance.spoolPending");
+}
+
+async fn receive(mut received: Receiver<Handoff>, data_dir: PathBuf) {
+    while let Some(handoff) = received.recv().await {
+        match handoff {
+            Handoff::Wake => tracing::info!("instance.wake"),
+            Handoff::Spool(id) => log_spool(&instance::spool_file(&data_dir, id), &id.to_string()),
+        }
+    }
+}
+
+fn log_spool(path: &Path, id: &str) {
+    let mut bytes = Vec::new();
+    let limit = u64::try_from(MAX_SPOOL_BYTES).unwrap_or(u64::MAX) + 1;
+    let read = std::fs::File::open(path).and_then(|file| file.take(limit).read_to_end(&mut bytes));
+    match read.map(|_| spool::parse(&bytes)) {
+        Ok(Ok(parsed)) => tracing::info!(
+            spool_id = id,
+            paths = parsed.paths.len(),
+            rejected = parsed.rejected,
+            non_unicode = parsed.non_unicode,
+            "instance.handoff"
+        ),
+        Ok(Err(error)) => tracing::warn!(spool_id = id, ?error, "instance.spoolRejected"),
+        Err(error) => tracing::warn!(spool_id = id, %error, "instance.spoolUnreadable"),
+    }
+}

@@ -4,3 +4,4 @@ ui/dist/
 .tools/
 coverage/
 *.log
+src-tauri/gen/
