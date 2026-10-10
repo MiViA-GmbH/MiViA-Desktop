@@ -1,5 +1,6 @@
 mod batches;
 mod folders;
+mod history;
 mod line;
 mod one_off;
 mod outages;

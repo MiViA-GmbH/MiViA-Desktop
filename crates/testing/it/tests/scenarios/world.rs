@@ -7,6 +7,7 @@ use mivia_domain::label::LabelRule;
 use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_ports::clock::Clock;
+use mivia_ports::ipc::history::HistoryFilter;
 use mivia_ports::ipc::views::{BatchItem, BatchSummary};
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{AccountScope, NewAccount, StoreExt};
@@ -158,8 +159,16 @@ impl World {
     }
 
     pub(crate) async fn series(&self) -> Vec<BatchSummary> {
-        let page = self.store.list_history(self.scope, None).await.unwrap();
-        page.head.into_iter().chain(page.rows).collect()
+        let page = self
+            .store
+            .list_history(self.scope, HistoryFilter::default(), None)
+            .await
+            .unwrap();
+        page.head
+            .into_iter()
+            .chain(page.rows)
+            .map(|row| row.summary)
+            .collect()
     }
 
     pub(crate) async fn items(&self, batch: &BatchSummary) -> Vec<BatchItem> {

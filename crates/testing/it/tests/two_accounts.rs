@@ -8,6 +8,7 @@ use mivia_domain::ids::{BatchId, ComputationId, ModelChoice, Timestamp};
 use mivia_domain::label::LabelRule;
 use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
+use mivia_ports::ipc::history::HistoryFilter;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{
     AccountScope, BatchModelChoice, NewAccount, NewBatch, NewComputation, NewFolder, NewSourceFile,
@@ -112,12 +113,15 @@ async fn two_accounts_share_one_file_but_never_see_each_other() {
         .await
         .unwrap();
 
-    let history = store.list_history(a.scope, None).await.unwrap();
+    let history = store
+        .list_history(a.scope, HistoryFilter::default(), None)
+        .await
+        .unwrap();
     let labels: Vec<_> = history
         .head
         .iter()
         .chain(&history.rows)
-        .map(|row| row.label.as_str())
+        .map(|row| row.summary.label.as_str())
         .collect();
     assert_eq!(labels, ["alpha open", "alpha closed"]);
     assert_eq!(store.get_batch(a.scope, b.closed).await.unwrap(), None);
