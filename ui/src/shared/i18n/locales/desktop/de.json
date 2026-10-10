@@ -195,7 +195,8 @@
 			"account": "Konto",
 			"language": "Sprache",
 			"languageAuto": "Automatisch (Windows)",
-			"explorer": "Explorer-Integration"
+			"explorer": "Explorer-Integration",
+			"support": "Support"
 		},
 		"status": {
 			"batch": {
@@ -253,7 +254,10 @@
 			"noImages": "Keines der ausgewählten Bilder hat schon ein Ergebnis.",
 			"tooMany": "Wählen Sie höchstens 1000 Bilder aus.",
 			"backupInvalid": "Diese Sicherung lässt sich nicht wiederherstellen. Sie ist beschädigt oder stammt aus einer anderen Version.",
-			"pickExpired": "Der gewählte Ordner gilt nicht mehr. Wählen Sie ihn erneut."
+			"pickExpired": "Der gewählte Ordner gilt nicht mehr. Wählen Sie ihn erneut.",
+			"reportExpired": "Dieser Problembericht ist nicht mehr verfügbar. Öffnen Sie den Dialog erneut.",
+			"reportingOff": "Problemberichte wurden von Ihrem Administrator ausgeschaltet.",
+			"noDownloads": "Der Ordner Downloads wurde nicht gefunden."
 		},
 		"oneOff": {
 			"title_one": "{{count}} Bild auswerten",
@@ -374,6 +378,55 @@
 			"inFolder": "Im Sicherungsordner",
 			"series_one": "1 Bildserie",
 			"series_other": "{{count}} Bildserien"
+		},
+		"support": {
+			"title": "Problem melden",
+			"reportProblem": "Problem melden",
+			"reportAction": "Problem melden…",
+			"description": "Was ist passiert?",
+			"descriptionHint": "Optional. Geben Sie keine vertraulichen Proben- oder Kundennamen ein.",
+			"range": "Zeitraum der Protokolle",
+			"rangeSession": "Diese Sitzung",
+			"rangeThreeDays": "Letzte 3 Tage",
+			"rangeFourteenDays": "Letzte 14 Tage",
+			"names": "Datei- und Ordnernamen mitsenden",
+			"namesHint": "Sie können Personen, Proben oder Projekte erkennbar machen.",
+			"review": "Ansehen, was gesendet wird",
+			"files_one": "1 Datei, {{size}}",
+			"files_other": "{{count}} Dateien, {{size}}",
+			"truncated": "Die ältesten Protokollzeilen wurden weggelassen, damit der Bericht unter 10 MB bleibt.",
+			"period": "Zeitraum: {{from}} bis {{to}}",
+			"ids": "Installation {{installId}}, Sitzungen: {{sessions}}",
+			"firstErrors": "Erste Fehler: {{errors}}",
+			"showFile": "Datei anzeigen",
+			"disclosure": "Sendet die gewählten Protokolle, Systemangaben und Einstellungen an den Support der MiViA GmbH (kein Zugangsschlüssel, keine Bilder, keine Ergebnisse) und informiert Ihre Ansprechperson bei MiViA. Wird 90 Tage gespeichert. Umfasst alle MiViA-Aktivitäten auf diesem Computer im gewählten Zeitraum.",
+			"sendOff": "Senden aus der App ist nicht möglich. Speichern Sie den Bericht und senden Sie ihn per E-Mail an {{contact}}.",
+			"send": "Senden",
+			"saveAndEmail": "Speichern und per E-Mail senden",
+			"sent": "Problembericht gesendet. Referenz {{reference}}.",
+			"queued": "Gerade keine Verbindung zu MiViA. Bericht {{reference}} wird in den nächsten 7 Tagen automatisch gesendet.",
+			"notSent": "Bericht {{reference}} konnte nicht aus der App gesendet werden. Speichern Sie ihn und senden Sie ihn per E-Mail an den Support.",
+			"saved": "Der Bericht liegt in Ihrem Ordner Downloads. Hängen Sie ihn an die geöffnete E-Mail an.",
+			"contact": "Support-Kontakt",
+			"version": "MiViA Desktop {{version}}, Installation {{installId}}",
+			"deleteLogs": "Lokale Protokolle löschen",
+			"deleteTitle": "Lokale Protokolle löschen?",
+			"deleteText": "Löscht ältere Protokolldateien, Absturzdateien und noch nicht gesendete Problemberichte. Die aktuelle Protokolldatei bleibt erhalten.",
+			"deleteConfirm": "Protokolle löschen",
+			"deleted_one": "1 Datei gelöscht.",
+			"deleted_other": "{{count}} Dateien gelöscht.",
+			"pendingTitle": "Noch nicht gesendete Problemberichte",
+			"waiting": "Wartet auf das Senden",
+			"mustSave": "Speichern und per E-Mail an den Support senden",
+			"discard": "Verwerfen",
+			"policiesTitle": "Richtlinien des Administrators",
+			"policiesHelp": "Von Ihrer IT-Abteilung über Gruppenrichtlinien festgelegt. Nicht festgelegte Werte verwenden die Vorgabe.",
+			"policy": "Richtlinie",
+			"value": "Wert",
+			"source": "Gilt für",
+			"notSet": "Nicht festgelegt",
+			"machine": "Diesen Computer",
+			"user": "Diesen Windows-Benutzer"
 		}
 	}
 }

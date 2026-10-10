@@ -5,6 +5,7 @@ import { Outlet } from '@tanstack/react-router';
 import { HoldBanner } from '../../features/hold/hold-banner';
 import { DropOverlay } from './drop-overlay';
 import { OneOffHost } from './one-off-host';
+import { ReportHost } from './report-host';
 import { Sidebar } from './sidebar';
 
 export function Shell() {
@@ -24,6 +25,7 @@ export function Shell() {
 					</ScrollArea>
 				</Stack>
 				<OneOffHost />
+				<ReportHost />
 				<DropOverlay />
 			</AppShell.Main>
 		</AppShell>

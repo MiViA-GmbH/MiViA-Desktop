@@ -8,6 +8,7 @@ import { AccountPanel } from '../features/settings/account-panel';
 import { BackupPanel } from '../features/settings/backup-panel';
 import { AutostartSwitch, ExplorerSwitch } from '../features/settings/integration-panel';
 import { LanguageSelect } from '../features/settings/language-select';
+import { SupportPanel } from '../features/support/support-panel';
 import { PageHeader } from '../shared/ui/page-header';
 import { Panel } from '../shared/ui/panel';
 import { NotFound } from './errors';
@@ -16,6 +17,7 @@ const SECTIONS = {
 	account: 'desktop.settings.account',
 	general: 'desktop.settings.general',
 	explorer: 'desktop.settings.explorer',
+	support: 'desktop.settings.support',
 } as const;
 
 type Section = keyof typeof SECTIONS;
@@ -40,6 +42,7 @@ const PANELS = {
 	account: { title: 'desktop.settings.account', body: AccountPanel },
 	general: { title: 'desktop.settings.general', body: General },
 	explorer: { title: 'desktop.settings.explorer', body: ExplorerSwitch },
+	support: { title: 'desktop.settings.support', body: SupportPanel },
 } as const;
 
 function Section({ section }: { section: Section }) {

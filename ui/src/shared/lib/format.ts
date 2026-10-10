@@ -34,6 +34,22 @@ export function formatDateTime(iso: string, now: Date = new Date()): string {
 	return formatter({ day: '2-digit', month: '2-digit', year: 'numeric', ...TIME }).format(date);
 }
 
+export function formatFullDateTime(iso: string): string {
+	return formatter({ day: '2-digit', month: '2-digit', year: 'numeric', ...TIME }).format(new Date(iso));
+}
+
 export function sameDay(first: string, second: string): boolean {
 	return new Date(first).toDateString() === new Date(second).toDateString();
+}
+
+const sizes = new Map<string, Intl.NumberFormat>();
+
+export function formatSize(bytes: number): string {
+	const large = bytes >= 1024 * 1024;
+	const unit = large ? 'megabyte' : 'kilobyte';
+	const value = bytes / (large ? 1024 * 1024 : 1024);
+	const key = `${locale}|${unit}`;
+	const known = sizes.get(key) ?? new Intl.NumberFormat(locale, { style: 'unit', unit, maximumFractionDigits: 1 });
+	sizes.set(key, known);
+	return known.format(value);
 }

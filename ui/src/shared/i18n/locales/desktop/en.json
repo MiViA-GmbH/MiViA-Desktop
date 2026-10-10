@@ -195,7 +195,8 @@
 			"account": "Account",
 			"language": "Language",
 			"languageAuto": "Automatic (Windows)",
-			"explorer": "Explorer integration"
+			"explorer": "Explorer integration",
+			"support": "Support"
 		},
 		"status": {
 			"batch": {
@@ -253,7 +254,10 @@
 			"noImages": "None of the selected images has a result yet.",
 			"tooMany": "Select at most 1000 images.",
 			"backupInvalid": "This backup cannot be restored. It is damaged or comes from another version.",
-			"pickExpired": "The chosen folder is no longer valid. Choose it again."
+			"pickExpired": "The chosen folder is no longer valid. Choose it again.",
+			"reportExpired": "This problem report is no longer available. Open the dialog again.",
+			"reportingOff": "Problem reports are turned off by your administrator.",
+			"noDownloads": "The Downloads folder could not be found."
 		},
 		"oneOff": {
 			"title_one": "Analyze {{count}} image",
@@ -374,6 +378,55 @@
 			"inFolder": "In the backup folder",
 			"series_one": "1 image series",
 			"series_other": "{{count}} image series"
+		},
+		"support": {
+			"title": "Report a problem",
+			"reportProblem": "Report problem",
+			"reportAction": "Report a problem…",
+			"description": "What happened?",
+			"descriptionHint": "Optional. Do not enter confidential sample or customer names.",
+			"range": "Logs from",
+			"rangeSession": "This session",
+			"rangeThreeDays": "Last 3 days",
+			"rangeFourteenDays": "Last 14 days",
+			"names": "Include file and folder names",
+			"namesHint": "They may identify people, samples or projects.",
+			"review": "Review what will be sent",
+			"files_one": "1 file, {{size}}",
+			"files_other": "{{count}} files, {{size}}",
+			"truncated": "The oldest log lines were left out to keep the report under 10 MB.",
+			"period": "Period: {{from}} to {{to}}",
+			"ids": "Installation {{installId}}, sessions: {{sessions}}",
+			"firstErrors": "First errors: {{errors}}",
+			"showFile": "Show file",
+			"disclosure": "Sends the selected logs, system details and settings to MiViA GmbH support (no access key, no images, no results) and informs your MiViA contact person. Stored for 90 days. Covers all MiViA activity on this computer in the chosen period.",
+			"sendOff": "Sending from the app is not available. Save the report and e-mail it to {{contact}}.",
+			"send": "Send",
+			"saveAndEmail": "Save and e-mail",
+			"sent": "Problem report sent. Reference {{reference}}.",
+			"queued": "No connection to MiViA right now. Report {{reference}} is sent automatically within the next 7 days.",
+			"notSent": "Report {{reference}} could not be sent from the app. Save it and e-mail it to support.",
+			"saved": "The report is in your Downloads folder. Attach it to the e-mail that opened.",
+			"contact": "Support contact",
+			"version": "MiViA Desktop {{version}}, installation {{installId}}",
+			"deleteLogs": "Delete local logs",
+			"deleteTitle": "Delete local logs?",
+			"deleteText": "Deletes older log files, crash files and problem reports that were not sent yet. The current log file stays.",
+			"deleteConfirm": "Delete logs",
+			"deleted_one": "1 file deleted.",
+			"deleted_other": "{{count}} files deleted.",
+			"pendingTitle": "Problem reports not sent yet",
+			"waiting": "Waiting to be sent",
+			"mustSave": "Save it and e-mail it to support",
+			"discard": "Discard",
+			"policiesTitle": "Administrator policies",
+			"policiesHelp": "Set by your IT department through Group Policy. A setting that is not set uses the default.",
+			"policy": "Policy",
+			"value": "Value",
+			"source": "Set for",
+			"notSet": "Not set",
+			"machine": "This computer",
+			"user": "This Windows user"
 		}
 	}
 }
