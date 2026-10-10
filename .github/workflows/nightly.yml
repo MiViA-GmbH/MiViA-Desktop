@@ -36,7 +36,7 @@ jobs:
       - name: Install node packages
         run: pnpm install --frozen-lockfile
       - name: Audit
-        run: node scripts/check.mjs deny audit
+        run: node scripts/check.mjs deny deny-fuzz deny-perf audit
 
   release-build:
     name: Release build (unsigned)

@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2024"
 publish = false
 
-[dev-dependencies]
+[dependencies]
 gungraun = "=0.19.4"
 mivia-domain = { path = "../../crates/core/domain" }
 

@@ -84,7 +84,7 @@ jobs:
       - name: Install node packages
         run: pnpm install --frozen-lockfile
       - name: Checks
-        run: node scripts/check.mjs source-rules arch command-size canary machete jscpd deny ci-integrity actionlint zizmor
+        run: node scripts/check.mjs source-rules arch command-size canary machete jscpd deny deny-fuzz deny-perf ci-integrity actionlint zizmor
 
   ui:
     name: UI
