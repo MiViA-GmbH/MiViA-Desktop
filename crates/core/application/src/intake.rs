@@ -6,7 +6,6 @@ mod restart;
 mod scan;
 mod signals;
 mod sink;
-mod worker;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
@@ -20,9 +19,9 @@ use parking_lot::Mutex;
 use tokio::sync::Notify;
 use tokio::sync::mpsc::Receiver;
 
+pub use crate::worker::{Tick, run};
 pub use folders::{AddFolder, FolderProblem, Resumed};
 pub use sink::{IntakeSink, SIGNAL_CAPACITY};
-pub use worker::{Tick, run};
 
 pub const LOCAL_RECONCILE_MS: i64 = 10 * MINUTE_MS;
 pub const NETWORK_RECONCILE_MS: i64 = 2 * MINUTE_MS;

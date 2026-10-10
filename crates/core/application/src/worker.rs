@@ -2,8 +2,6 @@ use mivia_domain::ids::{SECOND_MS, Timestamp};
 use mivia_ports::clock::Clock;
 use tokio::sync::Notify;
 
-use super::IntakeError;
-
 const MAX_SLEEP_MS: i64 = 60 * SECOND_MS;
 const ERROR_PAUSE_MS: i64 = 5 * SECOND_MS;
 
@@ -18,10 +16,11 @@ fn on_grid(at: Timestamp) -> Timestamp {
     Timestamp(at.0.div_euclid(SECOND_MS).saturating_add(1) * SECOND_MS)
 }
 
-pub async fn run<F, Fut>(name: &str, clock: &dyn Clock, wake: &Notify, mut tick: F)
+pub async fn run<F, Fut, E>(name: &str, clock: &dyn Clock, wake: &Notify, mut tick: F)
 where
     F: FnMut() -> Fut,
-    Fut: Future<Output = Result<Tick, IntakeError>>,
+    Fut: Future<Output = Result<Tick, E>>,
+    E: std::fmt::Debug,
 {
     loop {
         let next = match tick().await {
