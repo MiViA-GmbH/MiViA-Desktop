@@ -2,12 +2,11 @@ use mivia_domain::batch::ClosureReason;
 use mivia_domain::computation::{ComputationEvent, ComputationState};
 use mivia_domain::hold::{Access, Gate, HoldReason};
 use mivia_domain::ids::{
-    AccountId, BatchId, ComputationId, FolderId, ModelChoice, ReportId, ReportPartId, SourceFileId,
-    Timestamp,
+    AccountId, BatchId, ComputationId, FolderId, ModelChoice, SourceFileId, Timestamp,
 };
 use mivia_domain::label::LabelRule;
+use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
-use mivia_domain::report::{PartEvent, PartState};
 use mivia_domain::source_file::{SourceFileEvent, SourceFileState};
 
 use super::TxError;
@@ -46,6 +45,7 @@ pub struct NewFolder {
     pub quiet_period_ms: i64,
     pub label_rule: LabelRule,
     pub report_settings_json: String,
+    pub report_folder: ReportFolder,
     pub model_choices: Vec<ModelChoice>,
 }
 
@@ -153,33 +153,4 @@ pub trait ComputationRepo {
         now: Timestamp,
         exclude: &[ComputationId],
     ) -> Result<Vec<ComputationId>, TxError>;
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct NewReport {
-    pub batch_id: BatchId,
-    pub model_choice_key: String,
-    pub formats: Vec<String>,
-    pub language: String,
-    pub created_at: Timestamp,
-    pub app_version: String,
-    pub members: Vec<(ComputationId, String)>,
-}
-
-pub trait ReportRepo {
-    fn create(&mut self, report: &NewReport) -> Result<ReportId, TxError>;
-    fn parts(&mut self, id: ReportId) -> Result<Vec<ReportPartId>, TxError>;
-    fn apply_part(
-        &mut self,
-        id: ReportPartId,
-        event: PartEvent,
-        now: Timestamp,
-    ) -> Result<PartState, TxError>;
-    fn set_stale(&mut self, id: ReportId, stale: bool) -> Result<(), TxError>;
-    fn due_for_request(&mut self, exclude: &[ReportPartId]) -> Result<Vec<ReportPartId>, TxError>;
-    fn due_for_poll(
-        &mut self,
-        now: Timestamp,
-        exclude: &[ReportPartId],
-    ) -> Result<Vec<ReportPartId>, TxError>;
 }

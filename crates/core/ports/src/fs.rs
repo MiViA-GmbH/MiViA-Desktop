@@ -1,6 +1,8 @@
 use async_trait::async_trait;
 use mivia_domain::ids::{Fingerprint, Timestamp};
 use mivia_domain::image_format::FormatCheck;
+use mivia_domain::naming::ReportName;
+use mivia_domain::output::ProbeResult;
 use mivia_domain::path::WinPath;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -15,6 +17,7 @@ pub enum FsError {
     CloudOnly,
     Changed,
     Link,
+    Exists,
     Io,
 }
 
@@ -57,6 +60,30 @@ pub trait ChunkSource: Send {
     async fn next_chunk(&mut self) -> Result<Option<Vec<u8>>, FsError>;
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Staged {
+    pub size: u64,
+    pub sha256: Fingerprint,
+    pub head: Vec<u8>,
+}
+
+#[async_trait]
+pub trait ByteSink: Send {
+    async fn write(&mut self, chunk: Vec<u8>) -> Result<(), FsError>;
+    async fn finish(self: Box<Self>) -> Result<Staged, FsError>;
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SaveTarget {
+    pub folder: WinPath,
+    pub base: WinPath,
+    pub name: ReportName,
+    pub clash: Option<u32>,
+    pub temp_prefix: String,
+    pub direct: bool,
+    pub create: bool,
+}
+
 #[async_trait]
 pub trait FileSystem: Send + Sync {
     async fn stat(&self, path: &WinPath) -> Result<FileStat, FsError>;
@@ -72,4 +99,11 @@ pub trait FileSystem: Send + Sync {
     async fn final_path(&self, path: &WinPath) -> Result<WinPath, FsError>;
     async fn write_atomic(&self, path: &WinPath, bytes: &[u8]) -> Result<(), FsError>;
     async fn free_space(&self, path: &WinPath) -> Result<u64, FsError>;
+    async fn create_staging(&self, path: &WinPath) -> Result<Box<dyn ByteSink>, FsError>;
+    async fn list_names(&self, folder: &WinPath) -> Result<Vec<String>, FsError>;
+    async fn save_report(&self, staging: &WinPath, target: &SaveTarget)
+    -> Result<WinPath, FsError>;
+    async fn digest(&self, path: &WinPath) -> Result<(u64, Fingerprint), FsError>;
+    async fn remove(&self, path: &WinPath) -> Result<(), FsError>;
+    async fn probe_folder(&self, folder: &WinPath, create: bool) -> Result<ProbeResult, FsError>;
 }

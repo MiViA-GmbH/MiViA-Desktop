@@ -1,11 +1,15 @@
 use async_trait::async_trait;
 use mivia_domain::hold::KeyProblem;
 use mivia_domain::ids::{ModelChoice, Timestamp};
+use mivia_domain::naming::Language;
+use mivia_domain::output::Format;
+use mivia_domain::report::OmittedReason;
 use uuid::Uuid;
 
-use crate::fs::{ChunkSource, FsError};
+use crate::fs::{ByteSink, ChunkSource, FsError, Staged};
 
 pub const MAX_STATUS_IDS: usize = 100;
+pub const MAX_REPORT_BYTES: u64 = 2 * 1024 * 1024 * 1024;
 pub const MAX_SUBMIT_IMAGES: usize = 50;
 pub const FIND_PAGE_SIZE: u32 = 100;
 
@@ -117,6 +121,39 @@ pub struct FindJobs {
     pub page: u32,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ReportExtras {
+    pub labels: Vec<String>,
+    pub part: Option<(u32, u32)>,
+    pub omitted: Vec<(String, OmittedReason)>,
+    pub replaces: Option<String>,
+    pub decimal_comma: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ReportRequest {
+    pub format: Format,
+    pub job_ids: Vec<String>,
+    pub timezone: String,
+    pub include_images: bool,
+    pub language: Language,
+    pub extras: Option<ReportExtras>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ReportProgress {
+    Pending,
+    Done,
+    Cancelled,
+    Failed { too_large: bool },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Download {
+    Expired,
+    Staged(Staged),
+}
+
 #[async_trait]
 pub trait ServerApi: Send + Sync {
     async fn version(&self) -> Result<ServerVersion, ServerError>;
@@ -132,5 +169,12 @@ pub trait ServerApi: Send + Sync {
     async fn job_statuses(&self, job_ids: Vec<String>) -> Result<Vec<ServerJob>, ServerError>;
     async fn find_jobs(&self, query: FindJobs) -> Result<Vec<ServerJob>, ServerError>;
     async fn job_exists(&self, job_id: &str) -> Result<bool, ServerError>;
+    async fn request_report(&self, request: ReportRequest) -> Result<String, ServerError>;
+    async fn report_status(&self, report_id: &str) -> Result<ReportProgress, ServerError>;
+    async fn download_report(
+        &self,
+        report_id: &str,
+        sink: Box<dyn ByteSink>,
+    ) -> Result<Download, ServerError>;
     fn server_offset_ms(&self) -> Option<i64>;
 }

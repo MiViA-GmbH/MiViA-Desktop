@@ -1,5 +1,6 @@
 pub mod intake;
 pub mod pipeline;
+pub mod reports;
 mod repos;
 
 use std::any::Any;
@@ -12,10 +13,10 @@ use crate::ipc::change::Change;
 use intake::IntakeRepo;
 use pipeline::PipelineRepo;
 
+pub use reports::{NewReport, ReportRepo};
 pub use repos::{
     AccountRepo, BatchModelChoice, BatchRepo, ComputationRepo, FolderRepo, HoldRepo, NewAccount,
-    NewBatch, NewComputation, NewFolder, NewReport, NewSourceFile, Origin, ReportRepo, SourceClaim,
-    SourceFileRepo,
+    NewBatch, NewComputation, NewFolder, NewSourceFile, Origin, SourceClaim, SourceFileRepo,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

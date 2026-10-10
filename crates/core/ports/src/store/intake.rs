@@ -1,6 +1,7 @@
 use mivia_domain::ids::{BatchId, FolderId, SourceFileId, Timestamp};
 use mivia_domain::intake::BatchKey;
 use mivia_domain::label::LabelRule;
+use mivia_domain::output::{ProbeResult, ReportFolder};
 use mivia_domain::path::WinPath;
 use mivia_domain::readiness::Attempts;
 use mivia_domain::source_file::SourceFileState;
@@ -16,11 +17,14 @@ pub struct FolderRow {
     pub quiet_ms: i64,
     pub label_rule: LabelRule,
     pub missing_since: Option<Timestamp>,
+    pub report_folder: ReportFolder,
+    pub probe: Option<ProbeResult>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FolderChange {
     Active(bool),
+    Probe(ProbeResult),
     Missing(Option<Timestamp>),
     Relocated(WinPath),
     Removed(Timestamp),

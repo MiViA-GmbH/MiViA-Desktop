@@ -1,6 +1,6 @@
 use mivia_domain::batch::{BatchState, ClosureReason};
 use mivia_domain::computation::{ComputationEvent, ComputationState, FailReason, JobOutcome};
-use mivia_domain::report::{PartEvent, PartFailure, PartState, SaveError};
+use mivia_domain::report::{PartEvent, PartFailure, PartState, SaveError, SaveProblem};
 use mivia_domain::source_file::{
     Classification, OpenFailure, RejectReason, SourceFileEvent, SourceFileState, UnreadableReason,
 };
@@ -288,7 +288,7 @@ fn part_events() -> Vec<PartEvent> {
     events.extend((0..5).map(|rerequests| E::Cancelled { rerequests }));
     events.extend(
         [
-            SaveError::Retryable,
+            SaveError::Retryable(SaveProblem::DiskFull),
             SaveError::InvalidName,
             SaveError::TooManyClashes,
         ]
@@ -344,7 +344,11 @@ fn part_table() -> Vec<Row<PartState, PartEvent>> {
         )
     }));
     for from in [S::Requested, S::NotSaved] {
-        rows.push((from, E::SaveFailed(SaveError::Retryable), S::NotSaved));
+        rows.push((
+            from,
+            E::SaveFailed(SaveError::Retryable(SaveProblem::DiskFull)),
+            S::NotSaved,
+        ));
         rows.push((
             from,
             E::SaveFailed(SaveError::InvalidName),

@@ -145,7 +145,7 @@ pub enum PartFailure {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SaveError {
-    Retryable,
+    Retryable(SaveProblem),
     InvalidName,
     TooManyClashes,
 }
@@ -204,7 +204,7 @@ const fn rerequest(rerequests: u32) -> PartState {
 
 const fn save_failed(error: SaveError) -> PartState {
     match error {
-        SaveError::Retryable => PartState::NotSaved,
+        SaveError::Retryable(_) => PartState::NotSaved,
         SaveError::InvalidName => PartState::Failed(PartFailure::InvalidName),
         SaveError::TooManyClashes => PartState::Failed(PartFailure::TooManyClashes),
     }
