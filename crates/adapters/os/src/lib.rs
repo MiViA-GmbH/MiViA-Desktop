@@ -26,7 +26,8 @@ pub use ffi::{
     is_elevated, known_folder, memory_is_low, open_file, physical_memory_bytes, pick_files,
     pick_folder, pipe_client, pipe_server_pid, process_age_ms, process_identity, process_table,
     proxy_for_url, read_link, reveal_file, save_link, set_webview_visible, show_error,
-    spawn_session_watcher, suspend_webview, user_idle_ms, user_locale_name, windows_user,
+    spawn_session_watcher, suspend_webview, thread_name, user_idle_ms, user_locale_name,
+    windows_user,
 };
 pub use fs::OsFileSystem;
 pub use images::{ImageCount, count_images};

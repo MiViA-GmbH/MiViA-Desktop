@@ -90,15 +90,27 @@ fn put(run: &mut Run, budgets: &Budgets, id: &str, samples: Vec<f64>) -> Result<
     Ok(())
 }
 
+fn require_quiet(options: &Options, run: &mut Run) {
+    if let Err(percent) = harness::wait_quiet() {
+        let note =
+            format!("the machine never went CPU-quiet, last second at {percent:.1} % of all cores");
+        if options.allow_noise {
+            run.notes.push(note);
+        } else {
+            note.clone_into(&mut run.validity);
+        }
+    }
+}
+
 fn idle(options: &Options, budgets: &Budgets, run: &mut Run) -> Result<()> {
     let session = seeded(options, "idle")?;
     let mut app = session.launch(&["--minimized"], &[])?;
     app.marker("db_ready", 0.0, LONG)?;
-    if !harness::wait_quiet() {
-        "invalid: the machine never went CPU-quiet".clone_into(&mut run.validity);
-    }
+    require_quiet(options, run);
     sleep(SETTLE);
     let first = usage(app.pid())?;
+    run.notes
+        .push(format!("threads at settle: {}", thread_names(&first)));
     put(
         run,
         budgets,
@@ -119,7 +131,8 @@ fn idle(options: &Options, budgets: &Budgets, run: &mut Run) -> Result<()> {
         vec![f64::from(first.handles_root)],
     )?;
     if options.idle_minutes > 0 {
-        let (cpu, switches, elapsed) = idle_window(&app, &first, options.idle_minutes)?;
+        let (cpu, switches, elapsed, top) = idle_window(&app, &first, options.idle_minutes)?;
+        run.notes.push(format!("busiest threads: {top}"));
         put(run, budgets, "idle.cpu", vec![cpu])?;
         put(run, budgets, "idle.switches", vec![switches])?;
         run.notes.push(format!(
@@ -130,7 +143,20 @@ fn idle(options: &Options, budgets: &Budgets, run: &mut Run) -> Result<()> {
     Ok(())
 }
 
-fn idle_window(app: &App, first: &harness::Usage, minutes: u64) -> Result<(f64, f64, f64)> {
+fn thread_names(usage: &harness::Usage) -> String {
+    let mut counts = std::collections::BTreeMap::<String, usize>::new();
+    for thread in &usage.threads {
+        let name = mivia_os::thread_name(thread.id).unwrap_or_else(|| "unnamed".to_owned());
+        *counts.entry(name).or_default() += 1;
+    }
+    counts
+        .iter()
+        .map(|(name, count)| format!("{name} x{count}"))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn idle_window(app: &App, first: &harness::Usage, minutes: u64) -> Result<(f64, f64, f64, String)> {
     let started = Instant::now();
     let window = Duration::from_secs(minutes * 60);
     while started.elapsed() < window {
@@ -142,5 +168,29 @@ fn idle_window(app: &App, first: &harness::Usage, minutes: u64) -> Result<(f64, 
     let cpu = seconds(last.cpu_root.saturating_sub(first.cpu_root));
     let switches = last.switches_root.saturating_sub(first.switches_root);
     let per_second = count(usize::try_from(switches).unwrap_or(usize::MAX)) / elapsed;
-    Ok((cpu * 1800.0 / elapsed, per_second, elapsed))
+    let mut busy: Vec<(u64, u32)> = last
+        .threads
+        .iter()
+        .map(|thread| {
+            let before = first.threads.iter().find(|row| row.id == thread.id);
+            let gained = thread
+                .context_switches
+                .saturating_sub(before.map_or(0, |row| row.context_switches));
+            (u64::from(gained), thread.id)
+        })
+        .collect();
+    busy.sort_unstable_by(|a, b| b.cmp(a));
+    let top = busy
+        .iter()
+        .take(6)
+        .map(|(gained, id)| {
+            let name = mivia_os::thread_name(*id).unwrap_or_else(|| id.to_string());
+            format!(
+                "{name} {:.1}/s",
+                count(usize::try_from(*gained).unwrap_or(0)) / elapsed
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    Ok((cpu * 1800.0 / elapsed, per_second, elapsed, top))
 }

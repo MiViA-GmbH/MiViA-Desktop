@@ -17,7 +17,9 @@ pub(crate) use files::{
 pub use pipe::{
     PIPE_INSTANCE_LIMIT, accept_pipe_client, create_pipe_instance, pipe_client, pipe_server_pid,
 };
-pub use probe::{ProcessRow, ThreadRow, close_windows_of, physical_memory_bytes, process_table};
+pub use probe::{
+    ProcessRow, ThreadRow, close_windows_of, physical_memory_bytes, process_table, thread_name,
+};
 pub(crate) use process::process_session;
 pub use process::{
     allow_foreground, boot_time_unix_ms, current_session_id, harden_process, process_age_ms,

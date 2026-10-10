@@ -20,7 +20,7 @@ use crate::{flag_value, repo};
 const USAGE: &str = "usage: cargo xtask perf <start-idle-window | io | preview | startup | idle | window | \
 suspend-ab | burst | history | report | size | upload | instr [--baseline-out <dir>] | calibrate | \
 compare <dir>> [--exe <path>] [--stub <path>] [--out <dir>] [--runs <n>] [--idle-minutes <n>] \
-[--hidden-minutes <n>] [--installer <dir>] [--previous <dir>]";
+[--hidden-minutes <n>] [--installer <dir>] [--previous <dir>] [--allow-noise]";
 
 #[derive(Debug)]
 pub(crate) struct Infra(pub(crate) String);
@@ -41,6 +41,7 @@ pub(crate) struct Options {
     pub(crate) runs: Option<usize>,
     pub(crate) idle_minutes: u64,
     pub(crate) hidden_minutes: u64,
+    pub(crate) allow_noise: bool,
     pub(crate) installer: Option<PathBuf>,
     pub(crate) previous: Option<PathBuf>,
 }
@@ -64,6 +65,7 @@ impl Options {
             runs: number(args, "--runs")?,
             idle_minutes: number(args, "--idle-minutes")?.unwrap_or(30),
             hidden_minutes: number(args, "--hidden-minutes")?.unwrap_or(10),
+            allow_noise: args.iter().any(|arg| arg == "--allow-noise"),
             installer: flag_value(args, "--installer").map(PathBuf::from),
             previous: flag_value(args, "--previous").map(PathBuf::from),
         })

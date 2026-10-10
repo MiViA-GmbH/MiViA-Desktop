@@ -1,8 +1,11 @@
 use std::io;
 
 use windows_sys::Wdk::System::SystemInformation::NtQuerySystemInformation;
-use windows_sys::Win32::Foundation::{HWND, LPARAM};
+use windows_sys::Win32::Foundation::{CloseHandle, HWND, LPARAM, LocalFree};
 use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
+use windows_sys::Win32::System::Threading::{
+    GetThreadDescription, OpenThread, THREAD_QUERY_LIMITED_INFORMATION,
+};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     EnumWindows, GetWindowTextLengthW, GetWindowThreadProcessId, IsWindowVisible, PostMessageW,
     WM_CLOSE,
@@ -146,4 +149,24 @@ pub fn physical_memory_bytes() -> Option<u64> {
     };
     // SAFETY: the struct is a live local with dwLength set, as the call requires.
     (unsafe { GlobalMemoryStatusEx(&raw mut status) } != 0).then_some(status.ullTotalPhys)
+}
+
+pub fn thread_name(id: u32) -> Option<String> {
+    // SAFETY: plain value arguments; the handle is checked and closed below.
+    let handle = unsafe { OpenThread(THREAD_QUERY_LIMITED_INFORMATION, 0, id) };
+    if handle.is_null() {
+        return None;
+    }
+    let mut text = std::ptr::null_mut();
+    // SAFETY: the handle is open and `text` is a live out pointer.
+    let described = unsafe { GetThreadDescription(handle, &raw mut text) } >= 0;
+    let name = (described && !text.is_null()).then(|| {
+        let name = super::system::utf16_until_nul(text, 256);
+        // SAFETY: the buffer was allocated by the system for this call.
+        unsafe { LocalFree(text.cast()) };
+        name
+    });
+    // SAFETY: the handle was opened above and is closed once.
+    unsafe { CloseHandle(handle) };
+    name.filter(|name| !name.is_empty())
 }

@@ -187,6 +187,7 @@ pub(super) struct Usage {
     pub(super) cpu_root: u64,
     pub(super) cpu_tree: u64,
     pub(super) switches_root: u64,
+    pub(super) threads: Vec<mivia_os::ThreadRow>,
 }
 
 fn descendants(table: &[ProcessRow], root: u32) -> Vec<&ProcessRow> {
@@ -223,6 +224,7 @@ pub(super) fn usage(root: u32) -> Result<Usage> {
             .count(),
         cpu_root: main.cpu_100ns,
         cpu_tree: tree.iter().map(|row| row.cpu_100ns).sum(),
+        threads: main.threads.clone(),
         switches_root: main
             .threads
             .iter()
@@ -244,27 +246,27 @@ fn busy_ticks() -> Result<u64> {
         .sum())
 }
 
-pub(super) fn wait_quiet() -> bool {
+pub(super) fn wait_quiet() -> Result<(), f64> {
     let cores = std::thread::available_parallelism().map_or(1, usize::from);
     let capacity = super::count(cores);
-    let mut calm = 0;
+    let (mut calm, mut percent) = (0, 0.0);
     let started = Instant::now();
     let Ok(mut last) = busy_ticks() else {
-        return false;
+        return Err(percent);
     };
     while started.elapsed() < QUIET_LIMIT {
         std::thread::sleep(Duration::from_secs(1));
         let Ok(now) = busy_ticks() else {
-            return false;
+            return Err(percent);
         };
-        let percent = seconds(now.saturating_sub(last)) / capacity * 100.0;
+        percent = seconds(now.saturating_sub(last)) / capacity * 100.0;
         last = now;
         calm = if percent < QUIET_PERCENT { calm + 1 } else { 0 };
         if calm >= QUIET_SECONDS {
-            return true;
+            return Ok(());
         }
     }
-    false
+    Err(percent)
 }
 
 pub(super) fn hide(app: &App) {
