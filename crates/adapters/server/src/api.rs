@@ -1,3 +1,4 @@
+mod diagnostics;
 mod jobs;
 mod plain;
 mod reports;
@@ -13,8 +14,9 @@ use mivia_domain::ids::AccountId;
 use mivia_ports::auth::{AuthError, Authorization, Authorizer, ServerOrigin};
 use mivia_ports::fs::ByteSink;
 use mivia_ports::server::{
-    CatalogueModel, Download, FindJobs, ImageRef, LabelsFetch, License, ReportProgress,
-    ReportRequest, ServerApi, ServerError, ServerJob, ServerVersion, SubmitRequest, UploadRequest,
+    CatalogueModel, Download, FindJobs, ImageRef, LabelsFetch, License, ProblemReportForm,
+    ReportProgress, ReportRequest, ServerApi, ServerError, ServerJob, ServerVersion, SubmitRequest,
+    UploadRequest,
 };
 use parking_lot::Mutex;
 use reqwest::StatusCode;
@@ -247,6 +249,14 @@ impl ServerApi for HttpServerApi {
         sink: Box<dyn ByteSink>,
     ) -> Result<Download, ServerError> {
         self.fetch_report(report_id, sink).await
+    }
+
+    async fn send_problem_report(
+        &self,
+        form: &ProblemReportForm,
+        bundle: Vec<u8>,
+    ) -> Result<(), ServerError> {
+        self.post_problem_report(form, bundle).await
     }
 
     fn server_offset_ms(&self) -> Option<i64> {

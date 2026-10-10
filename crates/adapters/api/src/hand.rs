@@ -116,3 +116,30 @@ pub fn create_report(
         .header(AUTHORIZATION, authorization)
         .json(body)
 }
+
+pub struct IssueReport {
+    pub session_id: String,
+    pub fields: Vec<(&'static str, String)>,
+    pub file_name: String,
+    pub bundle: Vec<u8>,
+}
+
+pub fn issue_report(
+    client: &Client,
+    base_url: &str,
+    authorization: HeaderValue,
+    report: IssueReport,
+) -> RequestBuilder {
+    let part = Part::bytes(report.bundle).file_name(report.file_name);
+    let form = report
+        .fields
+        .into_iter()
+        .fold(Form::new(), |form, (name, value)| form.text(name, value))
+        .part("bundle", part);
+    client
+        .post(format!("{base_url}/api/client-diagnostics/issue-reports"))
+        .header(ACCEPT, JSON)
+        .header(AUTHORIZATION, authorization)
+        .header("x-client-session-id", report.session_id)
+        .multipart(form)
+}
