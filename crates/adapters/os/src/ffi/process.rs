@@ -51,9 +51,13 @@ pub fn harden_process() -> io::Result<()> {
 }
 
 pub fn current_session_id() -> io::Result<u32> {
+    process_session(std::process::id())
+}
+
+pub(crate) fn process_session(pid: u32) -> io::Result<u32> {
     let mut session = 0;
     // SAFETY: the out pointer refers to a live local.
-    check(unsafe { ProcessIdToSessionId(std::process::id(), &raw mut session) })?;
+    check(unsafe { ProcessIdToSessionId(pid, &raw mut session) })?;
     Ok(session)
 }
 

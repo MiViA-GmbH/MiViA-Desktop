@@ -2306,6 +2306,7 @@ dependencies = [
  "mivia-ports",
  "parking_lot",
  "proptest",
+ "quick-xml",
  "serde",
  "serde_json",
  "tokio",
@@ -2404,9 +2405,11 @@ dependencies = [
  "tokio",
  "walkdir",
  "webview2-com",
+ "windows",
  "windows-core",
  "windows-native-keyring-store",
  "windows-sys 0.61.2",
+ "winreg",
 ]
 
 [[package]]
