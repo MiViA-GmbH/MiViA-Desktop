@@ -25,7 +25,10 @@ impl Pipeline {
     async fn probe(&self, reason: HoldReason) -> Result<bool, PipelineError> {
         let server = &self.ports.server;
         let ok = match reason {
-            HoldReason::Offline | HoldReason::NetworkBlocked(_) => server.version().await.is_ok(),
+            HoldReason::Offline | HoldReason::NetworkBlocked(_) => {
+                self.ports.network.refresh(false).await;
+                server.version().await.is_ok()
+            }
             HoldReason::ServiceUnavailable => server.license().await.is_ok(),
             HoldReason::AccessKeyInvalid(_) => self.key_accepted().await,
             HoldReason::LicenseInvalid(LicenseScope::Uploads) => self.upload_canary().await?,

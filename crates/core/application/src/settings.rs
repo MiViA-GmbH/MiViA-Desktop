@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use mivia_domain::ids::{BatchId, Timestamp};
+use mivia_ports::ipc::network::ProxySetting;
 use mivia_ports::ipc::screens::{Language, LanguageSetting, LocaleView};
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{
@@ -24,6 +25,7 @@ pub struct GlobalSettings {
     pub custom_report_folder: Option<String>,
     pub backup_folder: Option<String>,
     pub backup_copied_at: Option<i64>,
+    pub proxy: ProxySetting,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

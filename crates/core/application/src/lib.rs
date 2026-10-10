@@ -6,6 +6,7 @@ pub mod history;
 pub mod intake;
 pub mod launch;
 pub mod legacy;
+pub mod network;
 pub mod one_off;
 pub mod pipeline;
 pub mod policy;

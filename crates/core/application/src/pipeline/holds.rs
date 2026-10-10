@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
-use mivia_domain::hold::HoldReason;
+use mivia_domain::hold::{HoldReason, NetworkBlock};
 use mivia_domain::ids::{MINUTE_MS, SECOND_MS, Timestamp};
 use mivia_domain::retry::RetryPolicy;
-use mivia_ports::telemetry::{HoldLifted, HoldRaised, LiftedBy};
+use mivia_ports::telemetry::{HoldLifted, HoldRaised, LiftedBy, ProxyAuthRequired, TlsUntrusted};
 
 use parking_lot::Mutex;
 
@@ -31,6 +31,42 @@ fn policy(reason: HoldReason) -> Option<RetryPolicy> {
 }
 
 impl Pipeline {
+    fn network_event(&self, reason: HoldReason) {
+        let HoldReason::NetworkBlocked(block) = reason else {
+            return;
+        };
+        let event = match block {
+            NetworkBlock::ProxyAuth => {
+                tracing::warn!(schemes = "unknown", "proxy.authRequired");
+                ProxyAuthRequired {
+                    unknown: Some(true),
+                    ..ProxyAuthRequired::default()
+                }
+                .into()
+            }
+            NetworkBlock::Tls => {
+                let seen = self.ports.network.untrusted();
+                TlsUntrusted {
+                    issuer_is_enterprise: Some(seen.is_some_and(|cert| cert.unknown_issuer)),
+                }
+                .into()
+            }
+            NetworkBlock::ProxyRefused | NetworkBlock::Redirect => return,
+        };
+        self.ports.telemetry.record(event);
+    }
+
+    pub async fn network_block(&self) -> Result<Option<NetworkBlock>, PipelineError> {
+        let active = self.write(|tx, scope| tx.holds(scope).active()).await?;
+        Ok(active.into_iter().find_map(|reason| {
+            if let HoldReason::NetworkBlocked(block) = reason {
+                Some(block)
+            } else {
+                None
+            }
+        }))
+    }
+
     fn probe_at(&self, reason: HoldReason, attempt: u32) -> Option<Timestamp> {
         let delay = policy(reason)?.delay_ms(attempt, self.random());
         Some(self.now().plus_ms(delay))
@@ -62,6 +98,7 @@ impl Pipeline {
         if first {
             let event = HoldRaised { kind: Some(reason) };
             self.ports.telemetry.record(event.into());
+            self.network_event(reason);
         }
         tracing::info!(?reason, "hold.raised");
         self.wakers.probe.notify_one();

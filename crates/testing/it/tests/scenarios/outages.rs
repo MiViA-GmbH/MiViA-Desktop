@@ -1,4 +1,4 @@
-use mivia_domain::hold::{HoldReason, KeyProblem, LicenseScope};
+use mivia_domain::hold::{HoldReason, KeyProblem, LicenseScope, NetworkBlock};
 use mivia_domain::ids::{HOUR_MS, MINUTE_MS, SECOND_MS};
 use mivia_domain::retry::RetryPolicy;
 use mivia_ports::auth::AuthError;
@@ -314,5 +314,36 @@ async fn holds_and_settled_analyses_are_reported_once_each() {
             .iter()
             .all(|event| event.state == Some(SettledState::Done))
     );
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn a_proxy_sign_in_blocks_the_network_reports_once_and_resolves_the_proxy_before_probes() {
+    let line = Line::new().await;
+    let mut everything = API.to_vec();
+    everything.push(Op::Version);
+    line.server
+        .set_down(&everything, Some(&ServerError::ProxyAuth));
+    line.files(1).await;
+    line.run_for(5 * MINUTE_MS, 5 * SECOND_MS).await;
+    assert_eq!(
+        line.holds().await,
+        [HoldReason::NetworkBlocked(NetworkBlock::ProxyAuth)]
+    );
+    let probes = line.server.count(Op::Version);
+    assert!(probes >= 1);
+    assert_eq!(line.route.applied.lock().len(), probes);
+    let reported = line
+        .telemetry
+        .events()
+        .iter()
+        .filter(|event| matches!(event, ProductEvent::ProxyAuthRequired(_)))
+        .count();
+    assert_eq!(reported, 1);
+
+    line.server.set_down(&everything, None);
+    line.run_for(20 * MINUTE_MS, 5 * SECOND_MS).await;
+    assert_eq!(line.holds().await, []);
+    assert!(line.states().await.iter().all(|state| state == "done"));
     line.finish().await;
 }

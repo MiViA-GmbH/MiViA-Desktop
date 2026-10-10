@@ -31,6 +31,8 @@ use mivia_ports::telemetry::TelemetrySink;
 use parking_lot::Mutex;
 use tokio::sync::Notify;
 
+use crate::network::Network;
+
 pub use crate::worker::{Tick, run};
 pub use report_save::SavedCheck;
 
@@ -57,6 +59,7 @@ pub struct PipelinePorts {
     pub clock: Arc<dyn Clock>,
     pub ids: Arc<dyn IdGen>,
     pub telemetry: Arc<dyn TelemetrySink>,
+    pub network: Arc<Network>,
     pub staging: WinPath,
 }
 

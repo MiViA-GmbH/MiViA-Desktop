@@ -1,6 +1,7 @@
 use std::future::Future;
 use std::sync::Arc;
 
+use mivia_application::network::{Network, ProxyInputs};
 use mivia_application::pipeline::{Pipeline, PipelinePorts, Tick};
 use mivia_application::report_settings::ReportSettings;
 use mivia_domain::hold::HoldReason;
@@ -10,6 +11,7 @@ use mivia_ports::store::StoreExt;
 use mivia_testkit::auth::FakeAuthorizer;
 use mivia_testkit::clock::ManualClock;
 use mivia_testkit::id_gen::SeededIdGen;
+use mivia_testkit::network::{FakeResolver, FakeRoute};
 use mivia_testkit::server::{FakeServerApi, Fault, Op};
 use mivia_testkit::telemetry::RecordingTelemetry;
 
@@ -40,6 +42,7 @@ pub(crate) struct Line {
     pub(crate) auth: Arc<FakeAuthorizer>,
     pub(crate) pipeline: Pipeline,
     pub(crate) telemetry: Arc<RecordingTelemetry>,
+    pub(crate) route: Arc<FakeRoute>,
 }
 
 impl Line {
@@ -53,7 +56,8 @@ impl Line {
         let server = Arc::new(FakeServerApi::new(Arc::clone(&world.clock) as _));
         let auth = Arc::new(FakeAuthorizer::new(world.scope.0));
         let telemetry = Arc::new(RecordingTelemetry::default());
-        let pipeline = pipeline(&world, (&server, &auth, &telemetry), 1);
+        let route = Arc::new(FakeRoute::default());
+        let pipeline = pipeline(&world, (&server, &auth, &telemetry, &route), 1);
         pipeline.start().await.unwrap();
         Self {
             world,
@@ -61,11 +65,12 @@ impl Line {
             auth,
             pipeline,
             telemetry,
+            route,
         }
     }
 
     pub(crate) async fn restart(&mut self, seed: u64) {
-        let wiring = (&self.server, &self.auth, &self.telemetry);
+        let wiring = (&self.server, &self.auth, &self.telemetry, &self.route);
         self.pipeline = pipeline(&self.world, wiring, seed);
         self.pipeline.start().await.unwrap();
     }
@@ -178,15 +183,14 @@ impl Line {
     }
 }
 
-fn pipeline(
-    world: &World,
-    (server, auth, telemetry): (
-        &Arc<FakeServerApi>,
-        &Arc<FakeAuthorizer>,
-        &Arc<RecordingTelemetry>,
-    ),
-    seed: u64,
-) -> Pipeline {
+type Wiring<'a> = (
+    &'a Arc<FakeServerApi>,
+    &'a Arc<FakeAuthorizer>,
+    &'a Arc<RecordingTelemetry>,
+    &'a Arc<FakeRoute>,
+);
+
+fn pipeline(world: &World, (server, auth, telemetry, route): Wiring<'_>, seed: u64) -> Pipeline {
     let ports = PipelinePorts {
         store: Arc::clone(&world.store) as _,
         fs: Arc::clone(&world.fs) as _,
@@ -195,6 +199,12 @@ fn pipeline(
         clock: Arc::clone(&world.clock) as _,
         ids: Arc::new(SeededIdGen::new(seed)),
         telemetry: Arc::clone(telemetry) as _,
+        network: Arc::new(Network::new(
+            Arc::new(FakeResolver::default()),
+            Arc::clone(route) as _,
+            "https://app.example.invalid".to_owned(),
+            ProxyInputs::default(),
+        )),
         staging: win(STAGING),
     };
     Pipeline::new(ports, world.scope, 2)
