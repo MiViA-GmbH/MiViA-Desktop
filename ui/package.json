@@ -7,7 +7,7 @@
 		"dev": "vite",
 		"build": "vite build",
 		"build:e2e": "vite build --mode e2e",
-		"typecheck": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json && tsc -p e2e/tsconfig.json",
 		"test": "vitest run",
 		"fallow": "fallow",
 		"size": "vite build && node scripts/startup-bundle.mjs && size-limit",
