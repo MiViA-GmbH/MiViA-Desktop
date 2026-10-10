@@ -195,4 +195,5 @@ pub struct AccountView {
 pub enum OpenTarget {
     Report { part_id: String },
     RevealReport { part_id: String },
+    Link { link: super::support::KnownLink },
 }

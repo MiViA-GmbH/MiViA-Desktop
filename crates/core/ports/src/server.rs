@@ -4,9 +4,11 @@ use mivia_domain::ids::{ModelChoice, Timestamp};
 use mivia_domain::naming::Language;
 use mivia_domain::output::Format;
 use mivia_domain::report::OmittedReason;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::fs::{ByteSink, ChunkSource, FsError, Staged};
+use crate::ipc::support::ReportTrigger;
 
 pub const MAX_STATUS_IDS: usize = 100;
 pub const MAX_REPORT_BYTES: u64 = 2 * 1024 * 1024 * 1024;
@@ -155,6 +157,20 @@ pub enum Download {
     Staged(Staged),
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProblemReportForm {
+    pub report_id: String,
+    pub trigger: ReportTrigger,
+    pub signature: Option<String>,
+    pub description: Option<String>,
+    pub app_version: String,
+    pub os: String,
+    pub machine_id: String,
+    pub install_id: String,
+    pub session_id: String,
+}
+
 #[async_trait]
 pub trait ServerApi: Send + Sync {
     async fn version(&self) -> Result<ServerVersion, ServerError>;
@@ -177,5 +193,10 @@ pub trait ServerApi: Send + Sync {
         report_id: &str,
         sink: Box<dyn ByteSink>,
     ) -> Result<Download, ServerError>;
+    async fn send_problem_report(
+        &self,
+        form: &ProblemReportForm,
+        bundle: Vec<u8>,
+    ) -> Result<(), ServerError>;
     fn server_offset_ms(&self) -> Option<i64>;
 }
