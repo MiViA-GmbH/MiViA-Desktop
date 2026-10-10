@@ -5,4 +5,9 @@
 # owner = "name"
 # issue = "link"
 # expires = "YYYY-MM-DD"
-entry = []
+[[entry]]
+id = "idle.floor.threads"
+reason = "18 threads at the 20 s settle, 10 of them Windows pool and Winsock threads that retire later; 8 app threads, 10 in total after 2 minutes"
+owner = "Krzysztof Bzowski"
+issue = "perf/decisions.md#idlefloorthreads"
+expires = "2026-10-24"
