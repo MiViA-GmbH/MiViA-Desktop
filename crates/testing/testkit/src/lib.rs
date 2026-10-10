@@ -5,6 +5,7 @@ pub mod fs;
 pub mod id_gen;
 pub mod observer;
 pub mod server;
+pub mod telemetry;
 pub mod watch;
 
 pub use mivia_domain as domain;

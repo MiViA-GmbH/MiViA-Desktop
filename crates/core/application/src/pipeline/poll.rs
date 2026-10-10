@@ -1,11 +1,12 @@
 use std::collections::BTreeMap;
 
-use mivia_domain::computation::{ComputationEvent, PendingVerdict, pending_verdict};
+use mivia_domain::computation::{ComputationEvent, JobOutcome, PendingVerdict, pending_verdict};
 use mivia_domain::hold::{Access, Gate};
 use mivia_domain::ids::{ComputationId, MINUTE_MS, Timestamp};
 use mivia_domain::polling::{poll_delay_ms, status_request_gap_ms};
 use mivia_ports::server::{MAX_STATUS_IDS, ServerJob, ServerJobStatus};
 use mivia_ports::store::pipeline::{JobRecord, PollRow};
+use mivia_ports::telemetry::{EventKind, ProductEvent};
 
 use super::effects::{Call, Item};
 use super::outcome::record;
@@ -130,6 +131,10 @@ impl Pipeline {
         changes: Vec<(ComputationId, Change)>,
     ) -> Result<(), PipelineError> {
         let now = self.now();
+        let settled: Vec<ProductEvent> = changes
+            .iter()
+            .filter_map(|(id, change)| settled(*id, change, now))
+            .collect();
         self.write(move |tx, scope| {
             let repo = tx.pipeline(scope);
             for (id, change) in changes {
@@ -142,9 +147,40 @@ impl Pipeline {
             Ok(())
         })
         .await?;
+        for event in settled {
+            self.ports.telemetry.record(event);
+        }
         self.wakers.submitter.notify_one();
         self.wakers.reports.notify_one();
         Ok(())
+    }
+}
+
+fn settled(id: ComputationId, change: &Change, now: Timestamp) -> Option<ProductEvent> {
+    let event = ProductEvent::new(EventKind::ComputationSettled).entity(
+        "computation_id",
+        "computation",
+        id.0,
+    );
+    match change {
+        Change::Record(job) => {
+            let took = u64::try_from(now.ms_since(job.submitted_at)).unwrap_or(0);
+            match job.outcome {
+                JobOutcome::Done { reused } => Some(
+                    event
+                        .tag("state", "done")
+                        .flag("reused", reused)
+                        .count("duration_ms", took),
+                ),
+                JobOutcome::Failed(_) => {
+                    Some(event.tag("state", "failed").count("duration_ms", took))
+                }
+                JobOutcome::Pending => None,
+            }
+        }
+        Change::Event(ComputationEvent::JobGone { .. }) => Some(event.tag("state", "lost")),
+        Change::Event(ComputationEvent::TimedOut(_)) => Some(event.tag("state", "failed")),
+        Change::Event(_) | Change::PollAt(_) => None,
     }
 }
 

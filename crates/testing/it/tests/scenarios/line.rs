@@ -11,6 +11,7 @@ use mivia_testkit::auth::FakeAuthorizer;
 use mivia_testkit::clock::ManualClock;
 use mivia_testkit::id_gen::SeededIdGen;
 use mivia_testkit::server::{FakeServerApi, Fault, Op};
+use mivia_testkit::telemetry::RecordingTelemetry;
 
 use super::world::{World, jpeg, win};
 
@@ -38,6 +39,7 @@ pub(crate) struct Line {
     pub(crate) server: Arc<FakeServerApi>,
     pub(crate) auth: Arc<FakeAuthorizer>,
     pub(crate) pipeline: Pipeline,
+    pub(crate) telemetry: Arc<RecordingTelemetry>,
 }
 
 impl Line {
@@ -50,18 +52,21 @@ impl Line {
         world.add_with(MINUTE_MS, false, settings).await;
         let server = Arc::new(FakeServerApi::new(Arc::clone(&world.clock) as _));
         let auth = Arc::new(FakeAuthorizer::new(world.scope.0));
-        let pipeline = pipeline(&world, &server, &auth, 1);
+        let telemetry = Arc::new(RecordingTelemetry::default());
+        let pipeline = pipeline(&world, (&server, &auth, &telemetry), 1);
         pipeline.start().await.unwrap();
         Self {
             world,
             server,
             auth,
             pipeline,
+            telemetry,
         }
     }
 
     pub(crate) async fn restart(&mut self, seed: u64) {
-        self.pipeline = pipeline(&self.world, &self.server, &self.auth, seed);
+        let wiring = (&self.server, &self.auth, &self.telemetry);
+        self.pipeline = pipeline(&self.world, wiring, seed);
         self.pipeline.start().await.unwrap();
     }
 
@@ -175,8 +180,11 @@ impl Line {
 
 fn pipeline(
     world: &World,
-    server: &Arc<FakeServerApi>,
-    auth: &Arc<FakeAuthorizer>,
+    (server, auth, telemetry): (
+        &Arc<FakeServerApi>,
+        &Arc<FakeAuthorizer>,
+        &Arc<RecordingTelemetry>,
+    ),
     seed: u64,
 ) -> Pipeline {
     let ports = PipelinePorts {
@@ -186,6 +194,7 @@ fn pipeline(
         authorizer: Arc::clone(auth) as _,
         clock: Arc::clone(&world.clock) as _,
         ids: Arc::new(SeededIdGen::new(seed)),
+        telemetry: Arc::clone(telemetry) as _,
         staging: win(STAGING),
     };
     Pipeline::new(ports, world.scope, 2)

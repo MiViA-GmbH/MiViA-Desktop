@@ -14,5 +14,6 @@ pub mod report_settings;
 pub mod settings;
 pub mod setup;
 pub mod spool;
+pub mod telemetry;
 pub mod watch_marker;
 pub mod worker;

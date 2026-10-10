@@ -27,6 +27,7 @@ use mivia_ports::id_gen::IdGen;
 use mivia_ports::server::ServerApi;
 use mivia_ports::store::pipeline::Clamp;
 use mivia_ports::store::{AccountScope, Store, StoreError, StoreExt, TxError, WriteTx};
+use mivia_ports::telemetry::TelemetrySink;
 use parking_lot::Mutex;
 use tokio::sync::Notify;
 
@@ -55,6 +56,7 @@ pub struct PipelinePorts {
     pub authorizer: Arc<dyn Authorizer>,
     pub clock: Arc<dyn Clock>,
     pub ids: Arc<dyn IdGen>,
+    pub telemetry: Arc<dyn TelemetrySink>,
     pub staging: WinPath,
 }
 
@@ -202,6 +204,11 @@ impl Pipeline {
         .await?;
         self.wakers.probe.notify_one();
         Ok(())
+    }
+
+    pub fn busy(&self) -> bool {
+        let in_flight = self.in_flight.lock();
+        !in_flight.uploads.is_empty() || !in_flight.submits.is_empty()
     }
 
     fn now(&self) -> Timestamp {

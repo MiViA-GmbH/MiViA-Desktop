@@ -5,6 +5,7 @@ use mivia_ports::auth::AuthError;
 use mivia_ports::id_gen::IdGen;
 use mivia_ports::server::CatalogueModel;
 use mivia_ports::server::ServerError;
+use mivia_ports::telemetry::{EventKind, Field, ProductEvent};
 use mivia_testkit::id_gen::SeededIdGen;
 use mivia_testkit::server::{Fault, Licence, Op};
 
@@ -253,5 +254,49 @@ async fn check_now_probes_at_once_instead_of_waiting_for_the_backoff() {
         .unwrap();
     assert_eq!(line.server.count(Op::Version), probes + 1);
     assert_eq!(line.holds().await, []);
+    line.finish().await;
+}
+
+fn has(event: &ProductEvent, name: &str, value: &Field) -> bool {
+    event
+        .fields
+        .iter()
+        .any(|(field, found)| *field == name && found == value)
+}
+
+#[tokio::test]
+async fn holds_and_settled_analyses_are_reported_once_each() {
+    let line = Line::new().await;
+    let mut everything = API.to_vec();
+    everything.push(Op::Version);
+    line.server
+        .set_down(&everything, Some(&ServerError::Unreachable));
+    line.files(2).await;
+    line.run_for(10 * MINUTE_MS, 5 * SECOND_MS).await;
+    line.server.set_down(&everything, None);
+    line.run_for(6 * MINUTE_MS, 5 * SECOND_MS).await;
+    let events = line.telemetry.events();
+    let of = |kind: EventKind| -> Vec<&ProductEvent> {
+        events.iter().filter(|event| event.kind == kind).collect()
+    };
+    let raised = of(EventKind::HoldRaised);
+    assert_eq!(raised.len(), 1);
+    assert!(has(raised[0], "kind", &Field::Tag("offline")));
+    let lifted = of(EventKind::HoldLifted);
+    assert_eq!(lifted.len(), 1);
+    assert!(has(lifted[0], "by", &Field::Tag("probe")));
+    assert!(
+        lifted[0]
+            .fields
+            .iter()
+            .any(|(name, _)| *name == "duration_ms")
+    );
+    let settled = of(EventKind::ComputationSettled);
+    assert_eq!(settled.len(), line.states().await.len());
+    assert!(
+        settled
+            .iter()
+            .all(|event| has(event, "state", &Field::Tag("done")))
+    );
     line.finish().await;
 }

@@ -3,6 +3,9 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use mivia_domain::hold::HoldReason;
 use mivia_domain::ids::{MINUTE_MS, SECOND_MS, Timestamp};
 use mivia_domain::retry::RetryPolicy;
+use mivia_ports::telemetry::{EventKind, ProductEvent};
+
+use crate::telemetry::hold_tag;
 use parking_lot::Mutex;
 
 use super::{Pipeline, PipelineError};
@@ -19,6 +22,7 @@ pub(super) struct HoldState {
     attempts: Mutex<BTreeMap<HoldReason, u32>>,
     lifted: Mutex<BTreeMap<HoldReason, (Timestamp, u32)>>,
     last_lift: Mutex<Option<Timestamp>>,
+    raised: Mutex<BTreeMap<HoldReason, Timestamp>>,
     transients: Mutex<VecDeque<(Timestamp, String)>>,
     offline_check: tokio::sync::Mutex<()>,
 }
@@ -50,6 +54,16 @@ impl Pipeline {
         }
         self.write(move |tx, scope| tx.holds(scope).raise(reason, now, next))
             .await?;
+        let first = {
+            let mut raised = self.holds.raised.lock();
+            let first = !raised.contains_key(&reason);
+            raised.entry(reason).or_insert(now);
+            first
+        };
+        if first {
+            let event = ProductEvent::new(EventKind::HoldRaised).tag("kind", hold_tag(reason));
+            self.ports.telemetry.record(event);
+        }
         tracing::info!(?reason, "hold.raised");
         self.wakers.probe.notify_one();
         Ok(())
@@ -78,9 +92,25 @@ impl Pipeline {
         let attempts = self.holds.attempts.lock().remove(&reason).unwrap_or(1);
         self.holds.lifted.lock().insert(reason, (now, attempts));
         *self.holds.last_lift.lock() = Some(now);
+        self.lifted_event(reason, now, attempts);
         tracing::info!(?reason, "hold.lifted");
         self.wakers.all();
         Ok(())
+    }
+
+    fn lifted_event(&self, reason: HoldReason, now: Timestamp, probes: u32) {
+        let since = self.holds.raised.lock().remove(&reason);
+        let mut event = ProductEvent::new(EventKind::HoldLifted)
+            .tag("kind", hold_tag(reason))
+            .count("count", u64::from(probes))
+            .tag("by", "probe");
+        if let Some(since) = since {
+            event = event.count(
+                "duration_ms",
+                u64::try_from(now.ms_since(since)).unwrap_or(0),
+            );
+        }
+        self.ports.telemetry.record(event);
     }
 
     pub(super) fn counts_attempt(&self) -> bool {
