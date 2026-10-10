@@ -109,7 +109,7 @@ pub(crate) struct Stored {
     pub(crate) remaining_uploads: Option<u32>,
 }
 
-fn remaining(license: &License) -> Option<u32> {
+pub(crate) fn remaining(license: &License) -> Option<u32> {
     let left = license
         .images_limit?
         .saturating_sub(license.images_used.unwrap_or(0));

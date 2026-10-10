@@ -33,7 +33,7 @@ fn win(path: &Path) -> Option<WinPath> {
     WinPath::parse(path.to_str()?).ok()
 }
 
-fn known(folder: KnownFolder) -> Option<WinPath> {
+pub(crate) fn known(folder: KnownFolder) -> Option<WinPath> {
     known_folder(folder).as_deref().and_then(win)
 }
 

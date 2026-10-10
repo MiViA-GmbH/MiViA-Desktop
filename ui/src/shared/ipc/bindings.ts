@@ -26,6 +26,20 @@ export const commands = {
 } | null>("get_batch", { id }),
 	listBatchItems: (id: string, after: number | null) => __TAURI_INVOKE<BatchItemsPage>("list_batch_items", { id, after }),
 	listSeriesReports: (id: string) => __TAURI_INVOKE<SeriesReportsView>("list_series_reports", { id }),
+	getOneOff: () => __TAURI_INVOKE<{
+	count: number,
+	groups: ImageGroupView[],
+	notIncluded: NotIncludedView[],
+	subfolders: number,
+	tooMany: boolean,
+	label: string,
+	lastChoices: ModelChoiceView[],
+	lastChosenAt: string | null,
+	reportFolder: string,
+	reportFallback: boolean,
+	language: Language,
+} | null>("get_one_off"),
+	getRemainingUploads: () => __TAURI_INVOKE<number | null>("get_remaining_uploads"),
 	uiReady: () => __TAURI_INVOKE<void>("ui_ready"),
 	setLanguage: (setting: LanguageSetting) => __TAURI_INVOKE<null>("set_language", { setting }),
 	finishSeries: (id: string) => __TAURI_INVOKE<null>("finish_series", { id }),
@@ -54,10 +68,14 @@ export const commands = {
 	switchAccount: () => __TAURI_INVOKE<ConnectOutcome>("switch_account"),
 	signOut: () => __TAURI_INVOKE<null>("sign_out"),
 	setIntegration: (autostart: boolean | null, explorer: boolean | null) => __TAURI_INVOKE<IntegrationView>("set_integration", { autostart, explorer }),
+	confirmOneOff: (input: OneOffInput) => __TAURI_INVOKE<string>("confirm_one_off", { input }),
+	discardOneOff: (group: number | null) => __TAURI_INVOKE<null>("discard_one_off", { group }),
+	addImages: () => __TAURI_INVOKE<number>("add_images"),
 };
 
 /** Events */
 export const events = {
+	dropHover: makeEvent<DropHover>("drop-hover"),
 	languageChanged: makeEvent<LanguageChanged>("language-changed"),
 	navigate: makeEvent<Navigate>("navigate"),
 	quitRequested: makeEvent<QuitRequested>("quit-requested"),
@@ -158,7 +176,7 @@ export type CatalogueView = {
 	legacyCustomGone: string[],
 };
 
-export type Change = { type: "batchSummary"; batchId: string; summary: BatchSummary } | { type: "batchItems"; batchId: string } | { type: "folder"; id: string } | { type: "reports"; batchId: string } | { type: "needsAttention" } | { type: "holds" } | { type: "catalogue" } | { type: "settings" } | { type: "history" } | { type: "all" };
+export type Change = { type: "batchSummary"; batchId: string; summary: BatchSummary } | { type: "batchItems"; batchId: string } | { type: "folder"; id: string } | { type: "reports"; batchId: string } | { type: "needsAttention" } | { type: "holds" } | { type: "catalogue" } | { type: "settings" } | { type: "history" } | { type: "oneOff" } | { type: "all" };
 
 export type ComputationItem = {
 	id: string,
@@ -199,6 +217,8 @@ export type DoneView = {
 	legacy: LegacyOutcome | null,
 	legacyStartup: string[],
 };
+
+export type DropHover = boolean;
 
 export type FolderBlock = { kind: "notFound" } | { kind: "tooBroad" } | { kind: "nested"; name: string } | { kind: "insideReports" };
 
@@ -262,6 +282,11 @@ export type HoldsView = {
 	holds: HoldView[],
 };
 
+export type ImageGroupView = {
+	folder: string,
+	names: string[],
+};
+
 export type IntegrationView = {
 	available: boolean,
 	autostart: StartupState,
@@ -319,6 +344,36 @@ export type NewFolderInput = {
 	reportPick: string | null,
 	models: ModelChoiceView[],
 	includeExisting: boolean,
+};
+
+export type NotIncludedReason = "missing" | "notImage" | "zipTemp";
+
+export type NotIncludedView = {
+	name: string,
+	reason: NotIncludedReason,
+};
+
+export type OneOffInput = {
+	label: string,
+	models: ModelChoiceView[],
+	pdf: boolean,
+	csv: boolean,
+	language: Language,
+	reportPick: string | null,
+};
+
+export type OneOffView = {
+	count: number,
+	groups: ImageGroupView[],
+	notIncluded: NotIncludedView[],
+	subfolders: number,
+	tooMany: boolean,
+	label: string,
+	lastChoices: ModelChoiceView[],
+	lastChosenAt: string | null,
+	reportFolder: string,
+	reportFallback: boolean,
+	language: Language,
 };
 
 export type OpenTarget = { kind: "report"; partId: string } | { kind: "revealReport"; partId: string };
@@ -403,6 +458,7 @@ export type SetupView = {
 	report: ReportFolderView | null,
 	models: ModelChoiceView[],
 	options: SetupOption[],
+	imagesSent: number,
 };
 
 export type StartupState = "on" | "off" | "turnedOffInTaskManager";

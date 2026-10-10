@@ -1,8 +1,15 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::os::windows::io::AsHandle;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
+use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+
+use mivia_application::setup::SetupDraft;
+use mivia_ports::queries::Queries;
+use mivia_ports::store::SettingsScope;
+use mivia_store::{SqliteStore, StoreConfig};
+use mivia_testkit::observer::RecordingObserver;
 
 const ROUNDS: usize = 100;
 const SECONDARIES: usize = 15;
@@ -102,6 +109,27 @@ fn settle(round: &mut Round, killed: Option<u32>) -> Vec<u32> {
     }
 }
 
+fn drafted_paths(local_app_data: &Path) -> Vec<String> {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .build()
+        .unwrap();
+    runtime.block_on(async {
+        let path = data_dir(local_app_data).join("mivia.db");
+        if !path.exists() {
+            return Vec::new();
+        }
+        let observer = Arc::new(RecordingObserver::default());
+        let store = SqliteStore::open(&path, StoreConfig::for_tests(), observer)
+            .await
+            .unwrap();
+        let draft = store.settings(SettingsScope::SetupDraft).await.unwrap();
+        store.close().await.unwrap();
+        SetupDraft::parse(draft.as_deref())
+            .map(|draft| draft.sent.paths)
+            .unwrap_or_default()
+    })
+}
+
 fn staged_paths(local_app_data: &Path) -> BTreeMap<String, usize> {
     let mut seen = BTreeMap::new();
     let inbox = data_dir(local_app_data).join("inbox");
@@ -129,6 +157,13 @@ fn check(mut round: Round, kill_after: Duration) {
         round.index
     );
     let alive = settle(&mut round, killed);
+    let spooled = staged_paths(&round.local_app_data);
+    for child in &mut round.children {
+        if alive.contains(&child.id()) {
+            drop(child.kill());
+            drop(child.wait());
+        }
+    }
     for child in &mut round.children {
         if alive.contains(&child.id()) || killed == Some(child.id()) {
             continue;
@@ -143,9 +178,17 @@ fn check(mut round: Round, kill_after: Duration) {
             );
         }
     }
-    let seen = staged_paths(&round.local_app_data);
-    let expected: BTreeMap<String, usize> = (0..SECONDARIES)
-        .map(|file| (sent_path(round.index, file), 1))
+    let drafted = drafted_paths(&round.local_app_data);
+    let unique: BTreeSet<&String> = drafted.iter().collect();
+    assert_eq!(
+        unique.len(),
+        drafted.len(),
+        "round {} drafted twice",
+        round.index
+    );
+    let seen: BTreeSet<String> = spooled.into_keys().chain(drafted).collect();
+    let expected: BTreeSet<String> = (0..SECONDARIES)
+        .map(|file| sent_path(round.index, file))
         .collect();
     assert_eq!(
         seen, expected,

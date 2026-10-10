@@ -8,6 +8,8 @@ const COMMANDS: &[&str] = &[
     "get_batch",
     "list_batch_items",
     "list_series_reports",
+    "get_one_off",
+    "get_remaining_uploads",
     "ui_ready",
     "set_language",
     "finish_series",
@@ -32,6 +34,9 @@ const COMMANDS: &[&str] = &[
     "switch_account",
     "sign_out",
     "set_integration",
+    "confirm_one_off",
+    "discard_one_off",
+    "add_images",
 ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

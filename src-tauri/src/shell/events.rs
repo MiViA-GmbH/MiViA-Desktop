@@ -26,6 +26,9 @@ pub(crate) struct Navigate {
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct QuitRequested;
 
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Type, Event)]
+pub(crate) struct DropHover(pub(crate) bool);
+
 fn commands() -> Commands<tauri::Wry> {
     collect_commands![
         queries::get_locale,
@@ -37,6 +40,8 @@ fn commands() -> Commands<tauri::Wry> {
         queries::get_batch,
         queries::list_batch_items,
         queries::list_series_reports,
+        queries::get_one_off,
+        queries::get_remaining_uploads,
         actions::ui_ready,
         actions::set_language,
         actions::finish_series,
@@ -61,6 +66,9 @@ fn commands() -> Commands<tauri::Wry> {
         setup::switch_account,
         setup::sign_out,
         setup::set_integration,
+        actions::confirm_one_off,
+        actions::discard_one_off,
+        actions::add_images,
     ]
 }
 
@@ -71,7 +79,8 @@ pub(crate) fn builder() -> Builder<tauri::Wry> {
             StoreChangedEvent,
             LanguageChanged,
             Navigate,
-            QuitRequested
+            QuitRequested,
+            DropHover
         ])
         .error_handling(ErrorHandlingMode::Throw)
 }

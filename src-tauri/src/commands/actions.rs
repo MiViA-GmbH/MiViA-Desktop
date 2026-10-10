@@ -2,12 +2,13 @@ use mivia_application::errors::{app_error, intake_error, pipeline_error};
 use mivia_application::settings::{clear_attention, save_language};
 use mivia_domain::ids::{BatchId, FolderId, ReportPartId};
 use mivia_ports::ipc::error::AppError;
+use mivia_ports::ipc::one_off::OneOffInput;
 use mivia_ports::ipc::screens::{LanguageSetting, OpenTarget};
 use mivia_ports::store::{AttentionCleared, StoreExt};
 use tauri::{AppHandle, State};
 
 use crate::shell::cx::{Cx, now, parse_id};
-use crate::shell::{locale, open, window};
+use crate::shell::{locale, one_off, open, window};
 
 #[tauri::command]
 #[specta::specta]
@@ -106,4 +107,25 @@ pub(crate) async fn check_connection_now(cx: State<'_, Cx>) -> Result<(), AppErr
 #[specta::specta]
 pub(crate) async fn open_target(cx: State<'_, Cx>, target: OpenTarget) -> Result<(), AppError> {
     open::target(&*cx.ready().await, target).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn confirm_one_off(
+    cx: State<'_, Cx>,
+    input: OneOffInput,
+) -> Result<String, AppError> {
+    one_off::confirm(&cx, input).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn discard_one_off(cx: State<'_, Cx>, group: Option<u32>) -> Result<(), AppError> {
+    one_off::discard(&cx, group).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn add_images(app: AppHandle) -> Result<u32, AppError> {
+    one_off::add_images(&app).await
 }

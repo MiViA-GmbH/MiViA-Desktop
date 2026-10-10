@@ -9,6 +9,7 @@ pub(crate) mod folders;
 mod intake;
 pub(crate) mod integration;
 pub(crate) mod locale;
+pub(crate) mod one_off;
 pub(crate) mod open;
 mod pipeline;
 pub(crate) mod setup;
@@ -17,14 +18,13 @@ mod start;
 mod tray;
 pub(crate) mod window;
 
-use std::io::{self, Read};
-use std::path::{Path, PathBuf};
+use std::io;
+use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
 
 use mivia_application::handoff::Handoff;
-use mivia_application::spool::{self, MAX_SPOOL_BYTES};
 use mivia_diagnostics::{
     DiagnosticsContext, PreviousSession, install_panic_hook, previous_session, start_logging,
     write_marker,
@@ -104,7 +104,7 @@ fn builder(
             mark("tray_ready");
             let inbox = launch.data_dir.clone();
             tauri::async_runtime::spawn(init(app.handle().clone(), shutdown, launch));
-            tauri::async_runtime::spawn(receive(received, inbox));
+            tauri::async_runtime::spawn(receive(app.handle().clone(), received, inbox));
             Ok(())
         })
 }
@@ -161,8 +161,6 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
     let (observer, commits) = feed::channel();
     tauri::async_runtime::spawn(feed::run(app.clone(), commits));
     let opened = SqliteStore::open(&path, StoreConfig::production(), Arc::new(observer)).await;
-    let pending = std::fs::read_dir(instance::inbox(&launch.data_dir)).map_or(0, Iterator::count);
-    tracing::info!(count = pending, "instance.spoolPending");
     let store = match opened {
         Ok(store) => Arc::new(store),
         Err(error) => {
@@ -185,6 +183,7 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
     app.state::<Cx>()
         .set(account::compose(&services, launch.minimized, None).await);
     tray::started(&app);
+    one_off::ingest_inbox(&app, &instance::inbox(&launch.data_dir)).await;
     if !completed {
         tray::hide(&app);
         open_at_start(&app);
@@ -204,28 +203,14 @@ fn open_at_start(app: &AppHandle) {
     }
 }
 
-async fn receive(mut received: Receiver<Handoff>, data_dir: PathBuf) {
+async fn receive(app: AppHandle, mut received: Receiver<Handoff>, data_dir: PathBuf) {
     while let Some(handoff) = received.recv().await {
         match handoff {
-            Handoff::Wake => tracing::info!("instance.wake"),
-            Handoff::Spool(id) => log_spool(&instance::spool_file(&data_dir, id), &id.to_string()),
+            Handoff::Wake => {
+                tracing::info!("instance.wake");
+                open_at_start(&app);
+            }
+            Handoff::Spool(id) => one_off::ingest(&app, &instance::spool_file(&data_dir, id)).await,
         }
-    }
-}
-
-fn log_spool(path: &Path, id: &str) {
-    let mut bytes = Vec::new();
-    let limit = u64::try_from(MAX_SPOOL_BYTES).unwrap_or(u64::MAX) + 1;
-    let read = std::fs::File::open(path).and_then(|file| file.take(limit).read_to_end(&mut bytes));
-    match read.map(|_| spool::parse(&bytes)) {
-        Ok(Ok(parsed)) => tracing::info!(
-            spool_id = id,
-            paths = parsed.paths.len(),
-            rejected = parsed.rejected,
-            non_unicode = parsed.non_unicode,
-            "instance.handoff"
-        ),
-        Ok(Err(error)) => tracing::warn!(spool_id = id, ?error, "instance.spoolRejected"),
-        Err(error) => tracing::warn!(spool_id = id, %error, "instance.spoolUnreadable"),
     }
 }

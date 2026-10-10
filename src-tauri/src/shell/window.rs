@@ -1,13 +1,18 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
+use mivia_domain::path::WinPath;
 use tauri::utils::config::Color;
 use tauri::webview::{NewWindowResponse, PermissionResponse};
-use tauri::{AppHandle, Manager, Url, WebviewWindow, WebviewWindowBuilder, Window, WindowEvent};
+use tauri::{
+    AppHandle, DragDropEvent, Manager, Url, WebviewWindow, WebviewWindowBuilder, Window,
+    WindowEvent,
+};
 use tauri_specta::Event;
 
 use super::cx::Cx;
-use super::events::{Navigate, QuitRequested, Route};
+use super::events::{DropHover, Navigate, QuitRequested, Route};
+use super::one_off;
 
 pub(crate) const LABEL: &str = "main";
 const HIDDEN_CHECKS: u32 = 10;
@@ -69,7 +74,7 @@ fn build(app: &AppHandle) -> tauri::Result<WebviewWindow> {
         .build()
 }
 
-pub(crate) fn open(app: &AppHandle) {
+pub(crate) fn reveal(app: &AppHandle) {
     GENERATION.fetch_add(1, Ordering::SeqCst);
     super::mark("window_open_requested");
     let Some(window) = app.get_webview_window(LABEL) else {
@@ -80,6 +85,14 @@ pub(crate) fn open(app: &AppHandle) {
     };
     set_visible(&window, true);
     show(&window);
+}
+
+pub(crate) fn open(app: &AppHandle) {
+    let existed = app.get_webview_window(LABEL).is_some();
+    reveal(app);
+    if !existed {
+        return;
+    }
     if let Err(error) = (Navigate {
         route: Route::Overview,
     })
@@ -102,7 +115,29 @@ pub(crate) fn shown(app: &AppHandle) {
     }
 }
 
+fn dropped(app: &AppHandle, event: &DragDropEvent) {
+    if matches!(event, DragDropEvent::Over { .. }) {
+        return;
+    }
+    let over = matches!(event, DragDropEvent::Enter { .. });
+    if let Err(error) = DropHover(over).emit(app) {
+        tracing::warn!(%error, "ipc.emitFailed");
+    }
+    let DragDropEvent::Drop { paths, .. } = event else {
+        return;
+    };
+    let paths: Vec<WinPath> = paths
+        .iter()
+        .filter_map(|path| WinPath::parse(path.to_str()?).ok())
+        .collect();
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move { one_off::stage(&app, None, paths).await });
+}
+
 pub(crate) fn on_event(window: &Window, event: &WindowEvent) {
+    if let WindowEvent::DragDrop(drop) = event {
+        dropped(window.app_handle(), drop);
+    }
     if let WindowEvent::CloseRequested { api, .. } = event {
         api.prevent_close();
         let app = window.app_handle();

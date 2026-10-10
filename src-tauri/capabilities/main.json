@@ -16,6 +16,8 @@
 		"allow-get-batch",
 		"allow-list-batch-items",
 		"allow-list-series-reports",
+		"allow-get-one-off",
+		"allow-get-remaining-uploads",
 		"allow-ui-ready",
 		"allow-set-language",
 		"allow-finish-series",
@@ -39,6 +41,9 @@
 		"allow-add-folder",
 		"allow-switch-account",
 		"allow-sign-out",
-		"allow-set-integration"
+		"allow-set-integration",
+		"allow-confirm-one-off",
+		"allow-discard-one-off",
+		"allow-add-images"
 	]
 }

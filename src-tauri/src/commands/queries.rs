@@ -1,6 +1,7 @@
 use mivia_application::errors::app_error;
 use mivia_domain::ids::BatchId;
 use mivia_ports::ipc::error::AppError;
+use mivia_ports::ipc::one_off::OneOffView;
 use mivia_ports::ipc::screens::{AccountView, HoldsView, LocaleView, SeriesReportsView};
 use mivia_ports::ipc::views::{
     BatchItemsPage, BatchView, FoldersView, HistoryCursor, HistoryPage, NeedsAttentionView,
@@ -9,7 +10,7 @@ use mivia_ports::queries::Queries;
 use tauri::State;
 
 use crate::shell::cx::{Cx, parse_id};
-use crate::shell::locale;
+use crate::shell::{locale, one_off};
 
 #[tauri::command]
 #[specta::specta]
@@ -106,4 +107,16 @@ pub(crate) async fn list_series_reports(
     found
         .await
         .map_err(|error| app_error(&error, "list_series_reports"))
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn get_one_off(cx: State<'_, Cx>) -> Result<Option<OneOffView>, AppError> {
+    one_off::view(&cx).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn get_remaining_uploads(cx: State<'_, Cx>) -> Result<Option<u32>, AppError> {
+    one_off::remaining_uploads(&cx).await
 }

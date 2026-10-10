@@ -122,6 +122,7 @@ fn base_view(ready: &Ready, draft: &SetupDraft) -> SetupView {
         report: None,
         models: draft.model_views(),
         options: draft.options.iter().copied().collect(),
+        images_sent: u32::try_from(draft.sent.paths.len()).unwrap_or(u32::MAX),
     }
 }
 
