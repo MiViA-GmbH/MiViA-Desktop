@@ -83,7 +83,6 @@ pub enum Sighting {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ContentLookup {
-    pub folder: FolderId,
     pub earlier_in_batch: Option<SourceFileId>,
     pub in_ledger: bool,
     pub same_path: bool,

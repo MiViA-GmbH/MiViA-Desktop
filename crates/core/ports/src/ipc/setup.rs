@@ -162,6 +162,7 @@ pub struct SetupView {
     pub report: Option<ReportFolderView>,
     pub models: Vec<ModelChoiceView>,
     pub options: Vec<SetupOption>,
+    pub images_sent: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

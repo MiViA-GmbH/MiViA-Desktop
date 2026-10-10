@@ -6,7 +6,7 @@ mod repos;
 use std::any::Any;
 
 use async_trait::async_trait;
-use mivia_domain::ids::AccountId;
+use mivia_domain::ids::{AccountId, Timestamp};
 use mivia_domain::transition::IllegalTransition;
 
 use crate::ipc::change::Change;
@@ -70,6 +70,20 @@ pub trait WriteTx {
         json: &str,
     ) -> Result<(), TxError>;
     fn clear_settings(&mut self, scope: SettingsScope) -> Result<(), TxError>;
+    fn pending_one_off(&mut self, scope: AccountScope) -> Result<Option<SentImages>, TxError>;
+    fn set_pending_one_off(
+        &mut self,
+        scope: AccountScope,
+        pending: Option<&SentImages>,
+        now: Timestamp,
+    ) -> Result<(), TxError>;
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct SentImages {
+    pub spool_ids: Vec<String>,
+    pub paths: Vec<String>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

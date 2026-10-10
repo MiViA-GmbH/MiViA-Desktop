@@ -28,6 +28,7 @@ pub enum Change {
     Catalogue,
     Settings,
     History,
+    OneOff,
     All,
 }
 
