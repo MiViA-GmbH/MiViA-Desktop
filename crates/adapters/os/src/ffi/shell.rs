@@ -4,8 +4,9 @@ use std::sync::OnceLock;
 
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW, COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL,
-    ICoreWebView2_19, ICoreWebView2Controller,
+    ICoreWebView2_3, ICoreWebView2_19, ICoreWebView2Controller,
 };
+use webview2_com::TrySuspendCompletedHandler;
 use windows_core::Interface;
 use windows_sys::Win32::Foundation::HANDLE;
 use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
@@ -87,6 +88,23 @@ pub fn set_webview_visible(controller: &ICoreWebView2Controller, visible: bool) 
             .and_then(|core| core.SetMemoryUsageTargetLevel(level))
             .is_ok();
         shown && lowered
+    }
+}
+
+pub fn suspend_webview(controller: &ICoreWebView2Controller) -> bool {
+    let handler = TrySuspendCompletedHandler::create(Box::new(|_, suspended| {
+        if !suspended {
+            tracing::debug!("window.suspendRefused");
+        }
+        Ok(())
+    }));
+    // SAFETY: the controller is a live COM pointer used on the thread Tauri hands to with_webview.
+    unsafe {
+        controller
+            .CoreWebView2()
+            .and_then(|core| core.cast::<ICoreWebView2_3>())
+            .and_then(|core| core.TrySuspend(&handler))
+            .is_ok()
     }
 }
 

@@ -1,6 +1,7 @@
 mod com;
 mod files;
 mod pipe;
+mod probe;
 mod process;
 mod proxy;
 mod security;
@@ -16,6 +17,7 @@ pub(crate) use files::{
 pub use pipe::{
     PIPE_INSTANCE_LIMIT, accept_pipe_client, create_pipe_instance, pipe_client, pipe_server_pid,
 };
+pub use probe::{ProcessRow, ThreadRow, close_windows_of, physical_memory_bytes, process_table};
 pub(crate) use process::process_session;
 pub use process::{
     allow_foreground, boot_time_unix_ms, current_session_id, harden_process, process_age_ms,
@@ -26,7 +28,9 @@ pub use security::{
     ProcessIdentity, create_user_only, current_user_sid, is_elevated, process_identity,
     windows_user,
 };
-pub use shell::{memory_is_low, open_file, reveal_file, set_webview_visible, user_locale_name};
+pub use shell::{
+    memory_is_low, open_file, reveal_file, set_webview_visible, suspend_webview, user_locale_name,
+};
 pub use system::{
     KnownFolder, accepts_notifications, clear_clipboard, clipboard_text, confirm, known_folder,
     user_idle_ms,
