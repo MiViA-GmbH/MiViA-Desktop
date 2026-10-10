@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitionResources xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" revision="1.0" schemaVersion="1.0" xmlns="http://schemas.microsoft.com/GroupPolicy/2006/07/PolicyDefinitions">
+  <displayName>MiViA Desktop</displayName>
+  <description>MiViA Desktop</description>
+  <resources>
+    <stringTable>
+      <string id="MiViA">MiViA</string>
+      <string id="Desktop">MiViA Desktop</string>
+      <string id="SUPPORTED_Desktop2">MiViA Desktop 2.0 und höher</string>
+      <string id="ServerUrl">Serveradresse</string>
+      <string id="ServerUrl_Explain">Legt den MiViA-Server fest, mit dem sich MiViA Desktop verbindet, als https-Adresse, zum Beispiel https://mivia.example.com. Nur verwenden, wenn die MiViA GmbH einen Server für Ihre Organisation betreibt. Das Fenster zeigt den Servernamen an, solange der Wert gesetzt ist. Wird nur aus der Computerkonfiguration gelesen.</string>
+      <string id="Language">Sprache</string>
+      <string id="Language_Explain">Legt die Sprache von MiViA Desktop fest und sperrt die Sprachauswahl.</string>
+      <string id="Language_auto">Wie Windows</string>
+      <string id="Language_en">English</string>
+      <string id="Language_de">Deutsch</string>
+      <string id="Autostart">Mit Windows starten</string>
+      <string id="Autostart_Explain">Aktiviert: MiViA Desktop startet bei der Windows-Anmeldung. Deaktiviert: Es startet nicht mit Windows. Der Schalter in der App ist in beiden Fällen gesperrt.</string>
+      <string id="ExplorerIntegration">Explorer-Integration</string>
+      <string id="ExplorerIntegration_Explain">Aktiviert: Die Explorer-Einträge Mit MiViA auswerten und Senden an MiViA-Auswertung werden für den Benutzer angelegt. Deaktiviert: Sie werden entfernt. Der Schalter in der App ist in beiden Fällen gesperrt.</string>
+      <string id="Telemetry">Nutzungs- und Fehlerstatistiken</string>
+      <string id="Telemetry_Explain">Aktiviert: MiViA Desktop sendet Nutzungs- und Fehlerstatistiken an die MiViA GmbH. Deaktiviert: Es wird nichts gesendet und die Rechnerkennung wird nicht gelesen. Der Schalter in der App ist in beiden Fällen gesperrt.</string>
+      <string id="IssueReporting">Problemberichte</string>
+      <string id="IssueReporting_Explain">Legt fest, wie Benutzer Probleme aus MiViA Desktop melden können.</string>
+      <string id="IssueReporting_on">Problemberichte senden</string>
+      <string id="IssueReporting_mailto_only">Nur speichern und per E-Mail senden</string>
+      <string id="IssueReporting_off">Aus</string>
+      <string id="LegacyMigration">Altes MiViA Desktop übernehmen</string>
+      <string id="LegacyMigration_Explain">Deaktiviert: MiViA Desktop sucht nicht nach dem alten MiViA Desktop und übernimmt oder deaktiviert dessen Einstellungen nicht. Aktiviert oder nicht konfiguriert: Die Suche läuft während der Einrichtung.</string>
+      <string id="DefaultInputFolder">Vorgeschlagener Eingangsordner</string>
+      <string id="DefaultInputFolder_Explain">Schlägt diesen Ordner in der Einrichtung vor. Der Benutzer kann einen anderen wählen. Umgebungsvariablen wie %USERPROFILE% werden aufgelöst.</string>
+      <string id="SupportContact">Support-Kontakt</string>
+      <string id="SupportContact_Explain">Ersetzt support@mivia.ai in Hilfetexten. Text, eine mailto:-Adresse oder eine https-Adresse.</string>
+      <string id="AutoUpdate">Updates</string>
+      <string id="AutoUpdate_Explain">Legt fest, wie MiViA Desktop Updates prüft, herunterlädt und installiert.</string>
+      <string id="AutoUpdate_on">Updates automatisch installieren</string>
+      <string id="AutoUpdate_notify_only">Nur herunterladen und benachrichtigen</string>
+      <string id="AutoUpdate_off">Keine automatische Prüfung</string>
+      <string id="ProxyUrl">Proxy</string>
+      <string id="ProxyUrl_Explain">Legt den Proxy für MiViA Desktop als http://host:port fest, oder direct für keinen Proxy. Proxys mit Anmeldung werden nicht unterstützt.</string>
+      <string id="MaxUploadConcurrency">Parallele Uploads</string>
+      <string id="MaxUploadConcurrency_Explain">Legt die höchste Zahl gleichzeitig hochgeladener Bilder fest.</string>
+      <string id="MaxUploadMbps">Upload-Geschwindigkeit</string>
+      <string id="MaxUploadMbps_Explain">Begrenzt die Upload-Geschwindigkeit in Megabit pro Sekunde.</string>
+      <string id="DisableWatchMarker">Keine Überwachungsmarkierung</string>
+      <string id="DisableWatchMarker_Explain">Aktiviert: MiViA Desktop schreibt keine Markierungsdatei in Berichtsordner.</string>
+    </stringTable>
+    <presentationTable>
+      <presentation id="ServerUrl"><textBox refId="ServerUrl"><label>Serveradresse</label></textBox></presentation>
+      <presentation id="Language"><dropdownList refId="Language" noSort="true">Sprache</dropdownList></presentation>
+      <presentation id="IssueReporting"><dropdownList refId="IssueReporting" noSort="true">Problemberichte</dropdownList></presentation>
+      <presentation id="DefaultInputFolder"><textBox refId="DefaultInputFolder"><label>Vorgeschlagener Eingangsordner</label></textBox></presentation>
+      <presentation id="SupportContact"><textBox refId="SupportContact"><label>Support-Kontakt</label></textBox></presentation>
+      <presentation id="AutoUpdate"><dropdownList refId="AutoUpdate" noSort="true">Updates</dropdownList></presentation>
+      <presentation id="ProxyUrl"><textBox refId="ProxyUrl"><label>Proxy</label></textBox></presentation>
+      <presentation id="MaxUploadConcurrency"><decimalTextBox refId="MaxUploadConcurrency">Parallele Uploads</decimalTextBox></presentation>
+      <presentation id="MaxUploadMbps"><decimalTextBox refId="MaxUploadMbps">Upload-Geschwindigkeit</decimalTextBox></presentation>
+    </presentationTable>
+  </resources>
+</policyDefinitionResources>

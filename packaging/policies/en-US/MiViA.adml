@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitionResources xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" revision="1.0" schemaVersion="1.0" xmlns="http://schemas.microsoft.com/GroupPolicy/2006/07/PolicyDefinitions">
+  <displayName>MiViA Desktop</displayName>
+  <description>MiViA Desktop</description>
+  <resources>
+    <stringTable>
+      <string id="MiViA">MiViA</string>
+      <string id="Desktop">MiViA Desktop</string>
+      <string id="SUPPORTED_Desktop2">MiViA Desktop 2.0 and later</string>
+      <string id="ServerUrl">Server address</string>
+      <string id="ServerUrl_Explain">Sets the MiViA server that MiViA Desktop connects to, as an https address, for example https://mivia.example.com. Only use this when MiViA GmbH runs a server for your organization. The window shows the server name while it is set. Read from the computer configuration only.</string>
+      <string id="Language">Language</string>
+      <string id="Language_Explain">Sets the language of MiViA Desktop and locks the language choice.</string>
+      <string id="Language_auto">Like Windows</string>
+      <string id="Language_en">English</string>
+      <string id="Language_de">Deutsch</string>
+      <string id="Autostart">Start with Windows</string>
+      <string id="Autostart_Explain">Enabled: MiViA Desktop starts when the user signs in to Windows. Disabled: it does not start with Windows. The switch in the app is locked in both cases.</string>
+      <string id="ExplorerIntegration">Explorer integration</string>
+      <string id="ExplorerIntegration_Explain">Enabled: the Explorer entries Analyze with MiViA and Send to MiViA analysis are added for the user. Disabled: they are removed. The switch in the app is locked in both cases.</string>
+      <string id="Telemetry">Usage and error statistics</string>
+      <string id="Telemetry_Explain">Enabled: MiViA Desktop sends usage and error statistics to MiViA GmbH. Disabled: nothing is sent and the machine identifier is not read. The switch in the app is locked in both cases.</string>
+      <string id="IssueReporting">Problem reports</string>
+      <string id="IssueReporting_Explain">Sets how users can report problems from MiViA Desktop.</string>
+      <string id="IssueReporting_on">Send problem reports</string>
+      <string id="IssueReporting_mailto_only">Only save and e-mail</string>
+      <string id="IssueReporting_off">Off</string>
+      <string id="LegacyMigration">Take over the old MiViA Desktop</string>
+      <string id="LegacyMigration_Explain">Disabled: MiViA Desktop does not search for the old MiViA Desktop and does not take over or switch off its settings. Enabled or not configured: the search runs during setup.</string>
+      <string id="DefaultInputFolder">Suggested input folder</string>
+      <string id="DefaultInputFolder_Explain">Suggests this folder in setup. The user can choose another one. Environment variables such as %USERPROFILE% are expanded.</string>
+      <string id="SupportContact">Support contact</string>
+      <string id="SupportContact_Explain">Replaces support@mivia.ai in help texts. Plain text, a mailto: address or an https address.</string>
+      <string id="AutoUpdate">Updates</string>
+      <string id="AutoUpdate_Explain">Sets how MiViA Desktop checks for, downloads and installs updates.</string>
+      <string id="AutoUpdate_on">Install updates automatically</string>
+      <string id="AutoUpdate_notify_only">Download and notify only</string>
+      <string id="AutoUpdate_off">No automatic check</string>
+      <string id="ProxyUrl">Proxy</string>
+      <string id="ProxyUrl_Explain">Sets the proxy for MiViA Desktop as http://host:port, or direct for no proxy. Proxies that require a sign-in are not supported.</string>
+      <string id="MaxUploadConcurrency">Parallel uploads</string>
+      <string id="MaxUploadConcurrency_Explain">Sets the highest number of images uploaded at the same time.</string>
+      <string id="MaxUploadMbps">Upload speed limit</string>
+      <string id="MaxUploadMbps_Explain">Limits the upload speed in megabits per second.</string>
+      <string id="DisableWatchMarker">No watch marker</string>
+      <string id="DisableWatchMarker_Explain">Enabled: MiViA Desktop does not write its watch marker file into report folders.</string>
+    </stringTable>
+    <presentationTable>
+      <presentation id="ServerUrl"><textBox refId="ServerUrl"><label>Server address</label></textBox></presentation>
+      <presentation id="Language"><dropdownList refId="Language" noSort="true">Language</dropdownList></presentation>
+      <presentation id="IssueReporting"><dropdownList refId="IssueReporting" noSort="true">Problem reports</dropdownList></presentation>
+      <presentation id="DefaultInputFolder"><textBox refId="DefaultInputFolder"><label>Suggested input folder</label></textBox></presentation>
+      <presentation id="SupportContact"><textBox refId="SupportContact"><label>Support contact</label></textBox></presentation>
+      <presentation id="AutoUpdate"><dropdownList refId="AutoUpdate" noSort="true">Updates</dropdownList></presentation>
+      <presentation id="ProxyUrl"><textBox refId="ProxyUrl"><label>Proxy</label></textBox></presentation>
+      <presentation id="MaxUploadConcurrency"><decimalTextBox refId="MaxUploadConcurrency">Parallel uploads</decimalTextBox></presentation>
+      <presentation id="MaxUploadMbps"><decimalTextBox refId="MaxUploadMbps">Upload speed limit</decimalTextBox></presentation>
+    </presentationTable>
+  </resources>
+</policyDefinitionResources>

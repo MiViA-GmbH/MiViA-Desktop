@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" revision="1.0" schemaVersion="1.0" xmlns="http://schemas.microsoft.com/GroupPolicy/2006/07/PolicyDefinitions">
+  <policyNamespaces>
+    <target prefix="mivia" namespace="MiViA.Policies.Desktop" />
+    <using prefix="windows" namespace="Microsoft.Policies.Windows" />
+  </policyNamespaces>
+  <resources minRequiredRevision="1.0" />
+  <supportedOn>
+    <definitions>
+      <definition name="SUPPORTED_Desktop2" displayName="$(string.SUPPORTED_Desktop2)" />
+    </definitions>
+  </supportedOn>
+  <categories>
+    <category name="MiViA" displayName="$(string.MiViA)" />
+    <category name="Desktop" displayName="$(string.Desktop)">
+      <parentCategory ref="MiViA" />
+    </category>
+  </categories>
+  <policies>
+    <policy name="ServerUrl" class="Machine" displayName="$(string.ServerUrl)" explainText="$(string.ServerUrl_Explain)" presentation="$(presentation.ServerUrl)" key="Software\Policies\MiViA\Desktop">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <elements>
+        <text id="ServerUrl" valueName="ServerUrl" required="true" />
+      </elements>
+    </policy>
+    <policy name="Language" class="Both" displayName="$(string.Language)" explainText="$(string.Language_Explain)" presentation="$(presentation.Language)" key="Software\Policies\MiViA\Desktop">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <elements>
+        <enum id="Language" valueName="Language" required="true">
+          <item displayName="$(string.Language_auto)"><value><string>auto</string></value></item>
+          <item displayName="$(string.Language_en)"><value><string>en</string></value></item>
+          <item displayName="$(string.Language_de)"><value><string>de</string></value></item>
+        </enum>
+      </elements>
+    </policy>
+    <policy name="Autostart" class="Both" displayName="$(string.Autostart)" explainText="$(string.Autostart_Explain)" key="Software\Policies\MiViA\Desktop" valueName="Autostart">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+    <policy name="ExplorerIntegration" class="Both" displayName="$(string.ExplorerIntegration)" explainText="$(string.ExplorerIntegration_Explain)" key="Software\Policies\MiViA\Desktop" valueName="ExplorerIntegration">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+    <policy name="Telemetry" class="Both" displayName="$(string.Telemetry)" explainText="$(string.Telemetry_Explain)" key="Software\Policies\MiViA\Desktop" valueName="Telemetry">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+    <policy name="IssueReporting" class="Both" displayName="$(string.IssueReporting)" explainText="$(string.IssueReporting_Explain)" presentation="$(presentation.IssueReporting)" key="Software\Policies\MiViA\Desktop">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <elements>
+        <enum id="IssueReporting" valueName="IssueReporting" required="true">
+          <item displayName="$(string.IssueReporting_on)"><value><string>on</string></value></item>
+          <item displayName="$(string.IssueReporting_mailto_only)"><value><string>mailto-only</string></value></item>
+          <item displayName="$(string.IssueReporting_off)"><value><string>off</string></value></item>
+        </enum>
+      </elements>
+    </policy>
+    <policy name="LegacyMigration" class="Both" displayName="$(string.LegacyMigration)" explainText="$(string.LegacyMigration_Explain)" key="Software\Policies\MiViA\Desktop" valueName="LegacyMigration">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+    <policy name="DefaultInputFolder" class="Both" displayName="$(string.DefaultInputFolder)" explainText="$(string.DefaultInputFolder_Explain)" presentation="$(presentation.DefaultInputFolder)" key="Software\Policies\MiViA\Desktop">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <elements>
+        <text id="DefaultInputFolder" valueName="DefaultInputFolder" required="true" expandable="true" />
+      </elements>
+    </policy>
+    <policy name="SupportContact" class="Both" displayName="$(string.SupportContact)" explainText="$(string.SupportContact_Explain)" presentation="$(presentation.SupportContact)" key="Software\Policies\MiViA\Desktop">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <elements>
+        <text id="SupportContact" valueName="SupportContact" required="true" />
+      </elements>
+    </policy>
+    <policy name="AutoUpdate" class="Both" displayName="$(string.AutoUpdate)" explainText="$(string.AutoUpdate_Explain)" presentation="$(presentation.AutoUpdate)" key="Software\Policies\MiViA\Desktop">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <elements>
+        <enum id="AutoUpdate" valueName="AutoUpdate" required="true">
+          <item displayName="$(string.AutoUpdate_on)"><value><string>on</string></value></item>
+          <item displayName="$(string.AutoUpdate_notify_only)"><value><string>notify-only</string></value></item>
+          <item displayName="$(string.AutoUpdate_off)"><value><string>off</string></value></item>
+        </enum>
+      </elements>
+    </policy>
+    <policy name="ProxyUrl" class="Both" displayName="$(string.ProxyUrl)" explainText="$(string.ProxyUrl_Explain)" presentation="$(presentation.ProxyUrl)" key="Software\Policies\MiViA\Desktop">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <elements>
+        <text id="ProxyUrl" valueName="ProxyUrl" required="true" />
+      </elements>
+    </policy>
+    <policy name="MaxUploadConcurrency" class="Both" displayName="$(string.MaxUploadConcurrency)" explainText="$(string.MaxUploadConcurrency_Explain)" presentation="$(presentation.MaxUploadConcurrency)" key="Software\Policies\MiViA\Desktop">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <elements>
+        <decimal id="MaxUploadConcurrency" valueName="MaxUploadConcurrency" required="true" minValue="1" maxValue="4" />
+      </elements>
+    </policy>
+    <policy name="MaxUploadMbps" class="Both" displayName="$(string.MaxUploadMbps)" explainText="$(string.MaxUploadMbps_Explain)" presentation="$(presentation.MaxUploadMbps)" key="Software\Policies\MiViA\Desktop">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <elements>
+        <decimal id="MaxUploadMbps" valueName="MaxUploadMbps" required="true" minValue="1" maxValue="10000" />
+      </elements>
+    </policy>
+    <policy name="DisableWatchMarker" class="Both" displayName="$(string.DisableWatchMarker)" explainText="$(string.DisableWatchMarker_Explain)" key="Software\Policies\MiViA\Desktop" valueName="DisableWatchMarker">
+      <parentCategory ref="Desktop" />
+      <supportedOn ref="SUPPORTED_Desktop2" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><delete /></disabledValue>
+    </policy>
+  </policies>
+</policyDefinitions>
