@@ -5,6 +5,7 @@ use mivia_application::pipeline::SavedCheck;
 use mivia_domain::ids::ReportPartId;
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
 use mivia_ports::ipc::screens::OpenTarget;
+use mivia_ports::ipc::support::KnownLink;
 
 use super::cx::{Ready, parse_id};
 
@@ -28,8 +29,18 @@ fn opened(result: Result<io::Result<()>, tokio::task::JoinError>) -> Result<(), 
     }
 }
 
+async fn link(ready: &Ready, link: KnownLink) -> Result<(), AppError> {
+    let target = match link {
+        KnownLink::Support => super::support::support_link(&ready.services),
+    };
+    opened(tokio::task::spawn_blocking(move || mivia_os::open_file(&target)).await)
+}
+
 pub(crate) async fn target(ready: &Ready, target: OpenTarget) -> Result<(), AppError> {
-    let (OpenTarget::Report { part_id } | OpenTarget::RevealReport { part_id }) = &target;
+    let part_id = match &target {
+        OpenTarget::Report { part_id } | OpenTarget::RevealReport { part_id } => part_id,
+        OpenTarget::Link { link: known } => return link(ready, *known).await,
+    };
     let part = ReportPartId(parse_id(part_id, SITE)?);
     let check = ready
         .pipeline()?

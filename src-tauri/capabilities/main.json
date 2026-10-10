@@ -57,6 +57,15 @@
 		"allow-export-history",
 		"allow-list-backups",
 		"allow-set-backup-folder",
-		"allow-restore-backup"
+		"allow-restore-backup",
+		"allow-get-support",
+		"allow-claim-report-offer",
+		"allow-prepare-problem-report",
+		"allow-read-problem-report-file",
+		"allow-send-problem-report",
+		"allow-save-problem-report",
+		"allow-list-pending-reports",
+		"allow-cancel-pending-report",
+		"allow-delete-local-logs"
 	]
 }

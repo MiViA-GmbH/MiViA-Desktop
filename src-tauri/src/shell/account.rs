@@ -51,6 +51,11 @@ pub(crate) async fn compose(
         && let Some(started) = pipeline::start(services, scope, &account, session_key).await
     {
         ready.track(started.workers);
+        let api = Arc::new(pipeline::server_api(services, scope.0, &started.authorizer));
+        let outbox = super::support::outbox(services);
+        ready.track(tauri::async_runtime::spawn(super::support::retry(
+            outbox, api,
+        )));
         ready.pipeline = Some(started.pipeline);
         ready.authorizer = Some(started.authorizer);
     }
@@ -242,6 +247,7 @@ pub(crate) async fn enter_account(
     if stored.notes.contains(&ConnectionNote::StoreFailed) {
         cx.setup.keep_session_key(key.clone());
     }
+    super::support::outbox(services).clear();
     let account = new_account(services, &identity);
     services
         .store
@@ -277,6 +283,7 @@ pub(crate) async fn sign_out(cx: &Cx) -> Result<(), AppError> {
         tracing::warn!(?error, "credentials.deleteFailed");
     }
     cx.setup.forget_keys();
+    super::support::outbox(&ready.services).clear();
     let account = ready.store.get_account(ready.scope).await.ok().flatten();
     let last = account.map(|account| account.server_account_id);
     ready

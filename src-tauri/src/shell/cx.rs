@@ -6,11 +6,14 @@ use arc_swap::ArcSwap;
 use mivia_application::intake::Intake;
 use mivia_application::pipeline::Pipeline;
 use mivia_application::policy::Policies;
+use mivia_application::report_offer::OfferGate;
+use mivia_diagnostics::{DiagnosticsContext, Logging};
 use mivia_domain::ids::{AccountId, Timestamp};
 use mivia_os::SystemClock;
 use mivia_ports::auth::{CredentialStore, ServerOrigin};
 use mivia_ports::clock::Clock;
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
+use mivia_ports::ipc::support::PolicyRow;
 use mivia_ports::store::AccountScope;
 use mivia_server::{ConnectionAuthorizer, HttpClients};
 use mivia_store::SqliteStore;
@@ -26,8 +29,11 @@ pub(crate) struct Services {
     pub(crate) clients: Arc<ArcSwap<HttpClients>>,
     pub(crate) origin: ServerOrigin,
     pub(crate) policies: Policies,
+    pub(crate) policy_rows: Vec<PolicyRow>,
     pub(crate) data_dir: PathBuf,
     pub(crate) version: String,
+    pub(crate) diagnostics: DiagnosticsContext,
+    pub(crate) logging: Arc<Logging>,
 }
 
 pub(crate) struct Ready {
@@ -104,6 +110,8 @@ pub(crate) struct Cx {
     pub(crate) data_dir: PathBuf,
     pub(crate) setup: Session,
     pub(crate) setup_completed: AtomicBool,
+    pub(crate) offers: Mutex<OfferGate>,
+    pub(crate) report_draft: Mutex<Option<super::support::Draft>>,
     ready: RwLock<Option<Arc<Ready>>>,
     set: Notify,
 }
@@ -114,6 +122,8 @@ impl Cx {
             data_dir,
             setup: Session::default(),
             setup_completed: AtomicBool::new(false),
+            offers: Mutex::new(OfferGate::default()),
+            report_draft: Mutex::new(None),
             ready: RwLock::new(None),
             set: Notify::new(),
         }

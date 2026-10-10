@@ -90,7 +90,8 @@ fn origin(policies: &Policies) -> ServerOrigin {
 }
 
 pub(super) fn services(store: Arc<SqliteStore>, launch: &Launch) -> Option<Arc<Services>> {
-    let (policies, ignored) = policy::parse(&mivia_os::read_policies(policy::KEY));
+    let values = mivia_os::read_policies(policy::KEY);
+    let (policies, ignored) = policy::parse(&values);
     for entry in ignored {
         tracing::warn!(name = %entry.name, hive = ?entry.hive, "policy.ignored");
     }
@@ -104,7 +105,10 @@ pub(super) fn services(store: Arc<SqliteStore>, launch: &Launch) -> Option<Arc<S
         clients: Arc::new(ArcSwap::from_pointee(clients)),
         origin: origin(&policies),
         policies,
+        policy_rows: policy::rows(&values),
         data_dir: launch.data_dir.clone(),
         version: launch.version.clone(),
+        diagnostics: launch.diagnostics.clone(),
+        logging: Arc::clone(&launch.logging),
     }))
 }

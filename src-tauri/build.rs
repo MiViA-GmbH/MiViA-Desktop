@@ -50,6 +50,15 @@ const COMMANDS: &[&str] = &[
     "list_backups",
     "set_backup_folder",
     "restore_backup",
+    "get_support",
+    "claim_report_offer",
+    "prepare_problem_report",
+    "read_problem_report_file",
+    "send_problem_report",
+    "save_problem_report",
+    "list_pending_reports",
+    "cancel_pending_report",
+    "delete_local_logs",
 ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

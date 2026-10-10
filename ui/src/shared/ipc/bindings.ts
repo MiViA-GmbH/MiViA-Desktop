@@ -95,6 +95,15 @@ export const commands = {
 	listBackups: () => __TAURI_INVOKE<BackupsView>("list_backups"),
 	setBackupFolder: (pick: string | null) => __TAURI_INVOKE<BackupsView>("set_backup_folder", { pick }),
 	restoreBackup: (id: string) => __TAURI_INVOKE<null>("restore_backup", { id }),
+	getSupport: () => __TAURI_INVOKE<SupportView>("get_support"),
+	claimReportOffer: (signature: string) => __TAURI_INVOKE<boolean>("claim_report_offer", { signature }),
+	prepareProblemReport: (input: ProblemReportInput) => __TAURI_INVOKE<ProblemReportPreview>("prepare_problem_report", { input }),
+	readProblemReportFile: (reportId: string, name: string) => __TAURI_INVOKE<string>("read_problem_report_file", { reportId, name }),
+	sendProblemReport: (reportId: string) => __TAURI_INVOKE<SendOutcome>("send_problem_report", { reportId }),
+	saveProblemReport: (reportId: string) => __TAURI_INVOKE<null>("save_problem_report", { reportId }),
+	listPendingReports: () => __TAURI_INVOKE<PendingReportView[]>("list_pending_reports"),
+	cancelPendingReport: (reportId: string) => __TAURI_INVOKE<null>("cancel_pending_report", { reportId }),
+	deleteLocalLogs: () => __TAURI_INVOKE<number>("delete_local_logs"),
 };
 
 /** Events */
@@ -198,6 +207,12 @@ export type BatchView = {
 	summary: BatchSummary,
 	analyses: AnalysisView[],
 	renamable: boolean,
+};
+
+export type BundleEntryView = {
+	name: string,
+	bytes: number,
+	lines: number,
 };
 
 export type CatalogueModelView = {
@@ -426,6 +441,10 @@ export type IntegrationView = {
 	locks: SetupLocks,
 };
 
+export type IssueReporting = "on" | "mailtoOnly" | "off";
+
+export type KnownLink = "support";
+
 export type Language = "en" | "de";
 
 export type LanguageChanged = LocaleView;
@@ -515,11 +534,50 @@ export type OneOffView = {
 	language: Language,
 };
 
-export type OpenTarget = { kind: "report"; partId: string } | { kind: "revealReport"; partId: string };
+export type OpenTarget = { kind: "report"; partId: string } | { kind: "revealReport"; partId: string } | { kind: "link"; link: KnownLink };
 
 export type OriginView = { kind: "folder"; folderId: string } | { kind: "oneOff" };
 
+export type PendingReportView = {
+	reportId: string,
+	reference: string,
+	createdAt: string,
+	state: PendingState,
+	attempts: number,
+};
+
+export type PendingState = "waiting" | "saveAndEmail";
+
 export type PickPurpose = "input" | "reports" | "legacy";
+
+export type PolicyRow = {
+	name: string,
+	value: string | null,
+	source: PolicySource | null,
+};
+
+export type PolicySource = "machine" | "user";
+
+export type ProblemReportInput = {
+	description: string,
+	range: ReportRange,
+	includeNames: boolean,
+	trigger: ReportTrigger,
+	signature: string | null,
+};
+
+export type ProblemReportPreview = {
+	reportId: string,
+	reference: string,
+	entries: BundleEntryView[],
+	totalBytes: number,
+	truncated: boolean,
+	from: string,
+	to: string,
+	sessionIds: string[],
+	installId: string,
+	firstErrors: string[],
+};
 
 export type QuitRequested = null;
 
@@ -547,6 +605,10 @@ export type ReportPartView = {
 	fileName: string | null,
 };
 
+export type ReportRange = "session" | "threeDays" | "fourteenDays";
+
+export type ReportTrigger = "manual" | "error" | "crash";
+
 export type ReportView = {
 	id: string,
 	analysisKey: string,
@@ -558,6 +620,8 @@ export type ReportView = {
 };
 
 export type Route = "overview";
+
+export type SendOutcome = { kind: "sent"; reference: string } | { kind: "queued"; reference: string } | { kind: "saveAndEmail"; reference: string };
 
 export type SeriesReportsView = {
 	revision: string,
@@ -613,6 +677,17 @@ export type StoreChanged = {
 };
 
 export type StoreChangedEvent = StoreChanged;
+
+export type SupportView = {
+	reporting: IssueReporting,
+	canSend: boolean,
+	contact: string,
+	policies: PolicyRow[],
+	version: string,
+	sessionId: string,
+	installId: string,
+	pending: number,
+};
 
 export type WaitingReason = "noModels" | "license" | "offline";
 

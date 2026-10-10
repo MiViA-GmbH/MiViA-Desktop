@@ -18,6 +18,7 @@ mod pipeline;
 pub(crate) mod setup;
 mod shutdown;
 mod start;
+pub(crate) mod support;
 mod tray;
 pub(crate) mod window;
 
@@ -29,8 +30,8 @@ use std::time::Duration;
 
 use mivia_application::handoff::Handoff;
 use mivia_diagnostics::{
-    DiagnosticsContext, PreviousSession, install_panic_hook, previous_session, start_logging,
-    write_marker,
+    DiagnosticsContext, Logging, PreviousSession, install_panic_hook, previous_session,
+    start_logging, write_marker,
 };
 use mivia_os::SystemClock;
 use mivia_ports::clock::Clock;
@@ -81,13 +82,15 @@ fn start(
     let data_dir = primary.data_dir.clone();
     let minimized = primary.launch.minimized;
     primary.serve(handoffs)?;
-    let shutdown = Arc::new(Shutdown::new(runtime, logging, logs));
+    let shutdown = Arc::new(Shutdown::new(runtime, Arc::clone(&logging), logs));
     let watcher = Arc::clone(&shutdown);
     mivia_os::spawn_session_watcher(move || watcher.session_ending())?;
     let launch = Launch {
         data_dir,
         version,
         minimized,
+        diagnostics: context,
+        logging,
     };
     let app = builder(Arc::clone(&shutdown), launch, received).build(tauri_context)?;
     app.run(move |_, event| on_event(&shutdown, &event));
@@ -160,6 +163,8 @@ struct Launch {
     data_dir: PathBuf,
     version: String,
     minimized: bool,
+    diagnostics: DiagnosticsContext,
+    logging: Arc<Logging>,
 }
 
 async fn open_store(launch: &Launch, observer: feed::Feed) -> Option<Arc<SqliteStore>> {

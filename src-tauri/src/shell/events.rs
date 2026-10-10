@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::{Builder, Commands, ErrorHandlingMode, Event, collect_commands, collect_events};
 
-use crate::commands::{actions, history, queries, setup};
+use crate::commands::{actions, history, queries, setup, support};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct StoreChangedEvent(pub(crate) StoreChanged);
@@ -83,6 +83,15 @@ macro_rules! app_commands {
             history::list_backups,
             history::set_backup_folder,
             history::restore_backup,
+            support::get_support,
+            support::claim_report_offer,
+            support::prepare_problem_report,
+            support::read_problem_report_file,
+            support::send_problem_report,
+            support::save_problem_report,
+            support::list_pending_reports,
+            support::cancel_pending_report,
+            support::delete_local_logs,
         ]
     };
 }
