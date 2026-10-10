@@ -1,3 +1,4 @@
+pub mod access_key;
 pub mod batch;
 pub mod computation;
 pub mod fuzz;
@@ -6,6 +7,7 @@ pub mod ids;
 pub mod image_format;
 pub mod intake;
 pub mod label;
+pub mod legacy;
 pub mod naming;
 pub mod natural;
 pub mod output;

@@ -67,3 +67,40 @@ fn pending_jobs_turn_slow_then_time_out() {
         PendingVerdict::Slow
     );
 }
+
+const KEY: &str = "mv-AbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKl";
+
+#[test]
+fn access_keys_are_cleaned_of_wrapping_and_invisible_characters() {
+    use mivia_domain::access_key::normalise;
+    let cases = [
+        format!("  {KEY}\r\n"),
+        format!("\"{KEY}\""),
+        format!("\u{201C}{KEY}\u{201D}"),
+        format!("Bearer {KEY}"),
+        format!("bearer\u{200B} {KEY}"),
+        format!("{}\n{}", KEY.split_at(20).0, KEY.split_at(20).1),
+        format!("\u{FEFF}{KEY}\t"),
+    ];
+    for case in cases {
+        assert_eq!(normalise(&case).as_deref(), Some(KEY), "{case:?}");
+    }
+}
+
+#[test]
+fn malformed_access_keys_are_refused() {
+    use mivia_domain::access_key::normalise;
+    let cases = [
+        String::new(),
+        "short".to_owned(),
+        format!("{} {}", KEY.split_at(20).0, KEY.split_at(20).1),
+        format!("{KEY}!"),
+        "a".repeat(257),
+        format!("Token {KEY}"),
+    ];
+    for case in cases {
+        assert_eq!(normalise(&case), None, "{case:?}");
+    }
+    assert_eq!(normalise(&"a".repeat(32)).map(|key| key.len()), Some(32));
+    assert_eq!(normalise(&"a".repeat(256)).map(|key| key.len()), Some(256));
+}
