@@ -34,6 +34,10 @@ impl WinPath {
         Ok(Self { root, components })
     }
 
+    pub const fn is_unc(&self) -> bool {
+        matches!(self.root, Root::Unc { .. })
+    }
+
     pub fn key(&self) -> String {
         fold(&self.to_string())
     }

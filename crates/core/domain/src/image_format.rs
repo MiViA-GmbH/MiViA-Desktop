@@ -19,6 +19,7 @@ pub enum FormatCheck {
 const PNG_SIGNATURE: &[u8] = &[0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
 const PNG_IEND: &[u8] = &[0, 0, 0, 0, b'I', b'E', b'N', b'D', 0xAE, 0x42, 0x60, 0x82];
 const MAX_IFDS: usize = 4096;
+const MAX_ARRAY_BYTES: u64 = 64 * 1024 * 1024;
 const STRIP_TAGS: [(u16, u16); 2] = [(273, 279), (324, 325)];
 
 pub const ACCEPTED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "tif", "tiff", "bmp"];
@@ -31,15 +32,41 @@ pub fn has_accepted_extension(file_name: &str) -> bool {
     })
 }
 
+pub trait ByteSource {
+    fn size(&self) -> u64;
+    fn read_at(&self, at: u64, buffer: &mut [u8]) -> bool;
+}
+
+impl ByteSource for [u8] {
+    fn size(&self) -> u64 {
+        u64::try_from(self.len()).unwrap_or(u64::MAX)
+    }
+
+    fn read_at(&self, at: u64, buffer: &mut [u8]) -> bool {
+        let window = usize::try_from(at).ok().and_then(|start| {
+            let end = start.checked_add(buffer.len())?;
+            self.get(start..end)
+        });
+        window.is_some_and(|window| {
+            buffer.copy_from_slice(window);
+            true
+        })
+    }
+}
+
 pub fn check_format(bytes: &[u8]) -> FormatCheck {
-    let Some(format) = detect(bytes) else {
+    check_source(bytes)
+}
+
+pub fn check_source<S: ByteSource + ?Sized>(source: &S) -> FormatCheck {
+    let Some(format) = detect(source) else {
         return FormatCheck::Unknown;
     };
     let complete = match format {
-        ImageFormat::Jpeg => bytes.ends_with(&[0xFF, 0xD9]),
-        ImageFormat::Png => bytes.ends_with(PNG_IEND),
-        ImageFormat::Tiff | ImageFormat::BigTiff => Tiff::new(bytes, format).complete(),
-        ImageFormat::Bmp => read_u32_le(bytes, 2) == u64::try_from(bytes.len()).ok(),
+        ImageFormat::Jpeg => ends_with(source, &[0xFF, 0xD9]),
+        ImageFormat::Png => ends_with(source, PNG_IEND),
+        ImageFormat::Tiff | ImageFormat::BigTiff => Tiff::new(source, format).complete(),
+        ImageFormat::Bmp => read_u32_le(source, 2) == Some(source.size()),
     };
     if complete {
         FormatCheck::Complete(format)
@@ -48,7 +75,27 @@ pub fn check_format(bytes: &[u8]) -> FormatCheck {
     }
 }
 
-fn detect(bytes: &[u8]) -> Option<ImageFormat> {
+fn head<S: ByteSource + ?Sized>(source: &S) -> Vec<u8> {
+    let length = usize::try_from(source.size().min(8)).unwrap_or_default();
+    let mut buffer = vec![0; length];
+    if source.read_at(0, &mut buffer) {
+        buffer
+    } else {
+        Vec::new()
+    }
+}
+
+fn ends_with<S: ByteSource + ?Sized>(source: &S, suffix: &[u8]) -> bool {
+    let length = u64::try_from(suffix.len()).unwrap_or(u64::MAX);
+    let mut buffer = vec![0; suffix.len()];
+    source
+        .size()
+        .checked_sub(length)
+        .is_some_and(|at| source.read_at(at, &mut buffer) && buffer == suffix)
+}
+
+fn detect<S: ByteSource + ?Sized>(source: &S) -> Option<ImageFormat> {
+    let bytes = head(source);
     if bytes.starts_with(&[0xFF, 0xD8, 0xFF]) {
         return Some(ImageFormat::Jpeg);
     }
@@ -63,7 +110,7 @@ fn detect(bytes: &[u8]) -> Option<ImageFormat> {
         return None;
     }
     let header = Tiff {
-        bytes,
+        source,
         little,
         big: false,
     };
@@ -74,22 +121,24 @@ fn detect(bytes: &[u8]) -> Option<ImageFormat> {
     }
 }
 
-fn read_u32_le(bytes: &[u8], at: usize) -> Option<u64> {
-    let window: [u8; 4] = bytes.get(at..at + 4)?.try_into().ok()?;
-    Some(u64::from(u32::from_le_bytes(window)))
+fn read_u32_le<S: ByteSource + ?Sized>(source: &S, at: u64) -> Option<u64> {
+    let mut window = [0; 4];
+    source
+        .read_at(at, &mut window)
+        .then(|| u64::from(u32::from_le_bytes(window)))
 }
 
-struct Tiff<'a> {
-    bytes: &'a [u8],
+struct Tiff<'a, S: ByteSource + ?Sized> {
+    source: &'a S,
     little: bool,
     big: bool,
 }
 
-impl<'a> Tiff<'a> {
-    fn new(bytes: &'a [u8], format: ImageFormat) -> Self {
+impl<'a, S: ByteSource + ?Sized> Tiff<'a, S> {
+    fn new(source: &'a S, format: ImageFormat) -> Self {
         Self {
-            bytes,
-            little: bytes.starts_with(b"II"),
+            source,
+            little: head(source).starts_with(b"II"),
             big: format == ImageFormat::BigTiff,
         }
     }
@@ -143,7 +192,7 @@ impl<'a> Tiff<'a> {
         let (Some(starts), Some(lengths)) = (self.values(offsets), self.values(counts)) else {
             return false;
         };
-        let size = u64::try_from(self.bytes.len()).unwrap_or(u64::MAX);
+        let size = self.source.size();
         starts.len() == lengths.len()
             && starts
                 .iter()
@@ -166,23 +215,34 @@ impl<'a> Tiff<'a> {
         } else {
             self.uint(entry + 4 + count_size, inline)?
         };
-        if total > u64::try_from(self.bytes.len()).ok()? {
+        if total > self.source.size().min(MAX_ARRAY_BYTES) {
             return None;
         }
-        (0..count)
-            .map(|index| self.uint(data.checked_add(index * width)?, width))
-            .collect()
+        let mut array = vec![0; usize::try_from(total).ok()?];
+        if !self.source.read_at(data, &mut array) {
+            return None;
+        }
+        let step = usize::try_from(width).ok()?;
+        Some(
+            array
+                .chunks_exact(step)
+                .map(|chunk| self.fold(chunk))
+                .collect(),
+        )
     }
 
     fn uint(&self, at: u64, width: u64) -> Option<u64> {
-        let start = usize::try_from(at).ok()?;
-        let end = start.checked_add(usize::try_from(width).ok()?)?;
-        let window = self.bytes.get(start..end)?;
+        let mut window = [0; 8];
+        let window = window.get_mut(..usize::try_from(width).ok()?)?;
+        self.source.read_at(at, window).then(|| self.fold(window))
+    }
+
+    fn fold(&self, window: &[u8]) -> u64 {
         let fold = |value: u64, byte: &u8| (value << 8) | u64::from(*byte);
-        Some(if self.little {
+        if self.little {
             window.iter().rev().fold(0, fold)
         } else {
             window.iter().fold(0, fold)
-        })
+        }
     }
 }

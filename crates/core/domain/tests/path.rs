@@ -15,6 +15,8 @@ fn drive_and_unc_forms_are_canonical() {
     assert_eq!(parse(r"\\?\UNC\server\share\x"), parse(r"\\server\share\x"));
     assert_eq!(parse(r"C:\a\b.tif").file_name(), Some("b.tif"));
     assert_eq!(parse(r"C:\").file_name(), None);
+    assert!(parse(r"\\?\UNC\server\share\x").is_unc());
+    assert!(!parse(r"C:\a").is_unc());
 }
 
 #[test]
