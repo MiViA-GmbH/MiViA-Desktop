@@ -351,5 +351,18 @@ async fn running_an_image_again_marks_its_saved_report_stale() {
         .unwrap()
         .unwrap();
     assert_eq!(view.summary.counts.reports_stale, 1);
+    assert_eq!(view.analyses[0].key, "grain:");
+    let reports = fx
+        .store
+        .list_series_reports(AccountScope(mivia_domain::ids::AccountId(1)), stale)
+        .await
+        .unwrap()
+        .reports;
+    assert!(reports[0].stale);
+    let part = &reports[0].parts[0];
+    assert_eq!(
+        (part.state.as_str(), part.file_name.as_deref()),
+        ("saved", Some("r.pdf"))
+    );
     fx.store.close().await.unwrap();
 }

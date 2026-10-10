@@ -3,7 +3,9 @@ use mivia_domain::ids::{BatchId, Timestamp};
 use mivia_domain::natural::sort_key;
 use mivia_domain::transition::IllegalTransition;
 use mivia_ports::ipc::change::Change;
-use mivia_ports::store::{BatchModelChoice, BatchRepo, NewBatch, Origin, TxError};
+use mivia_ports::store::{
+    AttentionCleared, BatchModelChoice, BatchRepo, NewBatch, Origin, TxError,
+};
 use rusqlite::{OptionalExtension, Transaction, params};
 
 use super::SqlTx;
@@ -132,6 +134,31 @@ impl BatchRepo for SqlTx<'_> {
         write_search_doc(self.tx, id.0).tx()?;
         self.insert_waiting(id.0, closed_at)?;
         self.record(Change::History);
+        Ok(())
+    }
+
+    fn clear_attention(
+        &mut self,
+        id: BatchId,
+        how: AttentionCleared,
+        at: Timestamp,
+    ) -> Result<(), TxError> {
+        let how = match how {
+            AttentionCleared::Opened => "opened",
+            AttentionCleared::Dismissed => "dismissed",
+        };
+        let updated = self
+            .tx
+            .execute(
+                "UPDATE batch SET needs_attention = 0, attention_cleared_at = ?3, \
+                 attention_cleared_how = ?4 WHERE id = ?1 AND account_id = ?2 AND needs_attention = 1",
+                params![id.0, self.account(), at.0, how],
+            )
+            .tx()?;
+        if updated > 0 {
+            self.record(Change::NeedsAttention);
+            self.record(Change::History);
+        }
         Ok(())
     }
 

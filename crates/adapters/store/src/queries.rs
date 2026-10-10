@@ -1,14 +1,16 @@
 use async_trait::async_trait;
 use mivia_domain::ids::{BatchId, Timestamp};
+use mivia_ports::ipc::screens::{AccountView, HoldsView, SeriesReportsView};
 use mivia_ports::ipc::views::{
-    BatchCounts, BatchItem, BatchItemsPage, BatchSummary, BatchView, ComputationItem, FolderView,
-    FoldersView, HistoryCursor, HistoryPage, NeedsAttentionView, OriginView,
+    BatchCounts, BatchItem, BatchItemsPage, BatchSummary, BatchView, ComputationItem, FoldersView,
+    HistoryCursor, HistoryPage, NeedsAttentionView, OriginView,
 };
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{AccountScope, StoreError};
 use mivia_ports::time::iso_utc;
 use rusqlite::{OptionalExtension, Row, Transaction, params};
 
+use crate::screens;
 use crate::sql;
 use crate::writer::SqliteStore;
 
@@ -43,7 +45,7 @@ fn summary(row: &Row<'_>) -> rusqlite::Result<(BatchSummary, i64)> {
     Ok((summary, row.get(17)?))
 }
 
-fn summaries(
+pub(crate) fn summaries(
     tx: &Transaction<'_>,
     query: &str,
     values: impl rusqlite::Params,
@@ -93,9 +95,10 @@ fn items(
                 row.get(1)?,
                 row.get(2)?,
                 row.get::<_, u32>(3)?,
+                row.get(4)?,
             ))
         })?
-        .collect::<rusqlite::Result<Vec<(i64, String, String, u32)>>>()?;
+        .collect::<rusqlite::Result<Vec<(i64, String, String, u32, Option<String>)>>>()?;
     let mut computations = tx.prepare_cached(sql::ITEM_COMPUTATIONS)?;
     let page = usize::try_from(sql::PAGE_SIZE).unwrap_or(usize::MAX);
     let next = rows
@@ -103,13 +106,14 @@ fn items(
         .filter(|_| rows.len() > page)
         .map(|row| row.3);
     let mut out = Vec::with_capacity(rows.len().min(page));
-    for (id, label, state, _) in rows.into_iter().take(page) {
+    for (id, label, state, _, reason) in rows.into_iter().take(page) {
         let computations = computations
             .query_map([id], |row| {
                 Ok(ComputationItem {
                     id: row.get::<_, i64>(0)?.to_string(),
                     model_choice_key: row.get(1)?,
                     state: row.get(2)?,
+                    reason: row.get(3)?,
                 })
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
@@ -117,6 +121,7 @@ fn items(
             id: id.to_string(),
             label,
             state,
+            reason,
             computations,
         });
     }
@@ -154,13 +159,11 @@ impl Queries for SqliteStore {
     ) -> Result<NeedsAttentionView, StoreError> {
         self.readers
             .read(move |tx, revision| {
-                let series = summaries(tx, &sql::attention_series(), [scope.0.0])?;
-                let series_total =
-                    tx.query_row(sql::ATTENTION_COUNT, [scope.0.0], |row| row.get(0))?;
+                let (items, total) = screens::attention(tx, scope)?;
                 Ok(NeedsAttentionView {
                     revision,
-                    series: series.into_iter().map(|(row, _)| row).collect(),
-                    series_total,
+                    items,
+                    total,
                 })
             })
             .await
@@ -177,7 +180,12 @@ impl Queries for SqliteStore {
                     .prepare_cached(&sql::batch_by_id())?
                     .query_row([scope.0.0, id.0], summary)
                     .optional()?;
-                Ok(found.map(|(summary, _)| BatchView { revision, summary }))
+                let analyses = screens::analyses(tx, id.0)?;
+                Ok(found.map(|(summary, _)| BatchView {
+                    revision,
+                    summary,
+                    analyses,
+                }))
             })
             .await
     }
@@ -203,18 +211,55 @@ impl Queries for SqliteStore {
     async fn list_folders(&self, scope: AccountScope) -> Result<FoldersView, StoreError> {
         self.readers
             .read(move |tx, revision| {
-                let folders = tx
-                    .prepare_cached(sql::FOLDERS)?
-                    .query_map([scope.0.0], |row| {
-                        Ok(FolderView {
-                            id: row.get::<_, i64>(0)?.to_string(),
-                            path: row.get(1)?,
-                            position: row.get(2)?,
-                            active: row.get(3)?,
-                        })
-                    })?
-                    .collect::<rusqlite::Result<Vec<_>>>()?;
+                let folders = screens::folders(tx, scope)?;
                 Ok(FoldersView { revision, folders })
+            })
+            .await
+    }
+
+    async fn list_holds(&self, scope: AccountScope) -> Result<HoldsView, StoreError> {
+        self.readers
+            .read(move |tx, revision| {
+                let holds = screens::holds(tx, scope)?;
+                Ok(HoldsView { revision, holds })
+            })
+            .await
+    }
+
+    async fn list_series_reports(
+        &self,
+        scope: AccountScope,
+        id: BatchId,
+    ) -> Result<SeriesReportsView, StoreError> {
+        self.readers
+            .read(move |tx, revision| {
+                let reports = screens::reports(tx, scope, id.0)?;
+                Ok(SeriesReportsView { revision, reports })
+            })
+            .await
+    }
+
+    async fn get_account(&self, scope: AccountScope) -> Result<Option<AccountView>, StoreError> {
+        self.readers
+            .read(move |tx, _| {
+                tx.prepare_cached(sql::screens::ACCOUNT)?
+                    .query_row([scope.0.0], |row| {
+                        Ok(AccountView {
+                            display_name: row.get(0)?,
+                            server_url: row.get(1)?,
+                            server_account_id: row.get(2)?,
+                        })
+                    })
+                    .optional()
+            })
+            .await
+    }
+
+    async fn global_settings(&self) -> Result<Option<String>, StoreError> {
+        self.readers
+            .read(move |tx, _| {
+                tx.query_row(sql::screens::GLOBAL_SETTINGS, [], |row| row.get(0))
+                    .optional()
             })
             .await
     }

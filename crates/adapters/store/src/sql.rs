@@ -1,5 +1,6 @@
 pub(crate) mod pipeline;
 pub(crate) mod reports;
+pub(crate) mod screens;
 
 use mivia_domain::hold::Gate;
 
@@ -119,18 +120,15 @@ pub(crate) fn batch_by_id() -> String {
 
 pub(crate) fn batch_items() -> String {
     format!(
-        "SELECT id, label, state, arrival_seq FROM source_file \
+        "SELECT id, label, state, arrival_seq, reason FROM source_file \
          WHERE batch_id = ?2 AND account_id = ?1 AND arrival_seq > ?3 \
          ORDER BY arrival_seq LIMIT {}",
         PAGE_SIZE + 1
     )
 }
 
-pub(crate) const ITEM_COMPUTATIONS: &str = "SELECT id, model_choice_key, state FROM computation \
+pub(crate) const ITEM_COMPUTATIONS: &str = "SELECT id, model_choice_key, state, reason FROM computation \
      WHERE source_file_id = ?1 ORDER BY model_choice_key, id";
-
-pub(crate) const FOLDERS: &str = "SELECT id, path, position, active FROM watched_folder \
-     WHERE account_id = ?1 AND removed_at IS NULL ORDER BY position, id";
 
 const FOLDER_COLUMNS: &str = "id, path, active, quiet_period, label_rule, missing_since, \
      report_folder_mode, report_folder_name, report_folder_path, probe_result";
@@ -257,7 +255,6 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("get batch", batch_by_id()),
         ("list batch items", batch_items()),
         ("list item computations", ITEM_COMPUTATIONS.to_owned()),
-        ("list folders", FOLDERS.to_owned()),
         ("list folder rows", folder_rows()),
         ("list live members", LIVE_MEMBERS.to_owned()),
         ("find open batch by key", OPEN_BATCH_BY_KEY.to_owned()),
@@ -275,5 +272,6 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
     ];
     queries.extend(pipeline::planned());
     queries.extend(reports::planned());
+    queries.extend(screens::planned());
     queries
 }

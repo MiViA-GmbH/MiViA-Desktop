@@ -62,7 +62,7 @@ const ADD: &str = "UPDATE batch SET files = files + ?2, done = done + ?3, failed
      problems = problems + ?5, active_count = active_count + ?6, \
      reports_saved = reports_saved + ?7, reports_problem = reports_problem + ?8, \
      reports_total = reports_total + ?9, reports_stale = reports_stale + ?10, \
-     needs_attention = CASE WHEN ?5 > 0 THEN 1 ELSE needs_attention END, \
+     needs_attention = CASE WHEN ?5 > 0 OR ?8 > 0 OR ?10 > 0 THEN 1 ELSE needs_attention END, \
      problems_changed_at = CASE WHEN ?5 > 0 THEN ?11 ELSE problems_changed_at END \
      WHERE id = ?1";
 

@@ -5,6 +5,7 @@ use mivia_domain::label::LabelRule;
 use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_domain::source_file::SourceFileEvent;
+use mivia_ports::ipc::screens::NeedsAttention;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{NewComputation, NewFolder, NewReport, SourceClaim, StoreExt};
 use mivia_store::StoreConfig;
@@ -58,8 +59,11 @@ async fn problems_raise_attention_and_items_list_in_arrival_order() {
     })
     .await;
     let attention = fx.store.list_needs_attention(scope).await.unwrap();
-    assert_eq!(attention.series_total, 1);
-    assert_eq!(attention.series[0].counts.problems, 1);
+    assert_eq!(attention.total, 1);
+    assert!(matches!(
+        &attention.items[..],
+        [NeedsAttention::SeriesProblems { problems: 1, .. }]
+    ));
     let view = fx.store.get_batch(scope, batch).await.unwrap().unwrap();
     assert_eq!(view.summary.counts.files, 2);
     assert!(view.summary.needs_attention);
@@ -105,6 +109,8 @@ async fn folders_list_by_position_and_claims_follow_holds() {
     let folders = fx.store.list_folders(scope).await.unwrap();
     let paths: Vec<_> = folders.folders.iter().map(|f| f.path.as_str()).collect();
     assert_eq!(paths, [r"D:\A", r"D:\B"]);
+    assert_eq!(folders.folders[0].name, "A");
+    assert_eq!(folders.folders[0].report_folder, None);
     let due = move |tx: &mut dyn mivia_ports::store::WriteTx| {
         tx.source_files(scope)
             .due(SourceClaim::Upload, Timestamp(5_000), &[])

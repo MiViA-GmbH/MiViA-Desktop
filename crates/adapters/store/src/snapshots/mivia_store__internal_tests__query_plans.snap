@@ -46,8 +46,6 @@ list batch items:
   SEARCH source_file USING INDEX source_file_by_batch (batch_id=? AND arrival_seq>?)
 list item computations:
   SEARCH computation USING INDEX computation_by_source (source_file_id=?)
-list folders:
-  SEARCH watched_folder USING INDEX watched_folder_by_account (account_id=?)
 list folder rows:
   SEARCH watched_folder USING INDEX watched_folder_by_account (account_id=?)
 list live members:
@@ -219,3 +217,27 @@ find stale candidates:
   SEARCH m USING COVERING INDEX report_member_by_comp (computation_id=?)
   SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
   SEARCH p EXISTS USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
+list folder views:
+  SEARCH watched_folder USING INDEX watched_folder_by_account (account_id=?)
+last closed series of folder:
+  SEARCH batch USING INDEX batch_hist_folder (account_id=? AND folder_id=?)
+list holds:
+  SEARCH account_hold USING PRIMARY KEY (account_id=?)
+find problem part of series:
+  SEARCH p USING INDEX report_part_problem (state=?)
+  SEARCH r USING INDEX report_by_batch (batch_id=? AND rowid=?)
+latest saved part of series:
+  SEARCH r USING INDEX report_by_batch (batch_id=?)
+  SEARCH p USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
+list series reports:
+  SEARCH report USING INDEX report_by_batch (batch_id=?)
+list report parts:
+  SEARCH report_part USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
+list batch analyses:
+  SEARCH m USING PRIMARY KEY (batch_id=?)
+  CORRELATED SCALAR SUBQUERY 1
+  SEARCH k USING PRIMARY KEY (account_id=? AND model_id=? AND customization_id=?)
+get account:
+  SEARCH account USING INTEGER PRIMARY KEY (rowid=?)
+get global settings:
+  SEARCH settings USING INDEX settings_scope (scope=? AND <expr>=?)

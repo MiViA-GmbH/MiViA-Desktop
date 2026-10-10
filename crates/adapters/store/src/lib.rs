@@ -5,6 +5,7 @@ mod errors;
 mod open;
 mod queries;
 mod readers;
+mod screens;
 mod sql;
 mod tx;
 mod writer;

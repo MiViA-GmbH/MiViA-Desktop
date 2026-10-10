@@ -24,9 +24,11 @@ use mivia_ports::store::intake::IntakeRepo;
 use mivia_ports::store::pipeline::PipelineRepo;
 use mivia_ports::store::{
     AccountRepo, AccountScope, BatchRepo, ComputationRepo, FolderRepo, HoldRepo, ReportRepo,
-    SourceFileRepo, WriteTx,
+    SourceFileRepo, TxError, WriteTx,
 };
 use rusqlite::Transaction;
+
+use crate::errors::SqlResult;
 
 pub(crate) use batches::rebuild_search;
 
@@ -113,5 +115,17 @@ impl WriteTx for SqlTx<'_> {
 
     fn pipeline(&mut self, scope: AccountScope) -> &mut dyn PipelineRepo {
         self.scoped(scope)
+    }
+
+    fn set_global_settings(&mut self, version: u32, json: &str) -> Result<(), TxError> {
+        self.tx
+            .execute(
+                "INSERT INTO settings (scope, version, json) VALUES ('global', ?1, ?2) \
+                 ON CONFLICT (scope, ifnull(account_id, 0)) DO UPDATE SET version = ?1, json = ?2",
+                rusqlite::params![version, json],
+            )
+            .tx()?;
+        self.record(Change::Settings);
+        Ok(())
     }
 }
