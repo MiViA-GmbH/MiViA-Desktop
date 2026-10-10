@@ -131,7 +131,7 @@ impl HttpServerApi {
         let target = (request.format.code(), request.language.code(), &body);
         self.authorized(|auth| async move {
             let send = mivia_api::create_report(&self.clients().api, self.base(), auth, target);
-            let response = send.send().await.map_err(|e| classify::transport(&e))?;
+            let response = send.send().await.map_err(|e| self.transport(&e))?;
             let capped = read_capped(response, JSON_LIMIT)
                 .await
                 .map_err(|_| ServerError::AfterSend)?;
@@ -186,7 +186,7 @@ impl HttpServerApi {
             .get(url)
             .send()
             .await
-            .map_err(|e| classify::transport(&e))?;
+            .map_err(|e| self.transport(&e))?;
         match response.status() {
             status if status.is_success() => stream(response, sink).await,
             StatusCode::FORBIDDEN | StatusCode::NOT_FOUND => Ok(Download::Expired),

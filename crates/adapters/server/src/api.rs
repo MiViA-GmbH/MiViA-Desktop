@@ -24,7 +24,7 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use secrecy::ExposeSecret;
 
 use crate::classify::{self, Call};
-use crate::clients::HttpClients;
+use crate::clients::{self, HttpClients};
 
 const ERROR_BODY_LIMIT: usize = 64 * 1024;
 
@@ -83,6 +83,10 @@ impl HttpServerApi {
 
     pub(crate) fn base(&self) -> &str {
         self.origin.0.trim_end_matches('/')
+    }
+
+    pub(crate) fn transport(&self, error: &reqwest::Error) -> ServerError {
+        clients::fall_through(&self.clients, classify::transport(error))
     }
 
     pub(crate) fn clients(&self) -> Arc<HttpClients> {
@@ -153,7 +157,7 @@ impl HttpServerApi {
                 self.seen(operation, value.headers());
                 Ok(value.into_inner())
             }
-            Err(error) => Err(api_failure(error, call).await),
+            Err(error) => Err(self.api_failure(error, call).await),
         }
     }
 }
@@ -170,26 +174,28 @@ pub(crate) fn status_failure(
     Failure::Error(classify::status(status, headers, bytes, call))
 }
 
-async fn api_failure(error: ApiError<()>, call: Call) -> Failure {
-    match error {
-        ApiError::CommunicationError(error) => Failure::Error(classify::transport(&error)),
-        ApiError::ErrorResponse(value) => {
-            status_failure(value.status(), value.headers(), &[], call)
+impl HttpServerApi {
+    async fn api_failure(&self, error: ApiError<()>, call: Call) -> Failure {
+        match error {
+            ApiError::CommunicationError(error) => Failure::Error(self.transport(&error)),
+            ApiError::ErrorResponse(value) => {
+                status_failure(value.status(), value.headers(), &[], call)
+            }
+            ApiError::UnexpectedResponse(response) => {
+                let status = response.status();
+                let headers = response.headers().clone();
+                let body = mivia_api::read_capped(response, ERROR_BODY_LIMIT)
+                    .await
+                    .map(|capped| capped.body)
+                    .unwrap_or_default();
+                status_failure(status, &headers, &body, call)
+            }
+            ApiError::ResponseBodyError(_) => Failure::Error(ServerError::AfterSend),
+            ApiError::InvalidRequest(_)
+            | ApiError::InvalidUpgrade(_)
+            | ApiError::InvalidResponsePayload(..)
+            | ApiError::Custom(_) => Failure::Error(ServerError::Contract),
         }
-        ApiError::UnexpectedResponse(response) => {
-            let status = response.status();
-            let headers = response.headers().clone();
-            let body = mivia_api::read_capped(response, ERROR_BODY_LIMIT)
-                .await
-                .map(|capped| capped.body)
-                .unwrap_or_default();
-            status_failure(status, &headers, &body, call)
-        }
-        ApiError::ResponseBodyError(_) => Failure::Error(ServerError::AfterSend),
-        ApiError::InvalidRequest(_)
-        | ApiError::InvalidUpgrade(_)
-        | ApiError::InvalidResponsePayload(..)
-        | ApiError::Custom(_) => Failure::Error(ServerError::Contract),
     }
 }
 

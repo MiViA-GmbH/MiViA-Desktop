@@ -43,7 +43,7 @@ impl HttpServerApi {
         request: reqwest::RequestBuilder,
         limit: usize,
     ) -> Result<Capped, ServerError> {
-        let response = request.send().await.map_err(|e| classify::transport(&e))?;
+        let response = request.send().await.map_err(|e| self.transport(&e))?;
         let capped = read_capped(response, limit)
             .await
             .map_err(|_| ServerError::AfterSend)?;

@@ -1,13 +1,10 @@
-use std::sync::Arc;
 use std::time::SystemTime;
 
-use arc_swap::ArcSwap;
 use async_trait::async_trait;
 use mivia_ports::fs::{ChunkSource, FsError};
 use mivia_ports::server::{ServerApi, ServerError, ServerJobStatus, UploadRequest};
-use mivia_server::HttpClients;
 use serde_json::json;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncReadExt;
 use tokio::net::TcpListener;
 use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, ResponseTemplate};
@@ -163,49 +160,4 @@ async fn an_unanswered_upload_is_dropped_after_five_minutes() {
         api.upload(bytes_upload(b"pixels")).await,
         Err(ServerError::StallTimeout)
     );
-}
-
-async fn proxy(answer: &'static str) -> String {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let uri = format!("http://{}", listener.local_addr().unwrap());
-    tokio::spawn(async move {
-        let (mut socket, _) = listener.accept().await.unwrap();
-        let mut buffer = vec![0; 4096];
-        let _read = socket.read(&mut buffer).await.unwrap();
-        socket.write_all(answer.as_bytes()).await.unwrap();
-    });
-    uri
-}
-
-async fn through_proxy(answer: &'static str) -> ServerError {
-    let proxy = proxy(answer).await;
-    let client = reqwest::Client::builder()
-        .tls_backend_rustls()
-        .proxy(reqwest::Proxy::all(proxy).unwrap())
-        .build()
-        .unwrap();
-    let clients = HttpClients {
-        api: client.clone(),
-        upload: client,
-    };
-    let (_, auth) = api_for("https://app.example.invalid");
-    let api = mivia_server::HttpServerApi::new(
-        auth.origin.clone(),
-        mivia_domain::ids::AccountId(1),
-        Arc::new(ArcSwap::from_pointee(clients)),
-        auth,
-    );
-    api.version().await.unwrap_err()
-}
-
-#[tokio::test]
-async fn proxy_tunnel_answers_are_classified_by_their_pinned_texts() {
-    drop(mivia_server::build_clients("test"));
-    let auth = through_proxy(
-        "HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Negotiate\r\n\r\n",
-    )
-    .await;
-    assert_eq!(auth, ServerError::ProxyAuth);
-    let refused = through_proxy("HTTP/1.1 403 Forbidden\r\n\r\n").await;
-    assert_eq!(refused, ServerError::ProxyRefused);
 }

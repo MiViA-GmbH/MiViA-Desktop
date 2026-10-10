@@ -10,7 +10,7 @@ use reqwest::{Body, Response};
 use tokio::time::Instant;
 
 use super::{Failure, HttpServerApi, header, status_failure};
-use crate::classify::{self, Call};
+use crate::classify::Call;
 
 const STALL: Duration = Duration::from_secs(60);
 const RESPONSE_WAIT: Duration = Duration::from_secs(300);
@@ -109,7 +109,7 @@ impl HttpServerApi {
         if let Some(error) = progress.lock().source_error {
             return Err(ServerError::Source(error));
         }
-        let response = response.map_err(|error| classify::transport(&error))?;
+        let response = response.map_err(|error| self.transport(&error))?;
         match self.upload_response(response).await {
             Ok(image) => Ok(image),
             Err(Failure::Error(error)) => Err(error),

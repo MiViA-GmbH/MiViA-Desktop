@@ -6,7 +6,7 @@ use reqwest::header::HeaderValue;
 use serde::Deserialize;
 
 use super::{Failure, HttpServerApi, status_failure};
-use crate::classify::{self, Call};
+use crate::classify::Call;
 
 const RESPONSE_LIMIT: usize = 64 * 1024;
 const SEND_TIMEOUT: Duration = Duration::from_secs(300);
@@ -50,7 +50,7 @@ impl HttpServerApi {
         let response = request
             .send()
             .await
-            .map_err(|error| classify::transport(&error))?;
+            .map_err(|error| self.transport(&error))?;
         let capped = read_capped(response, RESPONSE_LIMIT)
             .await
             .map_err(|_| ServerError::AfterSend)?;
@@ -115,7 +115,7 @@ impl HttpServerApi {
         let response = request
             .send()
             .await
-            .map_err(|error| classify::transport(&error))?;
+            .map_err(|error| self.transport(&error))?;
         let capped = read_capped(response, RESPONSE_LIMIT)
             .await
             .map_err(|_| ServerError::AfterSend)?;
