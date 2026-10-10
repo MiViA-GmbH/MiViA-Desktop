@@ -129,8 +129,13 @@ pub(super) fn run(services: &Arc<Services>, launch: &Launch, completed: bool) {
         },
         first_run: !completed,
         unclean: launch.previous_unclean,
+        duration_ms: mivia_os::process_age_ms(),
     };
-    record_start(services, &start);
+    let started = Arc::clone(services);
+    tauri::async_runtime::spawn(async move {
+        let route = super::network::begin(&started).await;
+        record_start(&started, &start, route.kind());
+    });
     spawn_writer(Arc::clone(services));
     drop(spawn_sender(Arc::clone(services)));
 }

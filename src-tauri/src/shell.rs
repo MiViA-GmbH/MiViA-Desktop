@@ -12,6 +12,7 @@ pub(crate) mod history;
 mod intake;
 pub(crate) mod integration;
 pub(crate) mod locale;
+pub(crate) mod network;
 pub(crate) mod one_off;
 pub(crate) mod open;
 mod pipeline;

@@ -70,6 +70,9 @@
 		"allow-get-privacy",
 		"allow-set-telemetry",
 		"allow-list-sent-telemetry",
-		"allow-note-privacy-viewed"
+		"allow-note-privacy-viewed",
+		"allow-get-network",
+		"allow-get-network-details",
+		"allow-set-proxy-setting"
 	]
 }

@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use arc_swap::ArcSwap;
 use mivia_application::intake::Intake;
+use mivia_application::network::Network;
 use mivia_application::pipeline::Pipeline;
 use mivia_application::policy::Policies;
 use mivia_application::report_offer::OfferGate;
@@ -28,6 +29,7 @@ pub(crate) struct Services {
     pub(crate) store: Arc<SqliteStore>,
     pub(crate) credentials: Arc<dyn CredentialStore>,
     pub(crate) clients: Arc<ArcSwap<HttpClients>>,
+    pub(crate) network: Arc<Network>,
     pub(crate) origin: ServerOrigin,
     pub(crate) policies: Policies,
     pub(crate) policy_rows: Vec<PolicyRow>,

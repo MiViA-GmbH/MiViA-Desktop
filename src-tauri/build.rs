@@ -63,6 +63,9 @@ const COMMANDS: &[&str] = &[
     "set_telemetry",
     "list_sent_telemetry",
     "note_privacy_viewed",
+    "get_network",
+    "get_network_details",
+    "set_proxy_setting",
 ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

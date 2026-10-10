@@ -108,6 +108,9 @@ export const commands = {
 	setTelemetry: (enabled: boolean) => __TAURI_INVOKE<PrivacyView>("set_telemetry", { enabled }),
 	listSentTelemetry: () => __TAURI_INVOKE<SentBatchView[]>("list_sent_telemetry"),
 	notePrivacyViewed: (panel: PrivacyPanel) => __TAURI_INVOKE<null>("note_privacy_viewed", { panel }),
+	getNetwork: () => __TAURI_INVOKE<NetworkView>("get_network"),
+	getNetworkDetails: () => __TAURI_INVOKE<string>("get_network_details"),
+	setProxySetting: (setting: ProxySetting) => __TAURI_INVOKE<NetworkView>("set_proxy_setting", { setting }),
 };
 
 /** Events */
@@ -212,6 +215,8 @@ export type BatchView = {
 	analyses: AnalysisView[],
 	renamable: boolean,
 };
+
+export type BlockKind = "tls" | "proxyAuth" | "proxyRefused" | "redirect";
 
 export type BundleEntryView = {
 	name: string,
@@ -494,6 +499,14 @@ export type NeedsAttentionView = {
 	total: number,
 };
 
+export type NetworkView = {
+	setting: ProxySetting,
+	managed: boolean,
+	host: string,
+	issuer: string | null,
+	block: BlockKind | null,
+};
+
 export type NewFolderInput = {
 	folderPick: string,
 	preset: ArrivalPreset,
@@ -591,6 +604,8 @@ export type ProblemReportPreview = {
 	installId: string,
 	firstErrors: string[],
 };
+
+export type ProxySetting = { mode: "system" } | { mode: "off" } | { mode: "manual"; address: string };
 
 export type QuitRequested = null;
 

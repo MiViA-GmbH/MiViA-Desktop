@@ -2,8 +2,8 @@ use mivia_application::settings::global_settings;
 use mivia_diagnostics::Flush;
 use mivia_ports::queries::Queries;
 use mivia_ports::telemetry::{
-    SessionAlive, SessionStart, SessionStop, SessionUnclean, SettingsSnapshot, StartState,
-    StopState,
+    ProxyKind, SessionAlive, SessionStart, SessionStop, SessionUnclean, SettingsSnapshot,
+    StartState, StopState,
 };
 
 use super::loops::step;
@@ -30,13 +30,15 @@ pub(crate) struct Start {
     pub(crate) launch: StartState,
     pub(crate) first_run: bool,
     pub(crate) unclean: bool,
+    pub(crate) duration_ms: u64,
 }
 
-pub(crate) fn record_start(services: &Services, start: &Start) {
+pub(crate) fn record_start(services: &Services, start: &Start, proxy_kind: ProxyKind) {
     services.telemetry.record(
         SessionStart {
             state: Some(start.launch),
-            duration_ms: Some(mivia_os::process_age_ms()),
+            duration_ms: Some(start.duration_ms),
+            proxy_kind: Some(proxy_kind),
             first_run: Some(start.first_run),
             prev_unclean: Some(start.unclean),
             ..SessionStart::default()

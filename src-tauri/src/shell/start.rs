@@ -4,14 +4,16 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use arc_swap::ArcSwap;
+use mivia_application::network::Network;
 use mivia_application::policy::{self, Policies};
 use mivia_application::settings::global_settings;
 use mivia_application::setup::SetupDraft;
+use mivia_os::WinHttpProxyResolver;
 use mivia_ports::auth::ServerOrigin;
 use mivia_ports::ipc::setup::SetupStep;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::SettingsScope;
-use mivia_server::{build_clients, user_agent};
+use mivia_server::{ClientRoute, build_clients, user_agent};
 use mivia_store::SqliteStore;
 use tauri::{AppHandle, Manager};
 
@@ -91,6 +93,10 @@ fn origin(policies: &Policies) -> ServerOrigin {
     )
 }
 
+pub(super) fn agent(version: &str) -> String {
+    user_agent(version, "10.0", "stable")
+}
+
 pub(super) fn services(store: Arc<SqliteStore>, launch: &Launch) -> Option<Arc<Services>> {
     let values = mivia_os::read_policies(policy::KEY);
     let (policies, ignored) = policy::parse(&values);
@@ -98,14 +104,23 @@ pub(super) fn services(store: Arc<SqliteStore>, launch: &Launch) -> Option<Arc<S
         tracing::warn!(name = %entry.name, hive = ?entry.hive, "policy.ignored");
     }
     tracing::info!(?policies, "policy.effective");
-    let clients = build_clients(&user_agent(&launch.version, "10.0", "stable"))
+    let clients = build_clients(&agent(&launch.version))
         .inspect_err(|error| tracing::error!(%error, "http.clientsFailed"))
         .ok()?;
+    let clients = Arc::new(ArcSwap::from_pointee(clients));
+    let origin = origin(&policies);
+    let network = Network::new(
+        Arc::new(WinHttpProxyResolver::default()),
+        Arc::new(ClientRoute(Arc::clone(&clients))),
+        origin.0.clone(),
+        super::network::inputs(&policies),
+    );
     Some(Arc::new(Services {
         store,
         credentials: pipeline::credentials(),
-        clients: Arc::new(ArcSwap::from_pointee(clients)),
-        origin: origin(&policies),
+        clients,
+        network: Arc::new(network),
+        origin,
         policies,
         policy_rows: policy::rows(&values),
         data_dir: launch.data_dir.clone(),

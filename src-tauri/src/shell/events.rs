@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::{Builder, Commands, ErrorHandlingMode, Event, collect_commands, collect_events};
 
-use crate::commands::{actions, history, privacy, queries, setup, support};
+use crate::commands::{actions, history, network, privacy, queries, setup, support};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct StoreChangedEvent(pub(crate) StoreChanged);
@@ -97,6 +97,9 @@ macro_rules! app_commands {
             privacy::set_telemetry,
             privacy::list_sent_telemetry,
             privacy::note_privacy_viewed,
+            network::get_network,
+            network::get_network_details,
+            network::set_proxy_setting,
         ]
     };
 }
