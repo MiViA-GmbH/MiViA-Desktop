@@ -6,16 +6,18 @@ use mivia_domain::ids::{Fingerprint, Timestamp};
 use mivia_domain::image_format::check_format;
 use mivia_domain::path::{WinPath, fold};
 use mivia_domain::sanitise::is_reserved;
+mod export;
 mod hooks;
 mod nodes;
 mod reports;
 
 use mivia_domain::output::ProbeResult;
+use mivia_ports::export::ExportSink;
 use mivia_ports::fs::{
     ByteSink, ChunkSource, Expected, FileStat, FileSystem, FsError, ImageRead, SaveTarget, Walk,
     WalkEntry,
 };
-use nodes::{MemoryUpload, file, stat_of, under_link};
+use nodes::{MemoryUpload, file, insert_node, stat_of, under_link};
 use parking_lot::Mutex;
 pub use reports::{MemorySink, staged};
 use sha2::{Digest, Sha256};
@@ -36,6 +38,8 @@ pub enum FsOp {
     Digest,
     Remove,
     ProbeFolder,
+    Move,
+    Export,
 }
 
 type Key = Vec<String>;
@@ -72,41 +76,6 @@ fn key(path: &WinPath) -> Key {
         .filter(|part| !part.is_empty())
         .map(str::to_owned)
         .collect()
-}
-
-fn insert_node(state: &mut State, path: &WinPath, bytes: Option<Vec<u8>>) {
-    for ancestor in ancestors(path) {
-        state.nodes.entry(key(&ancestor)).or_insert(Node {
-            path: ancestor,
-            bytes: None,
-            mtime: Timestamp(0),
-            link: false,
-        });
-    }
-    state.clock += 1;
-    let mtime = Timestamp(state.clock);
-    state.nodes.insert(
-        key(path),
-        Node {
-            path: path.clone(),
-            bytes,
-            mtime,
-            link: false,
-        },
-    );
-}
-
-fn ancestors(path: &WinPath) -> Vec<WinPath> {
-    let text = path.to_string();
-    let mut found = Vec::new();
-    let mut current = text.as_str();
-    while let Some((parent, _)) = current.rsplit_once('\\') {
-        if let Ok(parsed) = WinPath::parse(parent) {
-            found.push(parsed);
-        }
-        current = parent;
-    }
-    found
 }
 
 impl InMemoryFs {
@@ -319,5 +288,23 @@ impl FileSystem for InMemoryFs {
 
     async fn probe_folder(&self, folder: &WinPath, create: bool) -> Result<ProbeResult, FsError> {
         reports::probe(&*self.begin(FsOp::ProbeFolder)?, folder, create)
+    }
+
+    async fn move_report(&self, from: &WinPath, target: &SaveTarget) -> Result<WinPath, FsError> {
+        drop(self.begin(FsOp::Move)?);
+        export::move_file(&self.state, from, target)
+    }
+
+    async fn export_sink(
+        &self,
+        dir: &WinPath,
+        stem: &str,
+        separator: char,
+    ) -> Result<Box<dyn ExportSink>, FsError> {
+        drop(self.begin(FsOp::Export)?);
+        let state = Arc::clone(&self.state);
+        Ok(Box::new(export::MemoryExport::new(
+            state, dir, stem, separator,
+        )))
     }
 }

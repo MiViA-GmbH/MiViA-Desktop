@@ -9,8 +9,9 @@ use mivia_ports::fs::{ByteSink, FsError, SaveTarget, Staged};
 use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
 
+use super::nodes::insert_node;
 use super::nodes::{file, under_link};
-use super::{InMemoryFs, Key, State, insert_node, key};
+use super::{InMemoryFs, Key, State, key};
 
 const SPARE_BYTES: u64 = 1024 * 1024;
 

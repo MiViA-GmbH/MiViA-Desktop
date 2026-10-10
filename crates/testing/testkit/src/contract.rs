@@ -1,6 +1,7 @@
 pub mod clock;
 pub mod credentials;
 pub mod fs;
+pub mod fs_history;
 pub mod fs_reports;
 pub mod reports;
 pub mod server;

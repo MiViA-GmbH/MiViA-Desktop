@@ -287,5 +287,11 @@ macro_rules! fs_contract_tests {
             fs_save_refuses_a_linked_report_folder,
             fs_probe_and_remove,
         );
+        $crate::contract_cases!(
+            fs_history,
+            $harness,
+            fs_move_keeps_the_name_and_never_overwrites,
+            fs_export_writes_bom_headers_rows_and_hashes,
+        );
     };
 }
