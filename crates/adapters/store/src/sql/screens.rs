@@ -23,9 +23,10 @@ pub(crate) const LATEST_SAVED_PART: &str = "SELECT p.id, max(p.format) FROM repo
      INDEXED BY report_by_batch JOIN report_part p ON p.report_id = r.id \
      WHERE r.batch_id = ?1 AND r.replaced_by IS NULL AND p.state = 'saved'";
 
-pub(crate) const SERIES_REPORTS: &str = "SELECT id, model_choice_key, state, stale FROM report \
-     INDEXED BY report_by_batch WHERE batch_id = ?2 AND account_id = ?1 \
-     AND replaced_by IS NULL ORDER BY id";
+pub(crate) const SERIES_REPORTS: &str = "SELECT r.id, r.model_choice_key, r.state, r.stale, \
+     r.replaced_by, EXISTS (SELECT 1 FROM report_part p WHERE p.report_id = r.id \
+     AND p.moved_to_replaced_at IS NOT NULL) FROM report r INDEXED BY report_by_batch \
+     WHERE r.batch_id = ?2 AND r.account_id = ?1 ORDER BY r.id";
 
 pub(crate) const REPORT_PARTS: &str = "SELECT id, part_no, part_count, format, member_from, \
      member_to, state, coalesce(save_problem, error), file_path FROM report_part \

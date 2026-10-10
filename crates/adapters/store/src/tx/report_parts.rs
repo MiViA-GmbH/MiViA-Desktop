@@ -132,7 +132,12 @@ impl SqlTx<'_> {
         } else {
             Vec::new()
         };
+        let replaces = self
+            .column(sql::REPLACES, params![report, format])?
+            .into_iter()
+            .next();
         Ok(Some(RequestRow {
+            replaces,
             id: ReportPartId(id),
             format: format_of(&format)?,
             part: (count(number), count(total)),

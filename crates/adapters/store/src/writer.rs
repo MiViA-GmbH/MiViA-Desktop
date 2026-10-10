@@ -1,14 +1,15 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use mivia_domain::ids::Timestamp;
+use mivia_ports::store::history::Actor;
 use mivia_ports::store::{CommitObserver, Committed, Erased, Store, StoreError, TxError, TxWork};
 use mivia_ports::time::utc_date;
 use rusqlite::{Connection, TransactionBehavior};
 
-use crate::backup;
+use crate::backup::{self, RestoreError};
 use crate::config::{StoreConfig, configure_writer};
 use crate::errors::{SqlResult, call_error};
 use crate::open::{self, OpenError};
@@ -18,7 +19,9 @@ use crate::tx::{SqlTx, rebuild_search};
 pub struct SqliteStore {
     writer: tokio_rusqlite::Connection,
     observer: Arc<dyn CommitObserver>,
+    actor: OnceLock<Actor>,
     pub(crate) readers: Readers,
+    pub(crate) path: PathBuf,
 }
 
 fn open_error(error: tokio_rusqlite::Error<OpenError>) -> OpenError {
@@ -55,8 +58,14 @@ impl SqliteStore {
         Ok(Self {
             writer,
             observer,
+            actor: OnceLock::new(),
             readers: Readers::new(path.to_path_buf()),
+            path: path.to_path_buf(),
         })
+    }
+
+    pub fn set_actor(&self, actor: Actor) {
+        drop(self.actor.set(actor));
     }
 
     async fn call<R: Send + 'static>(
@@ -92,6 +101,25 @@ impl SqliteStore {
         let target = dir.join(backup::daily_backup_name(&utc_date(now)));
         self.backup_into(target).await?;
         backup::prune_daily(&dir).map_err(|error| StoreError::Sql(error.to_string()))
+    }
+
+    pub async fn restore_from(
+        &self,
+        candidate: PathBuf,
+        now: Timestamp,
+    ) -> Result<(), RestoreError> {
+        self.readers.close().await;
+        let db_path = self.path.clone();
+        self.writer
+            .call(move |conn| backup::restore_in_place(conn, &candidate, &db_path, now))
+            .await
+            .map_err(|error| {
+                if let tokio_rusqlite::Error::Error(inner) = error {
+                    inner
+                } else {
+                    RestoreError::Io("connection closed".to_owned())
+                }
+            })
     }
 
     pub async fn quick_check(&self) -> Result<Vec<String>, StoreError> {
@@ -133,7 +161,11 @@ impl SqliteStore {
 impl Store for SqliteStore {
     async fn write_erased(&self, work: TxWork) -> Result<Erased, StoreError> {
         let observer = Arc::clone(&self.observer);
-        self.call(move |conn| run_write(conn, work, observer.as_ref()))
+        let actor = self.actor.get().cloned().unwrap_or_else(|| Actor {
+            windows_user: String::new(),
+            tz: "UTC".to_owned(),
+        });
+        self.call(move |conn| run_write(conn, work, observer.as_ref(), actor))
             .await
     }
 }
@@ -142,11 +174,12 @@ fn run_write(
     conn: &mut Connection,
     work: TxWork,
     observer: &dyn CommitObserver,
+    actor: Actor,
 ) -> Result<Erased, StoreError> {
     let tx = conn
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .store()?;
-    let mut sql_tx = SqlTx::new(&tx);
+    let mut sql_tx = SqlTx::new(&tx, actor);
     let outcome = catch_unwind(AssertUnwindSafe(|| work(&mut sql_tx)));
     let value = outcome
         .map_err(|_| StoreError::Panicked)?

@@ -216,6 +216,18 @@ fn part(row: &Row<'_>) -> rusqlite::Result<ReportPartView> {
     })
 }
 
+fn report_head(row: &Row<'_>) -> rusqlite::Result<ReportView> {
+    Ok(ReportView {
+        id: row.get::<_, i64>(0)?.to_string(),
+        analysis_key: row.get(1)?,
+        state: row.get(2)?,
+        stale: row.get(3)?,
+        replaced_by: row.get::<_, Option<i64>>(4)?.map(|other| other.to_string()),
+        moved: row.get(5)?,
+        parts: Vec::new(),
+    })
+}
+
 pub(crate) fn reports(
     tx: &Transaction<'_>,
     scope: AccountScope,
@@ -223,22 +235,18 @@ pub(crate) fn reports(
 ) -> rusqlite::Result<Vec<ReportView>> {
     let heads = tx
         .prepare_cached(screens::SERIES_REPORTS)?
-        .query_map(params![scope.0.0, batch], |row| {
-            Ok((row.get::<_, i64>(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
-        })?
-        .collect::<rusqlite::Result<Vec<(i64, String, String, bool)>>>()?;
+        .query_map(params![scope.0.0, batch], report_head)?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
     let mut parts = tx.prepare_cached(screens::REPORT_PARTS)?;
     heads
         .into_iter()
-        .map(|(id, analysis_key, state, stale)| {
+        .map(|head| {
+            let id: i64 = head.id.parse().unwrap_or_default();
             Ok(ReportView {
-                id: id.to_string(),
-                analysis_key,
-                state,
-                stale,
                 parts: parts
                     .query_map([id], part)?
                     .collect::<rusqlite::Result<_>>()?,
+                ..head
             })
         })
         .collect()

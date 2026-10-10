@@ -1,3 +1,4 @@
+pub(crate) mod history;
 pub(crate) mod pipeline;
 pub(crate) mod reports;
 pub(crate) mod screens;
@@ -87,15 +88,6 @@ pub(crate) const BATCH_OPEN: &str =
 pub(crate) const BATCH_COLUMNS: &str = "id, label, origin, folder_id, open, opened_at, closed_at, \
      files, done, failed, problems, active_count, reports_saved, reports_problem, reports_total, \
      reports_stale, needs_attention, sort_at, closure_reason";
-
-pub(crate) fn history_body() -> String {
-    format!(
-        "SELECT {BATCH_COLUMNS} FROM batch INDEXED BY batch_hist_time \
-         WHERE account_id = ?1 AND open = 0 AND (sort_at, id) < (?2, ?3) \
-         ORDER BY sort_at DESC, id DESC LIMIT {}",
-        PAGE_SIZE + 1
-    )
-}
 
 pub(crate) fn history_head() -> String {
     format!(
@@ -252,7 +244,6 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("claim computation poll", computation_due_poll()),
         ("claim hold probe", HOLD_DUE_PROBE.to_owned()),
         ("claim open batches", BATCH_OPEN.to_owned()),
-        ("list history body", history_body()),
         ("list history head", history_head()),
         ("list attention series", attention_series()),
         ("count attention series", ATTENTION_COUNT.to_owned()),
@@ -277,5 +268,6 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
     queries.extend(pipeline::planned());
     queries.extend(reports::planned());
     queries.extend(screens::planned());
+    queries.extend(history::planned());
     queries
 }

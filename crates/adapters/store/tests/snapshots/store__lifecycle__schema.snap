@@ -326,6 +326,8 @@ CREATE TABLE report (
   stale INTEGER NOT NULL DEFAULT 0 CHECK (stale IN (0, 1)),
   replaces INTEGER REFERENCES report(id),
   replaced_by INTEGER REFERENCES report(id),
+  update_no INTEGER NOT NULL DEFAULT 0,
+  folder TEXT,
   attention_cleared_at INTEGER,
   created_at INTEGER NOT NULL,
   app_version TEXT NOT NULL

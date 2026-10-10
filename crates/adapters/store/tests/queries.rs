@@ -5,6 +5,7 @@ use mivia_domain::label::LabelRule;
 use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_domain::source_file::SourceFileEvent;
+use mivia_ports::ipc::history::HistoryFilter;
 use mivia_ports::ipc::screens::NeedsAttention;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{NewComputation, NewFolder, NewReport, SourceClaim, StoreExt};
@@ -24,15 +25,27 @@ async fn history_pages_by_closing_order_with_open_head() {
         scope
     })
     .await;
-    let first = fx.store.list_history(scope, None).await.unwrap();
+    let first = fx
+        .store
+        .list_history(scope, HistoryFilter::default(), None)
+        .await
+        .unwrap();
     assert_eq!(first.head.len(), 1);
     assert_eq!(first.rows.len(), 100);
-    assert_eq!(first.rows[0].label, "S101");
+    assert_eq!(first.rows[0].summary.label, "S101");
     let next = first.next.clone().unwrap();
-    assert_eq!(next.id, first.rows[99].id);
-    let second = fx.store.list_history(scope, Some(next)).await.unwrap();
+    assert_eq!(next.id, first.rows[99].summary.id);
+    let second = fx
+        .store
+        .list_history(scope, HistoryFilter::default(), Some(next))
+        .await
+        .unwrap();
     assert_eq!(second.head, []);
-    let labels: Vec<_> = second.rows.iter().map(|row| row.label.as_str()).collect();
+    let labels: Vec<_> = second
+        .rows
+        .iter()
+        .map(|row| row.summary.label.as_str())
+        .collect();
     assert_eq!(labels, ["S1", "S0"]);
     assert_eq!(second.next, None);
 }

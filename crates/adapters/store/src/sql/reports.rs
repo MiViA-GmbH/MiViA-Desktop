@@ -75,20 +75,29 @@ pub(crate) const NEXT_SAVE: &str = "SELECT min(p.next_attempt_at) \
      AND r.account_id = ?1";
 
 pub(crate) const SAVE_ROW: &str = "SELECT p.format, p.part_no, p.part_count, r.language, \
-     b.label, COALESCE(b.closed_at, r.created_at), \
+     COALESCE(r.custom_name, b.label), COALESCE(b.closed_at, r.created_at), \
      (SELECT names FROM model_catalogue k WHERE k.account_id = r.account_id \
      AND k.model_id = m.model_id AND k.customization_id = ''), \
      (SELECT names FROM model_catalogue k WHERE k.account_id = r.account_id \
      AND k.model_id = m.model_id AND k.customization_id = m.customization_id), \
      m.model_id, \
-     f.variant_in_file_name OR (SELECT count(*) FROM batch_model_choice x \
-     WHERE x.batch_id = b.id AND x.model_id = m.model_id) > 1, \
+     CASE WHEN b.id IS NULL THEN m.customization_id IS NOT NULL \
+     ELSE f.variant_in_file_name OR (SELECT count(*) FROM batch_model_choice x \
+     WHERE x.batch_id = b.id AND x.model_id = m.model_id) > 1 END, \
      f.path, f.report_folder_mode, f.report_folder_name, f.report_folder_path, f.probe_result, \
      (SELECT s.path FROM source_file s WHERE s.batch_id = b.id ORDER BY s.arrival_seq LIMIT 1), \
-     p.staging_path, p.size, p.sha256, p.intended_name, m.customization_id, json_extract(b.report_settings, '$.oneOffFolder') \
-     FROM report_part p JOIN report r ON r.id = p.report_id JOIN batch b ON b.id = r.batch_id \
-     JOIN batch_model_choice m ON m.batch_id = b.id AND m.model_choice_key = r.model_choice_key \
+     p.staging_path, p.size, p.sha256, p.intended_name, m.customization_id, \
+     json_extract(b.report_settings, '$.oneOffFolder'), r.folder, r.update_no \
+     FROM report_part p JOIN report r ON r.id = p.report_id LEFT JOIN batch b ON b.id = r.batch_id \
+     JOIN batch_model_choice m ON m.batch_id = COALESCE(r.batch_id, (SELECT c.batch_id \
+     FROM report_member rm JOIN computation c ON c.id = rm.computation_id \
+     WHERE rm.report_id = r.id ORDER BY rm.seq LIMIT 1)) \
+     AND m.model_choice_key = r.model_choice_key \
      LEFT JOIN watched_folder f ON f.id = b.folder_id WHERE p.id = ?1 AND r.account_id = ?2";
+
+pub(crate) const REPLACES: &str = "SELECT o.server_report_id FROM report r \
+     JOIN report_part o ON o.report_id = r.replaces WHERE r.id = ?1 AND o.part_no = 1 \
+     AND o.format = ?2 AND o.server_report_id IS NOT NULL";
 
 pub(crate) const PART_HEAD: &str = "SELECT p.report_id, p.format, p.part_no, p.member_from, \
      p.member_to, p.split, p.rerequests FROM report_part p JOIN report r ON r.id = p.report_id \
@@ -120,6 +129,7 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("claim report part save", SAVE_DUE.to_owned()),
         ("next report part save", NEXT_SAVE.to_owned()),
         ("get save row", SAVE_ROW.to_owned()),
+        ("find replaced report id", REPLACES.to_owned()),
         ("find stale candidates", STALE_CANDIDATES.to_owned()),
     ]
 }

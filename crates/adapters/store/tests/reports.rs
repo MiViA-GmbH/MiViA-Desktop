@@ -18,9 +18,9 @@ use mivia_store::StoreConfig;
 
 use crate::common::{account, fixture, new_batch, seed};
 
-const NOW: Timestamp = Timestamp(10_000);
+pub(crate) const NOW: Timestamp = Timestamp(10_000);
 
-fn spec(formats: Vec<Format>) -> ReportSpec {
+pub(crate) fn spec(formats: Vec<Format>) -> ReportSpec {
     ReportSpec {
         formats,
         language: Language::De,
@@ -30,7 +30,7 @@ fn spec(formats: Vec<Format>) -> ReportSpec {
     }
 }
 
-fn folder_batch(tx: &mut dyn WriteTx, scope: AccountScope) -> BatchId {
+pub(crate) fn folder_batch(tx: &mut dyn WriteTx, scope: AccountScope) -> BatchId {
     let folder = tx
         .folders(scope)
         .add(&NewFolder {
@@ -51,7 +51,12 @@ fn folder_batch(tx: &mut dyn WriteTx, scope: AccountScope) -> BatchId {
         .unwrap()
 }
 
-fn add(tx: &mut dyn WriteTx, scope: AccountScope, batch: BatchId, name: &str) -> ComputationId {
+pub(crate) fn add(
+    tx: &mut dyn WriteTx,
+    scope: AccountScope,
+    batch: BatchId,
+    name: &str,
+) -> ComputationId {
     let file = tx
         .source_files(scope)
         .add(&NewSourceFile {
@@ -83,7 +88,12 @@ fn add(tx: &mut dyn WriteTx, scope: AccountScope, batch: BatchId, name: &str) ->
         .unwrap()
 }
 
-fn finish(tx: &mut dyn WriteTx, scope: AccountScope, id: ComputationId, outcome: JobOutcome) {
+pub(crate) fn finish(
+    tx: &mut dyn WriteTx,
+    scope: AccountScope,
+    id: ComputationId,
+    outcome: JobOutcome,
+) {
     tx.computations(scope)
         .apply(id, ComputationEvent::SubmitClaimed, NOW)
         .unwrap();
@@ -97,9 +107,9 @@ fn finish(tx: &mut dyn WriteTx, scope: AccountScope, id: ComputationId, outcome:
     tx.pipeline(scope).record_job(id, &job, NOW).unwrap();
 }
 
-const DONE: JobOutcome = JobOutcome::Done { reused: false };
+pub(crate) const DONE: JobOutcome = JobOutcome::Done { reused: false };
 
-fn closed(tx: &mut dyn WriteTx, scope: AccountScope, batch: BatchId) {
+pub(crate) fn closed(tx: &mut dyn WriteTx, scope: AccountScope, batch: BatchId) {
     tx.batches(scope)
         .close(batch, ClosureReason::Manual, Timestamp(5_000))
         .unwrap();

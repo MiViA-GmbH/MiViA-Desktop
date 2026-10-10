@@ -32,8 +32,6 @@ claim hold probe:
   SEARCH account_hold USING COVERING INDEX account_hold_probe (account_id=? AND next_probe_at<?)
 claim open batches:
   SEARCH batch USING COVERING INDEX batch_open (account_id=?)
-list history body:
-  SEARCH batch USING INDEX batch_hist_time (account_id=? AND sort_at<?)
 list history head:
   SEARCH batch USING INDEX batch_open (account_id=?)
 list attention series:
@@ -207,8 +205,11 @@ next report part save:
 get save row:
   SEARCH p USING INTEGER PRIMARY KEY (rowid=?)
   SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
-  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
   SEARCH m USING PRIMARY KEY (batch_id=? AND model_choice_key=?)
+  CORRELATED SCALAR SUBQUERY 5
+  SEARCH rm USING PRIMARY KEY (report_id=?)
+  SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
   SEARCH f USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
   CORRELATED SCALAR SUBQUERY 1
   SEARCH k USING PRIMARY KEY (account_id=? AND model_id=? AND customization_id=?)
@@ -218,6 +219,9 @@ get save row:
   SEARCH x USING PRIMARY KEY (batch_id=?)
   CORRELATED SCALAR SUBQUERY 4
   SEARCH s USING INDEX source_file_by_batch (batch_id=?)
+find replaced report id:
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH o USING INDEX sqlite_autoindex_report_part_1 (report_id=? AND part_no=? AND format=?)
 find stale candidates:
   SEARCH m USING COVERING INDEX report_member_by_comp (computation_id=?)
   SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
@@ -235,7 +239,9 @@ latest saved part of series:
   SEARCH r USING INDEX report_by_batch (batch_id=?)
   SEARCH p USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
 list series reports:
-  SEARCH report USING INDEX report_by_batch (batch_id=?)
+  SEARCH r USING INDEX report_by_batch (batch_id=?)
+  CORRELATED SCALAR SUBQUERY 1
+  SEARCH p USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
 list report parts:
   SEARCH report_part USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
 list batch analyses:
@@ -246,3 +252,33 @@ get account:
   SEARCH account USING INTEGER PRIMARY KEY (rowid=?)
 get settings:
   SEARCH settings USING INDEX settings_scope (scope=? AND <expr>=?)
+find series by report id:
+  SEARCH p USING INDEX report_part_server_id (server_report_id>? AND server_report_id<?)
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+list member labels:
+  SEARCH source_file USING INDEX source_file_by_batch (batch_id=?)
+list saved report files:
+  SEARCH r USING COVERING INDEX report_by_batch (batch_id=?)
+  SEARCH p USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
+list custom report window:
+  SEARCH r USING INDEX report_custom (account_id=? AND created_at<?)
+get custom report row:
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+  CORRELATED SCALAR SUBQUERY 1
+  SEARCH rm USING PRIMARY KEY (report_id=?)
+  CORRELATED SCALAR SUBQUERY 2
+  SEARCH rm USING PRIMARY KEY (report_id=?)
+  SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+  CORRELATED SCALAR SUBQUERY 3
+  SEARCH p USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
+  CORRELATED SCALAR SUBQUERY 4
+  SEARCH p USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
+  CORRELATED SCALAR SUBQUERY 5
+  SEARCH p USING INDEX sqlite_autoindex_report_part_1 (report_id=?)
+list series events:
+  SEARCH e USING INDEX history_event_batch (batch_id=? AND id<?)
+check series renamable:
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+  CORRELATED SCALAR SUBQUERY 1
+  SEARCH r USING COVERING INDEX report_by_batch (batch_id=?)
+  SEARCH p USING INDEX sqlite_autoindex_report_part_1 (report_id=?)

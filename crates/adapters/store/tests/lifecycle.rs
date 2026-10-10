@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
 use mivia_domain::ids::{AccountId, Timestamp};
+use mivia_ports::ipc::history::HistoryFilter;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{AccountScope, StoreError, StoreExt, TxError};
 use mivia_store::{
@@ -129,7 +130,11 @@ async fn revision_moves_only_with_changes_and_observer_sees_it() {
         .unwrap();
     assert_eq!(fx.recorder.revision.load(Ordering::SeqCst), 1);
     assert_eq!(fx.recorder.commits.load(Ordering::SeqCst), 2);
-    let page = fx.store.list_history(scope, None).await.unwrap();
+    let page = fx
+        .store
+        .list_history(scope, HistoryFilter::default(), None)
+        .await
+        .unwrap();
     assert_eq!(page.revision, "1");
 }
 

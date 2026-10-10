@@ -102,7 +102,7 @@ pub fn expired_daily_backups(dates: &[String]) -> Vec<String> {
         .collect()
 }
 
-pub(crate) fn prune_daily(dir: &Path) -> std::io::Result<()> {
+pub fn prune_daily(dir: &Path) -> std::io::Result<()> {
     let dates = list_names(dir)?
         .into_iter()
         .filter_map(|name| {
@@ -152,6 +152,34 @@ pub fn restore_backup(
     fs::copy(candidate, &staged).map_err(io)?;
     set_aside(db_path, &format!(".before-restore-{}", now.0)).map_err(io)?;
     fs::rename(&staged, db_path).map_err(io)
+}
+
+pub fn backup_series(candidate: &Path) -> Option<u32> {
+    let conn = Connection::open_with_flags(candidate, OpenFlags::SQLITE_OPEN_READ_ONLY).ok()?;
+    crate::config::harden(&conn).ok()?;
+    conn.query_row("SELECT count(*) FROM batch", [], |row| row.get(0))
+        .ok()
+}
+
+pub(crate) fn restore_in_place(
+    conn: &mut Connection,
+    candidate: &Path,
+    db_path: &Path,
+    now: Timestamp,
+) -> Result<(), RestoreError> {
+    verify_backup(candidate)?;
+    let failed = |error: rusqlite::Error| RestoreError::Io(error.to_string());
+    vacuum_into(
+        conn,
+        &sibling(db_path, &format!(".before-restore-{}", now.0)),
+    )
+    .map_err(failed)?;
+    conn.restore(
+        rusqlite::MAIN_DB,
+        candidate,
+        None::<fn(rusqlite::backup::Progress)>,
+    )
+    .map_err(failed)
 }
 
 pub fn quarantine_corrupt(db_path: &Path, now: Timestamp) -> std::io::Result<PathBuf> {

@@ -44,6 +44,16 @@ impl ComputationRepo for SqlTx<'_> {
                 )
             })
             .tx()?;
+        self.run(
+            "UPDATE computation SET superseded_by = ?1 WHERE source_file_id = ?2 \
+             AND model_choice_key = ?3 AND state = 'superseded' AND superseded_by IS NULL \
+             AND id <> ?1",
+            params![
+                id,
+                computation.source_file_id.0,
+                computation.model_choice_key
+            ],
+        )?;
         let state = if computation.reused_from.is_some() {
             ComputationState::Done { reused: true }
         } else {

@@ -5,6 +5,8 @@ mod computations;
 mod counters;
 mod files;
 mod folders;
+mod history;
+mod history_reports;
 mod intake;
 mod intake_repo;
 mod ledger;
@@ -12,6 +14,7 @@ mod one_off;
 mod pipeline;
 mod readiness;
 mod report_build;
+mod report_moves;
 mod report_parts;
 mod report_repo;
 mod report_save;
@@ -21,6 +24,7 @@ mod upkeep;
 
 use mivia_domain::ids::{AccountId, Timestamp};
 use mivia_ports::ipc::change::Change;
+use mivia_ports::store::history::{Actor, HistoryRepo};
 use mivia_ports::store::intake::IntakeRepo;
 use mivia_ports::store::pipeline::PipelineRepo;
 use mivia_ports::store::{
@@ -37,14 +41,16 @@ pub(crate) struct SqlTx<'a> {
     tx: &'a Transaction<'a>,
     scope: AccountScope,
     changes: Vec<Change>,
+    actor: Actor,
 }
 
 impl<'a> SqlTx<'a> {
-    pub(crate) const fn new(tx: &'a Transaction<'a>) -> Self {
+    pub(crate) const fn new(tx: &'a Transaction<'a>, actor: Actor) -> Self {
         Self {
             tx,
             scope: AccountScope(AccountId(0)),
             changes: Vec::new(),
+            actor,
         }
     }
 
@@ -115,6 +121,10 @@ impl WriteTx for SqlTx<'_> {
     }
 
     fn pipeline(&mut self, scope: AccountScope) -> &mut dyn PipelineRepo {
+        self.scoped(scope)
+    }
+
+    fn history(&mut self, scope: AccountScope) -> &mut dyn HistoryRepo {
         self.scoped(scope)
     }
 

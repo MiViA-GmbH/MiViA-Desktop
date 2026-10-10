@@ -1,14 +1,17 @@
 use mivia_domain::batch::{self, ClosureReason, OPEN_SORT_AT};
 use mivia_domain::ids::{BatchId, Timestamp};
 use mivia_domain::natural::sort_key;
+use mivia_domain::path::WinPath;
 use mivia_domain::transition::IllegalTransition;
 use mivia_ports::ipc::change::Change;
+use mivia_ports::store::history::{NewEvent, Trigger};
 use mivia_ports::store::{
     AttentionCleared, BatchModelChoice, BatchRepo, NewBatch, Origin, TxError,
 };
 use rusqlite::{OptionalExtension, Transaction, params};
 
 use super::SqlTx;
+use super::history::json;
 use crate::codec::closure_reason;
 use crate::errors::SqlResult;
 use crate::sql;
@@ -98,6 +101,15 @@ impl BatchRepo for SqlTx<'_> {
             })
             .tx()?;
         self.insert_choices(id, &batch.model_choices)?;
+        let trigger = if folder.is_some() {
+            Trigger::Folder
+        } else {
+            Trigger::SendTo
+        };
+        let mut event = NewEvent::new("series_opened", trigger, batch.opened_at);
+        event.batch = Some(BatchId(id));
+        event.after = Some(json(&[("label", batch.label.clone())]));
+        self.log_event(&event)?;
         self.record(Change::History);
         Ok(BatchId(id))
     }
@@ -133,6 +145,10 @@ impl BatchRepo for SqlTx<'_> {
             .tx()?;
         write_search_doc(self.tx, id.0).tx()?;
         self.insert_waiting(id.0, closed_at)?;
+        let mut event = NewEvent::new("series_closed", closure_trigger(reason), closed_at);
+        event.batch = Some(id);
+        event.after = Some(json(&[("reason", closure_reason(reason).to_owned())]));
+        self.log_event(&event)?;
         self.record(Change::History);
         Ok(())
     }
@@ -156,6 +172,10 @@ impl BatchRepo for SqlTx<'_> {
             )
             .tx()?;
         if updated > 0 {
+            let mut event = NewEvent::new("attention_cleared", Trigger::User, at);
+            event.batch = Some(id);
+            event.after = Some(json(&[("how", how.to_owned())]));
+            self.log_event(&event)?;
             self.record(Change::NeedsAttention);
             self.record(Change::History);
         }
@@ -168,7 +188,28 @@ impl BatchRepo for SqlTx<'_> {
     }
 }
 
-fn write_search_doc(tx: &Transaction<'_>, batch_id: i64) -> rusqlite::Result<()> {
+const fn closure_trigger(reason: ClosureReason) -> Trigger {
+    match reason {
+        ClosureReason::Manual | ClosureReason::AccountSwitch => Trigger::User,
+        ClosureReason::OneOff => Trigger::SendTo,
+        ClosureReason::QuietPeriod | ClosureReason::Cap | ClosureReason::Restart => {
+            Trigger::Automatic
+        }
+    }
+}
+
+fn saved_names(tx: &Transaction<'_>, batch_id: i64) -> rusqlite::Result<Vec<String>> {
+    let mut saved = tx.prepare_cached(sql::history::SAVED_FILES)?;
+    let paths = saved
+        .query_map([batch_id], |row| row.get::<_, String>(0))?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+    Ok(paths
+        .iter()
+        .filter_map(|path| Some(WinPath::parse(path).ok()?.file_name()?.to_owned()))
+        .collect())
+}
+
+pub(super) fn write_search_doc(tx: &Transaction<'_>, batch_id: i64) -> rusqlite::Result<()> {
     let Some((label, sort_at)) = tx
         .query_row(
             "SELECT label, sort_at FROM batch WHERE id = ?1 AND open = 0",
@@ -186,6 +227,7 @@ fn write_search_doc(tx: &Transaction<'_>, batch_id: i64) -> rusqlite::Result<()>
         .collect::<rusqlite::Result<Vec<_>>>()?;
     let text = std::iter::once(label)
         .chain(labels)
+        .chain(saved_names(tx, batch_id)?)
         .collect::<Vec<_>>()
         .join("\n");
     tx.execute("DELETE FROM batch_search WHERE rowid = ?1", [sort_at])?;

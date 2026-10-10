@@ -8,6 +8,7 @@ use mivia_ports::store::reports::{SaveRow, SavedFile};
 use rusqlite::{Row, params};
 
 use super::SqlTx;
+use super::batches::write_search_doc;
 use super::report_parts::{format_of, language_of};
 use crate::codec::{parse_path, report_folder};
 use crate::errors::SqlResult;
@@ -27,6 +28,7 @@ struct RawSave {
     first_member: Text,
     staged: (Text, Option<i64>, Option<Vec<u8>>, Text),
     one_off: Text,
+    custom: (Text, i64),
 }
 
 fn raw_save(row: &Row<'_>) -> rusqlite::Result<RawSave> {
@@ -48,6 +50,7 @@ fn raw_save(row: &Row<'_>) -> rusqlite::Result<RawSave> {
         first_member: row.get(15)?,
         staged: (row.get(16)?, row.get(17)?, row.get(18)?, row.get(19)?),
         one_off: row.get(21)?,
+        custom: (row.get(22)?, row.get(23)?),
     })
 }
 
@@ -72,6 +75,10 @@ fn one_off_home(target: &str) -> Result<(WinPath, ReportFolder), TxError> {
 }
 
 fn home(raw: &RawSave) -> Result<(Option<WinPath>, Option<ReportFolder>), TxError> {
+    if let Some(target) = &raw.custom.0 {
+        let target = parse_path(target)?;
+        return Ok((Some(target.clone()), Some(ReportFolder::Custom(target))));
+    }
     let (root, mode, name, custom, _) = &raw.folder;
     if let (None, Some(target)) = (root, &raw.one_off) {
         let (root, folder) = one_off_home(target)?;
@@ -115,6 +122,7 @@ fn save_row(id: ReportPartId, raw: RawSave) -> Result<SaveRow, TxError> {
         size: size.and_then(|n| u64::try_from(n).ok()).unwrap_or_default(),
         sha256: Fingerprint(sha),
         intended: optional_path(intended.as_deref())?,
+        update: u32::try_from(raw.custom.1).ok().filter(|k| *k > 0),
     })
 }
 
@@ -166,10 +174,14 @@ impl SqlTx<'_> {
     ) -> Result<(), TxError> {
         self.part_event(id, PartEvent::Saved, now)?;
         self.run(
-            "UPDATE report_part SET file_path = ?2, staging_path = NULL, save_problem = NULL \
-             WHERE id = ?1",
+            "UPDATE report_part SET file_path = ?2, saved_path = ?2, staging_path = NULL, \
+             save_problem = NULL WHERE id = ?1",
             params![id.0, path.to_string()],
-        )
+        )?;
+        match self.log_saved(id, path, now)? {
+            Some(batch) => write_search_doc(self.tx, batch).tx(),
+            None => Ok(()),
+        }
     }
 
     pub(super) fn record_save_failure(

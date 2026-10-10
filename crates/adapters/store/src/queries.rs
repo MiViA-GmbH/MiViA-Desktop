@@ -1,18 +1,24 @@
 use async_trait::async_trait;
 use mivia_domain::ids::{BatchId, Timestamp};
+use mivia_ports::export::{ExportRequest, ExportSink};
+use mivia_ports::ipc::history::{
+    CustomReportsPage, HistoryCursor, HistoryEventsPage, HistoryFilter, HistoryPage,
+};
 use mivia_ports::ipc::screens::{AccountView, HoldsView, SeriesReportsView};
 use mivia_ports::ipc::views::{
     BatchCounts, BatchItem, BatchItemsPage, BatchSummary, BatchView, ComputationItem, FoldersView,
-    HistoryCursor, HistoryPage, NeedsAttentionView, OriginView,
+    NeedsAttentionView, OriginView,
 };
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{AccountScope, SettingsScope, StoreError};
 use mivia_ports::time::iso_utc;
 use rusqlite::{OptionalExtension, Row, Transaction, params};
 
+use crate::errors::{SqlResult, call_error};
 use crate::screens;
 use crate::sql;
 use crate::writer::SqliteStore;
+use crate::{config, export, history, history_lists};
 
 fn summary(row: &Row<'_>) -> rusqlite::Result<(BatchSummary, i64)> {
     let id: i64 = row.get(0)?;
@@ -53,32 +59,6 @@ pub(crate) fn summaries(
     tx.prepare_cached(query)?
         .query_map(values, summary)?
         .collect()
-}
-
-fn history(
-    tx: &Transaction<'_>,
-    scope: AccountScope,
-    after: (i64, i64),
-) -> rusqlite::Result<(Vec<BatchSummary>, Option<HistoryCursor>)> {
-    let mut rows = summaries(
-        tx,
-        &sql::history_body(),
-        params![scope.0.0, after.0, after.1],
-    )?;
-    let page = usize::try_from(sql::PAGE_SIZE).unwrap_or(usize::MAX);
-    let next = (rows.len() > page)
-        .then(|| rows.truncate(page))
-        .and_then(|()| rows.last())
-        .map(|(row, sort_at)| HistoryCursor {
-            sort_at: sort_at.to_string(),
-            id: row.id.clone(),
-        });
-    Ok((rows.into_iter().map(|(row, _)| row).collect(), next))
-}
-
-fn cursor(after: Option<&HistoryCursor>) -> Option<(i64, i64)> {
-    let after = after?;
-    Some((after.sort_at.parse().ok()?, after.id.parse().ok()?))
 }
 
 fn items(
@@ -133,24 +113,64 @@ impl Queries for SqliteStore {
     async fn list_history(
         &self,
         scope: AccountScope,
+        filter: HistoryFilter,
         after: Option<HistoryCursor>,
     ) -> Result<HistoryPage, StoreError> {
-        let start = cursor(after.as_ref());
         self.readers
             .read(move |tx, revision| {
-                let head = match start {
-                    Some(_) => Vec::new(),
-                    None => summaries(tx, &sql::history_head(), [scope.0.0])?,
-                };
-                let (rows, next) = history(tx, scope, start.unwrap_or((i64::MAX, i64::MAX)))?;
-                Ok(HistoryPage {
-                    revision,
-                    head: head.into_iter().map(|(row, _)| row).collect(),
-                    rows,
-                    next,
-                })
+                let page = history::list(tx, scope, &filter, after.as_ref())?;
+                Ok(HistoryPage { revision, ..page })
             })
             .await
+    }
+
+    async fn list_custom_reports(
+        &self,
+        scope: AccountScope,
+        q: Option<String>,
+        after: Option<String>,
+    ) -> Result<CustomReportsPage, StoreError> {
+        self.readers
+            .read(move |tx, revision| {
+                let page =
+                    history_lists::custom_reports(tx, scope, q.as_deref(), after.as_deref())?;
+                Ok(CustomReportsPage { revision, ..page })
+            })
+            .await
+    }
+
+    async fn list_batch_events(
+        &self,
+        scope: AccountScope,
+        id: BatchId,
+        after: Option<String>,
+    ) -> Result<HistoryEventsPage, StoreError> {
+        self.readers
+            .read(move |tx, revision| {
+                let page = history_lists::batch_events(tx, scope, id.0, after.as_deref())?;
+                Ok(HistoryEventsPage { revision, ..page })
+            })
+            .await
+    }
+
+    async fn export_history(
+        &self,
+        scope: AccountScope,
+        request: ExportRequest,
+        mut sink: Box<dyn ExportSink>,
+    ) -> Result<Box<dyn ExportSink>, StoreError> {
+        let conn = tokio_rusqlite::Connection::open(&self.path).await.store()?;
+        let exported = conn
+            .call(move |conn| {
+                config::configure_reader(conn).store()?;
+                export::export(conn, scope, &request, sink.as_mut())
+                    .map_err(|error| export::failure(&error))?;
+                Ok(sink)
+            })
+            .await
+            .map_err(call_error);
+        drop(conn.close().await);
+        exported
     }
 
     async fn list_needs_attention(
@@ -181,10 +201,12 @@ impl Queries for SqliteStore {
                     .query_row([scope.0.0, id.0], summary)
                     .optional()?;
                 let analyses = screens::analyses(tx, id.0)?;
+                let renamable = history::renamable(tx, id.0)?;
                 Ok(found.map(|(summary, _)| BatchView {
                     revision,
                     summary,
                     analyses,
+                    renamable,
                 }))
             })
             .await
