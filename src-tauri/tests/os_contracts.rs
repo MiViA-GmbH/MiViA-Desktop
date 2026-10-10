@@ -8,16 +8,20 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use mivia_domain::path::WinPath;
-use mivia_os::{NotifyWatcher, OsFileSystem, SystemClock};
+use mivia_os::{NotifyWatcher, OsFileSystem, SystemClock, WindowsCredentialStore};
+use mivia_ports::auth::{CredentialStore, ServerOrigin};
 use mivia_ports::clock::Clock;
 use mivia_ports::fs::FileSystem;
 use mivia_ports::watch::{FolderWatcher, FsSignal};
 use mivia_testkit::contract::Capability;
 use mivia_testkit::contract::clock::ClockHarness;
+use mivia_testkit::contract::credentials::CredentialHarness;
 use mivia_testkit::contract::fs::FsHarness;
 use mivia_testkit::contract::watch::WatchHarness;
 use mivia_testkit::watch::RecordingSink;
-use mivia_testkit::{clock_contract_tests, fs_contract_tests, watch_contract_tests};
+use mivia_testkit::{
+    clock_contract_tests, credentials_contract_tests, fs_contract_tests, watch_contract_tests,
+};
 use parking_lot::Mutex;
 use tempfile::TempDir;
 
@@ -161,6 +165,61 @@ impl ClockHarness for RealClock {
     }
 }
 
+struct RealCredentials {
+    store: Arc<WindowsCredentialStore>,
+    prefix: String,
+}
+
+const CASES: [&str; 3] = ["missing", "round-trip", "delete"];
+
+impl RealCredentials {
+    fn new() -> Self {
+        let unique = format!("MiViA Desktop Test/{}-{}/", std::process::id(), uuid_like());
+        Self {
+            store: Arc::new(WindowsCredentialStore::with_prefix(&unique).unwrap()),
+            prefix: unique,
+        }
+    }
+}
+
+fn uuid_like() -> u128 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos()
+}
+
+impl CredentialHarness for RealCredentials {
+    fn sut(&self) -> Arc<dyn CredentialStore> {
+        Arc::clone(&self.store) as _
+    }
+
+    fn origin(&self, case: &str) -> ServerOrigin {
+        ServerOrigin(format!("https://{case}.example.invalid:443"))
+    }
+}
+
+impl Drop for RealCredentials {
+    fn drop(&mut self) {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        for case in CASES {
+            let origin = self.origin(case);
+            runtime.block_on(self.store.delete(&origin)).unwrap();
+            assert!(
+                runtime
+                    .block_on(self.store.load(&origin))
+                    .unwrap()
+                    .is_none(),
+                "{} left behind",
+                self.prefix
+            );
+        }
+    }
+}
+
 fs_contract_tests!(RealFs::new());
+credentials_contract_tests!(RealCredentials::new());
 watch_contract_tests!(RealWatch::new());
 clock_contract_tests!(RealClock);

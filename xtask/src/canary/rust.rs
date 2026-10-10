@@ -183,9 +183,10 @@ fn plant_manifests(work: &Work) -> Result<()> {
         "crates/core/application/Cargo.toml",
         "mivia-store.workspace = true\n",
     )?;
-    work.append(
+    work.replace(
         "crates/adapters/server/Cargo.toml",
-        "mivia-testkit.workspace = true\n",
+        "[dependencies]\n",
+        "[dependencies]\nmivia-testkit.workspace = true\n",
     )?;
     work.append(
         "crates/core/domain/Cargo.toml",

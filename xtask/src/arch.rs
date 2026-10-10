@@ -118,7 +118,7 @@ pub(crate) const RULES: &[Rule] = &[
     Rule {
         krate: "mivia-desktop",
         may_use: DESKTOP,
-        dev_may_use: &["mivia-testkit"],
+        dev_may_use: &["mivia-testkit", "mivia-stub"],
         must_not_reach: &[],
         no_direct: &["rusqlite", "reqwest", "notify", "keyring-core"],
     },
