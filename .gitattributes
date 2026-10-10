@@ -7,3 +7,4 @@
 *.bmp binary
 *.ico binary
 *.db binary
+*.der binary

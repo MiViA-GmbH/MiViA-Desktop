@@ -10,6 +10,7 @@ mod legacy;
 mod locale;
 mod pipe;
 mod policy;
+mod proxy;
 mod reports;
 mod upload;
 mod watch;
@@ -18,11 +19,12 @@ pub use clock::SystemClock;
 pub use credentials::WindowsCredentialStore;
 pub use ffi::{
     KnownFolder, PIPE_INSTANCE_LIMIT, ProcessIdentity, accept_pipe_client, allow_foreground,
-    boot_time_unix_ms, clear_clipboard, clipboard_text, confirm, create_pipe_instance,
-    create_user_only, current_session_id, current_user_sid, harden_process, is_elevated,
-    known_folder, memory_is_low, open_file, pick_files, pick_folder, pipe_client, pipe_server_pid,
-    process_age_ms, process_identity, read_link, reveal_file, save_link, set_webview_visible,
-    show_error, spawn_session_watcher, user_locale_name, windows_user,
+    boot_time_unix_ms, certificate_issuer, clear_clipboard, clipboard_text, confirm,
+    create_pipe_instance, create_user_only, current_session_id, current_user_sid, harden_process,
+    is_elevated, known_folder, memory_is_low, open_file, pick_files, pick_folder, pipe_client,
+    pipe_server_pid, process_age_ms, process_identity, proxy_for_url, read_link, reveal_file,
+    save_link, set_webview_visible, show_error, spawn_session_watcher, user_locale_name,
+    windows_user,
 };
 pub use fs::OsFileSystem;
 pub use images::{ImageCount, count_images};
@@ -36,4 +38,5 @@ pub use legacy::{
 pub use locale::{SystemLocale, system_locale};
 pub use pipe::open_pipe_client;
 pub use policy::{machine_guid, read_policies};
+pub use proxy::{WinHttpProxyResolver, static_entries};
 pub use watch::NotifyWatcher;

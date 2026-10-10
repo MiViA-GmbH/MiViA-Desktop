@@ -22,7 +22,8 @@ serde_json = "=1.0.150"
 sha2 = "=0.11.0"
 sys-locale = "=0.3.2"
 tempfile = "=3.27.0"
-tokio = { version = "=1.53.1", features = ["rt", "time"] }
+tokio = { version = "=1.53.1", features = ["rt", "sync", "time"] }
+tracing = { version = "=0.1.44", default-features = false, features = ["std"] }
 walkdir = "=2.5.0"
 winreg = "=0.55.0"
 windows = { version = "=0.62.2", features = [
@@ -37,10 +38,12 @@ windows-native-keyring-store = { version = "=1.1.0", default-features = false }
 windows-sys = { version = "=0.61.2", features = [
     "Win32_Foundation",
     "Win32_Globalization",
+    "Win32_Networking_WinHttp",
     "Win32_Graphics_Gdi",
     "Win32_Security",
     "Win32_Security_Authentication_Identity",
     "Win32_Security_Authorization",
+    "Win32_Security_Cryptography",
     "Win32_Storage_FileSystem",
     "Win32_System_Com",
     "Win32_System_DataExchange",
@@ -62,3 +65,6 @@ windows-sys = { version = "=0.61.2", features = [
     "Win32_UI_Shell_Common",
     "Win32_UI_WindowsAndMessaging",
 ] }
+
+[dev-dependencies]
+tokio = { version = "=1.53.1", features = ["macros", "rt", "net", "io-util", "time"] }

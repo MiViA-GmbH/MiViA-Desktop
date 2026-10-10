@@ -77,7 +77,7 @@ const fn guid(folder: KnownFolder) -> GUID {
     }
 }
 
-fn utf16_until_nul(start: *const u16, max: usize) -> String {
+pub(super) fn utf16_until_nul(start: *const u16, max: usize) -> String {
     let mut length = 0;
     // SAFETY: callers pass a pointer to at least `max` readable u16 values.
     while length < max && unsafe { *start.add(length) } != 0 {
