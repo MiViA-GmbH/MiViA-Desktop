@@ -5,17 +5,22 @@ use std::time::Duration;
 
 use mivia_diagnostics::{Logging, remove_marker};
 use mivia_store::SqliteStore;
+
+use super::cx::Services;
+use super::telemetry::{flush_on_stop, record_stop};
 use parking_lot::Mutex;
 use tokio::runtime::{Handle, Runtime};
 
 const SESSION_END_CAP: Duration = Duration::from_secs(3);
 const QUIT_GRACE: Duration = Duration::from_secs(5);
 const RUNTIME_SHUTDOWN: Duration = Duration::from_secs(2);
+const TELEMETRY_STOP: Duration = Duration::from_secs(2);
 
 pub(super) struct Shutdown {
     runtime: Mutex<Option<Runtime>>,
     handle: Handle,
     store: OnceLock<Arc<SqliteStore>>,
+    services: OnceLock<Arc<Services>>,
     logging: Arc<Logging>,
     logs_dir: PathBuf,
     session_ending: AtomicBool,
@@ -28,6 +33,7 @@ impl Shutdown {
             handle: runtime.handle().clone(),
             runtime: Mutex::new(Some(runtime)),
             store: OnceLock::new(),
+            services: OnceLock::new(),
             logging,
             logs_dir,
             session_ending: AtomicBool::new(false),
@@ -37,6 +43,10 @@ impl Shutdown {
 
     pub(super) fn attach_store(&self, store: Arc<SqliteStore>) {
         drop(self.store.set(store));
+    }
+
+    pub(super) fn attach_services(&self, services: Arc<Services>) {
+        drop(self.services.set(services));
     }
 
     pub(super) fn session_ending(&self) {
@@ -52,7 +62,13 @@ impl Shutdown {
         let (done, finished) = mpsc::channel();
         *routine = Some(finished);
         let store = self.store.get().cloned();
+        let services = self.services.get().cloned();
+        let session_end = self.session_ending.load(Ordering::SeqCst);
         self.handle.spawn(async move {
+            if let Some(services) = services {
+                record_stop(&services, session_end);
+                drop(tokio::time::timeout(TELEMETRY_STOP, flush_on_stop(&services)).await);
+            }
             if let Some(store) = store
                 && let Err(error) = store.checkpoint().await
             {

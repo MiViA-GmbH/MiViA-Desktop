@@ -17,6 +17,7 @@ use tauri::AppHandle;
 use super::super::account::{self, clear_clipboard_if, identify, key_from, store_key};
 use super::super::cx::{Cx, Ready};
 use super::super::folders::{self, folder_view, report_folder, report_view};
+use super::super::telemetry;
 use super::language;
 use super::legacy::{legacy_install, legacy_view, read_config};
 
@@ -171,13 +172,19 @@ pub(crate) async fn save(cx: &Cx, input: SetupInput) -> Result<SetupView, AppErr
         .setup
         .legacy()
         .map(|install| install.folder.display().to_string());
-    update(&ready, move |draft| {
+    let (before, after) = update(&ready, move |draft| {
+        let before = (draft.step, draft.has(SetupOption::Telemetry));
         if input.legacy_take.is_some() && draft.legacy_folder.is_none() {
             draft.legacy_folder = found;
         }
         draft.apply(input);
+        (before, (draft.step, draft.has(SetupOption::Telemetry)))
     })
     .await?;
+    if before.1 != after.1 {
+        telemetry::refresh_gate(&ready.services).await;
+    }
+    telemetry::step_changed(&ready.services, before.0, after.0).await;
     view(cx).await
 }
 

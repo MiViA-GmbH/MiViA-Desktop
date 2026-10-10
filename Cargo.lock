@@ -2345,6 +2345,7 @@ version = "0.0.0"
 dependencies = [
  "arc-swap",
  "async-trait",
+ "flate2",
  "getrandom 0.4.3",
  "mivia-application",
  "mivia-diagnostics",

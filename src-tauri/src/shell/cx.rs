@@ -22,6 +22,7 @@ use tauri::async_runtime::JoinHandle;
 use tokio::sync::Notify;
 
 use super::setup::Session;
+use super::telemetry::Telemetry;
 
 pub(crate) struct Services {
     pub(crate) store: Arc<SqliteStore>,
@@ -34,6 +35,7 @@ pub(crate) struct Services {
     pub(crate) version: String,
     pub(crate) diagnostics: DiagnosticsContext,
     pub(crate) logging: Arc<Logging>,
+    pub(crate) telemetry: Arc<Telemetry>,
 }
 
 pub(crate) struct Ready {

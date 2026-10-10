@@ -5,6 +5,7 @@ use mivia_ports::ipc::error::AppError;
 use mivia_ports::ipc::one_off::OneOffInput;
 use mivia_ports::ipc::screens::{LanguageSetting, OpenTarget};
 use mivia_ports::store::{AttentionCleared, StoreExt};
+use mivia_ports::telemetry::{EventKind, ProductEvent};
 use tauri::{AppHandle, State};
 
 use crate::shell::cx::{Cx, now, parse_id};
@@ -34,37 +35,54 @@ pub(crate) async fn set_language(
 #[specta::specta]
 pub(crate) async fn finish_series(cx: State<'_, Cx>, id: String) -> Result<(), AppError> {
     let ready = cx.ready().await;
-    let finished = ready
+    let batch = BatchId(parse_id(&id, "finish_series")?);
+    ready
         .intake()?
-        .finish_series(BatchId(parse_id(&id, "finish_series")?));
-    finished
+        .finish_series(batch)
         .await
-        .map_err(|error| intake_error(&error, "finish_series"))
+        .map_err(|error| intake_error(&error, "finish_series"))?;
+    ready.services.telemetry.record(
+        ProductEvent::new(EventKind::BatchManualClose).entity("batch_id", "batch", batch.0),
+    );
+    Ok(())
 }
 
 #[tauri::command]
 #[specta::specta]
 pub(crate) async fn pause_folder(cx: State<'_, Cx>, id: String) -> Result<(), AppError> {
     let ready = cx.ready().await;
-    let paused = ready
+    let folder = FolderId(parse_id(&id, "pause_folder")?);
+    ready
         .intake()?
-        .pause_folder(FolderId(parse_id(&id, "pause_folder")?));
-    paused
+        .pause_folder(folder)
         .await
-        .map_err(|error| intake_error(&error, "pause_folder"))
+        .map_err(|error| intake_error(&error, "pause_folder"))?;
+    ready
+        .services
+        .telemetry
+        .record(ProductEvent::new(EventKind::FolderPaused).entity("folder_id", "folder", folder.0));
+    Ok(())
 }
 
 #[tauri::command]
 #[specta::specta]
 pub(crate) async fn resume_folder(cx: State<'_, Cx>, id: String) -> Result<u32, AppError> {
     let ready = cx.ready().await;
+    let folder = FolderId(parse_id(&id, "resume_folder")?);
     let resumed = ready
         .intake()?
-        .resume_folder(FolderId(parse_id(&id, "resume_folder")?));
-    resumed.await.map_or_else(
-        |error| Err(intake_error(&error, "resume_folder")),
-        |resumed| Ok(u32::try_from(resumed.waiting).unwrap_or(u32::MAX)),
-    )
+        .resume_folder(folder)
+        .await
+        .map_err(|error| intake_error(&error, "resume_folder"))?;
+    ready
+        .services
+        .telemetry
+        .record(ProductEvent::new(EventKind::FolderResumed).entity(
+            "folder_id",
+            "folder",
+            folder.0,
+        ));
+    Ok(u32::try_from(resumed.waiting).unwrap_or(u32::MAX))
 }
 
 #[tauri::command]

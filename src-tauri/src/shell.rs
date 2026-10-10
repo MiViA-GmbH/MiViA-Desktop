@@ -15,10 +15,12 @@ pub(crate) mod locale;
 pub(crate) mod one_off;
 pub(crate) mod open;
 mod pipeline;
+pub(crate) mod privacy;
 pub(crate) mod setup;
 mod shutdown;
 mod start;
 pub(crate) mod support;
+pub(crate) mod telemetry;
 mod tray;
 pub(crate) mod window;
 
@@ -37,6 +39,7 @@ use mivia_diagnostics::{
 use mivia_os::SystemClock;
 use mivia_ports::clock::Clock;
 use mivia_ports::store::history::Actor;
+use mivia_ports::telemetry::{EventKind, ProductEvent};
 use mivia_store::{SqliteStore, StoreConfig};
 use tauri::{AppHandle, Manager, RunEvent};
 use tokio::sync::mpsc::{Receiver, channel};
@@ -78,6 +81,7 @@ fn start(
     let logging = Arc::new(start_logging(&logs)?);
     install_panic_hook(logs.clone(), context.clone(), Arc::clone(&logging));
     write_marker(&logs, &context)?;
+    let previous_unclean = matches!(previous, PreviousSession::Unclean { .. });
     log_start(&context, &primary, previous, hardening);
     let (handoffs, received) = channel(HANDOFF_QUEUE);
     let data_dir = primary.data_dir.clone();
@@ -92,6 +96,7 @@ fn start(
         minimized,
         diagnostics: context,
         logging,
+        previous_unclean,
     };
     let app = builder(Arc::clone(&shutdown), launch, received).build(tauri_context)?;
     app.run(move |_, event| on_event(&shutdown, &event));
@@ -166,6 +171,7 @@ struct Launch {
     minimized: bool,
     diagnostics: DiagnosticsContext,
     logging: Arc<Logging>,
+    previous_unclean: bool,
 }
 
 async fn open_store(launch: &Launch, observer: feed::Feed) -> Option<Arc<SqliteStore>> {
@@ -198,7 +204,10 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
     let Some(services) = services(store, &launch) else {
         return;
     };
+    shutdown.attach_services(Arc::clone(&services));
+    telemetry::refresh_gate(&services).await;
     let completed = setup_state(&app.state::<Cx>(), &services).await;
+    telemetry::run(&services, &launch, completed);
     app.state::<Cx>()
         .set(account::compose(&services, launch.minimized, None).await);
     let reporting = services.policies.issue_reporting != Some(IssueReporting::Off);
@@ -223,14 +232,26 @@ fn open_at_start(app: &AppHandle) {
     }
 }
 
+async fn record_handoff(app: &AppHandle, kind: &'static str) {
+    let ready = app.state::<Cx>().ready().await;
+    ready
+        .services
+        .telemetry
+        .record(ProductEvent::new(EventKind::InstanceHandoff).tag("kind", kind));
+}
+
 async fn receive(app: AppHandle, mut received: Receiver<Handoff>, data_dir: PathBuf) {
     while let Some(handoff) = received.recv().await {
         match handoff {
             Handoff::Wake => {
                 tracing::info!("instance.wake");
+                record_handoff(&app, "wake").await;
                 open_at_start(&app);
             }
-            Handoff::Spool(id) => one_off::ingest(&app, &instance::spool_file(&data_dir, id)).await,
+            Handoff::Spool(id) => {
+                record_handoff(&app, "spool").await;
+                one_off::ingest(&app, &instance::spool_file(&data_dir, id)).await;
+            }
         }
     }
 }

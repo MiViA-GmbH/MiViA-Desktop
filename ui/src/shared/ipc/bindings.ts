@@ -104,6 +104,10 @@ export const commands = {
 	listPendingReports: () => __TAURI_INVOKE<PendingReportView[]>("list_pending_reports"),
 	cancelPendingReport: (reportId: string) => __TAURI_INVOKE<null>("cancel_pending_report", { reportId }),
 	deleteLocalLogs: () => __TAURI_INVOKE<number>("delete_local_logs"),
+	getPrivacy: () => __TAURI_INVOKE<PrivacyView>("get_privacy"),
+	setTelemetry: (enabled: boolean) => __TAURI_INVOKE<PrivacyView>("set_telemetry", { enabled }),
+	listSentTelemetry: () => __TAURI_INVOKE<SentBatchView[]>("list_sent_telemetry"),
+	notePrivacyViewed: (panel: PrivacyPanel) => __TAURI_INVOKE<null>("note_privacy_viewed", { panel }),
 };
 
 /** Events */
@@ -558,6 +562,15 @@ export type PolicyRow = {
 
 export type PolicySource = "machine" | "user";
 
+export type PrivacyPanel = "whatIsSent" | "viewSentData";
+
+export type PrivacyView = {
+	enabled: boolean,
+	locked: boolean,
+	installId: string,
+	machineId: string | null,
+};
+
 export type ProblemReportInput = {
 	description: string,
 	range: ReportRange,
@@ -622,6 +635,13 @@ export type ReportView = {
 export type Route = "overview" | "problemReport";
 
 export type SendOutcome = { kind: "sent"; reference: string } | { kind: "queued"; reference: string } | { kind: "saveAndEmail"; reference: string };
+
+export type SentBatchView = {
+	batchId: string,
+	sentAt: string,
+	events: number,
+	json: string,
+};
 
 export type SeriesReportsView = {
 	revision: string,

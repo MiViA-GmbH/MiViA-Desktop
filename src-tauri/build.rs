@@ -59,6 +59,10 @@ const COMMANDS: &[&str] = &[
     "list_pending_reports",
     "cancel_pending_report",
     "delete_local_logs",
+    "get_privacy",
+    "set_telemetry",
+    "list_sent_telemetry",
+    "note_privacy_viewed",
 ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

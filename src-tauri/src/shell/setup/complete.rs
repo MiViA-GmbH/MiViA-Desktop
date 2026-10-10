@@ -23,7 +23,7 @@ use tauri::AppHandle;
 use super::super::account::{identify, rebuild};
 use super::super::cx::{Cx, Ready, Services};
 use super::super::folders::{display, folder_view, report_folder, report_view};
-use super::super::{intake, integration, tray};
+use super::super::{intake, integration, telemetry, tray};
 use super::language;
 use super::legacy::switch_off;
 
@@ -168,6 +168,7 @@ pub(crate) async fn complete(cx: &Cx, app: &AppHandle) -> Result<DoneView, AppEr
         language,
     };
     let problems = start(cx, app, &services, begin).await;
+    telemetry::setup_finished(&services, &draft, folder, integration).await;
     let (legacy, legacy_startup) = switch_off(cx, &draft, &services).await;
     let effects = Effects {
         problems,

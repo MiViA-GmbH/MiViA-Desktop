@@ -66,6 +66,10 @@
 		"allow-save-problem-report",
 		"allow-list-pending-reports",
 		"allow-cancel-pending-report",
-		"allow-delete-local-logs"
+		"allow-delete-local-logs",
+		"allow-get-privacy",
+		"allow-set-telemetry",
+		"allow-list-sent-telemetry",
+		"allow-note-privacy-viewed"
 	]
 }

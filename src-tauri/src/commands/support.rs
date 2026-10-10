@@ -82,5 +82,5 @@ pub(crate) async fn cancel_pending_report(
 #[specta::specta]
 pub(crate) async fn delete_local_logs(cx: State<'_, Cx>) -> Result<u32, AppError> {
     let ready = cx.ready().await;
-    Ok(support::delete_logs(&cx, &ready))
+    Ok(support::delete_logs(&cx, &ready).await)
 }

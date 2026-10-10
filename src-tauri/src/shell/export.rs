@@ -14,6 +14,7 @@ use uuid::Uuid;
 use super::cx::{Cx, Ready, now, parse_id};
 use super::history::{history, invalid};
 use super::setup::language;
+use super::telemetry::exported;
 
 const SITE: &str = "export_history";
 
@@ -96,9 +97,10 @@ pub(crate) async fn export(
         target,
         now: at,
     };
-    let exported = history(&ready).export_history(job).await;
+    let done = history(&ready).export_history(job).await;
     drop(std::fs::remove_dir_all(temp.to_string()));
-    let view = exported.map_err(|error| history_error(&error, SITE))?;
+    let view = done.map_err(|error| history_error(&error, SITE))?;
     cx.setup.used_pick(pick);
+    exported(&ready.services, &view.files);
     Ok(view)
 }

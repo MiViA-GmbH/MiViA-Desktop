@@ -17,6 +17,8 @@ use mivia_ports::ipc::support::{
     SupportView,
 };
 use mivia_ports::server::{ProblemReportForm, ServerApi};
+use mivia_ports::store::StoreExt;
+use mivia_ports::telemetry::{EventKind, ProductEvent};
 use serde_json::{Map, Value};
 use uuid::Uuid;
 
@@ -30,6 +32,7 @@ const RETRY_EVERY: Duration = Duration::from_secs(60);
 pub(crate) struct Draft {
     form: ProblemReportForm,
     bundle: Vec<u8>,
+    names: bool,
 }
 
 fn refused(code: &str, site: &str) -> AppError {
@@ -90,7 +93,22 @@ pub(crate) fn view(ready: &Ready) -> SupportView {
 }
 
 pub(crate) fn claim_offer(cx: &Cx, ready: &Ready, signature: &str) -> bool {
-    paths(ready).dialog && cx.offers.lock().claim(signature, now())
+    let offered = paths(ready).dialog && cx.offers.lock().claim(signature, now());
+    if offered {
+        ready
+            .services
+            .telemetry
+            .record(ProductEvent::new(EventKind::ProblemReportOffered).tag("trigger", "error"));
+    }
+    offered
+}
+
+fn record_sent(services: &Services, state: &'static str, names: bool) {
+    services.telemetry.record(
+        ProductEvent::new(EventKind::ProblemReportSent)
+            .tag("state", state)
+            .flag("names_included", names),
+    );
 }
 
 fn since(range: ReportRange, to: i64) -> i64 {
@@ -153,6 +171,7 @@ pub(crate) async fn prepare(
     *cx.report_draft.lock() = Some(Draft {
         form,
         bundle: built.bytes,
+        names: include_names,
     });
     Ok(preview)
 }
@@ -188,6 +207,7 @@ pub(crate) async fn send(cx: &Cx, id: &str) -> Result<SendOutcome, AppError> {
         return Ok(SendOutcome::SaveAndEmail { reference });
     };
     let draft = take_draft(cx, id, SITE)?;
+    let names = draft.names;
     let outbox = outbox(services);
     let at = now().0;
     outbox
@@ -195,11 +215,13 @@ pub(crate) async fn send(cx: &Cx, id: &str) -> Result<SendOutcome, AppError> {
         .map_err(|error| internal(&error, SITE))?;
     let api = server_api(services, ready.scope.0, authorizer);
     let delivered = outbox.deliver(&api, id, at).await;
-    Ok(match delivered.map_err(|error| internal(&error, SITE))? {
-        Delivery::Sent | Delivery::Expired => SendOutcome::Sent { reference },
-        Delivery::Retry => SendOutcome::Queued { reference },
-        Delivery::SaveAndEmail => SendOutcome::SaveAndEmail { reference },
-    })
+    let (outcome, state) = match delivered.map_err(|error| internal(&error, SITE))? {
+        Delivery::Sent | Delivery::Expired => (SendOutcome::Sent { reference }, "sent"),
+        Delivery::Retry => (SendOutcome::Queued { reference }, "queued"),
+        Delivery::SaveAndEmail => (SendOutcome::SaveAndEmail { reference }, "failed"),
+    };
+    record_sent(services, state, names);
+    Ok(outcome)
 }
 
 fn downloads(services: &Services) -> Option<PathBuf> {
@@ -216,11 +238,14 @@ pub(crate) async fn save(cx: &Cx, id: &str) -> Result<(), AppError> {
     let services = &ready.services;
     dialog(&ready, SITE)?;
     let outbox = outbox(services);
-    let bundle = match take_draft(cx, &id, SITE) {
-        Ok(draft) => draft.bundle,
-        Err(_) => outbox
-            .bundle(&id)
-            .map_err(|_| refused("reportExpired", SITE))?,
+    let (bundle, names) = match take_draft(cx, &id, SITE) {
+        Ok(draft) => (draft.bundle, draft.names),
+        Err(_) => (
+            outbox
+                .bundle(&id)
+                .map_err(|_| refused("reportExpired", SITE))?,
+            false,
+        ),
     };
     let folder = downloads(services).ok_or_else(|| refused("noDownloads", SITE))?;
     let file = folder.join(format!("MiViA-report-{id}.zip"));
@@ -238,6 +263,7 @@ pub(crate) async fn save(cx: &Cx, id: &str) -> Result<(), AppError> {
     .map_err(|error| internal(&error, SITE))?;
     delivered.map_err(|error| internal(&error, SITE))?;
     outbox.remove(&id);
+    record_sent(services, "saved", names);
     tracing::info!(report_id = %id, "report.saved");
     Ok(())
 }
@@ -257,9 +283,12 @@ pub(crate) fn cancel(cx: &Cx, ready: &Ready, id: &str) -> Result<(), AppError> {
     Ok(())
 }
 
-pub(crate) fn delete_logs(cx: &Cx, ready: &Ready) -> u32 {
+pub(crate) async fn delete_logs(cx: &Cx, ready: &Ready) -> u32 {
     *cx.report_draft.lock() = None;
     outbox(&ready.services).clear();
+    if let Err(error) = ready.store.write(|tx| tx.telemetry().delete_sent()).await {
+        tracing::warn!(?error, "telemetry.deleteSentFailed");
+    }
     let deleted = delete_local_logs(&ready.services.data_dir.join("logs"));
     tracing::info!(deleted, "logs.deleted");
     u32::try_from(deleted).unwrap_or(u32::MAX)

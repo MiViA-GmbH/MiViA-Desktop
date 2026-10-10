@@ -15,10 +15,12 @@ use mivia_ports::ipc::views::OriginView;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::reports::ReportSpec;
 use mivia_ports::store::{StoreError, StoreExt, TxError};
+use mivia_ports::telemetry::{EventKind, ProductEvent};
 
 use super::cx::{Cx, Ready, now, parse_id};
 use super::folders::known;
 use super::setup::language;
+use super::telemetry::custom_report;
 
 pub(crate) fn history(ready: &Ready) -> History {
     History {
@@ -135,6 +137,7 @@ pub(crate) async fn create(cx: &Cx, input: CustomReportInput) -> Result<u32, App
         .iter()
         .for_each(|id| cx.setup.used_pick(id));
     ready.wake();
+    custom_report(&ready.services, created.len(), input.series.len());
     Ok(u32::try_from(created.len()).unwrap_or(u32::MAX))
 }
 
@@ -160,6 +163,16 @@ pub(crate) async fn report_action(cx: &Cx, id: &str, action: ReportAction) -> Re
     };
     done.map_err(|error| history_error(&error, SITE))?;
     ready.wake();
+    if matches!(action, ReportAction::Update) {
+        ready
+            .services
+            .telemetry
+            .record(ProductEvent::new(EventKind::ReportStaleUpdated).entity(
+                "report_id",
+                "report",
+                report.0,
+            ));
+    }
     Ok(())
 }
 
@@ -176,7 +189,7 @@ pub(crate) async fn rename(cx: &Cx, id: &str, label: String) -> Result<(), AppEr
             now(),
         ))
         .await;
-    renamed.map_err(|error| match error {
+    let outcome = renamed.map_err(|error| match error {
         StoreError::Tx(TxError::Illegal(_)) => AppError::new(
             AppErrorKind::Conflict,
             Some("renameLocked"),
@@ -188,5 +201,11 @@ pub(crate) async fn rename(cx: &Cx, id: &str, label: String) -> Result<(), AppEr
         | StoreError::Unavailable
         | StoreError::DiskFull
         | StoreError::Sql(_)) => app_error(&other, SITE),
-    })
+    });
+    if outcome.is_ok() {
+        ready.services.telemetry.record(
+            ProductEvent::new(EventKind::BatchRenamed).entity("batch_id", "batch", batch.0),
+        );
+    }
+    outcome
 }

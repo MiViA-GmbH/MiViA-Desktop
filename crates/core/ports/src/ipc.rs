@@ -3,6 +3,7 @@ pub mod error;
 pub mod folders;
 pub mod history;
 pub mod one_off;
+pub mod privacy;
 pub mod screens;
 pub mod setup;
 pub mod support;

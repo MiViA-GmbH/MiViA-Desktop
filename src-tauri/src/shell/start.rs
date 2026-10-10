@@ -16,6 +16,7 @@ use mivia_store::SqliteStore;
 use tauri::{AppHandle, Manager};
 
 use super::cx::{Cx, Services};
+use super::telemetry::{self, Telemetry};
 use super::{Launch, integration, pipeline, setup};
 
 const BACKGROUND_DELAY: Duration = Duration::from_secs(2);
@@ -36,9 +37,10 @@ pub(super) async fn setup_state(cx: &Cx, services: &Services) -> bool {
         .ok()
         .flatten();
     let resumed =
-        SetupDraft::parse(draft.as_deref()).is_some_and(|draft| draft.step != SetupStep::Welcome);
-    if resumed {
+        SetupDraft::parse(draft.as_deref()).filter(|draft| draft.step != SetupStep::Welcome);
+    if let Some(draft) = resumed {
         cx.setup.mark_resumed();
+        telemetry::restarted(services, draft.step);
     }
     completed
 }
@@ -110,5 +112,9 @@ pub(super) fn services(store: Arc<SqliteStore>, launch: &Launch) -> Option<Arc<S
         version: launch.version.clone(),
         diagnostics: launch.diagnostics.clone(),
         logging: Arc::clone(&launch.logging),
+        telemetry: Arc::new(Telemetry::new(
+            launch.diagnostics.session_id.clone(),
+            launch.diagnostics.install_id.clone(),
+        )),
     }))
 }

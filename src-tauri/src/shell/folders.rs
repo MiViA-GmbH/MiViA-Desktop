@@ -23,6 +23,7 @@ use tauri::AppHandle;
 
 use super::cx::{Cx, Ready};
 use super::setup::language;
+use super::telemetry::folder_added;
 
 const COUNT_CAP: u32 = 10_000;
 const COUNT_BUDGET: Duration = Duration::from_secs(2);
@@ -293,5 +294,6 @@ pub(crate) async fn add(cx: &Cx, input: NewFolderInput) -> Result<String, AppErr
         .report_pick
         .iter()
         .for_each(|pick| cx.setup.used_pick(pick));
+    folder_added(&ready.services, id, &input);
     Ok(id.0.to_string())
 }
