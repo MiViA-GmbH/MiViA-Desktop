@@ -1,0 +1,514 @@
+schema = 1
+retention_days = 400
+
+[[event]]
+name = "session.start"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Counts app launches and how long start-up takes."
+purpose_de = "Zählt App-Starts und wie lange der Start dauert."
+fields = { state = { enum = ["autostart", "user", "sendto", "update_relaunch", "wizard"] }, duration_ms = "num", proxy_kind = { enum = ["direct", "static", "pac", "wpad", "env", "policy"] }, first_run = "flag", prev_unclean = "flag", holds_active = "num" }
+
+[[event]]
+name = "session.alive"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Hourly health sample: uptime, queue sizes and how many events were dropped."
+purpose_de = "Stündliche Zustandsmessung: Laufzeit, Warteschlangen und Zahl verworfener Ereignisse."
+fields = { duration_ms = "num", open_batches = "num", folders_active = "num", folders_paused = "num", folders_missing = "num", holds_active = "num", attention_open = "num", errors_suppressed = "num", tlm_buffer = "num", tlm_dropped_core = "num", tlm_dropped_interaction = "num", tlm_send_failures = "num", tlm_last_success_age_s = "num", window_open = "flag" }
+
+[[event]]
+name = "session.stop"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Records how a session ended and how long it ran."
+purpose_de = "Hält fest, wie eine Sitzung endete und wie lange sie lief."
+fields = { state = { enum = ["quit", "update", "os_shutdown", "account_switch"] }, duration_ms = "num" }
+
+[[event]]
+name = "session.unclean"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Detects that the previous session ended without a clean stop."
+purpose_de = "Erkennt, dass die vorige Sitzung ohne sauberes Beenden endete."
+fields = { prev_version = "version", last_line_age_s = "num" }
+
+[[event]]
+name = "crash"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Reports a crash the app caught itself."
+purpose_de = "Meldet einen Absturz, den die App selbst abgefangen hat."
+fields = { kind = { enum = ["panic", "webview", "task_panic"] }, prev_session = "flag" }
+
+[[event]]
+name = "settings.snapshot"
+category = "usage"
+priority = "core"
+purpose_en = "Shows which settings are in use, as on and off values only."
+purpose_de = "Zeigt, welche Einstellungen genutzt werden, nur als Ein/Aus-Werte."
+fields = { language = { enum = ["auto", "en", "de"] }, autostart = "flag", explorer_entries = "flag", folders = "num" }
+
+[[event]]
+name = "wizard.step_shown"
+category = "usage"
+priority = "core"
+purpose_en = "Shows which setup step was displayed."
+purpose_de = "Zeigt, welcher Einrichtungsschritt angezeigt wurde."
+fields = { state = { enum = ["welcome", "legacy", "key", "folder", "series", "models", "finish"] } }
+
+[[event]]
+name = "wizard.step_completed"
+category = "usage"
+priority = "core"
+purpose_en = "Shows which setup step was completed and how long it took."
+purpose_de = "Zeigt, welcher Einrichtungsschritt abgeschlossen wurde und wie lange er dauerte."
+fields = { state = { enum = ["welcome", "legacy", "key", "folder", "series", "models", "finish"] }, duration_ms = "num" }
+
+[[event]]
+name = "wizard.back"
+category = "usage"
+priority = "core"
+purpose_en = "Shows which setup step the user went back from and to."
+purpose_de = "Zeigt, von welchem Einrichtungsschritt zu welchem zurückgegangen wurde."
+fields = { from = { enum = ["welcome", "legacy", "key", "folder", "series", "models", "finish"] }, to = { enum = ["welcome", "legacy", "key", "folder", "series", "models", "finish"] } }
+
+[[event]]
+name = "wizard.error"
+category = "usage"
+priority = "core"
+purpose_en = "Shows the kind of problem that stopped a setup step."
+purpose_de = "Zeigt die Art des Problems, das einen Einrichtungsschritt aufgehalten hat."
+fields = { state = { enum = ["welcome", "legacy", "key", "folder", "series", "models", "finish"] }, kind = { enum = ["dns", "connect", "timeout", "tls", "proxy_auth", "redirect", "http_4xx", "http_5xx", "key_invalid", "license", "folder"] }, count = "num" }
+
+[[event]]
+name = "wizard.legacy_found"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that an older installation was found during setup."
+purpose_de = "Zeigt, dass bei der Einrichtung eine ältere Installation gefunden wurde."
+fields = { source = "num" }
+
+[[event]]
+name = "wizard.restarted"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that setup was resumed after the app was closed."
+purpose_de = "Zeigt, dass die Einrichtung nach dem Schließen der App fortgesetzt wurde."
+fields = { state = { enum = ["welcome", "legacy", "key", "folder", "series", "models", "finish"] }, previous_duration_ms = "num" }
+
+[[event]]
+name = "wizard.finished"
+category = "usage"
+priority = "core"
+purpose_en = "Shows the choices made in setup, such as the arrival preset and options."
+purpose_de = "Zeigt die in der Einrichtung getroffenen Entscheidungen, etwa Voreinstellung und Optionen."
+fields = { duration_ms = "num", preset = { enum = ["microscope", "whole_folder", "by_hand", "none"] }, report_mode = { enum = ["subfolder", "beside", "custom", "none"] }, autostart = "flag", explorer = "flag", existing_images = { enum = ["only_new", "also_existing", "none"] }, skipped_steps = "num", model_choices = "num" }
+
+[[event]]
+name = "account.connected"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that an access key was accepted."
+purpose_de = "Zeigt, dass ein Zugangsschlüssel akzeptiert wurde."
+fields = { kind = { enum = ["access_key"] }, imported_from_v1 = "flag" }
+
+[[event]]
+name = "account.switched"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that the app switched to another account and why."
+purpose_de = "Zeigt, dass die App zu einem anderen Konto gewechselt hat und warum."
+fields = { state = { enum = ["user", "key_invalid", "key_removed"] } }
+
+[[event]]
+name = "account.disconnected"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that the account was disconnected and why."
+purpose_de = "Zeigt, dass das Konto getrennt wurde und warum."
+fields = { state = { enum = ["user", "key_invalid", "key_removed"] } }
+
+[[event]]
+name = "legacy.migrated"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows the result of importing settings from an older installation."
+purpose_de = "Zeigt das Ergebnis des Imports aus einer älteren Installation."
+fields = { count = "num", state = { enum = ["done", "pending", "failed"] } }
+
+[[event]]
+name = "folder.added"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that a watched folder was added and with which options."
+purpose_de = "Zeigt, dass ein überwachter Ordner hinzugefügt wurde und mit welchen Optionen."
+fields = { folder_id = "uuid", via = { enum = ["wizard", "settings", "empty_state"] }, preset = { enum = ["microscope", "whole_folder", "by_hand"] }, report_mode = { enum = ["subfolder", "beside", "custom"] }, is_network = "flag", is_cloud = "flag", existing_images = { enum = ["only_new", "also_existing", "none"] }, count = "num", model_choices = "num" }
+
+[[event]]
+name = "folder.changed"
+category = "usage"
+priority = "core"
+purpose_en = "Shows which kind of folder setting was changed."
+purpose_de = "Zeigt, welche Art von Ordnereinstellung geändert wurde."
+fields = { folder_id = "uuid", preset_from = { enum = ["microscope", "whole_folder", "by_hand"] }, preset_to = { enum = ["microscope", "whole_folder", "by_hand"] }, report_mode_from = { enum = ["subfolder", "beside", "custom"] }, report_mode_to = { enum = ["subfolder", "beside", "custom"] }, models_added = "num", models_removed = "num" }
+
+[[event]]
+name = "folder.paused"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that a folder was paused."
+purpose_de = "Zeigt, dass ein Ordner pausiert wurde."
+fields = { folder_id = "uuid" }
+
+[[event]]
+name = "folder.resumed"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that a folder was resumed and how long it was paused."
+purpose_de = "Zeigt, dass ein Ordner fortgesetzt wurde und wie lange er pausiert war."
+fields = { folder_id = "uuid", duration_ms = "num" }
+
+[[event]]
+name = "folder.removed"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that a folder was removed and how old it was."
+purpose_de = "Zeigt, dass ein Ordner entfernt wurde und wie alt er war."
+fields = { folder_id = "uuid", age_days = "num" }
+
+[[event]]
+name = "folder.condition"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that a folder became unavailable or available again."
+purpose_de = "Zeigt, dass ein Ordner nicht mehr oder wieder verfügbar wurde."
+fields = { folder_id = "uuid", state = { enum = ["ok", "missing", "waiting_for_network"] }, duration_ms = "num", drive_type = { enum = ["local", "removable", "network", "cloud"] } }
+
+[[event]]
+name = "watcher.rescan"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows why a folder had to be scanned again."
+purpose_de = "Zeigt, warum ein Ordner erneut durchsucht werden musste."
+fields = { folder_id = "uuid", reason = { enum = ["overflow", "error", "resume", "channel_full"] } }
+
+[[event]]
+name = "resume.catchup"
+category = "usage"
+priority = "core"
+purpose_en = "Shows how the question about images that arrived while paused was answered."
+purpose_de = "Zeigt, wie die Frage zu Bildern aus der Pause beantwortet wurde."
+fields = { folder_id = "uuid", count = "num", state = { enum = ["analyze", "skip"] } }
+
+[[event]]
+name = "batch.closed"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows how and when a series was closed and how many files it had."
+purpose_de = "Zeigt, wie und wann eine Serie abgeschlossen wurde und wie viele Dateien sie hatte."
+fields = { batch_id = "uuid", folder_id = "uuid", origin = { enum = ["folder", "one_off"] }, reason = { enum = ["quiet_period", "cap", "manual", "restart", "account_switch", "one_off"] }, count = "num", duration_ms = "num" }
+
+[[event]]
+name = "batch.manual_close"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that a series was finished by hand."
+purpose_de = "Zeigt, dass eine Serie von Hand abgeschlossen wurde."
+fields = { batch_id = "uuid" }
+
+[[event]]
+name = "batch.renamed"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that a series was renamed. The name is never sent."
+purpose_de = "Zeigt, dass eine Serie umbenannt wurde. Der Name wird nie gesendet."
+fields = { batch_id = "uuid" }
+
+[[event]]
+name = "upload.failed"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows why an image could not be uploaded, with its size and format."
+purpose_de = "Zeigt, warum ein Bild nicht hochgeladen werden konnte, mit Größe und Format."
+fields = { batch_id = "uuid", state = { enum = ["rejected", "changed", "vanished", "unreadable", "keeps_breaking"] }, bytes = "num", width = "num", height = "num", format = { enum = ["tif", "png", "jpg", "bmp", "other"] } }
+
+[[event]]
+name = "submit.done"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows the result of sending images for analysis."
+purpose_de = "Zeigt das Ergebnis der Übergabe von Bildern zur Analyse."
+fields = { count = "num", duration_ms = "num", state = { enum = ["ok", "ambiguous", "error"] }, model_id = "uuid", recovery_adopted = "num", recovery_resubmitted = "num" }
+
+[[event]]
+name = "computation.settled"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows how an analysis ended and how long it took."
+purpose_de = "Zeigt, wie eine Analyse endete und wie lange sie dauerte."
+fields = { computation_id = "uuid", batch_id = "uuid", folder_id = "uuid", origin = { enum = ["folder", "one_off"] }, model_id = "uuid", state = { enum = ["done", "failed", "lost", "cancelled", "unavailable", "superseded"] }, duration_ms = "num", e2e_ms = "num", customization_id = "uuid", reused = "flag", resubmitted = "flag", queue_ms = "num", upload_ms = "num", polls = "num" }
+
+[[event]]
+name = "attention.raised"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that an item appeared under Needs attention and of which kind."
+purpose_de = "Zeigt, dass ein Eintrag unter Aufmerksamkeit erforderlich erschien und welcher Art."
+fields = { kind = { enum = ["failed_images", "report_problem", "report_not_saved", "other"] } }
+
+[[event]]
+name = "attention.cleared"
+category = "usage"
+priority = "core"
+purpose_en = "Shows how an item under Needs attention was cleared."
+purpose_de = "Zeigt, wie ein Eintrag unter Aufmerksamkeit erforderlich erledigt wurde."
+fields = { kind = { enum = ["failed_images", "report_problem", "report_not_saved", "other"] }, how = { enum = ["resolved", "dismissed", "opened"] }, duration_ms = "num" }
+
+[[event]]
+name = "report.settled"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows how a report ended, how long it took and why it failed."
+purpose_de = "Zeigt, wie ein Bericht endete, wie lange er dauerte und warum er fehlschlug."
+fields = { report_id = "uuid", batch_id = "uuid", origin = { enum = ["folder", "one_off"] }, kind = { enum = ["auto", "custom"] }, state = { enum = ["saved", "failed", "not_saved", "nothing_to_report"] }, reason = { enum = ["unreachable", "tls", "proxy", "timeout", "server", "too_large", "write_denied", "disk_full", "path_too_long", "other"] }, code = "num", count = "num", duration_ms = "num", e2e_ms = "num", format = { enum = ["pdf", "csv", "xlsx", "other"] }, part = "num", parts = "num", bytes = "num" }
+
+[[event]]
+name = "report.opened"
+category = "usage"
+priority = "core"
+purpose_en = "Shows where a report was opened from."
+purpose_de = "Zeigt, von wo ein Bericht geöffnet wurde."
+fields = { from = { enum = ["toast", "history", "tray", "series"] } }
+
+[[event]]
+name = "report.custom_created"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that a custom report was created and how large it is."
+purpose_de = "Zeigt, dass ein eigener Bericht erstellt wurde und wie groß er ist."
+fields = { count = "num", source_batches = "num" }
+
+[[event]]
+name = "report.stale_updated"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that an out-of-date report was updated."
+purpose_de = "Zeigt, dass ein veralteter Bericht aktualisiert wurde."
+fields = { report_id = "uuid" }
+
+[[event]]
+name = "hold.raised"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that work was paused by a condition such as no network, and which one."
+purpose_de = "Zeigt, dass die Arbeit durch eine Bedingung wie fehlendes Netz angehalten wurde, und welche."
+fields = { kind = { enum = ["offline", "service_unavailable", "tls", "proxy_auth", "proxy_refused", "redirect", "key_invalid", "account_blocked", "admin_scope", "license_uploads", "license_all", "client_too_old"] } }
+
+[[event]]
+name = "hold.lifted"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that a pause condition ended, how long it lasted and what ended it."
+purpose_de = "Zeigt, dass eine Anhaltebedingung endete, wie lange sie dauerte und was sie beendete."
+fields = { kind = { enum = ["offline", "service_unavailable", "tls", "proxy_auth", "proxy_refused", "redirect", "key_invalid", "account_blocked", "admin_scope", "license_uploads", "license_all", "client_too_old"] }, duration_ms = "num", count = "num", by = { enum = ["probe", "canary", "user", "update"] } }
+
+[[event]]
+name = "proxy.auth_required"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that a proxy asked for a sign-in and which methods it offered."
+purpose_de = "Zeigt, dass ein Proxy eine Anmeldung verlangte und welche Verfahren er anbot."
+fields = { basic = "flag", ntlm = "flag", negotiate = "flag", digest = "flag", unknown = "flag" }
+
+[[event]]
+name = "tls.untrusted"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that a secure connection was not trusted."
+purpose_de = "Zeigt, dass einer gesicherten Verbindung nicht vertraut wurde."
+fields = { issuer_is_enterprise = "flag" }
+
+[[event]]
+name = "watch_marker.conflict"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that two installations watch the same folder."
+purpose_de = "Zeigt, dass zwei Installationen denselben Ordner überwachen."
+fields = { folder_id = "uuid" }
+
+[[event]]
+name = "app.error"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows the kind of an internal error, never its text."
+purpose_de = "Zeigt die Art eines internen Fehlers, nie dessen Text."
+fields = { kind = { enum = ["validation", "not_found", "conflict", "hold", "disk_full", "storage_unavailable", "contract", "internal", "panic"] }, reportable = "flag", http_status = "num", attempt = "num" }
+
+[[event]]
+name = "update.check"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows the result of a check for a new version."
+purpose_de = "Zeigt das Ergebnis der Suche nach einer neuen Version."
+fields = { state = { enum = ["none", "found", "error"] }, to = "version", trigger = { enum = ["schedule", "manual", "start"] } }
+
+[[event]]
+name = "update.downloaded"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that an update was downloaded and verified."
+purpose_de = "Zeigt, dass ein Update geladen und geprüft wurde."
+fields = { to = "version", bytes = "num", duration_ms = "num" }
+
+[[event]]
+name = "update.deferred"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows why an automatic update was postponed."
+purpose_de = "Zeigt, warum ein automatisches Update verschoben wurde."
+fields = { reason = { enum = ["upload", "open_batch", "probe", "report", "user_active", "notifications_off"] } }
+
+[[event]]
+name = "update.install_started"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that an update installation was started and how."
+purpose_de = "Zeigt, dass eine Update-Installation gestartet wurde und wie."
+fields = { from = "version", to = "version", trigger = { enum = ["user", "quit", "idle_auto", "forced"] } }
+
+[[event]]
+name = "update.applied"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that an update was applied and how long it took."
+purpose_de = "Zeigt, dass ein Update angewendet wurde und wie lange es dauerte."
+fields = { from = "version", to = "version", duration_ms = "num" }
+
+[[event]]
+name = "update.failed"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows at which stage an update failed."
+purpose_de = "Zeigt, in welcher Phase ein Update fehlschlug."
+fields = { stage = { enum = ["download", "signature", "authenticode", "install", "relaunch"] }, from = "version", to = "version", kind = { enum = ["network", "verify", "disk", "other"] } }
+
+[[event]]
+name = "update.min_version"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that the server asks for a newer app version."
+purpose_de = "Zeigt, dass der Server eine neuere App-Version verlangt."
+fields = { min = "version", state = { enum = ["blocked", "warned"] } }
+
+[[event]]
+name = "ui.view"
+category = "usage"
+priority = "interaction"
+purpose_en = "Shows which screen was opened."
+purpose_de = "Zeigt, welcher Bildschirm geöffnet wurde."
+fields = { state = { enum = ["welcome", "overview", "history", "single_images", "new_folder", "folder", "folder_settings", "series", "settings"] } }
+
+[[event]]
+name = "window.shown"
+category = "usage"
+priority = "interaction"
+purpose_en = "Shows how the main window was opened and how fast it appeared."
+purpose_de = "Zeigt, wie das Hauptfenster geöffnet wurde und wie schnell es erschien."
+fields = { source = { enum = ["tray", "notification", "sendto", "launch", "instance"] }, cold = "flag", duration_ms = "num" }
+
+[[event]]
+name = "notification.shown"
+category = "usage"
+priority = "interaction"
+purpose_en = "Shows that a notification appeared and of which kind."
+purpose_de = "Zeigt, dass eine Benachrichtigung erschien und welcher Art."
+fields = { kind = { enum = ["report_saved", "report_problem", "upload_problem", "update", "other"] }, channel = { enum = ["os", "in_app"] } }
+
+[[event]]
+name = "notification.clicked"
+category = "usage"
+priority = "interaction"
+purpose_en = "Shows that a notification was clicked."
+purpose_de = "Zeigt, dass auf eine Benachrichtigung geklickt wurde."
+fields = { kind = { enum = ["report_saved", "report_problem", "upload_problem", "update", "other"] }, channel = { enum = ["os", "in_app"] } }
+
+[[event]]
+name = "history.search"
+category = "usage"
+priority = "interaction"
+purpose_en = "Shows how many results a history search gave, as a range, never the search text."
+purpose_de = "Zeigt, wie viele Treffer eine Suche im Verlauf ergab, als Bereich, nie den Suchtext."
+fields = { count = { enum = ["0", "1-9", "10-99", "100-999", "1000+"] }, duration_ms = "num" }
+
+[[event]]
+name = "history.export"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that the history was exported and in which format."
+purpose_de = "Zeigt, dass der Verlauf exportiert wurde und in welchem Format."
+fields = { count = "num", format = { enum = ["csv", "xlsx"] } }
+
+[[event]]
+name = "sendto.request"
+category = "usage"
+priority = "core"
+purpose_en = "Shows how images were handed to the app, such as Send to or drag and drop."
+purpose_de = "Zeigt, wie Bilder an die App übergeben wurden, etwa über Senden an oder Ziehen und Ablegen."
+fields = { origin = { enum = ["sendto", "verb", "folder_verb", "drop", "add_images"] }, count = "num", not_included = "num", joined_pending = "flag" }
+
+[[event]]
+name = "oneoff.dialog"
+category = "usage"
+priority = "core"
+purpose_en = "Shows how the model choice dialog for single images was closed."
+purpose_de = "Zeigt, wie der Dialog zur Modellauswahl für Einzelbilder geschlossen wurde."
+fields = { state = { enum = ["analyze", "cancel", "no_usable_files"] }, duration_ms = "num", model_choices = "num", preselection_kept = "flag", remembered = "flag", hold_shown = "flag" }
+
+[[event]]
+name = "preview.opened"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that a result preview was opened and for which model."
+purpose_de = "Zeigt, dass eine Ergebnisvorschau geöffnet wurde und für welches Modell."
+fields = { model_id = "uuid", duration_ms = "num" }
+
+[[event]]
+name = "preview.zoom_max_tier"
+category = "usage"
+priority = "interaction"
+purpose_en = "Shows the highest zoom level reached in a result preview."
+purpose_de = "Zeigt die höchste Zoomstufe, die in einer Ergebnisvorschau erreicht wurde."
+fields = { tier = "num" }
+
+[[event]]
+name = "problem_report.offered"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that the app offered to send a problem report."
+purpose_de = "Zeigt, dass die App angeboten hat, einen Problembericht zu senden."
+fields = { trigger = { enum = ["manual", "error", "crash"] } }
+
+[[event]]
+name = "problem_report.sent"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows the outcome of a problem report and whether names were included."
+purpose_de = "Zeigt das Ergebnis eines Problemberichts und ob Namen enthalten waren."
+fields = { state = { enum = ["sent", "saved", "queued", "failed"] }, names_included = "flag" }
+
+[[event]]
+name = "instance.handoff"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows that a second start handed over to the running app."
+purpose_de = "Zeigt, dass ein zweiter Start an die laufende App übergeben hat."
+fields = { kind = { enum = ["wake", "spool"] } }
+
+[[event]]
+name = "privacy.viewed"
+category = "usage"
+priority = "core"
+purpose_en = "Shows that a privacy view was opened."
+purpose_de = "Zeigt, dass eine Datenschutzansicht geöffnet wurde."
+fields = { what = { enum = ["what_is_sent", "view_sent_data"] } }
