@@ -1,8 +1,8 @@
 use mivia_ports::policy::{Hive, PolicyValue, RegistryValue};
 use winreg::enums::{
-    HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, REG_BINARY, REG_DWORD, REG_DWORD_BIG_ENDIAN,
-    REG_EXPAND_SZ, REG_FULL_RESOURCE_DESCRIPTOR, REG_LINK, REG_MULTI_SZ, REG_NONE, REG_QWORD,
-    REG_RESOURCE_LIST, REG_RESOURCE_REQUIREMENTS_LIST, REG_SZ,
+    HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WOW64_64KEY, REG_BINARY, REG_DWORD,
+    REG_DWORD_BIG_ENDIAN, REG_EXPAND_SZ, REG_FULL_RESOURCE_DESCRIPTOR, REG_LINK, REG_MULTI_SZ,
+    REG_NONE, REG_QWORD, REG_RESOURCE_LIST, REG_RESOURCE_REQUIREMENTS_LIST, REG_SZ,
 };
 use winreg::types::FromRegValue;
 use winreg::{HKEY, RegKey, RegValue};
@@ -49,4 +49,15 @@ pub fn read_policies(key: &str) -> Vec<PolicyValue> {
     let mut values = read(Hive::Machine, HKEY_LOCAL_MACHINE, key);
     values.extend(read(Hive::User, HKEY_CURRENT_USER, key));
     values
+}
+
+pub fn machine_guid() -> Option<String> {
+    RegKey::predef(HKEY_LOCAL_MACHINE)
+        .open_subkey_with_flags(
+            r"SOFTWARE\Microsoft\Cryptography",
+            KEY_READ | KEY_WOW64_64KEY,
+        )
+        .ok()?
+        .get_value("MachineGuid")
+        .ok()
 }

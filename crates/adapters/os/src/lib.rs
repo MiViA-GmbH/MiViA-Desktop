@@ -35,5 +35,5 @@ pub use legacy::{
 };
 pub use locale::{SystemLocale, system_locale};
 pub use pipe::open_pipe_client;
-pub use policy::read_policies;
+pub use policy::{machine_guid, read_policies};
 pub use watch::NotifyWatcher;
