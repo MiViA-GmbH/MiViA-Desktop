@@ -130,7 +130,7 @@ pub(crate) const RULES: &[Rule] = &[
         must_not_reach: &[],
         no_direct: &["rusqlite", "reqwest", "notify", "keyring-core"],
     },
-    rule("xtask", &["mivia-update-sig"], &[]),
+    rule("xtask", &["mivia-update-sig", "mivia-os"], &[]),
 ];
 
 const DIRECT_USERS: &[(&str, &[&str])] = &[("mivia-api", &["mivia-server"])];

@@ -12,6 +12,7 @@ mod commit_text;
 mod finding;
 mod floors;
 mod json_format;
+mod perf;
 mod quality_diff;
 mod registry;
 mod repo;
@@ -28,7 +29,7 @@ use anyhow::{Result, anyhow, bail};
 const USAGE: &str = "usage: cargo xtask <arch | command-size | source-rules [paths] | canary | why <id> | \
 quality-diff --base <rev> --head <rev> | ci-integrity [--base <rev>] [--head <rev>] | \
 commit-text (--file <path> | --title <text> [--body <text>]) | floors-lower | \
-telemetry-fields [--check] | update-sig verify <asset> <sig> <version>>";
+telemetry-fields [--check] | update-sig verify <asset> <sig> <version> | perf <scenario>>";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -37,7 +38,7 @@ fn main() -> ExitCode {
         Ok(false) => ExitCode::FAILURE,
         Err(error) => {
             eprintln!("xtask: {error:#}");
-            ExitCode::from(2)
+            ExitCode::from(if error.is::<perf::Infra>() { 3 } else { 2 })
         }
     }
 }
@@ -57,6 +58,7 @@ fn run(args: &[String]) -> Result<bool> {
         "floors-lower" => floors::lower(&root),
         "telemetry-fields" => telemetry_fields::run(&root, rest),
         "update-sig" => update_sig::run(rest),
+        "perf" => perf::run(&root, rest),
         other => bail!("unknown command {other}\n{USAGE}"),
     }
 }
