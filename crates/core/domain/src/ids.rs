@@ -72,4 +72,12 @@ impl ModelChoice {
             self.customization_id.as_deref().unwrap_or_default()
         )
     }
+
+    pub fn from_key(key: &str) -> Option<Self> {
+        let (model_id, customization) = key.split_once(':')?;
+        Some(Self {
+            model_id: model_id.to_owned(),
+            customization_id: (!customization.is_empty()).then(|| customization.to_owned()),
+        })
+    }
 }

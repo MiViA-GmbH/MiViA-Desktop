@@ -197,6 +197,7 @@ fn computation_events() -> Vec<ComputationEvent> {
         E::ChoiceUnavailable,
         E::SubmitClaimed,
         E::Ambiguous,
+        E::NotSent,
         E::Refused { choice_gone: true },
         E::Refused { choice_gone: false },
         E::ContractError,
@@ -225,6 +226,7 @@ fn computation_table() -> Vec<Row<ComputationState, ComputationEvent>> {
         (S::Queued, E::ChoiceUnavailable, S::Unavailable),
         (S::Queued, E::SubmitClaimed, S::Submitting),
         (S::Submitting, E::Ambiguous, S::Submitting),
+        (S::Submitting, E::NotSent, S::Queued),
         (
             S::Submitting,
             E::Refused { choice_gone: true },

@@ -37,6 +37,7 @@ pub enum ComputationEvent {
     SubmitClaimed,
     Job(JobOutcome),
     Ambiguous,
+    NotSent,
     Refused { choice_gone: bool },
     ContractError,
     JobGone { resubmitted: bool },
@@ -63,7 +64,8 @@ impl ComputationState {
                 Ok(Self::Failed(FailReason::Refused))
             }
             (Self::Submitting, E::ContractError) => Ok(Self::Failed(FailReason::Contract)),
-            (Self::Computing, E::JobGone { resubmitted: false }) => Ok(Self::Queued),
+            (Self::Computing, E::JobGone { resubmitted: false })
+            | (Self::Submitting, E::NotSent) => Ok(Self::Queued),
             (Self::Computing, E::JobGone { resubmitted: true }) => Ok(Self::Lost),
             (Self::Computing, E::TimedOut(reason)) => Ok(Self::Failed(reason)),
             (Self::Queued | Self::Submitting | Self::Computing, E::Cancel) => Ok(Self::Cancelled),

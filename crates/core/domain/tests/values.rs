@@ -27,6 +27,9 @@ fn model_choice_key_names_model_and_customization() {
     assert_eq!(plain.key(), "m1:");
     assert_eq!(custom.key(), "m1:c7");
     assert_ne!(plain.key(), custom.key());
+    assert_eq!(ModelChoice::from_key(&plain.key()), Some(plain));
+    assert_eq!(ModelChoice::from_key(&custom.key()), Some(custom));
+    assert_eq!(ModelChoice::from_key("no separator"), None);
 }
 
 #[test]
