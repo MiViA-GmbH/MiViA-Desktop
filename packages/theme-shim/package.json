@@ -1,0 +1,25 @@
+{
+	"name": "@mivia-ai/theme",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./index.d.ts",
+			"default": "./src/index.ts"
+		},
+		"./fonts.css": "./src/fonts.css",
+		"./favicon.svg": "./assets/favicon.svg"
+	},
+	"dependencies": {
+		"@fontsource/barlow": "5.3.0",
+		"@fontsource-variable/space-grotesk": "5.3.0"
+	},
+	"peerDependencies": {
+		"@mantine/core": "9.3.1",
+		"react": "19.2.8"
+	},
+	"devDependencies": {
+		"@types/react": "19.2.18"
+	}
+}
