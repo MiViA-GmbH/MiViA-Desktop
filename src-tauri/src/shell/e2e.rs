@@ -41,6 +41,10 @@ pub(crate) fn seed_from_env() -> Option<Seed> {
     })
 }
 
+pub(crate) fn no_suspend() -> bool {
+    var("MIVIA_E2E_NO_SUSPEND").is_some()
+}
+
 pub(crate) fn cdp_port() -> Option<u16> {
     var("MIVIA_E2E_CDP_PORT")?.parse().ok()
 }

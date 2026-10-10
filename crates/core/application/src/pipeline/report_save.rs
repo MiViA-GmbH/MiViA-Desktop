@@ -197,6 +197,7 @@ impl Pipeline {
                     .await?;
                 self.remove_quietly(&row.staging).await;
                 tracing::info!(part = id.0, "report.saved");
+                tracing::info!(target: "perf", "report_saved");
             }
             Err(error) => {
                 let state = self

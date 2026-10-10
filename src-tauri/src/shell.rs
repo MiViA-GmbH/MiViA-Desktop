@@ -238,7 +238,7 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
         search_legacy(&app, &services);
     }
     #[cfg(feature = "e2e")]
-    if completed {
+    if completed && e2e::cdp_port().is_some() {
         open_at_start(&app);
     }
     tauri::async_runtime::spawn(background(Arc::clone(&services), app.clone(), completed));

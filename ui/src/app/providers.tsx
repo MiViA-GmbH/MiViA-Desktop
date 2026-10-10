@@ -15,10 +15,19 @@ const Notifications = lazy(() =>
 
 function useShowWindow(): void {
 	useEffect(() => {
-		const frame = requestAnimationFrame(() => {
-			commands.uiReady();
-		});
-		return () => cancelAnimationFrame(frame);
+		const paint = () => {
+			requestAnimationFrame(() => {
+				commands.uiReady();
+			});
+		};
+		const onVisible = () => {
+			if (document.visibilityState === 'visible') {
+				paint();
+			}
+		};
+		paint();
+		document.addEventListener('visibilitychange', onVisible);
+		return () => document.removeEventListener('visibilitychange', onVisible);
 	}, []);
 }
 

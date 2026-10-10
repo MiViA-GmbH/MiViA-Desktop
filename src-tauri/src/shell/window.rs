@@ -26,6 +26,7 @@ const WRY_DEFAULT_ARGS: &str = "--disable-features=msWebOOUI,msPdfOOUI,msSmartSc
 
 static GENERATION: AtomicU64 = AtomicU64::new(0);
 static REPORT_PENDING: AtomicBool = AtomicBool::new(false);
+static PAINTED: AtomicBool = AtomicBool::new(false);
 
 fn app_origin(url: &Url) -> bool {
     let local = matches!(url.host_str(), Some("tauri.localhost"));
@@ -36,12 +37,27 @@ fn app_origin(url: &Url) -> bool {
 
 fn set_visible(window: &WebviewWindow, visible: bool) {
     let applied = window.with_webview(move |webview| {
-        if !mivia_os::set_webview_visible(&webview.controller(), visible) {
+        let controller = webview.controller();
+        if !mivia_os::set_webview_visible(&controller, visible) {
             tracing::debug!(visible, "window.memoryLevelFailed");
+        }
+        if !visible && suspend_hidden() && !mivia_os::suspend_webview(&controller) {
+            tracing::debug!("window.suspendFailed");
         }
     });
     if let Err(error) = applied {
         tracing::debug!(%error, "window.memoryLevelFailed");
+    }
+}
+
+fn suspend_hidden() -> bool {
+    #[cfg(feature = "e2e")]
+    {
+        !super::e2e::no_suspend()
+    }
+    #[cfg(not(feature = "e2e"))]
+    {
+        true
     }
 }
 
@@ -79,8 +95,10 @@ pub(crate) fn reveal(app: &AppHandle) {
     GENERATION.fetch_add(1, Ordering::SeqCst);
     super::mark("window_open_requested");
     let Some(window) = app.get_webview_window(LABEL) else {
-        if let Err(error) = build(app) {
-            tracing::error!(%error, "window.buildFailed");
+        PAINTED.store(false, Ordering::SeqCst);
+        match build(app) {
+            Ok(_) => super::mark("build_done"),
+            Err(error) => tracing::error!(%error, "window.buildFailed"),
         }
         return;
     };
@@ -117,7 +135,11 @@ fn show(window: &WebviewWindow) {
 pub(crate) fn shown(app: &AppHandle) {
     if let Some(window) = app.get_webview_window(LABEL) {
         show(&window);
-        super::mark("shown_painted");
+        super::mark(if PAINTED.swap(true, Ordering::SeqCst) {
+            "shown_painted"
+        } else {
+            "ui_ready"
+        });
     }
     if REPORT_PENDING.swap(false, Ordering::SeqCst) {
         navigate(app, Route::ProblemReport);
