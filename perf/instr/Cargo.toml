@@ -1,0 +1,16 @@
+[package]
+name = "mivia-perf-instr"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dev-dependencies]
+gungraun = "=0.19.4"
+mivia-domain = { path = "../../crates/core/domain" }
+
+[workspace]
+members = ["."]
+
+[[bench]]
+name = "instr"
+harness = false
