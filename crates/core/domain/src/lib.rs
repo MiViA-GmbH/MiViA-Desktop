@@ -8,6 +8,7 @@ pub mod intake;
 pub mod label;
 pub mod naming;
 pub mod natural;
+pub mod output;
 pub mod path;
 pub mod polling;
 pub mod readiness;

@@ -120,6 +120,7 @@ const fn part_failure(failure: PartFailure) -> &'static str {
         PartFailure::InvalidName => "invalid_name",
         PartFailure::TooManyClashes => "too_many_clashes",
         PartFailure::Discarded => "discarded",
+        PartFailure::NothingLeft => "nothing_left",
     }
 }
 
@@ -201,7 +202,7 @@ pub(crate) const COMPUTATION_STATES: [ComputationState; 15] = [
     ComputationState::Superseded,
 ];
 
-pub(crate) const PART_STATES: [PartState; 10] = [
+pub(crate) const PART_STATES: [PartState; 11] = [
     PartState::Requested,
     PartState::Saved,
     PartState::NotSaved,
@@ -212,4 +213,5 @@ pub(crate) const PART_STATES: [PartState; 10] = [
     PartState::Failed(PartFailure::InvalidName),
     PartState::Failed(PartFailure::TooManyClashes),
     PartState::Failed(PartFailure::Discarded),
+    PartState::Failed(PartFailure::NothingLeft),
 ];

@@ -23,7 +23,7 @@ const FAIL: [FailReason; 6] = [
     FailReason::ServerTimeout,
     FailReason::UnknownServerStatus,
 ];
-const PART_FAILURES: [PartFailure; 7] = [
+const PART_FAILURES: [PartFailure; 8] = [
     PartFailure::Rerequested,
     PartFailure::TooLarge,
     PartFailure::NoAnswer,
@@ -31,6 +31,7 @@ const PART_FAILURES: [PartFailure; 7] = [
     PartFailure::InvalidName,
     PartFailure::TooManyClashes,
     PartFailure::Discarded,
+    PartFailure::NothingLeft,
 ];
 
 fn source_states() -> Vec<SourceFileState> {
@@ -282,6 +283,7 @@ fn part_events() -> Vec<PartEvent> {
         E::BadContent,
         E::Discard,
         E::TryAgain,
+        E::NothingLeft,
     ];
     events.extend((0..5).map(|rerequests| E::Cancelled { rerequests }));
     events.extend(
@@ -327,6 +329,11 @@ fn part_table() -> Vec<Row<PartState, PartEvent>> {
             S::Failed(PartFailure::Contract),
         ),
         (S::NotSaved, E::Discard, S::Failed(PartFailure::Discarded)),
+        (
+            S::Requested,
+            E::NothingLeft,
+            S::Failed(PartFailure::NothingLeft),
+        ),
     ];
     rows.extend((0..3).map(|rerequests| (S::Requested, E::Cancelled { rerequests }, S::Requested)));
     rows.extend((3..5).map(|rerequests| {

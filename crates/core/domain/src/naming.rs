@@ -20,6 +20,30 @@ pub enum Language {
 }
 
 impl Language {
+    pub const fn code(self) -> &'static str {
+        match self {
+            Self::En => "en",
+            Self::De => "de",
+        }
+    }
+
+    pub fn from_code(code: &str) -> Option<Self> {
+        [Self::En, Self::De]
+            .into_iter()
+            .find(|language| language.code() == code)
+    }
+
+    pub const fn report_folder_name(self) -> &'static str {
+        match self {
+            Self::En => "MiViA reports",
+            Self::De => "MiViA Berichte",
+        }
+    }
+
+    pub const fn decimal_comma(self) -> bool {
+        matches!(self, Self::De)
+    }
+
     const fn words(self) -> [&'static str; 5] {
         match self {
             Self::En => ["Part", "of", "updated", "Data", "image"],

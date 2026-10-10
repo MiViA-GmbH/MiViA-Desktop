@@ -60,3 +60,45 @@ proptest! {
         prop_assert!(first.len() >= second.len() && first.len() - second.len() <= 1);
     }
 }
+
+#[test]
+fn polls_fast_for_a_minute_then_slowly() {
+    use mivia_domain::report::poll_delay_ms;
+    assert_eq!(poll_delay_ms(0), 3_000);
+    assert_eq!(poll_delay_ms(59_999), 3_000);
+    assert_eq!(poll_delay_ms(60_000), 15_000);
+}
+
+#[test]
+fn version_two_needs_a_configured_minimum_reached() {
+    use mivia_domain::report::supports_v2;
+    assert!(!supports_v2("2.50.0", None));
+    assert!(supports_v2("2.50.0", Some("2.50.0")));
+    assert!(supports_v2("2.51.1-beta.1", Some("2.50.0")));
+    assert!(supports_v2("10.0.0", Some("9.9.9")));
+    assert!(!supports_v2("2.49.9", Some("2.50.0")));
+    assert!(!supports_v2("2.5", Some("2.50.0")));
+}
+
+#[test]
+fn membership_follows_the_computation_and_its_file() {
+    use mivia_domain::computation::{ComputationState as S, FailReason};
+    use mivia_domain::report::{Membership as M, OmittedReason as R, membership};
+    assert_eq!(membership(S::Done { reused: true }, false), M::Included);
+    assert_eq!(
+        membership(S::Failed(FailReason::NoResult), false),
+        M::Omitted(R::Failed)
+    );
+    assert_eq!(membership(S::Cancelled, true), M::Omitted(R::Rejected));
+    assert_eq!(membership(S::Cancelled, false), M::Omitted(R::Cancelled));
+    assert_eq!(membership(S::Lost, false), M::Omitted(R::Lost));
+    assert_eq!(
+        membership(S::Unavailable, false),
+        M::Omitted(R::Unavailable)
+    );
+    assert_eq!(membership(S::Superseded, false), M::Excluded);
+    assert_eq!(membership(S::Computing, false), M::Excluded);
+    for reason in R::ALL {
+        assert_eq!(R::from_code(reason.code()), Some(reason));
+    }
+}
