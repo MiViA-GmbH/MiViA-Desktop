@@ -2,24 +2,29 @@ use tauri::menu::{Menu, MenuEvent, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Wry};
 
+use super::events::Route;
 use super::window;
 
 const OPEN: &str = "open";
 const QUIT: &str = "quit";
+const REPORT: &str = "report";
 
 struct Starting {
     menu: Menu<Wry>,
     item: MenuItem<Wry>,
+    report: MenuItem<Wry>,
 }
 
 pub(super) fn build(app: &AppHandle) -> tauri::Result<()> {
     let starting = MenuItem::with_id(app, "starting", "Starting...", false, None::<&str>)?;
     let open = MenuItem::with_id(app, OPEN, "Open MiViA Desktop", true, None::<&str>)?;
+    let report = MenuItem::with_id(app, REPORT, "Report a problem...", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, QUIT, "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&starting, &open, &quit])?;
+    let menu = Menu::with_items(app, &[&starting, &open, &report, &quit])?;
     app.manage(Starting {
         menu: menu.clone(),
         item: starting,
+        report,
     });
     let tray = TrayIconBuilder::with_id("main")
         .tooltip("MiViA Desktop")
@@ -50,9 +55,16 @@ pub(super) fn hide(app: &AppHandle) {
     visible(app, false);
 }
 
-pub(super) fn started(app: &AppHandle) {
+pub(super) fn started(app: &AppHandle, reporting: bool) {
     let starting = app.state::<Starting>();
-    if let Err(error) = starting.menu.remove(&starting.item) {
+    let removed = starting.menu.remove(&starting.item).and_then(|()| {
+        if reporting {
+            Ok(())
+        } else {
+            starting.menu.remove(&starting.report)
+        }
+    });
+    if let Err(error) = removed {
         tracing::warn!(%error, "tray.menuFailed");
     }
 }
@@ -71,6 +83,7 @@ fn on_click(app: &AppHandle, event: &TrayIconEvent) {
 fn on_menu(app: &AppHandle, event: &MenuEvent) {
     match event.id().as_ref() {
         OPEN => window::open(app),
+        REPORT => window::open_at(app, Route::ProblemReport),
         QUIT => app.exit(0),
         _ => {}
     }

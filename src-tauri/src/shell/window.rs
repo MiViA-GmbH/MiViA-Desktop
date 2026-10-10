@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Duration;
 
 use mivia_domain::path::WinPath;
@@ -25,6 +25,7 @@ const NO_PEER_CONNECTIONS: &str = "delete window.RTCPeerConnection;\
 const WRY_DEFAULT_ARGS: &str = "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection";
 
 static GENERATION: AtomicU64 = AtomicU64::new(0);
+static REPORT_PENDING: AtomicBool = AtomicBool::new(false);
 
 fn app_origin(url: &Url) -> bool {
     let local = matches!(url.host_str(), Some("tauri.localhost"));
@@ -88,16 +89,21 @@ pub(crate) fn reveal(app: &AppHandle) {
 }
 
 pub(crate) fn open(app: &AppHandle) {
+    open_at(app, Route::Overview);
+}
+
+pub(crate) fn open_at(app: &AppHandle, route: Route) {
     let existed = app.get_webview_window(LABEL).is_some();
     reveal(app);
-    if !existed {
-        return;
+    if existed {
+        navigate(app, route);
+    } else {
+        REPORT_PENDING.store(matches!(route, Route::ProblemReport), Ordering::SeqCst);
     }
-    if let Err(error) = (Navigate {
-        route: Route::Overview,
-    })
-    .emit(app)
-    {
+}
+
+fn navigate(app: &AppHandle, route: Route) {
+    if let Err(error) = (Navigate { route }).emit(app) {
         tracing::warn!(%error, "ipc.emitFailed");
     }
 }
@@ -112,6 +118,9 @@ pub(crate) fn shown(app: &AppHandle) {
     if let Some(window) = app.get_webview_window(LABEL) {
         show(&window);
         super::mark("shown_painted");
+    }
+    if REPORT_PENDING.swap(false, Ordering::SeqCst) {
+        navigate(app, Route::ProblemReport);
     }
 }
 

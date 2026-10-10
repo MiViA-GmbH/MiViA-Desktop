@@ -16,6 +16,7 @@ pub(crate) struct LanguageChanged(pub(crate) LocaleView);
 #[serde(rename_all = "camelCase")]
 pub(crate) enum Route {
     Overview,
+    ProblemReport,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]

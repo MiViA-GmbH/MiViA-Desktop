@@ -619,7 +619,7 @@ export type ReportView = {
 	parts: ReportPartView[],
 };
 
-export type Route = "overview";
+export type Route = "overview" | "problemReport";
 
 export type SendOutcome = { kind: "sent"; reference: string } | { kind: "queued"; reference: string } | { kind: "saveAndEmail"; reference: string };
 

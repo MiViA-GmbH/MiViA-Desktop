@@ -29,6 +29,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use mivia_application::handoff::Handoff;
+use mivia_application::policy::IssueReporting;
 use mivia_diagnostics::{
     DiagnosticsContext, Logging, PreviousSession, install_panic_hook, previous_session,
     start_logging, write_marker,
@@ -200,7 +201,8 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
     let completed = setup_state(&app.state::<Cx>(), &services).await;
     app.state::<Cx>()
         .set(account::compose(&services, launch.minimized, None).await);
-    tray::started(&app);
+    let reporting = services.policies.issue_reporting != Some(IssueReporting::Off);
+    tray::started(&app, reporting);
     one_off::ingest_inbox(&app, &instance::inbox(&launch.data_dir)).await;
     if !completed {
         tray::hide(&app);
