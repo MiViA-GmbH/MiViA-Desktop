@@ -1,0 +1,48 @@
+[graph]
+targets = ["x86_64-pc-windows-msvc"]
+all-features = true
+
+[advisories]
+yanked = "deny"
+unmaintained = "workspace"
+ignore = []
+
+[licenses]
+confidence-threshold = 0.93
+unused-allowed-license = "deny"
+allow = ["MIT", "Apache-2.0", "Zlib"]
+exceptions = [{ crate = "libfuzzer-sys", allow = ["NCSA"] }]
+private = { ignore = true }
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+allow-wildcard-paths = true
+deny = [
+    "openssl",
+    "openssl-sys",
+    "native-tls",
+    "backoff",
+    "sqlx",
+    "tauri-plugin-sql",
+    "tauri-plugin-store",
+    "notify-debouncer-full",
+    "mockall",
+    "mockito",
+    "httpmock",
+    "serial_test",
+    "aws-lc-rs",
+    "aws-lc-sys",
+    { crate = "tokio", deny-multiple-versions = true },
+    { crate = "reqwest", deny-multiple-versions = true },
+    { crate = "rusqlite", deny-multiple-versions = true },
+    { crate = "tauri", deny-multiple-versions = true },
+    { crate = "hyper", deny-multiple-versions = true },
+    { crate = "webview2-com", deny-multiple-versions = true },
+    { crate = "rustls", deny-multiple-versions = true },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-git = []

@@ -1,0 +1,44 @@
+[package]
+name = "mivia-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "=0.4.13"
+mivia-application = { path = "../crates/core/application" }
+mivia-domain = { path = "../crates/core/domain" }
+
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "report_name"
+path = "fuzz_targets/report_name.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "label_sort"
+path = "fuzz_targets/label_sort.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "launch_args"
+path = "fuzz_targets/launch_args.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "image_format_check"
+path = "fuzz_targets/image_format_check.rs"
+test = false
+doc = false
+bench = false
