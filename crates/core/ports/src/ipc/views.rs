@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
+use super::screens::{AnalysisView, NeedsAttention};
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(
     tag = "kind",
     rename_all = "camelCase",
@@ -12,6 +15,7 @@ pub enum OriginView {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct BatchCounts {
     pub files: u32,
@@ -26,6 +30,7 @@ pub struct BatchCounts {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct BatchSummary {
     pub id: String,
@@ -40,6 +45,7 @@ pub struct BatchSummary {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct HistoryCursor {
     pub sort_at: String,
@@ -47,6 +53,7 @@ pub struct HistoryCursor {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct HistoryPage {
     pub revision: String,
@@ -56,38 +63,46 @@ pub struct HistoryPage {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct NeedsAttentionView {
     pub revision: String,
-    pub series: Vec<BatchSummary>,
-    pub series_total: u32,
+    pub items: Vec<NeedsAttention>,
+    pub total: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct BatchView {
     pub revision: String,
     pub summary: BatchSummary,
+    pub analyses: Vec<AnalysisView>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct ComputationItem {
     pub id: String,
     pub model_choice_key: String,
     pub state: String,
+    pub reason: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct BatchItem {
     pub id: String,
     pub label: String,
     pub state: String,
+    pub reason: Option<String>,
     pub computations: Vec<ComputationItem>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct BatchItemsPage {
     pub revision: String,
@@ -96,15 +111,24 @@ pub struct BatchItemsPage {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct FolderView {
     pub id: String,
+    pub name: String,
     pub path: String,
     pub position: u32,
-    pub active: bool,
+    pub paused: bool,
+    pub missing: bool,
+    pub quiet_seconds: u32,
+    pub report_folder: Option<String>,
+    pub open_series: Option<BatchSummary>,
+    pub last_series: Option<BatchSummary>,
+    pub latest_report: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct FoldersView {
     pub revision: String,

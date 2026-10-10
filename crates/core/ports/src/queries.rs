@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use mivia_domain::ids::BatchId;
 
+use crate::ipc::screens::{AccountView, HoldsView, SeriesReportsView};
 use crate::ipc::views::{
     BatchItemsPage, BatchView, FoldersView, HistoryCursor, HistoryPage, NeedsAttentionView,
 };
@@ -29,4 +30,12 @@ pub trait Queries: Send + Sync {
         after: Option<u32>,
     ) -> Result<BatchItemsPage, StoreError>;
     async fn list_folders(&self, scope: AccountScope) -> Result<FoldersView, StoreError>;
+    async fn list_holds(&self, scope: AccountScope) -> Result<HoldsView, StoreError>;
+    async fn list_series_reports(
+        &self,
+        scope: AccountScope,
+        id: BatchId,
+    ) -> Result<SeriesReportsView, StoreError>;
+    async fn get_account(&self, scope: AccountScope) -> Result<Option<AccountView>, StoreError>;
+    async fn global_settings(&self) -> Result<Option<String>, StoreError>;
 }

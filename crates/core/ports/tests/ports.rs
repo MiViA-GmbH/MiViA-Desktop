@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use mivia_domain::ids::Timestamp;
 use mivia_ports::ipc::change::{Change, StoreChanged};
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
+use mivia_ports::ipc::screens::{AnalysisView, AttentionSeries, NeedsAttention};
 use mivia_ports::ipc::views::{
     BatchCounts, BatchItem, BatchItemsPage, BatchSummary, BatchView, ComputationItem, FolderView,
     FoldersView, HistoryCursor, HistoryPage, NeedsAttentionView, OriginView,
@@ -59,14 +60,26 @@ fn views_round_trip_with_camel_case_fields() {
             id: "7".to_owned(),
         }),
     });
-    round_trip(&NeedsAttentionView {
+    let attention = round_trip(&NeedsAttentionView {
         revision: "4".to_owned(),
-        series: vec![folder.clone()],
-        series_total: 1,
+        items: vec![NeedsAttention::ReportNotSaved {
+            series: AttentionSeries {
+                id: "7".to_owned(),
+                label: "Probe 12".to_owned(),
+            },
+            part_id: "3".to_owned(),
+        }],
+        total: 1,
     });
+    assert!(attention.contains(r#""kind":"reportNotSaved","series":{"id":"7""#));
     round_trip(&BatchView {
         revision: "4".to_owned(),
         summary: folder.clone(),
+        analyses: vec![AnalysisView {
+            key: "grain:".to_owned(),
+            model_id: "grain".to_owned(),
+            names: [("en".to_owned(), "Grain size".to_owned())].into(),
+        }],
     });
     round_trip(&BatchItemsPage {
         revision: "4".to_owned(),
@@ -74,10 +87,12 @@ fn views_round_trip_with_camel_case_fields() {
             id: "1".to_owned(),
             label: "a.tif".to_owned(),
             state: "uploaded".to_owned(),
+            reason: None,
             computations: vec![ComputationItem {
                 id: "1".to_owned(),
                 model_choice_key: "m:".to_owned(),
                 state: "done".to_owned(),
+                reason: Some("reused".to_owned()),
             }],
         }],
         next: None,
@@ -86,9 +101,16 @@ fn views_round_trip_with_camel_case_fields() {
         revision: "4".to_owned(),
         folders: vec![FolderView {
             id: "2".to_owned(),
+            name: "Lab".to_owned(),
             path: r"D:\Lab".to_owned(),
             position: 0,
-            active: true,
+            paused: false,
+            missing: false,
+            quiet_seconds: 60,
+            report_folder: None,
+            open_series: None,
+            last_series: Some(folder.clone()),
+            latest_report: Some("3".to_owned()),
         }],
     });
     let changed = StoreChanged {
@@ -125,10 +147,10 @@ fn app_error_carries_signature_and_reportable_flag() {
         "unexpected body".to_owned(),
         "submit",
     );
-    assert_eq!(error.signature, "contract:bad_json:submit");
+    assert_eq!(&*error.signature, "contract:bad_json:submit");
     assert!(error.reportable);
     let hold = AppError::new(AppErrorKind::Hold, None, "offline".to_owned(), "upload");
-    assert_eq!(hold.signature, "hold:-:upload");
+    assert_eq!(&*hold.signature, "hold:-:upload");
     assert!(!hold.reportable);
     assert!(round_trip(&error).contains(r#""kind":"contract""#));
 }

@@ -15,8 +15,9 @@ use pipeline::PipelineRepo;
 
 pub use reports::{NewReport, ReportRepo};
 pub use repos::{
-    AccountRepo, BatchModelChoice, BatchRepo, ComputationRepo, FolderRepo, HoldRepo, NewAccount,
-    NewBatch, NewComputation, NewFolder, NewSourceFile, Origin, SourceClaim, SourceFileRepo,
+    AccountRepo, AttentionCleared, BatchModelChoice, BatchRepo, ComputationRepo, FolderRepo,
+    HoldRepo, NewAccount, NewBatch, NewComputation, NewFolder, NewSourceFile, Origin, SourceClaim,
+    SourceFileRepo,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -61,6 +62,7 @@ pub trait WriteTx {
     fn reports(&mut self, scope: AccountScope) -> &mut dyn ReportRepo;
     fn intake(&mut self, scope: AccountScope) -> &mut dyn IntakeRepo;
     fn pipeline(&mut self, scope: AccountScope) -> &mut dyn PipelineRepo;
+    fn set_global_settings(&mut self, version: u32, json: &str) -> Result<(), TxError>;
 }
 
 #[async_trait]

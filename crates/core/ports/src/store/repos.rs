@@ -90,6 +90,20 @@ pub trait BatchRepo {
         closed_at: Timestamp,
     ) -> Result<(), TxError>;
     fn open_batches(&mut self) -> Result<Vec<BatchId>, TxError>;
+    fn clear_attention(
+        &mut self,
+        id: BatchId,
+        how: AttentionCleared,
+        at: Timestamp,
+    ) -> Result<(), TxError>;
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub enum AttentionCleared {
+    Opened,
+    Dismissed,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

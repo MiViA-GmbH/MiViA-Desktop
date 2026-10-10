@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::views::BatchSummary;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(
     tag = "type",
     rename_all = "camelCase",
@@ -31,6 +32,7 @@ pub enum Change {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct StoreChanged {
     pub from_revision: String,
