@@ -39,6 +39,7 @@ fn seed_account(tx: &mut dyn WriteTx, name: &str) -> Result<Seeded, TxError> {
         quiet_period_ms: 2_000,
         label_rule: LabelRule::Auto,
         report_settings_json: "{}".to_owned(),
+        model_choices: Vec::new(),
     })?;
     let batch = |label: &str| NewBatch {
         origin: Origin::Folder(folder),
@@ -73,6 +74,7 @@ fn seed_account(tx: &mut dyn WriteTx, name: &str) -> Result<Seeded, TxError> {
         model_version: None,
         app_version: "2.0.0".to_owned(),
         next_attempt_at: Timestamp(1_000),
+        reused_from: None,
     })?;
     tx.batches(scope)
         .close(closed, ClosureReason::QuietPeriod, Timestamp(4_000))?;
