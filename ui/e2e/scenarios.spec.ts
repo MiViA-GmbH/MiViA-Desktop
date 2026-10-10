@@ -9,7 +9,7 @@ const RUN = join(REPO, 'target', 'e2e-run', String(Date.now()));
 const WATCHED = join(RUN, 'Mikroskop');
 const REPORTS = join(WATCHED, 'MiViA reports');
 const CDP_PORT = 9333;
-const STUB_KEY = 'stub-access-key';
+const STUB_KEY = 'stub-access-key-0123456789-abcdefghijkl';
 const MODEL = '00000009-0000-4000-8000-000000000001';
 
 type Running = { stub: ChildProcess; app: ChildProcess; origin: string; browser: Browser; page: Page };
@@ -22,19 +22,36 @@ function startStub(): Promise<{ stub: ChildProcess; origin: string }> {
 	});
 }
 
-function startApp(origin: string): ChildProcess {
-	const env = {
-		...process.env,
+function startApp(origin: string, extra: Record<string, string>): ChildProcess {
+	const env = { ...process.env, MIVIA_E2E_SERVER_ORIGIN: origin, MIVIA_E2E_CDP_PORT: String(CDP_PORT), ...extra };
+	return spawn(join(TARGET, 'mivia-desktop.exe'), [], { env });
+}
+
+function seeded(): Record<string, string> {
+	return {
 		LOCALAPPDATA: join(RUN, 'appdata'),
-		MIVIA_E2E_SERVER_ORIGIN: origin,
 		MIVIA_E2E_ACCESS_KEY: STUB_KEY,
 		MIVIA_E2E_ACCOUNT_ID: 'stub-account',
 		MIVIA_E2E_FOLDER: WATCHED,
 		MIVIA_E2E_MODEL: MODEL,
 		MIVIA_E2E_QUIET_SECS: '10',
-		MIVIA_E2E_CDP_PORT: String(CDP_PORT),
 	};
-	return spawn(join(TARGET, 'mivia-desktop.exe'), [], { env });
+}
+
+async function launch(extra: Record<string, string>): Promise<Running> {
+	const { stub, origin } = await startStub();
+	const app = startApp(origin, extra);
+	const browser = await connect();
+	const page = browser.contexts()[0]?.pages()[0];
+	if (!page) {
+		throw new Error('no page in the app window');
+	}
+	return { stub, app, origin, browser, page };
+}
+
+async function shutdown(running: Running | undefined): Promise<void> {
+	await running?.browser.close().catch(() => undefined);
+	await Promise.all([stop(running?.app), stop(running?.stub)]);
 }
 
 async function connect(): Promise<Browser> {
@@ -75,25 +92,72 @@ function reports(): string[] {
 	}
 }
 
+const FRESH = join(RUN, 'fresh');
+const FRESH_WATCHED = join(FRESH, 'Labor');
+const FRESH_REPORTS = join(FRESH_WATCHED, 'MiViA reports');
+
+function freshReports(): string[] {
+	try {
+		return readdirSync(FRESH_REPORTS).filter((name) => name.endsWith('.pdf'));
+	} catch {
+		return [];
+	}
+}
+
+async function next(page: Page, name = 'Next'): Promise<void> {
+	await page.getByRole('button', { name, exact: true }).click();
+}
+
+test.describe
+	.serial('first start against the stub', () => {
+		let running: Running;
+
+		test.beforeAll(async () => {
+			mkdirSync(FRESH_WATCHED, { recursive: true });
+			running = await launch({ LOCALAPPDATA: join(FRESH, 'appdata'), MIVIA_E2E_PICK_FOLDER: FRESH_WATCHED });
+		});
+
+		test.afterAll(async () => {
+			await shutdown(running);
+		});
+
+		test('scenario 1: the setup connects the key and the folder then delivers a report', async () => {
+			const { page } = running;
+			await expect(page.getByRole('heading', { name: 'Welcome to MiViA Desktop' })).toBeVisible({ timeout: 30_000 });
+			await next(page, 'Start setup');
+			await page.getByLabel('Access key').fill(STUB_KEY);
+			await next(page);
+			await expect(page.getByText('Connected as Stub Lab')).toBeVisible({ timeout: 20_000 });
+			await next(page);
+			await page.getByRole('button', { name: 'Choose folder…' }).click();
+			await expect(page.getByText(FRESH_WATCHED)).toBeVisible();
+			await next(page);
+			await expect(page.getByRole('heading', { name: 'How do images arrive in this folder?' })).toBeVisible();
+			await next(page);
+			await expect(page.getByRole('checkbox', { name: 'Grain size' })).toBeChecked({ timeout: 20_000 });
+			await next(page);
+			await next(page, 'Finish setup');
+			await expect(page.getByRole('heading', { name: 'MiViA Desktop is ready' })).toBeVisible({ timeout: 30_000 });
+			await next(page, 'Go to overview');
+			await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
+			writeFileSync(join(FRESH_WATCHED, 'probe_001.jpg'), jpeg(7));
+			await expect(page.getByText(/: 1 of 1 done/)).toBeVisible({ timeout: 60_000 });
+			await page.getByRole('button', { name: 'Finish series now' }).first().click();
+			await expect.poll(freshReports, { timeout: 120_000, intervals: [1000] }).toHaveLength(1);
+		});
+	});
+
 test.describe
 	.serial('desktop smoke against the stub', () => {
 		let running: Running;
 
 		test.beforeAll(async () => {
 			mkdirSync(WATCHED, { recursive: true });
-			const { stub, origin } = await startStub();
-			const app = startApp(origin);
-			const browser = await connect();
-			const page = browser.contexts()[0]?.pages()[0];
-			if (!page) {
-				throw new Error('no page in the app window');
-			}
-			running = { stub, app, origin, browser, page };
+			running = await launch(seeded());
 		});
 
 		test.afterAll(async () => {
-			await running?.browser.close().catch(() => undefined);
-			await Promise.all([stop(running?.app), stop(running?.stub)]);
+			await shutdown(running);
 			rmSync(RUN, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 });
 		});
 
