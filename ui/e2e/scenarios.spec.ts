@@ -279,6 +279,7 @@ test.describe
 					['list_sent_telemetry', {}],
 					['get_network', {}],
 					['get_network_details', {}],
+					['get_update', {}],
 				];
 				const folders = (await invoke('list_folders')) as { folders: { id: string }[] };
 				const folderId = folders.folders[0]?.id ?? '0';
@@ -287,12 +288,17 @@ test.describe
 				for (const [command, args] of calls) {
 					results[command] = await invoke(command, args).then(
 						() => 'ok',
-						(error: unknown) => JSON.stringify(error),
+						(error: { code?: string }) => {
+							if (error.code === 'updatesNotReady') {
+								return 'ok';
+							}
+							return JSON.stringify(error);
+						},
 					);
 				}
 				return results;
 			});
-			expect(Object.values(outcomes)).toEqual(Array(23).fill('ok'));
+			expect(Object.values(outcomes)).toEqual(Array(24).fill('ok'));
 		});
 
 		test('scenario 6: a problem report is sent, saved after a 404 and the local logs are deleted', async () => {

@@ -17,6 +17,7 @@ import { historyResponses } from './history';
 import { privacyResponses } from './privacy';
 import { setupResponses, setupView } from './setup';
 import { supportResponses } from './support';
+import { updateResponses } from './update';
 
 const params = new URLSearchParams(window.location.search);
 const scenario = params.get('scenario') ?? 'hold';
@@ -43,6 +44,9 @@ const calm = scenario !== 'hold';
 function holds() {
 	if (scenario === 'network') {
 		return NETWORK_HOLDS;
+	}
+	if (scenario === 'too-old') {
+		return { revision: '9', holds: [{ kind: 'clientTooOld' as const, since: '2026-10-12T08:42:00.000Z' }] };
 	}
 	return calm ? { revision: '9', holds: [] } : HOLDS;
 }
@@ -79,6 +83,7 @@ const setup = {
 	...setupResponses(setupView(scenario)),
 	...historyResponses(scenario),
 	...privacyResponses(scenario),
+	...updateResponses(scenario),
 };
 
 mockIPC((command, args) => setup[command]?.((args ?? {}) as Record<string, unknown>) ?? responses[command] ?? null, {

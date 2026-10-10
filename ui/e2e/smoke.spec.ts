@@ -177,3 +177,48 @@ test('reporting turned off by policy hides the report entry points', async ({ pa
 	await expect(page.getByText('Problem reports are turned off by your administrator.')).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Report a problem…' })).toHaveCount(0);
 });
+
+for (const lang of ['en', 'de']) {
+	test(`update settings with a ready update (${lang})`, async ({ page }) => {
+		await open(page, `/settings/updates?scenario=update-ready&lang=${lang}`);
+		await expect(page.getByText(/2\.1\.0/)).toBeVisible();
+		await expect(
+			page.getByRole('button', { name: /^(Restart and update|Neu starten und aktualisieren)$/ }),
+		).toBeVisible();
+		await expect(page.getByRole('button', { name: /^(Report a problem|Problem melden)$/ })).toBeVisible();
+		await structure(page);
+		await noHorizontalScroll(page);
+		await page.screenshot({ path: `${SHOTS}/g7-settings-updates-${lang}.png`, fullPage: true });
+	});
+}
+
+test('a policy that turns off automatic updates locks the switch', async ({ page }) => {
+	await open(page, '/settings/updates?scenario=update-locked');
+	const sw = page.getByRole('switch', { name: 'Download and install updates automatically' });
+	await expect(sw).toBeDisabled();
+	await expect(sw).not.toBeChecked();
+	await expect(page.getByText('Set by your IT department', { exact: false })).toBeVisible();
+});
+
+test('a required update shows a red banner with one filled restart button', async ({ page }) => {
+	await open(page, '/?scenario=too-old');
+	const banner = page.getByRole('status').filter({ hasText: 'Update required.' });
+	await expect(banner).toBeVisible();
+	await expect(banner.getByRole('button')).toHaveCount(1);
+	const fill = await banner
+		.getByRole('button', { name: 'Restart and update' })
+		.evaluate((button) => getComputedStyle(button).backgroundColor);
+	expect(fill).not.toMatch(/^rgba\(0, 0, 0, 0\)$|^rgb\(255, 255, 255\)$/);
+	await structure(page);
+	await page.screenshot({ path: `${SHOTS}/o4-update-required-en.png` });
+});
+
+test('a required version without a signed update shows a warning banner', async ({ page }) => {
+	await open(page, '/?scenario=update-unsigned');
+	const banner = page.getByRole('status').filter({ hasText: 'A newer version is required.' });
+	await expect(banner.getByRole('button', { name: 'Releases page' })).toBeVisible();
+	await expect(banner.getByRole('button', { name: 'Report a problem' })).toBeVisible();
+	await structure(page);
+	await noHorizontalScroll(page);
+	await page.screenshot({ path: `${SHOTS}/o5-update-unsigned-en.png` });
+});
