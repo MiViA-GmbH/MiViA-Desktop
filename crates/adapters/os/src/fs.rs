@@ -9,14 +9,16 @@ use mivia_domain::ids::{Fingerprint, Timestamp};
 use mivia_domain::image_format::{ByteSource, check_source};
 use mivia_domain::path::WinPath;
 use mivia_domain::sanitise::is_reserved;
-use mivia_ports::fs::{FileStat, FileSystem, FsError, ImageRead, Walk, WalkEntry};
+use mivia_ports::fs::{
+    ChunkSource, Expected, FileStat, FileSystem, FsError, ImageRead, Walk, WalkEntry,
+};
 use sha2::{Digest, Sha256};
 use windows_sys::Win32::Storage::FileSystem::{
     FILE_FLAG_BACKUP_SEMANTICS, FILE_FLAG_SEQUENTIAL_SCAN, FILE_SHARE_DELETE, FILE_SHARE_READ,
     FILE_SHARE_WRITE,
 };
 
-use crate::ffi;
+use crate::{ffi, upload};
 
 const SHARE_ALL: u32 = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 const READ_CHUNK: usize = 1024 * 1024;
@@ -45,7 +47,7 @@ fn native(path: &WinPath) -> PathBuf {
     PathBuf::from(path.to_string())
 }
 
-fn open_shared(path: &WinPath, flags: u32) -> Result<File, FsError> {
+pub(crate) fn open_shared(path: &WinPath, flags: u32) -> Result<File, FsError> {
     OpenOptions::new()
         .read(true)
         .share_mode(SHARE_ALL)
@@ -54,7 +56,7 @@ fn open_shared(path: &WinPath, flags: u32) -> Result<File, FsError> {
         .map_err(|error| fs_error(&error))
 }
 
-fn handle_stat(file: &File) -> Result<FileStat, FsError> {
+pub(crate) fn handle_stat(file: &File) -> Result<FileStat, FsError> {
     let metadata = file.metadata().map_err(|error| fs_error(&error))?;
     let (mtime, change_time) = ffi::file_times(file).map_err(|error| fs_error(&error))?;
     Ok(FileStat {
@@ -65,7 +67,7 @@ fn handle_stat(file: &File) -> Result<FileStat, FsError> {
     })
 }
 
-fn final_of(file: &File) -> Result<WinPath, FsError> {
+pub(crate) fn final_of(file: &File) -> Result<WinPath, FsError> {
     let text = ffi::final_path_of(file).map_err(|error| fs_error(&error))?;
     WinPath::parse(&text).map_err(|_| FsError::InvalidName)
 }
@@ -210,6 +212,17 @@ impl FileSystem for OsFileSystem {
     async fn read_image(&self, path: &WinPath, within: &WinPath) -> Result<ImageRead, FsError> {
         let (path, within) = (path.clone(), within.clone());
         blocking(move || read_image(&path, &within)).await
+    }
+
+    async fn open_upload(
+        &self,
+        path: &WinPath,
+        within: &WinPath,
+        expected: Expected,
+    ) -> Result<Box<dyn ChunkSource>, FsError> {
+        let (path, within) = (path.clone(), within.clone());
+        let source = blocking(move || upload::open(&path, &within, expected)).await?;
+        Ok(Box::new(source))
     }
 
     async fn final_path(&self, path: &WinPath) -> Result<WinPath, FsError> {
