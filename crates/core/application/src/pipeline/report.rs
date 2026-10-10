@@ -126,7 +126,7 @@ impl Pipeline {
             labels: row.members.iter().map(|(_, label)| label.clone()).collect(),
             part: Some(row.part).filter(|(_, of)| *of > 1),
             omitted: row.omitted.clone(),
-            replaces: None,
+            replaces: row.replaces.clone(),
             decimal_comma: row.decimal_comma,
         });
         ReportRequest {

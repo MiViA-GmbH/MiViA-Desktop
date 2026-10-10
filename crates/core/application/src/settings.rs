@@ -21,6 +21,9 @@ pub struct GlobalSettings {
     pub last_account: Option<String>,
     pub legacy_stop: Option<PendingStop>,
     pub one_off: BTreeMap<String, LastChoices>,
+    pub custom_report_folder: Option<String>,
+    pub backup_folder: Option<String>,
+    pub backup_copied_at: Option<i64>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

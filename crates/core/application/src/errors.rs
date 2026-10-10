@@ -1,6 +1,7 @@
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
 use mivia_ports::store::{StoreError, TxError};
 
+use crate::history::HistoryError;
 use crate::intake::{FolderProblem, IntakeError};
 use crate::pipeline::PipelineError;
 
@@ -45,6 +46,32 @@ pub fn pipeline_error(error: &PipelineError, site: &str) -> AppError {
     match error {
         PipelineError::Store(error) => app_error(error, site),
     }
+}
+
+fn history_code(error: &HistoryError) -> (AppErrorKind, &'static str) {
+    match error {
+        HistoryError::Store(_) | HistoryError::Fs(_) => (AppErrorKind::Internal, "fileSystem"),
+        HistoryError::NameRequired => (AppErrorKind::Validation, "nameRequired"),
+        HistoryError::NoImages => (AppErrorKind::Validation, "noImages"),
+        HistoryError::TooMany => (AppErrorKind::Validation, "tooMany"),
+        HistoryError::StillAnalyzing => (AppErrorKind::Conflict, "stillAnalyzing"),
+        HistoryError::NotReplaceable(_) => (AppErrorKind::Conflict, "notReplaceable"),
+        HistoryError::NotMoved => (AppErrorKind::Conflict, "notMoved"),
+        HistoryError::ChangedAfterMove => (AppErrorKind::Conflict, "changedAfterMove"),
+    }
+}
+
+pub fn history_error(error: &HistoryError, site: &str) -> AppError {
+    if let HistoryError::Store(store) = error {
+        return app_error(store, site);
+    }
+    let (kind, code) = history_code(error);
+    let mut failure = logged(kind, Some(code), format!("{error:?}"), site);
+    if let HistoryError::NotReplaceable(missing) = error {
+        let fields = [("missing".to_owned(), missing.join(", "))].into();
+        failure.fields = Some(Box::new(fields));
+    }
+    failure
 }
 
 pub fn not_found(code: &str, site: &str) -> AppError {

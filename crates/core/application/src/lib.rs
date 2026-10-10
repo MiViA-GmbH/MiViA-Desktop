@@ -2,6 +2,7 @@ pub mod errors;
 pub mod feed;
 pub mod fuzz;
 pub mod handoff;
+pub mod history;
 pub mod intake;
 pub mod launch;
 pub mod legacy;

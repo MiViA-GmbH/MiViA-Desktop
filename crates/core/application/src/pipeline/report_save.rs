@@ -149,7 +149,7 @@ impl Pipeline {
             analysis: &analysis,
             variant: variant.as_deref(),
             part: Some(row.part),
-            update: None,
+            update: row.update,
             data: row.format == Format::Csv,
             language: row.language,
         };
