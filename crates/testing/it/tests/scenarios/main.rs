@@ -2,6 +2,7 @@ mod batches;
 mod folders;
 mod history;
 mod line;
+mod network;
 mod one_off;
 mod outages;
 mod recovery;

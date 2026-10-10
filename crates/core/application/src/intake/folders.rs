@@ -231,6 +231,7 @@ impl Intake {
         let _serial = self.serial.lock().await;
         let root = self.checked_root(path, Some(id)).await?;
         self.ports.watcher.unwatch(id);
+        self.remove_marker(&self.folder(id).await?).await;
         let row = self.change(id, FolderChange::Relocated(root)).await?;
         self.scan(&row, Mode::Detect).await.map(drop)
     }
@@ -239,6 +240,7 @@ impl Intake {
         let _serial = self.serial.lock().await;
         self.ports.watcher.unwatch(id);
         self.schedule.lock().due.remove(&id);
+        self.remove_marker(&self.folder(id).await?).await;
         let now = self.now();
         self.write(move |tx, scope| {
             let open = tx.intake(scope).open_batches()?;

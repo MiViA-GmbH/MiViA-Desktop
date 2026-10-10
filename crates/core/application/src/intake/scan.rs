@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use mivia_domain::ids::{FolderId, Timestamp};
-use mivia_ports::fs::{FsError, WalkEntry};
-use mivia_ports::store::intake::{FolderChange, FolderRow, KnownPath};
+use mivia_ports::fs::WalkEntry;
+use mivia_ports::store::intake::{FolderRow, KnownPath};
 
 use super::plan::{Plan, accepts};
 use super::{Intake, IntakeError, LOCAL_RECONCILE_MS, NETWORK_RECONCILE_MS};
@@ -58,27 +58,6 @@ impl Intake {
         Ok(())
     }
 
-    pub(super) async fn root_present(&self, row: &FolderRow) -> Result<bool, IntakeError> {
-        let present = match self.ports.fs.final_path(&row.path).await {
-            Ok(found) => found.key() == row.path.key(),
-            Err(FsError::NotFound | FsError::NetworkUnavailable | FsError::NotADirectory) => false,
-            Err(error) => return Err(IntakeError::Fs(error)),
-        };
-        let change = match (present, row.missing_since) {
-            (true, Some(_)) => FolderChange::Missing(None),
-            (false, None) => FolderChange::Missing(Some(self.now())),
-            (true, None) | (false, Some(_)) => return Ok(present),
-        };
-        if !present {
-            self.ports.watcher.unwatch(row.id);
-            tracing::warn!(folder = %row.id, "folder.missing");
-        }
-        let id = row.id;
-        self.write(move |tx, scope| tx.folders(scope).update(id, &change))
-            .await?;
-        Ok(present)
-    }
-
     pub(super) async fn candidates(&self, row: &FolderRow) -> Result<Vec<WalkEntry>, IntakeError> {
         let walk = self
             .ports
@@ -123,6 +102,7 @@ impl Intake {
         if let Err(error) = self.ports.watcher.watch(row.id, &row.path) {
             tracing::warn!(folder = %row.id, ?error, "folder.watchFailed");
         }
+        self.check_marker(row).await?;
         let found = self.candidates(row).await?;
         let count = found.len();
         match mode {

@@ -206,7 +206,7 @@ async fn start(
     begin: Begin,
 ) -> Vec<DoneProblem> {
     if let Some(id) = begin.folder {
-        let intake = intake::compose(Arc::clone(&services.store), begin.scope, &services.version);
+        let intake = intake::compose_live(services, begin.scope).await;
         if let Err(error) = intake.start_folder(id, begin.include).await {
             tracing::warn!(?error, "setup.folderStartFailed");
         }

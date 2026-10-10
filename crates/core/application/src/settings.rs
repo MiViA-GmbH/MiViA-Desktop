@@ -26,6 +26,7 @@ pub struct GlobalSettings {
     pub backup_folder: Option<String>,
     pub backup_copied_at: Option<i64>,
     pub proxy: ProxySetting,
+    pub watch_marker_id: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

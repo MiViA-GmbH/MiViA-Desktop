@@ -198,11 +198,17 @@ impl Pipeline {
     }
 
     pub async fn probe_now(&self) -> Result<(), PipelineError> {
+        self.probe_within(0).await
+    }
+
+    pub async fn probe_within(&self, spread_ms: u64) -> Result<(), PipelineError> {
         let now = self.now();
+        let delay = i64::try_from(self.random() % spread_ms.max(1)).unwrap_or_default();
+        let at = now.plus_ms(delay);
         let held = self.active_holds().await?;
         self.write(move |tx, scope| {
             held.iter()
-                .try_for_each(|reason| tx.holds(scope).raise(*reason, now, Some(now)))
+                .try_for_each(|reason| tx.holds(scope).raise(*reason, now, Some(at)))
         })
         .await?;
         self.wakers.probe.notify_one();

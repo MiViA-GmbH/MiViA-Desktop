@@ -43,7 +43,7 @@ pub(crate) async fn compose(
         }
     };
     services.telemetry.detach();
-    let intake = intake::compose(Arc::clone(store), scope, &services.version);
+    let intake = intake::compose_live(services, scope).await;
     let mut ready = Ready::without_account(Arc::clone(services));
     ready.scope = scope;
     ready.track(intake::start(Arc::clone(&intake), minimized));

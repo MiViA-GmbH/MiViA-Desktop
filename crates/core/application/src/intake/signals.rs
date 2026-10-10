@@ -78,7 +78,11 @@ impl Intake {
     ) -> Result<Option<(FolderRow, Vec<Member>)>, IntakeError> {
         self.write(move |tx, scope| {
             let row = match tx.folders(scope).get(folder) {
-                Ok(row) if row.active && row.missing_since.is_none() => row,
+                Ok(row)
+                    if row.active && row.missing_since.is_none() && row.waiting_since.is_none() =>
+                {
+                    row
+                }
                 Ok(_) | Err(TxError::NotFound) => return Ok(None),
                 Err(error) => return Err(error),
             };

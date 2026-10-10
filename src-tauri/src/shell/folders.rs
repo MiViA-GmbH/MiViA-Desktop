@@ -90,6 +90,8 @@ pub(crate) async fn folder_view(
         .unwrap_or_default();
     let (block, mut notes) = classify_folder(path, &roots(&ready.services.data_dir), &watched);
     let final_path = fs.final_path(path).await.ok();
+    let stored = final_path.clone().unwrap_or_else(|| path.clone());
+    notes.extend(super::intake::watched_elsewhere(ready, &stored, language).await);
     if let (Some(letter), Some(unc)) = (
         path.to_string().get(..2),
         final_path.filter(WinPath::is_unc),

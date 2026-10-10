@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use mivia_application::intake::{AddFolder, Intake, IntakeSink, Ports, SIGNAL_CAPACITY, Tick};
+use mivia_application::intake::{
+    AddFolder, Intake, IntakeSink, MarkerSelf, Ports, SIGNAL_CAPACITY, Tick,
+};
 use mivia_application::report_settings::ReportSettings;
 use mivia_domain::ids::{BatchId, FolderId, ModelChoice, Timestamp};
 use mivia_domain::label::LabelRule;
@@ -16,6 +18,7 @@ use mivia_store::{SqliteStore, StoreConfig};
 use mivia_testkit::clock::ManualClock;
 use mivia_testkit::fs::InMemoryFs;
 use mivia_testkit::observer::RecordingObserver;
+use mivia_testkit::telemetry::RecordingTelemetry;
 use mivia_testkit::watch::FakeFolderWatcher;
 use tempfile::TempDir;
 
@@ -47,11 +50,16 @@ pub(crate) struct World {
     pub(crate) clock: Arc<ManualClock>,
     pub(crate) intake: Intake,
     pub(crate) scope: AccountScope,
+    pub(crate) telemetry: Arc<RecordingTelemetry>,
     _dir: TempDir,
 }
 
 impl World {
     pub(crate) async fn new() -> Self {
+        Self::with_marker(None).await
+    }
+
+    pub(crate) async fn with_marker(marker: Option<MarkerSelf>) -> Self {
         let dir = tempfile::tempdir().unwrap();
         let store = Arc::new(
             SqliteStore::open(
@@ -79,6 +87,7 @@ impl World {
         fs.set_now(START);
         fs.mkdir(&win(r"D:\Lab"));
         let clock = Arc::new(ManualClock::new(START));
+        let telemetry = Arc::new(RecordingTelemetry::default());
         let (sink, receiver) = IntakeSink::channel(SIGNAL_CAPACITY);
         let watcher = Arc::new(FakeFolderWatcher::new(
             Arc::clone(&sink) as _,
@@ -89,8 +98,9 @@ impl World {
             fs: Arc::clone(&fs) as _,
             watcher: Arc::clone(&watcher) as _,
             clock: Arc::clone(&clock) as _,
+            telemetry: Arc::clone(&telemetry) as _,
         };
-        let intake = Intake::new(ports, scope, "2.0.0", (sink, receiver));
+        let intake = Intake::new(ports, scope, "2.0.0", (sink, receiver)).with_marker(marker);
         Self {
             store,
             fs,
@@ -98,6 +108,7 @@ impl World {
             clock,
             intake,
             scope,
+            telemetry,
             _dir: dir,
         }
     }
@@ -113,9 +124,20 @@ impl World {
         include_existing: bool,
         report_settings: ReportSettings,
     ) -> FolderId {
+        self.add_at(r"D:\Lab", quiet_ms, include_existing, report_settings)
+            .await
+    }
+
+    pub(crate) async fn add_at(
+        &self,
+        path: &str,
+        quiet_ms: i64,
+        include_existing: bool,
+        report_settings: ReportSettings,
+    ) -> FolderId {
         self.intake
             .add_folder(AddFolder {
-                path: win(r"D:\Lab"),
+                path: win(path),
                 model_choices: vec![choice("grain"), choice("phase")],
                 quiet_ms,
                 label_rule: LabelRule::Auto,

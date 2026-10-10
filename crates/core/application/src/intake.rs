@@ -1,6 +1,8 @@
 mod closer;
 mod folders;
+mod marker;
 mod plan;
+mod reach;
 mod readiness;
 mod restart;
 mod scan;
@@ -14,6 +16,7 @@ use mivia_domain::ids::{FolderId, MINUTE_MS, SourceFileId, Timestamp};
 use mivia_ports::clock::Clock;
 use mivia_ports::fs::{FileSystem, FsError};
 use mivia_ports::store::{AccountScope, Store, StoreError, StoreExt, TxError, WriteTx};
+use mivia_ports::telemetry::TelemetrySink;
 use mivia_ports::watch::{FolderWatcher, FsSignal};
 use parking_lot::Mutex;
 use tokio::sync::Notify;
@@ -22,6 +25,8 @@ use tokio::sync::mpsc::Receiver;
 pub use crate::worker::{Tick, run};
 pub use closer::close_all_series;
 pub use folders::{AddFolder, FolderProblem, PreparedFolder, Resumed, insert_folder};
+pub use marker::{MarkerSelf, read_markers};
+pub use reach::{MISSING_AFTER_MS, RETRY_MS};
 pub use sink::{IntakeSink, SIGNAL_CAPACITY};
 
 pub const LOCAL_RECONCILE_MS: i64 = 10 * MINUTE_MS;
@@ -54,6 +59,7 @@ pub struct Ports {
     pub fs: Arc<dyn FileSystem>,
     pub watcher: Arc<dyn FolderWatcher>,
     pub clock: Arc<dyn Clock>,
+    pub telemetry: Arc<dyn TelemetrySink>,
 }
 
 #[derive(Default)]
@@ -67,6 +73,9 @@ pub struct Wakers {
 struct Schedule {
     rename_from: Option<FsSignal>,
     due: BTreeMap<FolderId, Timestamp>,
+    waits: BTreeMap<FolderId, reach::Wait>,
+    confirming: BTreeSet<FolderId>,
+    markers: BTreeMap<FolderId, Timestamp>,
 }
 
 pub struct Intake {
@@ -78,6 +87,7 @@ pub struct Intake {
     schedule: Mutex<Schedule>,
     in_flight: Arc<Mutex<BTreeSet<SourceFileId>>>,
     serial: tokio::sync::Mutex<()>,
+    marker: Option<MarkerSelf>,
     pub wakers: Arc<Wakers>,
 }
 
@@ -98,8 +108,15 @@ impl Intake {
             schedule: Mutex::new(Schedule::default()),
             in_flight: Arc::new(Mutex::new(BTreeSet::new())),
             serial: tokio::sync::Mutex::new(()),
+            marker: None,
             wakers,
         }
+    }
+
+    #[must_use]
+    pub fn with_marker(mut self, marker: Option<MarkerSelf>) -> Self {
+        self.marker = marker;
+        self
     }
 
     pub fn high_water(&self) -> usize {

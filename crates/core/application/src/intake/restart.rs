@@ -67,6 +67,7 @@ impl Intake {
         if let Err(error) = self.ports.watcher.watch(row.id, &row.path) {
             tracing::warn!(folder = %row.id, ?error, "folder.watchFailed");
         }
+        self.check_marker(row).await?;
         let mut files = Vec::new();
         for entry in self.candidates(row).await? {
             if let Ok(stat) = self.ports.fs.stat(&entry.path).await {

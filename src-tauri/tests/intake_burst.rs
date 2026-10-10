@@ -144,6 +144,7 @@ async fn burst_of_5000_files_loses_nothing() {
         fs: Arc::new(OsFileSystem),
         watcher: Arc::new(NotifyWatcher::new(Arc::clone(&sink) as _)),
         clock: Arc::new(SystemClock),
+        telemetry: Arc::new(mivia_ports::telemetry::NoTelemetry),
     };
     let intake = Arc::new(Intake::new(ports, scope, "2.0.0", (sink, receiver)));
     intake
