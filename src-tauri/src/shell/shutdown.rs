@@ -35,8 +35,8 @@ impl Shutdown {
         }
     }
 
-    pub(super) fn attach_store(&self, store: SqliteStore) {
-        drop(self.store.set(Arc::new(store)));
+    pub(super) fn attach_store(&self, store: Arc<SqliteStore>) {
+        drop(self.store.set(store));
     }
 
     pub(super) fn session_ending(&self) {

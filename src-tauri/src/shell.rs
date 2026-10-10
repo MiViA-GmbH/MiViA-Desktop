@@ -1,3 +1,4 @@
+mod intake;
 mod shutdown;
 mod tray;
 
@@ -62,6 +63,7 @@ fn start(
     log_start(&context, &primary, previous, hardening);
     let (handoffs, received) = channel(HANDOFF_QUEUE);
     let data_dir = primary.data_dir.clone();
+    let minimized = primary.launch.minimized;
     primary.serve(handoffs)?;
     let shutdown = Arc::new(Shutdown::new(runtime, logging, logs));
     let watcher = Arc::clone(&shutdown);
@@ -71,7 +73,7 @@ fn start(
         .setup(move |app| {
             tray::build(app.handle())?;
             mark("tray_ready");
-            tauri::async_runtime::spawn(init(setup, data_dir.clone()));
+            tauri::async_runtime::spawn(init(setup, data_dir.clone(), (version, minimized)));
             tauri::async_runtime::spawn(receive(received, data_dir));
             Ok(())
         })
@@ -121,17 +123,20 @@ fn mark(name: &str) {
     tracing::info!(target: "perf", ms_since_process_create = mivia_os::process_age_ms(), "{name}");
 }
 
-async fn init(shutdown: Arc<Shutdown>, data_dir: PathBuf) {
+async fn init(shutdown: Arc<Shutdown>, data_dir: PathBuf, launch: (String, bool)) {
     let path = data_dir.join("mivia.db");
-    match SqliteStore::open(&path, StoreConfig::production(), Arc::new(NoChanges)).await {
+    let opened = SqliteStore::open(&path, StoreConfig::production(), Arc::new(NoChanges)).await;
+    let pending = std::fs::read_dir(instance::inbox(&data_dir)).map_or(0, Iterator::count);
+    tracing::info!(count = pending, "instance.spoolPending");
+    match opened {
         Ok(store) => {
-            shutdown.attach_store(store);
+            let store = Arc::new(store);
+            shutdown.attach_store(Arc::clone(&store));
             mark("db_ready");
+            intake::start(store, launch.0, launch.1).await;
         }
         Err(error) => tracing::error!(?error, "store.openFailed"),
     }
-    let pending = std::fs::read_dir(instance::inbox(&data_dir)).map_or(0, Iterator::count);
-    tracing::info!(count = pending, "instance.spoolPending");
 }
 
 async fn receive(mut received: Receiver<Handoff>, data_dir: PathBuf) {
