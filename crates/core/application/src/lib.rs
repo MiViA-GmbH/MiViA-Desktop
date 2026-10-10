@@ -5,6 +5,7 @@ pub mod handoff;
 pub mod intake;
 pub mod launch;
 pub mod legacy;
+pub mod one_off;
 pub mod pipeline;
 pub mod policy;
 pub mod report_settings;

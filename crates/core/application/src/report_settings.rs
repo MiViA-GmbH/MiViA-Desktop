@@ -10,6 +10,8 @@ pub struct ReportSettings {
     pub language: String,
     pub decimal_comma: Option<bool>,
     pub include_images: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub one_off_folder: Option<String>,
 }
 
 impl Default for ReportSettings {
@@ -25,6 +27,7 @@ impl ReportSettings {
             language: language.code().to_owned(),
             decimal_comma: None,
             include_images: false,
+            one_off_folder: None,
         }
     }
 

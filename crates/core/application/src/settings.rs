@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use mivia_domain::ids::{BatchId, Timestamp};
 use mivia_ports::ipc::screens::{Language, LanguageSetting, LocaleView};
 use mivia_ports::queries::Queries;
@@ -18,6 +20,14 @@ pub struct GlobalSettings {
     pub send_to_name: Option<String>,
     pub last_account: Option<String>,
     pub legacy_stop: Option<PendingStop>,
+    pub one_off: BTreeMap<String, LastChoices>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct LastChoices {
+    pub models: Vec<String>,
+    pub at: i64,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

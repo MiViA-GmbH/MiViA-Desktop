@@ -7,7 +7,7 @@ use mivia_ports::ipc::setup::{
     ArrivalPreset, ConnectionNote, ConnectionView, LegacyTake, ModelChoiceView, ReportMode,
     SetupInput, SetupOption, SetupStep,
 };
-use mivia_ports::store::{AccountScope, NewAccount, SettingsScope, TxError, WriteTx};
+use mivia_ports::store::{AccountScope, NewAccount, SentImages, SettingsScope, TxError, WriteTx};
 use serde::{Deserialize, Serialize};
 
 use crate::intake::{PreparedFolder, insert_folder};
@@ -50,6 +50,7 @@ pub struct SetupDraft {
     pub report_custom: Option<String>,
     pub models: Vec<String>,
     pub options: BTreeSet<SetupOption>,
+    pub sent: SentImages,
 }
 
 impl Default for SetupDraft {
@@ -71,6 +72,7 @@ impl Default for SetupDraft {
                 SetupOption::LegacyStop,
             ]
             .into(),
+            sent: SentImages::default(),
         }
     }
 }
@@ -182,7 +184,18 @@ pub fn complete(
     global.telemetry = completion.telemetry;
     global.integration = completion.integration;
     write_global(tx, &global)?;
-    tx.clear_settings(SettingsScope::SetupDraft)?;
+    let sent = read_draft(tx)?.sent;
+    if sent == SentImages::default() {
+        tx.clear_settings(SettingsScope::SetupDraft)?;
+    } else {
+        write_draft(
+            tx,
+            &SetupDraft {
+                sent,
+                ..SetupDraft::default()
+            },
+        )?;
+    }
     Ok((scope, folder))
 }
 
