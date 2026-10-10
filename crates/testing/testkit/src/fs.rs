@@ -1,17 +1,23 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use mivia_domain::ids::{Fingerprint, Timestamp};
 use mivia_domain::image_format::check_format;
 use mivia_domain::path::{WinPath, fold};
 use mivia_domain::sanitise::is_reserved;
+mod hooks;
 mod nodes;
+mod reports;
 
+use mivia_domain::output::ProbeResult;
 use mivia_ports::fs::{
-    ChunkSource, Expected, FileStat, FileSystem, FsError, ImageRead, Walk, WalkEntry,
+    ByteSink, ChunkSource, Expected, FileStat, FileSystem, FsError, ImageRead, SaveTarget, Walk,
+    WalkEntry,
 };
 use nodes::{MemoryUpload, file, stat_of, under_link};
 use parking_lot::Mutex;
+pub use reports::{MemorySink, staged};
 use sha2::{Digest, Sha256};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -24,6 +30,12 @@ pub enum FsOp {
     Write,
     FreeSpace,
     OpenUpload,
+    Staging,
+    ListNames,
+    Save,
+    Digest,
+    Remove,
+    ProbeFolder,
 }
 
 type Key = Vec<String>;
@@ -40,12 +52,13 @@ struct State {
     locked: BTreeSet<Key>,
     failures: Vec<(FsOp, FsError)>,
     finals: BTreeMap<Key, WinPath>,
+    probes: BTreeMap<Key, ProbeResult>,
     free_space: u64,
     clock: i64,
 }
 
 pub struct InMemoryFs {
-    state: Mutex<State>,
+    state: Arc<Mutex<State>>,
 }
 
 fn ntfs_name(component: &str) -> &str {
@@ -59,6 +72,28 @@ fn key(path: &WinPath) -> Key {
         .filter(|part| !part.is_empty())
         .map(str::to_owned)
         .collect()
+}
+
+fn insert_node(state: &mut State, path: &WinPath, bytes: Option<Vec<u8>>) {
+    for ancestor in ancestors(path) {
+        state.nodes.entry(key(&ancestor)).or_insert(Node {
+            path: ancestor,
+            bytes: None,
+            mtime: Timestamp(0),
+            link: false,
+        });
+    }
+    state.clock += 1;
+    let mtime = Timestamp(state.clock);
+    state.nodes.insert(
+        key(path),
+        Node {
+            path: path.clone(),
+            bytes,
+            mtime,
+            link: false,
+        },
+    );
 }
 
 fn ancestors(path: &WinPath) -> Vec<WinPath> {
@@ -77,38 +112,28 @@ fn ancestors(path: &WinPath) -> Vec<WinPath> {
 impl InMemoryFs {
     pub fn windows() -> Self {
         Self {
-            state: Mutex::new(State {
+            state: Arc::new(Mutex::new(State {
                 nodes: BTreeMap::new(),
                 locked: BTreeSet::new(),
                 failures: Vec::new(),
                 finals: BTreeMap::new(),
+                probes: BTreeMap::new(),
                 free_space: u64::MAX,
                 clock: 1_790_000_000_000,
-            }),
+            })),
         }
     }
 
     fn insert(&self, path: &WinPath, bytes: Option<Vec<u8>>) {
-        let mut state = self.state.lock();
-        for ancestor in ancestors(path) {
-            state.nodes.entry(key(&ancestor)).or_insert(Node {
-                path: ancestor,
-                bytes: None,
-                mtime: Timestamp(0),
-                link: false,
-            });
-        }
-        state.clock += 1;
-        let mtime = Timestamp(state.clock);
-        state.nodes.insert(
-            key(path),
-            Node {
-                path: path.clone(),
-                bytes,
-                mtime,
-                link: false,
-            },
-        );
+        insert_node(&mut self.state.lock(), path, bytes);
+    }
+
+    pub fn set_probe(&self, folder: &WinPath, result: ProbeResult) {
+        self.state.lock().probes.insert(key(folder), result);
+    }
+
+    pub fn contents(&self, path: &WinPath) -> Option<Vec<u8>> {
+        self.state.lock().nodes.get(&key(path))?.bytes.clone()
     }
 
     pub fn set_now(&self, at: Timestamp) {
@@ -121,67 +146,6 @@ impl InMemoryFs {
 
     pub fn mkdir(&self, path: &WinPath) {
         self.insert(path, None);
-    }
-
-    pub fn link_dir(&self, path: &WinPath) {
-        self.mkdir(path);
-        if let Some(node) = self.state.lock().nodes.get_mut(&key(path)) {
-            node.link = true;
-        }
-    }
-
-    pub fn set_final_path(&self, path: &WinPath, target: &WinPath) {
-        self.state.lock().finals.insert(key(path), target.clone());
-    }
-
-    pub fn is_dir(&self, path: &WinPath) -> bool {
-        self.state
-            .lock()
-            .nodes
-            .get(&key(path))
-            .is_some_and(|node| node.bytes.is_none())
-    }
-
-    pub fn lock(&self, path: &WinPath) {
-        self.state.lock().locked.insert(key(path));
-    }
-
-    pub fn unlock(&self, path: &WinPath) {
-        self.state.lock().locked.remove(&key(path));
-    }
-
-    pub fn vanish(&self, path: &WinPath) {
-        let prefix = key(path);
-        self.state
-            .lock()
-            .nodes
-            .retain(|node, _| !node.starts_with(&prefix));
-    }
-
-    pub fn grow(&self, path: &WinPath, extra: &[u8]) {
-        if let Some(Some(bytes)) = self
-            .state
-            .lock()
-            .nodes
-            .get_mut(&key(path))
-            .map(|node| node.bytes.as_mut())
-        {
-            bytes.extend_from_slice(extra);
-        }
-    }
-
-    pub fn set_mtime(&self, path: &WinPath, mtime: Timestamp) {
-        if let Some(node) = self.state.lock().nodes.get_mut(&key(path)) {
-            node.mtime = mtime;
-        }
-    }
-
-    pub fn fail_next(&self, op: FsOp, error: FsError) {
-        self.state.lock().failures.push((op, error));
-    }
-
-    pub fn set_free_space(&self, bytes: u64) {
-        self.state.lock().free_space = bytes;
     }
 
     fn begin(&self, op: FsOp) -> Result<parking_lot::MutexGuard<'_, State>, FsError> {
@@ -319,5 +283,41 @@ impl FileSystem for InMemoryFs {
 
     async fn free_space(&self, _path: &WinPath) -> Result<u64, FsError> {
         Ok(self.begin(FsOp::FreeSpace)?.free_space)
+    }
+
+    async fn create_staging(&self, path: &WinPath) -> Result<Box<dyn ByteSink>, FsError> {
+        drop(self.begin(FsOp::Staging)?);
+        Ok(Box::new(reports::sink(self, path)))
+    }
+
+    async fn list_names(&self, folder: &WinPath) -> Result<Vec<String>, FsError> {
+        reports::names(&*self.begin(FsOp::ListNames)?, folder)
+    }
+
+    async fn save_report(
+        &self,
+        staging: &WinPath,
+        target: &SaveTarget,
+    ) -> Result<WinPath, FsError> {
+        drop(self.begin(FsOp::Save)?);
+        reports::save(&self.state, staging, target)
+    }
+
+    async fn digest(&self, path: &WinPath) -> Result<(u64, Fingerprint), FsError> {
+        let state = self.begin(FsOp::Digest)?;
+        let bytes = file(&state, path)?.bytes.clone().unwrap_or_default();
+        let summary = staged(&bytes);
+        Ok((summary.size, summary.sha256))
+    }
+
+    async fn remove(&self, path: &WinPath) -> Result<(), FsError> {
+        let mut state = self.begin(FsOp::Remove)?;
+        file(&state, path)?;
+        state.nodes.remove(&key(path));
+        Ok(())
+    }
+
+    async fn probe_folder(&self, folder: &WinPath, create: bool) -> Result<ProbeResult, FsError> {
+        reports::probe(&*self.begin(FsOp::ProbeFolder)?, folder, create)
     }
 }

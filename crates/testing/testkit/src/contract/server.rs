@@ -56,12 +56,15 @@ pub fn grain() -> ModelChoice {
     }
 }
 
-async fn image(server: &dyn ServerApi, bytes: &[u8]) -> Result<String, String> {
+pub(super) async fn image(server: &dyn ServerApi, bytes: &[u8]) -> Result<String, String> {
     let uploaded = server.upload(upload_request("a.png", bytes)).await;
     Ok(uploaded.map_err(|e| failed(&e))?.image_id)
 }
 
-async fn submit(server: &dyn ServerApi, images: &[&str]) -> Result<Vec<ServerJob>, String> {
+pub(super) async fn submit(
+    server: &dyn ServerApi,
+    images: &[&str],
+) -> Result<Vec<ServerJob>, String> {
     let request = SubmitRequest {
         key: Uuid::from_u64_pair(0, KEYS.fetch_add(1, Ordering::Relaxed)),
         choice: grain(),
@@ -207,6 +210,13 @@ macro_rules! server_contract_tests {
             server_jobs_finish_with_a_result,
             server_lists_jobs_newest_first,
             server_unknown_image_is_named,
+        );
+        $crate::contract_cases!(
+            reports,
+            $harness,
+            reports_render_and_download,
+            reports_refuse_unknown_jobs,
+            reports_unknown_report_is_gone,
         );
     };
 }

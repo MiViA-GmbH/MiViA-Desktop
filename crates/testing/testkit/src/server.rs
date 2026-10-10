@@ -1,3 +1,4 @@
+mod reports;
 mod sim;
 
 use std::collections::{BTreeMap, VecDeque};
@@ -7,13 +8,17 @@ use std::sync::atomic::{AtomicI64, Ordering};
 use async_trait::async_trait;
 use mivia_domain::ids::Timestamp;
 use mivia_ports::clock::Clock;
+use mivia_ports::fs::ByteSink;
 use mivia_ports::server::{
-    CatalogueModel, FindJobs, ImageRef, LabelsFetch, License, ServerApi, ServerError, ServerJob,
-    ServerVersion, SubmitRequest, UploadRequest,
+    CatalogueModel, Download, FindJobs, ImageRef, LabelsFetch, License, ReportProgress,
+    ReportRequest, ServerApi, ServerError, ServerJob, ServerVersion, SubmitRequest, UploadRequest,
 };
 use parking_lot::Mutex;
 
+pub use reports::{ReportFaults, SimDownload, SimReport};
 pub use sim::{Licence, ServerSim, SimJob, sim_id};
+
+const DOWNLOAD_CHUNK: usize = 16;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Op {
@@ -26,6 +31,9 @@ pub enum Op {
     Status,
     Find,
     Exists,
+    ReportRequest,
+    ReportStatus,
+    ReportDownload,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -232,6 +240,37 @@ impl ServerApi for FakeServerApi {
         let fault = self.enter(Op::Exists)?;
         let exists = self.sim.lock().job_exists(job_id);
         Self::after(fault, exists).await
+    }
+
+    async fn request_report(&self, request: ReportRequest) -> Result<String, ServerError> {
+        let fault = self.enter(Op::ReportRequest)?;
+        let id = self.sim.lock().request_report(&request)?;
+        Self::after(fault, id).await
+    }
+
+    async fn report_status(&self, report_id: &str) -> Result<ReportProgress, ServerError> {
+        let fault = self.enter(Op::ReportStatus)?;
+        let progress = self.sim.lock().report_status(report_id)?;
+        Self::after(fault, progress).await
+    }
+
+    async fn download_report(
+        &self,
+        report_id: &str,
+        mut sink: Box<dyn ByteSink>,
+    ) -> Result<Download, ServerError> {
+        let fault = self.enter(Op::ReportDownload)?;
+        let download = self.sim.lock().download(report_id)?;
+        let SimDownload::Bytes(bytes) = download else {
+            return Self::after(fault, Download::Expired).await;
+        };
+        for chunk in bytes.chunks(DOWNLOAD_CHUNK) {
+            sink.write(chunk.to_vec())
+                .await
+                .map_err(ServerError::Source)?;
+        }
+        let staged = sink.finish().await.map_err(ServerError::Source)?;
+        Self::after(fault, Download::Staged(staged)).await
     }
 
     fn server_offset_ms(&self) -> Option<i64> {

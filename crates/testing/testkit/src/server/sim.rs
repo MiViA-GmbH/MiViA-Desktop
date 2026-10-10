@@ -6,6 +6,8 @@ use mivia_ports::server::{
     ServerError, ServerJob, ServerJobStatus, ServerVersion, SubmitRequest,
 };
 use sha2::{Digest, Sha256};
+
+use super::reports::{ReportFaults, SimReport};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -52,6 +54,8 @@ pub struct ServerSim {
     images: BTreeMap<[u8; 32], String>,
     jobs: Vec<SimJob>,
     keys: BTreeMap<Uuid, Vec<String>>,
+    pub report_faults: ReportFaults,
+    pub(super) reports: Vec<SimReport>,
     counter: u64,
 }
 
@@ -79,6 +83,8 @@ impl Default for ServerSim {
             images: BTreeMap::new(),
             jobs: Vec::new(),
             keys: BTreeMap::new(),
+            report_faults: ReportFaults::default(),
+            reports: Vec::new(),
             counter: 0,
         }
     }
@@ -89,7 +95,7 @@ pub fn sim_id(kind: u32, n: u64) -> String {
 }
 
 impl ServerSim {
-    fn next(&mut self) -> u64 {
+    pub(super) fn next_id(&mut self) -> u64 {
         self.counter += 1;
         self.counter
     }
@@ -130,7 +136,7 @@ impl ServerSim {
         if self.licence != Licence::Valid {
             return Err(ServerError::LicenseInvalid);
         }
-        let image_id = sim_id(1, self.next());
+        let image_id = sim_id(1, self.next_id());
         self.images.insert(content, image_id.clone());
         Ok(ImageRef {
             image_id,
@@ -190,7 +196,7 @@ impl ServerSim {
 
     fn create_job(&mut self, image_id: String, request: &SubmitRequest, now: Timestamp) -> String {
         let choice = &request.choice;
-        let id = sim_id(2, self.next());
+        let id = sim_id(2, self.next_id());
         let computed = self.jobs.iter().find(|job| {
             job.image_id == image_id && job.choice == *choice && job.status == ServerJobStatus::New
         });

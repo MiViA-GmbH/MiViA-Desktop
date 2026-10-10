@@ -278,5 +278,14 @@ macro_rules! fs_contract_tests {
             fs_upload_streams_the_expected_content,
             fs_upload_refuses_changed_content,
         );
+        $crate::contract_cases!(
+            fs_reports,
+            $harness,
+            fs_staging_keeps_bytes_and_hash,
+            fs_save_never_overwrites,
+            fs_save_creates_the_folder_only_when_asked,
+            fs_save_refuses_a_linked_report_folder,
+            fs_probe_and_remove,
+        );
     };
 }
