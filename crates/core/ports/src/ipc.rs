@@ -2,6 +2,7 @@ pub mod change;
 pub mod error;
 pub mod folders;
 pub mod history;
+pub mod network;
 pub mod one_off;
 pub mod privacy;
 pub mod screens;
