@@ -1,21 +1,21 @@
 use std::sync::Arc;
 
 use arc_swap::ArcSwap;
-use async_trait::async_trait;
 use mivia_application::intake::AddFolder;
 use mivia_application::report_settings::ReportSettings;
+use mivia_application::settings::{GlobalSettings, write_global};
 use mivia_domain::ids::ModelChoice;
 use mivia_domain::label::LabelRule;
 use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
-use mivia_ports::auth::{
-    CredentialStore, CredentialStoreError, IdentityApi, ServerOrigin, StoredCredential,
-};
+use mivia_ports::auth::{CredentialStore, IdentityApi, ServerOrigin, StoredCredential};
 use mivia_ports::queries::Queries;
-use mivia_ports::store::{AccountScope, NewAccount, StoreExt};
+use mivia_ports::store::{AccountScope, NewAccount, SettingsScope, StoreExt};
 use mivia_server::{HttpIdentityApi, build_clients};
 use mivia_store::SqliteStore;
 use secrecy::SecretString;
+
+use super::setup::SessionCredentials;
 
 const SECOND_MS: i64 = 1000;
 
@@ -45,38 +45,25 @@ pub(crate) fn cdp_port() -> Option<u16> {
     var("MIVIA_E2E_CDP_PORT")?.parse().ok()
 }
 
-struct EnvCredentials;
-
-#[async_trait]
-impl CredentialStore for EnvCredentials {
-    async fn load(
-        &self,
-        _origin: &ServerOrigin,
-    ) -> Result<Option<StoredCredential>, CredentialStoreError> {
-        let account_id = var("MIVIA_E2E_ACCOUNT_ID").unwrap_or_default();
-        Ok(
-            var("MIVIA_E2E_ACCESS_KEY").map(|key| StoredCredential::AccessKey {
-                account_id,
-                key: SecretString::from(key),
-            }),
-        )
-    }
-
-    async fn save(
-        &self,
-        _origin: &ServerOrigin,
-        _credential: &StoredCredential,
-    ) -> Result<(), CredentialStoreError> {
-        Ok(())
-    }
-
-    async fn delete(&self, _origin: &ServerOrigin) -> Result<(), CredentialStoreError> {
-        Ok(())
-    }
+pub(crate) fn origin() -> Option<String> {
+    var("MIVIA_E2E_SERVER_ORIGIN")
 }
 
-pub(crate) fn credentials() -> Option<Arc<dyn CredentialStore>> {
-    var("MIVIA_E2E_ACCESS_KEY").map(|_| Arc::new(EnvCredentials) as Arc<dyn CredentialStore>)
+pub(crate) fn picked_folder() -> Option<String> {
+    var("MIVIA_E2E_PICK_FOLDER")
+}
+
+pub(crate) fn credentials() -> Arc<dyn CredentialStore> {
+    let seeded = origin()
+        .zip(var("MIVIA_E2E_ACCESS_KEY"))
+        .map(|(origin, key)| {
+            let credential = StoredCredential::AccessKey {
+                account_id: var("MIVIA_E2E_ACCOUNT_ID").unwrap_or_default(),
+                key: SecretString::from(key),
+            };
+            SessionCredentials::with(ServerOrigin(origin), credential)
+        });
+    Arc::new(seeded.unwrap_or_default())
 }
 
 async fn account(store: &SqliteStore, seed: &Seed) -> Result<AccountScope, String> {
@@ -92,11 +79,16 @@ async fn account(store: &SqliteStore, seed: &Seed) -> Result<AccountScope, Strin
         server_url: seed.origin.clone(),
         server_account_id: identity.account_id,
         display_name: identity.name,
+        email: identity.email,
     };
     store
         .write(move |tx| {
             let id = tx.accounts().upsert(&account)?;
             tx.accounts().activate(id)?;
+            let mut settings =
+                GlobalSettings::parse(tx.settings(SettingsScope::Global)?.as_deref());
+            settings.setup_completed = true;
+            write_global(tx, &settings)?;
             Ok(AccountScope(id))
         })
         .await

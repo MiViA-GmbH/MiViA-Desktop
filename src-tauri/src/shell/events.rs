@@ -2,9 +2,9 @@ use mivia_ports::ipc::change::StoreChanged;
 use mivia_ports::ipc::screens::LocaleView;
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use tauri_specta::{Builder, ErrorHandlingMode, Event, collect_commands, collect_events};
+use tauri_specta::{Builder, Commands, ErrorHandlingMode, Event, collect_commands, collect_events};
 
-use crate::commands::{actions, queries};
+use crate::commands::{actions, queries, setup};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct StoreChangedEvent(pub(crate) StoreChanged);
@@ -23,32 +23,55 @@ pub(crate) struct Navigate {
     pub(crate) route: Route,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
+pub(crate) struct QuitRequested;
+
+fn commands() -> Commands<tauri::Wry> {
+    collect_commands![
+        queries::get_locale,
+        queries::get_account,
+        queries::list_folders,
+        queries::list_holds,
+        queries::list_needs_attention,
+        queries::list_history,
+        queries::get_batch,
+        queries::list_batch_items,
+        queries::list_series_reports,
+        actions::ui_ready,
+        actions::set_language,
+        actions::finish_series,
+        actions::pause_folder,
+        actions::resume_folder,
+        actions::clear_series_attention,
+        actions::try_again_report_part,
+        actions::check_connection_now,
+        actions::open_target,
+        setup::get_setup,
+        setup::get_catalogue,
+        setup::get_integration,
+        setup::save_setup,
+        setup::pick_setup_folder,
+        setup::connect_access_key,
+        setup::import_legacy_key,
+        setup::close_legacy_app,
+        setup::complete_setup,
+        setup::quit_app,
+        setup::pick_folder,
+        setup::add_folder,
+        setup::switch_account,
+        setup::sign_out,
+        setup::set_integration,
+    ]
+}
+
 pub(crate) fn builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
-        .commands(collect_commands![
-            queries::get_locale,
-            queries::get_account,
-            queries::list_folders,
-            queries::list_holds,
-            queries::list_needs_attention,
-            queries::list_history,
-            queries::get_batch,
-            queries::list_batch_items,
-            queries::list_series_reports,
-            actions::ui_ready,
-            actions::set_language,
-            actions::finish_series,
-            actions::pause_folder,
-            actions::resume_folder,
-            actions::clear_series_attention,
-            actions::try_again_report_part,
-            actions::check_connection_now,
-            actions::open_target,
-        ])
+        .commands(commands())
         .events(collect_events![
             StoreChangedEvent,
             LanguageChanged,
-            Navigate
+            Navigate,
+            QuitRequested
         ])
         .error_handling(ErrorHandlingMode::Throw)
 }

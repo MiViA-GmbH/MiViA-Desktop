@@ -5,3 +5,4 @@
 
 pub(crate) mod actions;
 pub(crate) mod queries;
+pub(crate) mod setup;

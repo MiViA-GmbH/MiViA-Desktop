@@ -17,6 +17,21 @@ const COMMANDS: &[&str] = &[
     "try_again_report_part",
     "check_connection_now",
     "open_target",
+    "get_setup",
+    "get_catalogue",
+    "get_integration",
+    "save_setup",
+    "pick_setup_folder",
+    "connect_access_key",
+    "import_legacy_key",
+    "close_legacy_app",
+    "complete_setup",
+    "quit_app",
+    "pick_folder",
+    "add_folder",
+    "switch_account",
+    "sign_out",
+    "set_integration",
 ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

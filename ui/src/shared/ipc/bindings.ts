@@ -10,6 +10,7 @@ export const commands = {
 	displayName: string,
 	serverUrl: string,
 	serverAccountId: string,
+	email: string,
 } | null>("get_account"),
 	listFolders: () => __TAURI_INVOKE<FoldersView>("list_folders"),
 	listHolds: () => __TAURI_INVOKE<HoldsView>("list_holds"),
@@ -34,12 +35,32 @@ export const commands = {
 	tryAgainReportPart: (id: string) => __TAURI_INVOKE<null>("try_again_report_part", { id }),
 	checkConnectionNow: () => __TAURI_INVOKE<null>("check_connection_now"),
 	openTarget: (target: OpenTarget) => __TAURI_INVOKE<null>("open_target", { target }),
+	getSetup: () => __TAURI_INVOKE<SetupView>("get_setup"),
+	getCatalogue: () => __TAURI_INVOKE<CatalogueView>("get_catalogue"),
+	getIntegration: () => __TAURI_INVOKE<IntegrationView>("get_integration"),
+	saveSetup: (input: SetupInput) => __TAURI_INVOKE<SetupView>("save_setup", { input }),
+	pickSetupFolder: (purpose: PickPurpose) => __TAURI_INVOKE<SetupView>("pick_setup_folder", { purpose }),
+	connectAccessKey: (key: string | null) => __TAURI_INVOKE<ConnectOutcome>("connect_access_key", { key }),
+	importLegacyKey: () => __TAURI_INVOKE<ConnectOutcome>("import_legacy_key"),
+	closeLegacyApp: () => __TAURI_INVOKE<SetupView>("close_legacy_app"),
+	completeSetup: () => __TAURI_INVOKE<DoneView>("complete_setup"),
+	quitApp: () => __TAURI_INVOKE<void>("quit_app"),
+	pickFolder: (purpose: PickPurpose) => __TAURI_INVOKE<{
+	pickId: string,
+	folder: FolderPickView,
+	report: ReportFolderView | null,
+} | null>("pick_folder", { purpose }),
+	addFolder: (input: NewFolderInput) => __TAURI_INVOKE<string>("add_folder", { input }),
+	switchAccount: () => __TAURI_INVOKE<ConnectOutcome>("switch_account"),
+	signOut: () => __TAURI_INVOKE<null>("sign_out"),
+	setIntegration: (autostart: boolean | null, explorer: boolean | null) => __TAURI_INVOKE<IntegrationView>("set_integration", { autostart, explorer }),
 };
 
 /** Events */
 export const events = {
 	languageChanged: makeEvent<LanguageChanged>("language-changed"),
 	navigate: makeEvent<Navigate>("navigate"),
+	quitRequested: makeEvent<QuitRequested>("quit-requested"),
 	storeChangedEvent: makeEvent<StoreChangedEvent>("store-changed-event"),
 };
 
@@ -48,6 +69,7 @@ export type AccountView = {
 	displayName: string,
 	serverUrl: string,
 	serverAccountId: string,
+	email: string,
 };
 
 export type AnalysisView = {
@@ -68,6 +90,8 @@ export type AppError = {
 };
 
 export type AppErrorKind = "validation" | "notFound" | "conflict" | "hold" | "diskFull" | "storageUnavailable" | "contract" | "internal" | "panic";
+
+export type ArrivalPreset = "microscope" | "wholeFolder" | "byHand";
 
 export type AttentionCleared = "opened" | "dismissed";
 
@@ -120,6 +144,20 @@ export type BatchView = {
 	analyses: AnalysisView[],
 };
 
+export type CatalogueModelView = {
+	modelId: string,
+	name: string,
+	customizations: CustomizationView[],
+};
+
+export type CatalogueView = {
+	loaded: boolean,
+	models: CatalogueModelView[],
+	preselected: ModelChoiceView[],
+	legacyGone: string[],
+	legacyCustomGone: string[],
+};
+
 export type Change = { type: "batchSummary"; batchId: string; summary: BatchSummary } | { type: "batchItems"; batchId: string } | { type: "folder"; id: string } | { type: "reports"; batchId: string } | { type: "needsAttention" } | { type: "holds" } | { type: "catalogue" } | { type: "settings" } | { type: "history" } | { type: "all" };
 
 export type ComputationItem = {
@@ -127,6 +165,58 @@ export type ComputationItem = {
 	modelChoiceKey: string,
 	state: string,
 	reason: string | null,
+};
+
+export type ConnectOutcome = { kind: "connected"; connection: ConnectionView; otherAccount: boolean; clipboardCleared: boolean } | { kind: "malformed" } | { kind: "rejected" } | { kind: "accountBlocked" } | { kind: "adminScope" } | { kind: "offline"; details: string } | { kind: "switchAccount"; currentName: string; newName: string } | { kind: "cancelled" };
+
+export type ConnectionNote = "licenseInactive" | "storeFailed" | "imported";
+
+export type ConnectionView = {
+	name: string,
+	email: string,
+	notes: ConnectionNote[],
+	remainingUploads: number | null,
+};
+
+export type CustomizationView = {
+	id: string,
+	name: string,
+};
+
+export type DoneProblem = "autostart" | "explorer";
+
+export type DoneView = {
+	name: string,
+	email: string,
+	folder: string | null,
+	folderName: string | null,
+	models: string[],
+	reportFolder: string | null,
+	existing: number,
+	waiting: WaitingReason[],
+	problems: DoneProblem[],
+	explorer: boolean,
+	legacy: LegacyOutcome | null,
+	legacyStartup: string[],
+};
+
+export type FolderBlock = { kind: "notFound" } | { kind: "tooBroad" } | { kind: "nested"; name: string } | { kind: "insideReports" };
+
+export type FolderNote = { kind: "general" } | { kind: "oneDrive" } | { kind: "network" } | { kind: "mappedDrive"; letter: string; unc: string };
+
+export type FolderPick = {
+	pickId: string,
+	folder: FolderPickView,
+	report: ReportFolderView | null,
+};
+
+export type FolderPickView = {
+	display: string,
+	name: string,
+	block: FolderBlock | null,
+	notes: FolderNote[],
+	existing: number,
+	existingMore: boolean,
 };
 
 export type FolderView = {
@@ -172,16 +262,42 @@ export type HoldsView = {
 	holds: HoldView[],
 };
 
+export type IntegrationView = {
+	available: boolean,
+	autostart: StartupState,
+	explorer: boolean,
+	locks: SetupLocks,
+};
+
 export type Language = "en" | "de";
 
 export type LanguageChanged = LocaleView;
 
 export type LanguageSetting = "auto" | "en" | "de";
 
+export type LegacyFlag = "hasKey" | "running" | "network" | "unreadable";
+
+export type LegacyOutcome = "stopped" | "close" | "failed";
+
+export type LegacyTake = "all" | "keyOnly" | "nothing";
+
+export type LegacyView = {
+	folder: string,
+	inputFolder: string | null,
+	modelCount: number,
+	flags: LegacyFlag[],
+	take: LegacyTake | null,
+};
+
 export type LocaleView = {
 	language: Language,
 	setting: LanguageSetting,
 	formatLocale: string,
+};
+
+export type ModelChoiceView = {
+	modelId: string,
+	customizationId: string | null,
 };
 
 export type Navigate = {
@@ -196,9 +312,32 @@ export type NeedsAttentionView = {
 	total: number,
 };
 
+export type NewFolderInput = {
+	folderPick: string,
+	preset: ArrivalPreset,
+	reportMode: ReportMode,
+	reportPick: string | null,
+	models: ModelChoiceView[],
+	includeExisting: boolean,
+};
+
 export type OpenTarget = { kind: "report"; partId: string } | { kind: "revealReport"; partId: string };
 
 export type OriginView = { kind: "folder"; folderId: string } | { kind: "oneOff" };
+
+export type PickPurpose = "input" | "reports" | "legacy";
+
+export type QuitRequested = null;
+
+export type ReportFolderView = {
+	mode: ReportMode,
+	display: string,
+	subfolderName: string,
+	denied: string | null,
+	longPath: boolean,
+};
+
+export type ReportMode = "subfolder" | "beside" | "custom";
 
 export type ReportPartView = {
 	id: string,
@@ -227,6 +366,47 @@ export type SeriesReportsView = {
 	reports: ReportView[],
 };
 
+export type SetupInput = {
+	step: SetupStep,
+	preset: ArrivalPreset,
+	reportMode: ReportMode,
+	models: ModelChoiceView[],
+	options: SetupOption[],
+	legacyTake: LegacyTake | null,
+};
+
+export type SetupLocks = {
+	language: boolean,
+	legacySearch: boolean,
+	autostart: boolean | null,
+	explorer: boolean | null,
+	telemetry: boolean | null,
+};
+
+export type SetupOption = "skipFolder" | "includeExisting" | "autostart" | "explorer" | "telemetry" | "legacyStop";
+
+export type SetupStep = "welcome" | "legacy" | "key" | "folder" | "series" | "models" | "finish";
+
+export type SetupView = {
+	completed: boolean,
+	step: SetupStep,
+	resumed: boolean,
+	host: string,
+	supportContact: string,
+	detectedLanguage: string,
+	locks: SetupLocks,
+	legacy: LegacyView | null,
+	legacyFolderMissing: string | null,
+	connection: ConnectionView | null,
+	folder: FolderPickView | null,
+	preset: ArrivalPreset,
+	report: ReportFolderView | null,
+	models: ModelChoiceView[],
+	options: SetupOption[],
+};
+
+export type StartupState = "on" | "off" | "turnedOffInTaskManager";
+
 export type StoreChanged = {
 	fromRevision: string,
 	toRevision: string,
@@ -234,6 +414,8 @@ export type StoreChanged = {
 };
 
 export type StoreChangedEvent = StoreChanged;
+
+export type WaitingReason = "noModels" | "license" | "offline";
 
 /* Tauri Specta runtime */
 type EventEmit<T> = [T] extends [null] ? () => Promise<void> : (payload: T) => Promise<void>;

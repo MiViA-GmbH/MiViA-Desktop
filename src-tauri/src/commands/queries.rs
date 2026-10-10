@@ -14,7 +14,7 @@ use crate::shell::locale;
 #[tauri::command]
 #[specta::specta]
 pub(crate) async fn get_locale(cx: State<'_, Cx>) -> Result<LocaleView, AppError> {
-    locale::current(cx.ready().await).await
+    locale::current(&*cx.ready().await).await
 }
 
 #[tauri::command]

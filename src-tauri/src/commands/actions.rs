@@ -23,10 +23,10 @@ pub(crate) async fn set_language(
     setting: LanguageSetting,
 ) -> Result<(), AppError> {
     let ready = cx.ready().await;
-    save_language(ready.store.as_ref(), ready.store.as_ref(), setting)
+    save_language(ready.store.as_ref(), setting)
         .await
         .map_err(|error| app_error(&error, "set_language"))?;
-    locale::changed(&app, ready).await
+    locale::changed(&app, &ready).await
 }
 
 #[tauri::command]
@@ -105,5 +105,5 @@ pub(crate) async fn check_connection_now(cx: State<'_, Cx>) -> Result<(), AppErr
 #[tauri::command]
 #[specta::specta]
 pub(crate) async fn open_target(cx: State<'_, Cx>, target: OpenTarget) -> Result<(), AppError> {
-    open::target(cx.ready().await, target).await
+    open::target(&*cx.ready().await, target).await
 }

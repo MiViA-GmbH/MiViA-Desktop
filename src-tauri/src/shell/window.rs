@@ -7,7 +7,7 @@ use tauri::{AppHandle, Manager, Url, WebviewWindow, WebviewWindowBuilder, Window
 use tauri_specta::Event;
 
 use super::cx::Cx;
-use super::events::{Navigate, Route};
+use super::events::{Navigate, QuitRequested, Route};
 
 pub(crate) const LABEL: &str = "main";
 const HIDDEN_CHECKS: u32 = 10;
@@ -105,7 +105,12 @@ pub(crate) fn shown(app: &AppHandle) {
 pub(crate) fn on_event(window: &Window, event: &WindowEvent) {
     if let WindowEvent::CloseRequested { api, .. } = event {
         api.prevent_close();
-        hide(window.app_handle());
+        let app = window.app_handle();
+        if app.state::<Cx>().completed() {
+            hide(app);
+        } else if let Err(error) = QuitRequested.emit(app) {
+            tracing::warn!(%error, "ipc.emitFailed");
+        }
     }
     if matches!(event, WindowEvent::Destroyed) {
         if let Some(ready) = window.app_handle().state::<Cx>().get() {

@@ -10,14 +10,14 @@ workspace = true
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
-e2e = ["dep:async-trait", "dep:secrecy"]
+e2e = []
 
 [build-dependencies]
 tauri-build = { version = "=2.7.1", features = [] }
 
 [dependencies]
 arc-swap = "=1.9.2"
-async-trait = { version = "=0.1.92", optional = true }
+async-trait = "=0.1.92"
 getrandom = "=0.4.3"
 mivia-application.workspace = true
 mivia-diagnostics.workspace = true
@@ -27,19 +27,18 @@ mivia-ports = { workspace = true, features = ["specta"] }
 mivia-server.workspace = true
 mivia-store.workspace = true
 parking_lot = "=0.12.5"
-secrecy = { version = "=0.10.3", optional = true }
+secrecy = "=0.10.3"
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.150"
 specta = "=2.0.0-rc.25"
 specta-typescript = "=0.0.12"
 tauri = { version = "=2.12.1", features = ["tray-icon", "specta"] }
 tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
-tokio = { version = "=1.53.1", features = ["rt-multi-thread", "sync", "time"] }
+tokio = { version = "=1.53.1", features = ["macros", "rt-multi-thread", "sync", "time"] }
 tracing = "=0.1.44"
 uuid = { version = "=1.26.1", default-features = false, features = ["v7"] }
 
 [dev-dependencies]
-async-trait = "=0.1.92"
 mivia-stub.workspace = true
 mivia-testkit.workspace = true
 tempfile = "=3.27.0"

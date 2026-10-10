@@ -1,21 +1,21 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use arc_swap::ArcSwap;
 use mivia_application::pipeline::{Pipeline, PipelineError, PipelinePorts, Tick, run};
+use mivia_domain::ids::AccountId;
 use mivia_domain::path::WinPath;
 use mivia_os::{OsFileSystem, SystemClock};
-use mivia_ports::auth::{CredentialStore, ServerOrigin};
+use mivia_ports::auth::CredentialStore;
 use mivia_ports::id_gen::IdGen;
 use mivia_ports::ipc::screens::AccountView;
 use mivia_ports::store::AccountScope;
-use mivia_server::{
-    Connection, ConnectionAuthorizer, HttpClients, HttpIdentityApi, HttpServerApi, build_clients,
-    user_agent,
-};
-use mivia_store::SqliteStore;
+use mivia_server::{Connection, ConnectionAuthorizer, HttpIdentityApi, HttpServerApi};
+use secrecy::SecretString;
+use tauri::async_runtime::JoinHandle;
 use tokio::sync::Notify;
 use uuid::Uuid;
+
+use super::cx::Services;
 
 const UPLOAD_PERMITS: usize = 2;
 
@@ -73,37 +73,41 @@ fn waker(pipeline: &Pipeline, worker: Worker) -> &Notify {
     }
 }
 
-fn spawn(pipeline: &Arc<Pipeline>, worker: Worker) {
-    let pipeline = Arc::clone(pipeline);
-    tauri::async_runtime::spawn(async move {
-        let name = format!("pipeline-{}", worker as u8);
-        run(&name, &SystemClock, waker(&pipeline, worker), || {
-            tick(&pipeline, worker)
-        })
-        .await;
-    });
+async fn work(pipeline: Arc<Pipeline>, worker: Worker) {
+    let name = format!("pipeline-{}", worker as u8);
+    run(&name, &SystemClock, waker(&pipeline, worker), || {
+        tick(&pipeline, worker)
+    })
+    .await;
 }
 
-pub(super) struct Setup<'a> {
-    pub(super) store: Arc<SqliteStore>,
-    pub(super) scope: AccountScope,
-    pub(super) account: AccountView,
-    pub(super) credentials: Arc<dyn CredentialStore>,
-    pub(super) data_dir: &'a Path,
-    pub(super) version: &'a str,
+async fn work_all(pipeline: Arc<Pipeline>) {
+    let workers = WORKERS.map(|worker| work(Arc::clone(&pipeline), worker));
+    let [upload, submit, poll, recovery, probe, report, save] = workers;
+    let catalogue = async {
+        if let Err(error) = pipeline.refresh_catalogue().await {
+            tracing::warn!(?error, "pipeline.catalogueFailed");
+        }
+    };
+    tokio::join!(
+        upload, submit, poll, recovery, probe, report, save, catalogue
+    );
 }
 
 #[cfg(feature = "e2e")]
-pub(super) fn credentials() -> Option<Arc<dyn CredentialStore>> {
+pub(super) fn credentials() -> Arc<dyn CredentialStore> {
     super::e2e::credentials()
 }
 
 #[cfg(not(feature = "e2e"))]
-pub(super) fn credentials() -> Option<Arc<dyn CredentialStore>> {
-    mivia_os::WindowsCredentialStore::new()
-        .inspect_err(|error| tracing::error!(?error, "credentials.unavailable"))
-        .ok()
-        .map(|store| Arc::new(store) as Arc<dyn CredentialStore>)
+pub(super) fn credentials() -> Arc<dyn CredentialStore> {
+    match mivia_os::WindowsCredentialStore::new() {
+        Ok(store) => Arc::new(store),
+        Err(error) => {
+            tracing::error!(?error, "credentials.unavailable");
+            Arc::new(super::setup::SessionCredentials::default())
+        }
+    }
 }
 
 fn staging(data_dir: &Path) -> Option<WinPath> {
@@ -112,55 +116,73 @@ fn staging(data_dir: &Path) -> Option<WinPath> {
     WinPath::parse(path.to_str()?).ok()
 }
 
-async fn connect(
-    setup: &Setup<'_>,
-    clients: &Arc<ArcSwap<HttpClients>>,
-) -> Option<Arc<ConnectionAuthorizer>> {
+pub(crate) fn authorizer(
+    services: &Services,
+    account: AccountId,
+    server_account_id: String,
+) -> Arc<ConnectionAuthorizer> {
     let connection = Connection {
-        origin: ServerOrigin(setup.account.server_url.clone()),
-        account: setup.scope.0,
-        server_account_id: setup.account.server_account_id.clone(),
+        origin: services.origin.clone(),
+        account,
+        server_account_id,
     };
-    let identity = Arc::new(HttpIdentityApi::new(Arc::clone(clients)));
-    let credentials = Arc::clone(&setup.credentials);
-    let authorizer = Arc::new(ConnectionAuthorizer::new(connection, credentials, identity));
-    if authorizer.load().await.unwrap_or(false) {
-        Some(authorizer)
-    } else {
-        tracing::warn!("pipeline.noCredential");
-        None
-    }
+    let identity = Arc::new(HttpIdentityApi::new(Arc::clone(&services.clients)));
+    let credentials = Arc::clone(&services.credentials);
+    Arc::new(ConnectionAuthorizer::new(connection, credentials, identity))
 }
 
-pub(super) async fn start(setup: Setup<'_>) -> Option<Arc<Pipeline>> {
-    let clients = build_clients(&user_agent(setup.version, "10.0", "stable"))
-        .inspect_err(|error| tracing::error!(%error, "pipeline.clientsFailed"))
-        .ok()?;
-    let clients = Arc::new(ArcSwap::from_pointee(clients));
-    let authorizer = connect(&setup, &clients).await?;
-    let origin = ServerOrigin(setup.account.server_url);
-    let server = HttpServerApi::new(origin, setup.scope.0, clients, Arc::clone(&authorizer) as _);
+pub(crate) fn server_api(
+    services: &Services,
+    account: AccountId,
+    authorizer: &Arc<ConnectionAuthorizer>,
+) -> HttpServerApi {
+    HttpServerApi::new(
+        services.origin.clone(),
+        account,
+        Arc::clone(&services.clients),
+        Arc::clone(authorizer) as _,
+    )
+}
+
+pub(super) struct Started {
+    pub(super) pipeline: Arc<Pipeline>,
+    pub(super) authorizer: Arc<ConnectionAuthorizer>,
+    pub(super) workers: JoinHandle<()>,
+}
+
+pub(super) async fn start(
+    services: &Services,
+    scope: AccountScope,
+    account: &AccountView,
+    session_key: Option<SecretString>,
+) -> Option<Started> {
+    let authorizer = authorizer(services, scope.0, account.server_account_id.clone());
+    let loaded = authorizer.load().await.unwrap_or(false);
+    match (loaded, session_key) {
+        (true, _) => {}
+        (false, Some(key)) => authorizer.remember(key),
+        (false, None) => {
+            tracing::warn!("pipeline.noCredential");
+            return None;
+        }
+    }
     let ports = PipelinePorts {
-        store: setup.store,
+        store: Arc::clone(&services.store) as _,
         fs: Arc::new(OsFileSystem),
-        server: Arc::new(server),
-        authorizer,
+        server: Arc::new(server_api(services, scope.0, &authorizer)),
+        authorizer: Arc::clone(&authorizer) as _,
         clock: Arc::new(SystemClock),
         ids: Arc::new(SystemIds),
-        staging: staging(setup.data_dir)?,
+        staging: staging(&services.data_dir)?,
     };
-    let pipeline = Arc::new(Pipeline::new(ports, setup.scope, UPLOAD_PERMITS));
+    let pipeline = Arc::new(Pipeline::new(ports, scope, UPLOAD_PERMITS));
     if let Err(error) = pipeline.start().await {
         tracing::error!(?error, "pipeline.startFailed");
     }
-    for worker in WORKERS {
-        spawn(&pipeline, worker);
-    }
-    let catalogue = Arc::clone(&pipeline);
-    tauri::async_runtime::spawn(async move {
-        if let Err(error) = catalogue.refresh_catalogue().await {
-            tracing::warn!(?error, "pipeline.catalogueFailed");
-        }
-    });
-    Some(pipeline)
+    let workers = tauri::async_runtime::spawn(work_all(Arc::clone(&pipeline)));
+    Some(Started {
+        pipeline,
+        authorizer,
+        workers,
+    })
 }

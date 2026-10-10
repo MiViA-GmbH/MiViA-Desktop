@@ -24,6 +24,21 @@
 		"allow-clear-series-attention",
 		"allow-try-again-report-part",
 		"allow-check-connection-now",
-		"allow-open-target"
+		"allow-open-target",
+		"allow-get-setup",
+		"allow-get-catalogue",
+		"allow-get-integration",
+		"allow-save-setup",
+		"allow-pick-setup-folder",
+		"allow-connect-access-key",
+		"allow-import-legacy-key",
+		"allow-close-legacy-app",
+		"allow-complete-setup",
+		"allow-quit-app",
+		"allow-pick-folder",
+		"allow-add-folder",
+		"allow-switch-account",
+		"allow-sign-out",
+		"allow-set-integration"
 	]
 }

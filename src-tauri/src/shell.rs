@@ -1,13 +1,19 @@
+pub(crate) mod account;
 pub(crate) mod cx;
+
 #[cfg(feature = "e2e")]
 mod e2e;
 mod events;
 mod feed;
+pub(crate) mod folders;
 mod intake;
+pub(crate) mod integration;
 pub(crate) mod locale;
 pub(crate) mod open;
 mod pipeline;
+pub(crate) mod setup;
 mod shutdown;
+mod start;
 mod tray;
 pub(crate) mod window;
 
@@ -23,15 +29,14 @@ use mivia_diagnostics::{
     DiagnosticsContext, PreviousSession, install_panic_hook, previous_session, start_logging,
     write_marker,
 };
-use mivia_ports::queries::Queries;
-use mivia_ports::store::{AccountScope, StoreExt};
 use mivia_store::{SqliteStore, StoreConfig};
 use tauri::{AppHandle, Manager, RunEvent};
 use tokio::sync::mpsc::{Receiver, channel};
 
 use crate::instance::{self, Primary};
-use cx::{Cx, Ready};
+use cx::Cx;
 use shutdown::Shutdown;
+use start::{background, search_legacy, services, setup_state};
 
 const HANDOFF_QUEUE: usize = 64;
 
@@ -173,56 +178,29 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
     {
         tracing::error!(%error, "e2e.seedFailed");
     }
-    let ready = compose(store, &launch).await;
-    let intake = ready.intake.clone();
-    app.state::<Cx>().set(ready);
+    let Some(services) = services(store, &launch) else {
+        return;
+    };
+    let completed = setup_state(&app.state::<Cx>(), &services).await;
+    app.state::<Cx>()
+        .set(account::compose(&services, launch.minimized, None).await);
     tray::started(&app);
-    #[cfg(feature = "e2e")]
-    open_at_start(&app);
-    if let Some(intake) = intake {
-        intake::start(intake, launch.minimized).await;
+    if !completed {
+        tray::hide(&app);
+        open_at_start(&app);
+        search_legacy(&app, &services);
     }
+    #[cfg(feature = "e2e")]
+    if completed {
+        open_at_start(&app);
+    }
+    tauri::async_runtime::spawn(background(Arc::clone(&services), app.clone(), completed));
 }
 
-#[cfg(feature = "e2e")]
 fn open_at_start(app: &AppHandle) {
     let handle = app.clone();
     if let Err(error) = app.run_on_main_thread(move || window::open(&handle)) {
         tracing::error!(%error, "window.openFailed");
-    }
-}
-
-async fn compose(store: Arc<SqliteStore>, launch: &Launch) -> Ready {
-    let scope = match store.write(|tx| tx.accounts().active()).await {
-        Ok(Some(account)) => AccountScope(account),
-        Ok(None) => return Ready::without_account(store),
-        Err(error) => {
-            tracing::error!(?error, "store.accountUnreadable");
-            return Ready::without_account(store);
-        }
-    };
-    let intake = intake::compose(Arc::clone(&store), scope, &launch.version);
-    let account = store.get_account(scope).await.ok().flatten();
-    let credentials = pipeline::credentials();
-    let pipeline = match (account, credentials) {
-        (Some(account), Some(credentials)) => {
-            let setup = pipeline::Setup {
-                store: Arc::clone(&store),
-                scope,
-                account,
-                credentials,
-                data_dir: &launch.data_dir,
-                version: &launch.version,
-            };
-            pipeline::start(setup).await
-        }
-        _ => None,
-    };
-    Ready {
-        store,
-        scope,
-        intake: Some(intake),
-        pipeline,
     }
 }
 

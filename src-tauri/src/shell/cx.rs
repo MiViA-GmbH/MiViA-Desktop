@@ -1,30 +1,63 @@
 use std::path::PathBuf;
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
+use arc_swap::ArcSwap;
 use mivia_application::intake::Intake;
 use mivia_application::pipeline::Pipeline;
+use mivia_application::policy::Policies;
 use mivia_domain::ids::{AccountId, Timestamp};
 use mivia_os::SystemClock;
+use mivia_ports::auth::{CredentialStore, ServerOrigin};
 use mivia_ports::clock::Clock;
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
 use mivia_ports::store::AccountScope;
+use mivia_server::{ConnectionAuthorizer, HttpClients};
 use mivia_store::SqliteStore;
+use parking_lot::{Mutex, RwLock};
+use tauri::async_runtime::JoinHandle;
 use tokio::sync::Notify;
 
+use super::setup::Session;
+
+pub(crate) struct Services {
+    pub(crate) store: Arc<SqliteStore>,
+    pub(crate) credentials: Arc<dyn CredentialStore>,
+    pub(crate) clients: Arc<ArcSwap<HttpClients>>,
+    pub(crate) origin: ServerOrigin,
+    pub(crate) policies: Policies,
+    pub(crate) data_dir: PathBuf,
+    pub(crate) version: String,
+}
+
 pub(crate) struct Ready {
+    pub(crate) services: Arc<Services>,
     pub(crate) store: Arc<SqliteStore>,
     pub(crate) scope: AccountScope,
     pub(crate) intake: Option<Arc<Intake>>,
     pub(crate) pipeline: Option<Arc<Pipeline>>,
+    pub(crate) authorizer: Option<Arc<ConnectionAuthorizer>>,
+    pub(crate) tasks: Mutex<Vec<JoinHandle<()>>>,
+}
+
+impl Drop for Ready {
+    fn drop(&mut self) {
+        for task in self.tasks.get_mut().drain(..) {
+            task.abort();
+        }
+    }
 }
 
 impl Ready {
-    pub(crate) fn without_account(store: Arc<SqliteStore>) -> Self {
+    pub(crate) fn without_account(services: Arc<Services>) -> Self {
         Self {
-            store,
+            store: Arc::clone(&services.store),
+            services,
             scope: AccountScope(AccountId(0)),
             intake: None,
             pipeline: None,
+            authorizer: None,
+            tasks: Mutex::new(Vec::new()),
         }
     }
 
@@ -42,6 +75,10 @@ impl Ready {
         if let Some(pipeline) = &self.pipeline {
             pipeline.wakers.all();
         }
+    }
+
+    pub(crate) fn track(&self, task: JoinHandle<()>) {
+        self.tasks.lock().push(task);
     }
 }
 
@@ -65,7 +102,9 @@ pub(crate) fn invalid_id(site: &str) -> AppError {
 
 pub(crate) struct Cx {
     pub(crate) data_dir: PathBuf,
-    ready: OnceLock<Ready>,
+    pub(crate) setup: Session,
+    pub(crate) setup_completed: AtomicBool,
+    ready: RwLock<Option<Arc<Ready>>>,
     set: Notify,
 }
 
@@ -73,28 +112,35 @@ impl Cx {
     pub(crate) fn new(data_dir: PathBuf) -> Self {
         Self {
             data_dir,
-            ready: OnceLock::new(),
+            setup: Session::default(),
+            setup_completed: AtomicBool::new(false),
+            ready: RwLock::new(None),
             set: Notify::new(),
         }
     }
 
     pub(crate) fn set(&self, ready: Ready) {
-        drop(self.ready.set(ready));
+        let previous = self.ready.write().replace(Arc::new(ready));
+        drop(previous);
         self.set.notify_waiters();
     }
 
-    pub(crate) async fn ready(&self) -> &Ready {
+    pub(crate) async fn ready(&self) -> Arc<Ready> {
         loop {
             let notified = self.set.notified();
-            if let Some(ready) = self.ready.get() {
+            if let Some(ready) = self.get() {
                 return ready;
             }
             notified.await;
         }
     }
 
-    pub(crate) fn get(&self) -> Option<&Ready> {
-        self.ready.get()
+    pub(crate) fn get(&self) -> Option<Arc<Ready>> {
+        self.ready.read().clone()
+    }
+
+    pub(crate) fn completed(&self) -> bool {
+        self.setup_completed.load(Ordering::SeqCst)
     }
 }
 

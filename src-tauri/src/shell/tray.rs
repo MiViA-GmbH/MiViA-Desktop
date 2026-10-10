@@ -34,6 +34,22 @@ pub(super) fn build(app: &AppHandle) -> tauri::Result<()> {
     tray.build(app).map(drop)
 }
 
+fn visible(app: &AppHandle, visible: bool) {
+    if let Some(tray) = app.tray_by_id("main")
+        && let Err(error) = tray.set_visible(visible)
+    {
+        tracing::warn!(%error, "tray.visibilityFailed");
+    }
+}
+
+pub(super) fn show(app: &AppHandle) {
+    visible(app, true);
+}
+
+pub(super) fn hide(app: &AppHandle) {
+    visible(app, false);
+}
+
 pub(super) fn started(app: &AppHandle) {
     let starting = app.state::<Starting>();
     if let Err(error) = starting.menu.remove(&starting.item) {

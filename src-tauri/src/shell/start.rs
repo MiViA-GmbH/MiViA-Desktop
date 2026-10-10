@@ -1,0 +1,109 @@
+use std::path::Path;
+use std::sync::Arc;
+use std::sync::atomic::Ordering;
+use std::time::Duration;
+
+use arc_swap::ArcSwap;
+use mivia_application::policy::{self, Policies};
+use mivia_application::settings::global_settings;
+use mivia_application::setup::SetupDraft;
+use mivia_ports::auth::ServerOrigin;
+use mivia_ports::ipc::setup::SetupStep;
+use mivia_ports::queries::Queries;
+use mivia_ports::store::SettingsScope;
+use mivia_server::{build_clients, user_agent};
+use mivia_store::SqliteStore;
+use tauri::{AppHandle, Manager};
+
+use super::cx::{Cx, Services};
+use super::{Launch, integration, pipeline, setup};
+
+const BACKGROUND_DELAY: Duration = Duration::from_secs(2);
+
+const LEGACY_BUDGET: Duration = Duration::from_millis(1500);
+
+const DEFAULT_ORIGIN: &str = "https://app.mivia.ai";
+
+pub(super) async fn setup_state(cx: &Cx, services: &Services) -> bool {
+    let completed = global_settings(services.store.as_ref())
+        .await
+        .is_ok_and(|settings| settings.setup_completed);
+    cx.setup_completed.store(completed, Ordering::SeqCst);
+    let draft = services
+        .store
+        .settings(SettingsScope::SetupDraft)
+        .await
+        .ok()
+        .flatten();
+    let resumed =
+        SetupDraft::parse(draft.as_deref()).is_some_and(|draft| draft.step != SetupStep::Welcome);
+    if resumed {
+        cx.setup.mark_resumed();
+    }
+    completed
+}
+
+pub(super) async fn background(services: Arc<Services>, app: AppHandle, completed: bool) {
+    tokio::time::sleep(BACKGROUND_DELAY).await;
+    let ready = app.state::<Cx>().ready().await;
+    integration::heal(&services, setup::language(&ready).await).await;
+    if completed {
+        setup::retry_legacy_stop(&services).await;
+    }
+}
+
+pub(super) fn search_legacy(app: &AppHandle, services: &Services) {
+    if cfg!(feature = "e2e") || services.policies.legacy_migration == Some(false) {
+        return;
+    }
+    let app = app.clone();
+    let exclude = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(Path::to_path_buf))
+        .unwrap_or_default();
+    tauri::async_runtime::spawn(async move {
+        let found =
+            tokio::task::spawn_blocking(move || mivia_os::find_legacy(&exclude, LEGACY_BUDGET))
+                .await;
+        let found = found.ok().flatten();
+        tracing::info!(found = found.is_some(), "legacy.searched");
+        app.state::<Cx>().setup.found_legacy(found);
+    });
+}
+
+fn origin(policies: &Policies) -> ServerOrigin {
+    #[cfg(feature = "e2e")]
+    if let Some(origin) = super::e2e::origin() {
+        return ServerOrigin(origin);
+    }
+    #[cfg(debug_assertions)]
+    if let Ok(url) = std::env::var("MIVIA_SERVER_URL") {
+        return ServerOrigin(url);
+    }
+    ServerOrigin(
+        policies
+            .server_url
+            .clone()
+            .unwrap_or_else(|| DEFAULT_ORIGIN.to_owned()),
+    )
+}
+
+pub(super) fn services(store: Arc<SqliteStore>, launch: &Launch) -> Option<Arc<Services>> {
+    let (policies, ignored) = policy::parse(&mivia_os::read_policies(policy::KEY));
+    for entry in ignored {
+        tracing::warn!(name = %entry.name, hive = ?entry.hive, "policy.ignored");
+    }
+    tracing::info!(?policies, "policy.effective");
+    let clients = build_clients(&user_agent(&launch.version, "10.0", "stable"))
+        .inspect_err(|error| tracing::error!(%error, "http.clientsFailed"))
+        .ok()?;
+    Some(Arc::new(Services {
+        store,
+        credentials: pipeline::credentials(),
+        clients: Arc::new(ArcSwap::from_pointee(clients)),
+        origin: origin(&policies),
+        policies,
+        data_dir: launch.data_dir.clone(),
+        version: launch.version.clone(),
+    }))
+}

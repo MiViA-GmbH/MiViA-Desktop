@@ -22,6 +22,7 @@ pub(crate) async fn current(ready: &Ready) -> Result<LocaleView, AppError> {
 
 pub(crate) async fn changed(app: &AppHandle, ready: &Ready) -> Result<(), AppError> {
     let view = current(ready).await?;
+    super::integration::heal(&ready.services, super::setup::language(ready).await).await;
     if let Err(error) = LanguageChanged(view).emit(app) {
         tracing::warn!(%error, "ipc.emitFailed");
     }
