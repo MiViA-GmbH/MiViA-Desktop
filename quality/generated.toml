@@ -1,3 +1,8 @@
 # Generated files: excluded from Biome, fallow, jscpd and source-rules in one place.
 # cargo xtask source-rules fails when a listed path matches no file or a tool config disagrees.
-paths = []
+paths = [
+    "packages/theme-shim/assets/favicon.svg",
+    "packages/theme-shim/src/MiviaLogo.tsx",
+    "packages/theme-shim/src/theme.ts",
+    "ui/src/shared/ipc/bindings.ts",
+]

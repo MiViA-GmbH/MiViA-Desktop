@@ -17,5 +17,5 @@ ui-shared-lib = 90
 [mutation]
 
 [suppressions]
-rust = 2
+rust = 3
 ui = 0

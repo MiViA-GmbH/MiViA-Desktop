@@ -5,7 +5,7 @@ use mivia_application::intake::{
     Intake, IntakeError, IntakeSink, Ports, SIGNAL_CAPACITY, Tick, run,
 };
 use mivia_os::{NotifyWatcher, OsFileSystem, SystemClock};
-use mivia_ports::store::{AccountScope, StoreExt};
+use mivia_ports::store::AccountScope;
 use mivia_store::SqliteStore;
 use tokio::sync::Notify;
 
@@ -47,7 +47,7 @@ fn spawn_worker(name: String, intake: &Arc<Intake>, worker: Worker) {
     });
 }
 
-fn compose(store: Arc<SqliteStore>, scope: AccountScope, version: &str) -> Arc<Intake> {
+pub(super) fn compose(store: Arc<SqliteStore>, scope: AccountScope, version: &str) -> Arc<Intake> {
     let (sink, receiver) = IntakeSink::channel(SIGNAL_CAPACITY);
     let ports = Ports {
         store,
@@ -58,16 +58,7 @@ fn compose(store: Arc<SqliteStore>, scope: AccountScope, version: &str) -> Arc<I
     Arc::new(Intake::new(ports, scope, version, (sink, receiver)))
 }
 
-pub(super) async fn start(store: Arc<SqliteStore>, version: String, minimized: bool) {
-    let scope = match store.write(|tx| tx.accounts().active()).await {
-        Ok(Some(account)) => AccountScope(account),
-        Ok(None) => return,
-        Err(error) => {
-            tracing::error!(?error, "intake.accountUnreadable");
-            return;
-        }
-    };
-    let intake = compose(store, scope, &version);
+pub(super) async fn start(intake: Arc<Intake>, minimized: bool) {
     let delay = if minimized {
         START_DELAY_MINIMIZED
     } else {

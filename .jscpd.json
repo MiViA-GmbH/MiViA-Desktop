@@ -5,5 +5,15 @@
 	"threshold": 0,
 	"exitCode": 1,
 	"reporters": ["console"],
-	"ignore": ["**/tests/**", "**/tests.rs", "**/*_tests.rs", "crates/testing/**", "fuzz/**"]
+	"ignore": [
+		"**/*_tests.rs",
+		"**/tests.rs",
+		"**/tests/**",
+		"crates/testing/**",
+		"fuzz/**",
+		"packages/theme-shim/assets/favicon.svg",
+		"packages/theme-shim/src/MiviaLogo.tsx",
+		"packages/theme-shim/src/theme.ts",
+		"ui/src/shared/ipc/bindings.ts"
+	]
 }

@@ -1,7 +1,7 @@
 {
 	"$schema": "./node_modules/fallow/schema.json",
-	"entry": ["src/main.ts"],
-	"ignorePatterns": [],
+	"entry": ["src/main.tsx"],
+	"ignorePatterns": ["src/shared/ipc/bindings.ts"],
 	"rules": {
 		"unused-files": "error",
 		"unused-exports": "error",
@@ -29,19 +29,57 @@
 	},
 	"boundaries": {
 		"zones": [
-			{ "name": "app", "patterns": ["src/main.ts", "src/app/**"] },
-			{ "name": "routes", "patterns": ["src/routes/**"] },
-			{ "name": "features", "patterns": ["src/features/**"], "autoDiscover": ["src/features"] },
-			{ "name": "entities", "patterns": ["src/entities/**"], "autoDiscover": ["src/entities"] },
-			{ "name": "shared", "patterns": ["src/shared/**"] }
+			{
+				"name": "app",
+				"patterns": ["src/main.ts", "src/main.tsx", "src/app/**"]
+			},
+			{
+				"name": "routes",
+				"patterns": ["src/routes/**"]
+			},
+			{
+				"name": "features",
+				"patterns": ["src/features/**"],
+				"autoDiscover": ["src/features"]
+			},
+			{
+				"name": "entities",
+				"patterns": ["src/entities/**"],
+				"autoDiscover": ["src/entities"]
+			},
+			{
+				"name": "shared",
+				"patterns": ["src/shared/**"]
+			},
+			{
+				"name": "tooling",
+				"patterns": ["index.html", "*.config.ts", "scripts/**", "e2e/**"]
+			}
 		],
 		"rules": [
-			{ "from": "app", "allow": ["routes", "features", "entities", "shared"] },
-			{ "from": "routes", "allow": ["features", "entities", "shared"] },
-			{ "from": "features", "allow": ["entities", "shared"] },
-			{ "from": "entities", "allow": ["shared"] },
-			{ "from": "shared", "allow": [] }
+			{
+				"from": "app",
+				"allow": ["routes", "features", "entities", "shared"]
+			},
+			{
+				"from": "routes",
+				"allow": ["features", "entities", "shared"]
+			},
+			{
+				"from": "features",
+				"allow": ["entities", "shared"]
+			},
+			{
+				"from": "entities",
+				"allow": ["shared"]
+			},
+			{
+				"from": "shared",
+				"allow": []
+			}
 		],
-		"coverage": { "requireAllFiles": true }
+		"coverage": {
+			"requireAllFiles": true
+		}
 	}
 }

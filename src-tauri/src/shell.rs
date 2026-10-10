@@ -1,6 +1,15 @@
+pub(crate) mod cx;
+#[cfg(feature = "e2e")]
+mod e2e;
+mod events;
+mod feed;
 mod intake;
+pub(crate) mod locale;
+pub(crate) mod open;
+mod pipeline;
 mod shutdown;
 mod tray;
+pub(crate) mod window;
 
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
@@ -14,21 +23,17 @@ use mivia_diagnostics::{
     DiagnosticsContext, PreviousSession, install_panic_hook, previous_session, start_logging,
     write_marker,
 };
-use mivia_ports::store::{CommitObserver, Committed};
+use mivia_ports::queries::Queries;
+use mivia_ports::store::{AccountScope, StoreExt};
 use mivia_store::{SqliteStore, StoreConfig};
-use tauri::RunEvent;
+use tauri::{AppHandle, Manager, RunEvent};
 use tokio::sync::mpsc::{Receiver, channel};
 
 use crate::instance::{self, Primary};
+use cx::{Cx, Ready};
 use shutdown::Shutdown;
 
 const HANDOFF_QUEUE: usize = 64;
-
-struct NoChanges;
-
-impl CommitObserver for NoChanges {
-    fn committed(&self, _committed: &Committed) {}
-}
 
 pub(crate) fn run(primary: Primary, hardening: Option<&io::Result<()>>) -> ExitCode {
     match start(primary, hardening) {
@@ -68,18 +73,35 @@ fn start(
     let shutdown = Arc::new(Shutdown::new(runtime, logging, logs));
     let watcher = Arc::clone(&shutdown);
     mivia_os::spawn_session_watcher(move || watcher.session_ending())?;
-    let setup = Arc::clone(&shutdown);
-    let app = tauri::Builder::default()
-        .setup(move |app| {
-            tray::build(app.handle())?;
-            mark("tray_ready");
-            tauri::async_runtime::spawn(init(setup, data_dir.clone(), (version, minimized)));
-            tauri::async_runtime::spawn(receive(received, data_dir));
-            Ok(())
-        })
-        .build(tauri_context)?;
+    let launch = Launch {
+        data_dir,
+        version,
+        minimized,
+    };
+    let app = builder(Arc::clone(&shutdown), launch, received).build(tauri_context)?;
     app.run(move |_, event| on_event(&shutdown, &event));
     Ok(())
+}
+
+fn builder(
+    shutdown: Arc<Shutdown>,
+    launch: Launch,
+    received: Receiver<Handoff>,
+) -> tauri::Builder<tauri::Wry> {
+    let specta = events::builder();
+    tauri::Builder::default()
+        .invoke_handler(specta.invoke_handler())
+        .on_window_event(window::on_event)
+        .setup(move |app| {
+            specta.mount_events(app);
+            app.manage(Cx::new(launch.data_dir.clone()));
+            tray::build(app.handle())?;
+            mark("tray_ready");
+            let inbox = launch.data_dir.clone();
+            tauri::async_runtime::spawn(init(app.handle().clone(), shutdown, launch));
+            tauri::async_runtime::spawn(receive(received, inbox));
+            Ok(())
+        })
 }
 
 fn on_event(shutdown: &Shutdown, event: &RunEvent) {
@@ -123,19 +145,84 @@ fn mark(name: &str) {
     tracing::info!(target: "perf", ms_since_process_create = mivia_os::process_age_ms(), "{name}");
 }
 
-async fn init(shutdown: Arc<Shutdown>, data_dir: PathBuf, launch: (String, bool)) {
-    let path = data_dir.join("mivia.db");
-    let opened = SqliteStore::open(&path, StoreConfig::production(), Arc::new(NoChanges)).await;
-    let pending = std::fs::read_dir(instance::inbox(&data_dir)).map_or(0, Iterator::count);
+struct Launch {
+    data_dir: PathBuf,
+    version: String,
+    minimized: bool,
+}
+
+async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
+    let path = launch.data_dir.join("mivia.db");
+    let (observer, commits) = feed::channel();
+    tauri::async_runtime::spawn(feed::run(app.clone(), commits));
+    let opened = SqliteStore::open(&path, StoreConfig::production(), Arc::new(observer)).await;
+    let pending = std::fs::read_dir(instance::inbox(&launch.data_dir)).map_or(0, Iterator::count);
     tracing::info!(count = pending, "instance.spoolPending");
-    match opened {
-        Ok(store) => {
-            let store = Arc::new(store);
-            shutdown.attach_store(Arc::clone(&store));
-            mark("db_ready");
-            intake::start(store, launch.0, launch.1).await;
+    let store = match opened {
+        Ok(store) => Arc::new(store),
+        Err(error) => {
+            tracing::error!(?error, "store.openFailed");
+            return;
         }
-        Err(error) => tracing::error!(?error, "store.openFailed"),
+    };
+    shutdown.attach_store(Arc::clone(&store));
+    mark("db_ready");
+    #[cfg(feature = "e2e")]
+    if let Some(seed) = e2e::seed_from_env()
+        && let Err(error) = e2e::seed(&store, &seed, &launch.version).await
+    {
+        tracing::error!(%error, "e2e.seedFailed");
+    }
+    let ready = compose(store, &launch).await;
+    let intake = ready.intake.clone();
+    app.state::<Cx>().set(ready);
+    tray::started(&app);
+    #[cfg(feature = "e2e")]
+    open_at_start(&app);
+    if let Some(intake) = intake {
+        intake::start(intake, launch.minimized).await;
+    }
+}
+
+#[cfg(feature = "e2e")]
+fn open_at_start(app: &AppHandle) {
+    let handle = app.clone();
+    if let Err(error) = app.run_on_main_thread(move || window::open(&handle)) {
+        tracing::error!(%error, "window.openFailed");
+    }
+}
+
+async fn compose(store: Arc<SqliteStore>, launch: &Launch) -> Ready {
+    let scope = match store.write(|tx| tx.accounts().active()).await {
+        Ok(Some(account)) => AccountScope(account),
+        Ok(None) => return Ready::without_account(store),
+        Err(error) => {
+            tracing::error!(?error, "store.accountUnreadable");
+            return Ready::without_account(store);
+        }
+    };
+    let intake = intake::compose(Arc::clone(&store), scope, &launch.version);
+    let account = store.get_account(scope).await.ok().flatten();
+    let credentials = pipeline::credentials();
+    let pipeline = match (account, credentials) {
+        (Some(account), Some(credentials)) => {
+            let setup = pipeline::Setup {
+                store: Arc::clone(&store),
+                scope,
+                account,
+                credentials,
+                data_dir: &launch.data_dir,
+                version: &launch.version,
+            };
+            pipeline::start(setup).await
+        }
+        _ => None,
+    };
+    Ready {
+        store,
+        scope,
+        intake: Some(intake),
+        pipeline,
     }
 }
 

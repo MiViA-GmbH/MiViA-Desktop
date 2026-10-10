@@ -89,8 +89,8 @@ fn plant_code(work: &Work, registry: &Registry) -> Result<()> {
     )?;
     work.replace(
         "quality/generated.toml",
-        "paths = []",
-        "paths = [\"missing/generated.ts\"]",
+        "paths = [",
+        "paths = [\"missing/generated.ts\",",
     )?;
     for rule in registry.grep_rules() {
         let pattern = rule.grep.first().map_or("", String::as_str);

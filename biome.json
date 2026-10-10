@@ -2,7 +2,13 @@
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
 	"files": {
-		"includes": ["**"]
+		"includes": [
+			"**",
+			"!packages/theme-shim/assets/favicon.svg",
+			"!packages/theme-shim/src/MiviaLogo.tsx",
+			"!packages/theme-shim/src/theme.ts",
+			"!ui/src/shared/ipc/bindings.ts"
+		]
 	},
 	"plugins": ["./ui/quality/ternary.grit"],
 	"formatter": { "indentStyle": "tab", "lineEnding": "lf", "lineWidth": 120 },

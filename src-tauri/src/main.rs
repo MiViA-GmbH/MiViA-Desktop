@@ -3,10 +3,9 @@
 #[cfg(all(not(debug_assertions), not(feature = "custom-protocol")))]
 compile_error!("release builds need the custom-protocol feature, build through the Tauri CLI");
 
+mod commands;
 mod instance;
 mod shell;
-
-use mivia_server as _;
 
 use std::process::ExitCode;
 
