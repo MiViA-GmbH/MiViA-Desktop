@@ -197,7 +197,7 @@ impl TelemetrySink for SqliteTelemetrySink {
             payload: checked.payload,
         };
         inner.queue.push_back(row);
-        let wake = inner.queue.len() >= WRITE_AT;
+        let wake = inner.queue.len() == 1 || inner.queue.len() >= WRITE_AT;
         drop(inner);
         if wake {
             (self.wake)();

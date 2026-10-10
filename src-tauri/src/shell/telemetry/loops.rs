@@ -100,8 +100,15 @@ pub(crate) fn spawn_writer(services: Arc<Services>) {
                 daily_at = Instant::now();
                 daily(&services).await;
             }
+            let wake = &services.telemetry.wake;
+            if services.telemetry.sink.stats().buffered == 0 {
+                tokio::select! {
+                    () = wake.notified() => {}
+                    () = tokio::time::sleep(ALIVE_EVERY.saturating_sub(alive_at.elapsed())) => {}
+                }
+            }
             tokio::select! {
-                () = services.telemetry.wake.notified() => {}
+                () = wake.notified() => {}
                 () = tokio::time::sleep(WRITE_EVERY) => {}
             }
         }

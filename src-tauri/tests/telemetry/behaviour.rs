@@ -213,3 +213,40 @@ async fn canary_values_never_reach_telemetry_rows_bodies_or_views() {
         }
     }
 }
+
+#[test]
+fn the_writer_is_woken_by_the_first_queued_event_and_at_the_batch_size() {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use mivia_diagnostics::{SqliteTelemetrySink, WRITE_AT};
+    use mivia_domain::ids::{FolderId, Timestamp};
+    use mivia_ports::telemetry::{FolderPaused, TelemetrySink};
+    use mivia_testkit::clock::ManualClock;
+
+    let wakes = Arc::new(AtomicUsize::new(0));
+    let counter = Arc::clone(&wakes);
+    let sink = SqliteTelemetrySink::new(
+        Arc::new(ManualClock::new(Timestamp(NOW))),
+        ("mdt-test".to_owned(), "install".to_owned()),
+        true,
+        Box::new(move || {
+            counter.fetch_add(1, Ordering::SeqCst);
+        }),
+    );
+    let record = |id: i64| {
+        sink.record(
+            FolderPaused {
+                folder_id: Some(FolderId(id)),
+            }
+            .into(),
+        );
+    };
+    record(0);
+    record(1);
+    assert_eq!(wakes.load(Ordering::SeqCst), 1);
+    for id in 2..i64::try_from(WRITE_AT).unwrap() {
+        record(id);
+    }
+    assert_eq!(wakes.load(Ordering::SeqCst), 2);
+}
