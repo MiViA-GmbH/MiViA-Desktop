@@ -32,6 +32,9 @@ use mivia_diagnostics::{
     DiagnosticsContext, PreviousSession, install_panic_hook, previous_session, start_logging,
     write_marker,
 };
+use mivia_os::SystemClock;
+use mivia_ports::clock::Clock;
+use mivia_ports::store::history::Actor;
 use mivia_store::{SqliteStore, StoreConfig};
 use tauri::{AppHandle, Manager, RunEvent};
 use tokio::sync::mpsc::{Receiver, channel};
@@ -159,17 +162,24 @@ struct Launch {
     minimized: bool,
 }
 
-async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
+async fn open_store(launch: &Launch, observer: feed::Feed) -> Option<Arc<SqliteStore>> {
     let path = launch.data_dir.join("mivia.db");
+    let opened = SqliteStore::open(&path, StoreConfig::production(), Arc::new(observer)).await;
+    let store = opened
+        .inspect_err(|error| tracing::error!(?error, "store.openFailed"))
+        .ok()?;
+    store.set_actor(Actor {
+        windows_user: mivia_os::windows_user().unwrap_or_default(),
+        tz: SystemClock.time_zone(),
+    });
+    Some(Arc::new(store))
+}
+
+async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
     let (observer, commits) = feed::channel();
     tauri::async_runtime::spawn(feed::run(app.clone(), commits));
-    let opened = SqliteStore::open(&path, StoreConfig::production(), Arc::new(observer)).await;
-    let store = match opened {
-        Ok(store) => Arc::new(store),
-        Err(error) => {
-            tracing::error!(?error, "store.openFailed");
-            return;
-        }
+    let Some(store) = open_store(&launch, observer).await else {
+        return;
     };
     shutdown.attach_store(Arc::clone(&store));
     mark("db_ready");
