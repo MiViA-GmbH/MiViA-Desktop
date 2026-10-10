@@ -5,8 +5,10 @@ use std::time::{Duration, Instant};
 use mivia_application::intake::{
     AddFolder, Intake, IntakeError, IntakeSink, Ports, SIGNAL_CAPACITY, Tick, run,
 };
+use mivia_application::report_settings::ReportSettings;
 use mivia_domain::ids::{MINUTE_MS, ModelChoice};
 use mivia_domain::label::LabelRule;
+use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_os::{NotifyWatcher, OsFileSystem, SystemClock};
 use mivia_ports::queries::Queries;
@@ -149,6 +151,8 @@ async fn burst_of_5000_files_loses_nothing() {
             quiet_ms: MINUTE_MS,
             label_rule: LabelRule::Auto,
             include_existing: false,
+            report_settings: ReportSettings::default(),
+            report_folder: ReportFolder::Subfolder("MiViA reports".to_owned()),
         })
         .await
         .unwrap();

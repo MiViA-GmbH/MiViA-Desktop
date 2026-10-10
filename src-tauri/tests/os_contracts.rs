@@ -223,3 +223,11 @@ fs_contract_tests!(RealFs::new());
 credentials_contract_tests!(RealCredentials::new());
 watch_contract_tests!(RealWatch::new());
 clock_contract_tests!(RealClock);
+
+#[test]
+fn system_clock_names_a_zone_and_a_local_minute() {
+    let clock = SystemClock;
+    assert_ne!(clock.time_zone(), "");
+    let stamp = clock.local_stamp(clock.now());
+    assert!(stamp.year >= 2026 && (1..=12).contains(&stamp.month) && stamp.minute < 60);
+}
