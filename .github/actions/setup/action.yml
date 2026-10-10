@@ -1,0 +1,57 @@
+name: setup
+description: Hardened runner, proto toolchains and caches
+inputs:
+  profile:
+    description: Cache profile name
+    required: true
+  rust:
+    description: Install the Rust toolchain and restore the cargo cache
+    default: "true"
+  dev-drive:
+    description: Put the target and temp directories on a Dev Drive
+    default: "false"
+  extra-endpoints:
+    description: Additional allowed egress endpoints
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Harden runner
+      uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+      with:
+        egress-policy: audit
+        disable-sudo-and-containers: ${{ runner.os == 'Linux' && inputs.profile != 'ubuntu-bench' }}
+        allowed-endpoints: >
+          github.com:443 api.github.com:443 codeload.github.com:443 objects.githubusercontent.com:443 release-assets.githubusercontent.com:443 static.rust-lang.org:443 index.crates.io:443 static.crates.io:443 crates.io:443 registry.npmjs.org:443 nodejs.org:443 moonrepo.dev:443
+          *.actions.githubusercontent.com:443 *.blob.core.windows.net:443 ${{ inputs.extra-endpoints }}
+    - name: Dev Drive
+      if: inputs.dev-drive == 'true'
+      uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
+      with:
+        drive-size: 12GB
+        mount-path: C:\devdrive
+        trusted-dev-drive: true
+        env-mapping: |
+          CARGO_TARGET_DIR,{{ DEV_DRIVE }}/target
+          TMP,{{ DEV_DRIVE }}/tmp
+          TEMP,{{ DEV_DRIVE }}/tmp
+    - name: Toolchains
+      uses: moonrepo/setup-toolchain@261c62cb5b0f580c7be7c8cd0f023a2e96756095 # v0.6.4
+      with:
+        proto-version: "0.62.3"
+        auto-install: ${{ inputs.rust }}
+        cache-base: main
+    - name: Node toolchain only
+      if: inputs.rust != 'true'
+      shell: bash
+      run: proto install node && proto install pnpm
+    - name: Cargo cache
+      if: inputs.rust == 'true'
+      uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      with:
+        shared-key: ${{ inputs.profile }}
+        cache-all-crates: false
+        save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    - name: Environment report
+      shell: bash
+      run: node scripts/ci/env-report.mjs

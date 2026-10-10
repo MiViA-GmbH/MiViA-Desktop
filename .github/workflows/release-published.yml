@@ -1,0 +1,79 @@
+name: release-published
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+concurrency:
+  group: channels
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify published release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          allowed-endpoints: api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443 static.crates.io:443 index.crates.io:443 static.rust-lang.org:443 moonrepo.dev:443
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install toolchains without cache
+        uses: moonrepo/setup-toolchain@261c62cb5b0f580c7be7c8cd0f023a2e96756095 # v0.6.4
+        with:
+          proto-version: "0.62.3"
+          auto-install: true
+          cache: false
+      - name: Attestations and updater signature
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: bash scripts/ci/verify-release.sh && cargo xtask update-sig verify-release "$TAG"
+
+  channel:
+    name: Beta channel pull request
+    needs: [verify]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: release-bot
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          allowed-endpoints: api.github.com:443 github.com:443
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: App token
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Point beta at the release
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: node scripts/ci/channel.mjs beta
+      - name: Pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.app.outputs.token }}
+          branch: bot/channel-beta
+          title: "chore(release): point the beta channel at the new release"
+          sign-commits: true

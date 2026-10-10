@@ -1,0 +1,67 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": ["config:best-practices", ":semanticCommitTypeAll(build)", ":semanticCommitScope(deps)"],
+	"timezone": "Europe/Berlin",
+	"schedule": ["before 6am on monday"],
+	"minimumReleaseAge": "7 days",
+	"internalChecksFilter": "strict",
+	"prConcurrentLimit": 3,
+	"rebaseWhen": "conflicted",
+	"automerge": false,
+	"rangeStrategy": "pin",
+	"lockFileMaintenance": {
+		"enabled": true,
+		"schedule": ["before 6am on the first day of the month"]
+	},
+	"vulnerabilityAlerts": {
+		"minimumReleaseAge": null,
+		"schedule": ["at any time"],
+		"labels": ["security"]
+	},
+	"packageRules": [
+		{
+			"matchManagers": ["cargo"],
+			"matchUpdateTypes": ["minor", "patch", "digest"],
+			"groupName": "rust weekly"
+		},
+		{
+			"matchManagers": ["npm"],
+			"matchUpdateTypes": ["minor", "patch"],
+			"groupName": "npm weekly"
+		},
+		{
+			"matchManagers": ["github-actions", "custom.regex"],
+			"groupName": "ci weekly"
+		},
+		{
+			"matchManagers": ["proto"],
+			"groupName": "toolchain"
+		},
+		{
+			"matchPackageNames": ["webdriverio", "/^@wdio\\//"],
+			"allowedVersions": "<10"
+		}
+	],
+	"customManagers": [
+		{
+			"customType": "regex",
+			"managerFilePatterns": ["/^\\.github/(workflows|actions)/.+\\.ya?ml$/"],
+			"matchStrings": ["tool: (?<depName>[a-z0-9-]+)@(?<currentValue>[0-9.]+)"],
+			"datasourceTemplate": "crate"
+		},
+		{
+			"customType": "regex",
+			"managerFilePatterns": ["/^\\.github/(workflows|actions)/.+\\.ya?ml$/"],
+			"matchStrings": ["proto-version: \"(?<currentValue>[0-9.]+)\""],
+			"depNameTemplate": "moonrepo/proto",
+			"datasourceTemplate": "github-releases",
+			"extractVersionTemplate": "^v(?<version>.*)$"
+		},
+		{
+			"customType": "regex",
+			"managerFilePatterns": ["/^scripts/ci/tools\\.sha256$/"],
+			"matchStrings": ["# (?<depName>[\\w-]+/[\\w-]+) (?<currentValue>v?[0-9.]+)"],
+			"datasourceTemplate": "github-releases"
+		}
+	]
+}

@@ -1,0 +1,124 @@
+name: weekly
+
+on:
+  schedule:
+    - cron: "17 3 * * 0"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: weekly
+  cancel-in-progress: false
+
+jobs:
+  mutants:
+    name: Mutants (application, store)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: ubuntu-ci
+          rust: "true"
+      - name: Install cargo-mutants
+        uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
+        with:
+          tool: cargo-mutants@25.3.1
+          fallback: none
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
+        with:
+          tool: cargo-nextest@0.9.148
+          fallback: none
+      - name: Mutants shard
+        shell: bash
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: cargo mutants -p mivia-application -p mivia-store -p mivia-it --test-tool nextest --shard "$SHARD/6"
+
+  stryker:
+    name: Stryker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: ubuntu-ci
+          rust: "false"
+      - name: Install node packages
+        run: pnpm install --frozen-lockfile
+      - name: Mutation
+        run: pnpm --filter @mivia-desktop/ui stryker run --incremental
+
+  fuzz-cmin:
+    name: Fuzz corpus minimisation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: fuzz
+          rust: "true"
+      - name: Minimise
+        run: cargo xtask fuzz --cmin
+
+  floors-raise:
+    name: Raise floors
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: release-bot
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: ubuntu-ci
+          rust: "true"
+      - name: App token
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Raise
+        run: cargo xtask floors-raise
+      - name: Pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.app.outputs.token }}
+          branch: bot/floors-raise
+          title: "chore(ci): raise quality floors"
+          sign-commits: true

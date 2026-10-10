@@ -1,0 +1,15 @@
+rules:
+  dangerous-triggers:
+    ignore:
+      # guard.yml builds xtask from the base commit and only reads the head as git objects.
+      - guard.yml
+  self-repository:
+    # actionlint 1.7.12 rejects the $/ syntax; switch when actionlint supports it.
+    disable: true
+  superfluous-actions:
+    ignore:
+      # create-pull-request signs bot commits through the API, which gh pr create does not.
+      - promote.yml
+      - release-published.yml
+      - update-visual-baselines.yml
+      - weekly.yml

@@ -1,0 +1,119 @@
+name: main
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ci-main
+  cancel-in-progress: true
+
+jobs:
+  warm-ubuntu-ci:
+    name: Warm cache (ubuntu ci)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: ubuntu-ci
+          rust: "true"
+      - name: Build
+        run: cargo build --profile ci --workspace --all-targets --locked
+
+  warm-windows-ci:
+    name: Warm cache (windows ci)
+    runs-on: windows-2025
+    timeout-minutes: 45
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: windows-ci
+          rust: "true"
+      - name: Build
+        run: cargo build --profile ci --workspace --all-targets --locked
+
+  warm-windows-e2e:
+    name: Warm cache (windows e2e)
+    runs-on: windows-2025
+    timeout-minutes: 45
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: windows-e2e
+          rust: "true"
+      - name: Build
+        run: cargo build --profile e2e -p mivia-desktop --locked
+
+  perf-baseline:
+    name: Performance baseline
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    concurrency:
+      group: perf-baseline
+      cancel-in-progress: false
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: ubuntu-bench
+          rust: "true"
+      - name: Instruction counts
+        run: cargo xtask perf instr --baseline-out target/gungraun-baseline
+      - name: Upload gungraun-baseline-${{ github.sha }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gungraun-baseline-${{ github.sha }}
+          path: target/gungraun-baseline
+          retention-days: 30
+
+  cache-prune:
+    name: Prune caches
+    needs: [warm-ubuntu-ci, warm-windows-ci, warm-windows-e2e]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: write  # delete superseded caches
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          allowed-endpoints: api.github.com:443
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Keep the newest cache per key prefix
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/cache-prune.mjs

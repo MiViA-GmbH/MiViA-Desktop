@@ -1,0 +1,181 @@
+name: build-release
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        type: string
+        required: true
+      sha:
+        type: string
+        required: true
+      perf_override_reason:
+        type: string
+        default: ""
+
+permissions: {}
+
+jobs:
+  perf-gate:
+    name: Performance gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read  # check out the repository
+      actions: read  # read nightly perf results
+      issues: read  # read perf-red issues
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          allowed-endpoints: api.github.com:443 github.com:443
+      - name: Validate the tag
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag_name }}
+        run: printf '%s' "$TAG" | grep -Pq '^(beta-)?v\d+\.\d+\.\d+(-beta\.\d+)?$'
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag_name }}
+          OVERRIDE: ${{ inputs.perf_override_reason }}
+        run: node scripts/ci/perf-gate.mjs
+
+  compile:
+    name: Compile
+    needs: [perf-gate]
+    runs-on: windows-2025
+    timeout-minutes: 60
+    outputs:
+      digests: ${{ steps.digests.outputs.digests }}
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install toolchains without cache
+        uses: moonrepo/setup-toolchain@261c62cb5b0f580c7be7c8cd0f023a2e96756095 # v0.6.4
+        with:
+          proto-version: "0.62.3"
+          auto-install: true
+          cache: false
+      - name: Fetch
+        run: cargo fetch --locked
+      - name: Build
+        id: digests
+        run: node scripts/ci/release-compile.mjs
+      - name: Upload compile-out
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: compile-out
+          path: out
+          retention-days: 1
+
+  package:
+    name: Package and sign
+    needs: [compile]
+    runs-on: windows-2025
+    timeout-minutes: 45
+    environment: release
+    permissions:
+      contents: write  # upload release assets
+      id-token: write  # OIDC for Azure signing and attestations
+      attestations: write  # write build provenance
+      artifact-metadata: write  # attach attestation metadata
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - name: Only the release commit on main
+        shell: bash
+        env:
+          TAG_SHA: ${{ inputs.sha }}
+        run: test "$GITHUB_REF" = refs/heads/main && test "$GITHUB_SHA" = "$TAG_SHA"
+      - name: Download compile output
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: compile-out
+          path: out
+      - name: Verify digests
+        shell: bash
+        env:
+          EXPECTED: ${{ needs.compile.outputs.digests }}
+        run: cd out && sha256sum -c <<< "$EXPECTED"
+      - name: Install signing tools
+        shell: pwsh
+        run: scripts/ci/install-signing-tools.ps1
+      - name: Azure login
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Bundle
+        shell: pwsh
+        run: out/cargo-tauri.exe bundle --bundles nsis --config src-tauri/tauri.release.conf.json
+      - name: Authenticode gate
+        shell: pwsh
+        run: scripts/ci/check-authenticode.ps1
+      - name: Provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: |
+            target/release/bundle/nsis/*.exe
+            out/*.cdx.json
+      - name: Cargo SBOM attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: target/release/bundle/nsis/*.exe
+          sbom-path: out/cargo.cdx.json
+      - name: npm SBOM attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: target/release/bundle/nsis/*.exe
+          sbom-path: out/npm.cdx.json
+      - name: Upload release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag_name }}
+        run: gh release upload "$TAG" target/release/bundle/nsis/*.exe out/*.cdx.json
+      - name: Azure logout
+        if: always()
+        shell: pwsh
+        run: az logout
+
+  verify:
+    name: Verify
+    needs: [package]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          allowed-endpoints: api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443
+      - name: Validate the tag
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag_name }}
+        run: printf '%s' "$TAG" | grep -Pq '^(beta-)?v\d+\.\d+\.\d+(-beta\.\d+)?$'
+      - name: Attestations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag_name }}
+          REPO: ${{ github.repository }}
+        run: bash scripts/ci/verify-release.sh

@@ -1,0 +1,96 @@
+name: guard
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  merge_group:
+
+permissions: {}
+
+concurrency:
+  group: guard-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request_target' }}
+
+jobs:
+  guard:
+    name: guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read  # build xtask from the base commit
+      pull-requests: read  # read the pull request title
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          disable-sudo-and-containers: true
+          allowed-endpoints: >
+            github.com:443 api.github.com:443 codeload.github.com:443 objects.githubusercontent.com:443 release-assets.githubusercontent.com:443 static.rust-lang.org:443 index.crates.io:443 static.crates.io:443 crates.io:443 registry.npmjs.org:443 nodejs.org:443 moonrepo.dev:443
+      - name: Merge queue
+        if: github.event_name == 'merge_group'
+        run: echo "checked on the pull request before it entered the queue"
+      - name: Pull request title
+        if: github.event_name == 'pull_request_target'
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            test
+            build
+            ci
+            docs
+            chore
+            revert
+          scopes: |
+            domain
+            ports
+            application
+            store
+            api
+            server
+            os
+            preview
+            diagnostics
+            desktop
+            testkit
+            xtask
+            ui
+            i18n
+            e2e
+            ci
+            deps
+            release
+          subjectPattern: ^[a-z].{0,70}[^.]$
+      - name: Check out the base commit
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Toolchains without cache
+        if: github.event_name == 'pull_request_target'
+        uses: moonrepo/setup-toolchain@261c62cb5b0f580c7be7c8cd0f023a2e96756095 # v0.6.4
+        with:
+          proto-version: "0.62.3"
+          auto-install: true
+          cache: false
+      - name: Quality guard built from base
+        if: github.event_name == 'pull_request_target'
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          TITLE: ${{ github.event.pull_request.title }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          git fetch --no-tags origin "+refs/pull/${PR}/head:refs/guard/head"
+          base=$(git merge-base HEAD refs/guard/head)
+          cargo build --locked --release -p xtask
+          ./target/release/xtask commit-text --title "$TITLE" --body "$BODY"
+          ./target/release/xtask quality-diff --base "$base" --head refs/guard/head
+          ./target/release/xtask ci-integrity --base "$base" --head refs/guard/head

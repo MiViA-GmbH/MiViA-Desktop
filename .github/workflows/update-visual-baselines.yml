@@ -1,0 +1,48 @@
+name: update-visual-baselines
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: visual-baselines
+  cancel-in-progress: true
+
+jobs:
+  baselines:
+    name: Update visual baselines
+    runs-on: windows-2025
+    timeout-minutes: 30
+    environment: release-bot
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: windows-ci
+          rust: "false"
+      - name: Install node packages
+        run: pnpm install --frozen-lockfile
+      - name: Update
+        run: pnpm --filter @mivia-desktop/ui test:visual --update-snapshots
+      - name: App token
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.app.outputs.token }}
+          branch: bot/visual-baselines
+          title: "test(ui): update visual baselines"
+          sign-commits: true
