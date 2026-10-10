@@ -10,6 +10,7 @@ use mivia_ports::ipc::support::KnownLink;
 use super::cx::{Ready, parse_id};
 
 const SITE: &str = "open_target";
+const RELEASES: &str = "https://github.com/MiViA-GmbH/mivia-desktop/releases";
 
 fn opened(result: Result<io::Result<()>, tokio::task::JoinError>) -> Result<(), AppError> {
     match result {
@@ -32,6 +33,7 @@ fn opened(result: Result<io::Result<()>, tokio::task::JoinError>) -> Result<(), 
 async fn link(ready: &Ready, link: KnownLink) -> Result<(), AppError> {
     let target = match link {
         KnownLink::Support => super::support::support_link(&ready.services),
+        KnownLink::Releases => RELEASES.to_owned(),
     };
     opened(tokio::task::spawn_blocking(move || mivia_os::open_file(&target)).await)
 }

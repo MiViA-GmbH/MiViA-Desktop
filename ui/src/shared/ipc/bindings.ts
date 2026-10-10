@@ -459,7 +459,7 @@ export type IntegrationView = {
 
 export type IssueReporting = "on" | "mailtoOnly" | "off";
 
-export type KnownLink = "support";
+export type KnownLink = "support" | "releases";
 
 export type Language = "en" | "de";
 

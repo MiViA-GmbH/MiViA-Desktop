@@ -141,4 +141,5 @@ pub struct SupportView {
 #[serde(rename_all = "camelCase")]
 pub enum KnownLink {
     Support,
+    Releases,
 }
