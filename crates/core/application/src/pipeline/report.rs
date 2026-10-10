@@ -80,26 +80,24 @@ impl Pipeline {
         version.is_some_and(|version| supports_v2(&version, Some(&min)))
     }
 
+    async fn next_part(&self, now: Timestamp) -> Result<Option<RequestRow>, PipelineError> {
+        let paused = *self.reports.paused_until.lock();
+        if paused.is_some_and(|until| until > now) {
+            return Ok(None);
+        }
+        self.write(move |tx, scope| {
+            let repo = tx.reports(scope);
+            if repo.in_flight()? {
+                return Ok(None);
+            }
+            repo.next_request(now)
+        })
+        .await
+    }
+
     async fn request_part(&self) -> Result<bool, PipelineError> {
         let now = self.now();
-        if self
-            .reports
-            .paused_until
-            .lock()
-            .is_some_and(|until| until > now)
-        {
-            return Ok(false);
-        }
-        let next = self
-            .write(move |tx, scope| {
-                let repo = tx.reports(scope);
-                if repo.in_flight()? {
-                    return Ok(None);
-                }
-                repo.next_request(now)
-            })
-            .await?;
-        let Some(row) = next else {
+        let Some(row) = self.next_part(now).await? else {
             return Ok(false);
         };
         if row.members.is_empty() {
