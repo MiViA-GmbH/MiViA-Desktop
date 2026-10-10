@@ -46,12 +46,29 @@ pub struct Walk {
     pub links_skipped: u32,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Expected {
+    pub len: u64,
+    pub fingerprint: Fingerprint,
+}
+
+#[async_trait]
+pub trait ChunkSource: Send {
+    async fn next_chunk(&mut self) -> Result<Option<Vec<u8>>, FsError>;
+}
+
 #[async_trait]
 pub trait FileSystem: Send + Sync {
     async fn stat(&self, path: &WinPath) -> Result<FileStat, FsError>;
     async fn walk(&self, root: &WinPath) -> Result<Walk, FsError>;
     async fn probe(&self, path: &WinPath) -> Result<(), FsError>;
     async fn read_image(&self, path: &WinPath, within: &WinPath) -> Result<ImageRead, FsError>;
+    async fn open_upload(
+        &self,
+        path: &WinPath,
+        within: &WinPath,
+        expected: Expected,
+    ) -> Result<Box<dyn ChunkSource>, FsError>;
     async fn final_path(&self, path: &WinPath) -> Result<WinPath, FsError>;
     async fn write_atomic(&self, path: &WinPath, bytes: &[u8]) -> Result<(), FsError>;
     async fn free_space(&self, path: &WinPath) -> Result<u64, FsError>;

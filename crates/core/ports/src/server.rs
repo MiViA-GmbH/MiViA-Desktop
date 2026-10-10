@@ -1,7 +1,13 @@
 use async_trait::async_trait;
+use mivia_domain::hold::KeyProblem;
+use mivia_domain::ids::{ModelChoice, Timestamp};
 use uuid::Uuid;
 
+use crate::fs::{ChunkSource, FsError};
+
 pub const MAX_STATUS_IDS: usize = 100;
+pub const MAX_SUBMIT_IMAGES: usize = 50;
+pub const FIND_PAGE_SIZE: u32 = 100;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ServerError {
@@ -14,26 +20,61 @@ pub enum ServerError {
     StallTimeout,
     Unavailable { status: u16 },
     RateLimited { retry_after_ms: i64 },
-    Unauthorized,
+    Unauthorized(KeyProblem),
     LicenseInvalid,
     Forbidden { code: String },
     ImageRejected { code: String },
-    TooLarge,
-    NotFound,
+    TooLarge { by_proxy: bool },
+    NotFound { image_id: Option<String> },
+    Gone,
     BadRequest { code: String },
+    InProgress,
     Contract,
+    Source(FsError),
+    NotSignedIn,
+    AccountMismatch,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ServerVersion {
+    pub version: String,
+    pub min_desktop_version: Option<String>,
+    pub max_upload_size_mb: Option<u32>,
+    pub blocked_versions: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct License {
+    pub kind: String,
+    pub ends_at: Option<Timestamp>,
+    pub images_used: Option<u64>,
+    pub images_limit: Option<u64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Whoami {
-    pub account_id: String,
+pub struct CatalogueCustomization {
+    pub id: String,
+    pub name_en: String,
+    pub name_de: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CatalogueModel {
+    pub model_id: String,
     pub display_name: String,
+    pub customizations: Vec<CatalogueCustomization>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub enum LabelsFetch {
+    NotModified,
+    Fresh { body: Vec<u8>, etag: Option<String> },
+}
+
 pub struct UploadRequest {
     pub file_name: String,
-    pub bytes: Vec<u8>,
+    pub len: u64,
+    pub source: Box<dyn ChunkSource>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -43,17 +84,11 @@ pub struct ImageRef {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SubmitItem {
-    pub idempotency_key: Uuid,
-    pub image_id: String,
-    pub model_id: String,
-    pub customization_id: Option<String>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SubmitOutcome {
-    pub idempotency_key: Uuid,
-    pub job_id: String,
+pub struct SubmitRequest {
+    pub key: Uuid,
+    pub choice: ModelChoice,
+    pub image_ids: Vec<String>,
+    pub force: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -66,16 +101,36 @@ pub enum ServerJobStatus {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct JobStatus {
+pub struct ServerJob {
     pub job_id: String,
+    pub image_id: Option<String>,
+    pub customization_id: Option<String>,
     pub status: ServerJobStatus,
     pub result_id: Option<String>,
+    pub has_result: bool,
+    pub created_at: Option<Timestamp>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FindJobs {
+    pub choice: ModelChoice,
+    pub page: u32,
 }
 
 #[async_trait]
 pub trait ServerApi: Send + Sync {
-    async fn whoami(&self) -> Result<Whoami, ServerError>;
+    async fn version(&self) -> Result<ServerVersion, ServerError>;
+    async fn license(&self) -> Result<License, ServerError>;
+    async fn catalogue(&self) -> Result<Vec<CatalogueModel>, ServerError>;
+    async fn model_labels(
+        &self,
+        lang: &str,
+        etag: Option<String>,
+    ) -> Result<LabelsFetch, ServerError>;
     async fn upload(&self, request: UploadRequest) -> Result<ImageRef, ServerError>;
-    async fn submit(&self, items: Vec<SubmitItem>) -> Result<Vec<SubmitOutcome>, ServerError>;
-    async fn job_statuses(&self, job_ids: Vec<String>) -> Result<Vec<JobStatus>, ServerError>;
+    async fn submit(&self, request: SubmitRequest) -> Result<Vec<ServerJob>, ServerError>;
+    async fn job_statuses(&self, job_ids: Vec<String>) -> Result<Vec<ServerJob>, ServerError>;
+    async fn find_jobs(&self, query: FindJobs) -> Result<Vec<ServerJob>, ServerError>;
+    async fn job_exists(&self, job_id: &str) -> Result<bool, ServerError>;
+    fn server_offset_ms(&self) -> Option<i64>;
 }
