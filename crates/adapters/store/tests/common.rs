@@ -61,6 +61,7 @@ pub(crate) fn account(tx: &mut dyn WriteTx, name: &str) -> AccountScope {
             server_url: "https://app.mivia.ai".to_owned(),
             server_account_id: name.to_owned(),
             display_name: name.to_owned(),
+            email: String::new(),
         })
         .unwrap();
     AccountScope(id)

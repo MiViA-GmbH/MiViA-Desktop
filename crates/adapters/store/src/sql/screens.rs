@@ -37,10 +37,10 @@ pub(crate) const BATCH_ANALYSES: &str = "SELECT m.model_choice_key, m.model_id, 
      m.names) FROM batch_model_choice m WHERE m.batch_id = ?1 ORDER BY m.model_choice_key";
 
 pub(crate) const ACCOUNT: &str =
-    "SELECT display_name, server_url, server_account_id FROM account WHERE id = ?1";
+    "SELECT display_name, server_url, server_account_id, email FROM account WHERE id = ?1";
 
-pub(crate) const GLOBAL_SETTINGS: &str =
-    "SELECT json FROM settings WHERE scope = 'global' AND ifnull(account_id, 0) = 0";
+pub(crate) const SETTINGS: &str =
+    "SELECT json FROM settings WHERE scope = ?1 AND ifnull(account_id, 0) = 0";
 
 #[cfg(test)]
 pub(crate) fn planned() -> Vec<(&'static str, String)> {
@@ -54,6 +54,6 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("list report parts", REPORT_PARTS.to_owned()),
         ("list batch analyses", BATCH_ANALYSES.to_owned()),
         ("get account", ACCOUNT.to_owned()),
-        ("get global settings", GLOBAL_SETTINGS.to_owned()),
+        ("get settings", SETTINGS.to_owned()),
     ]
 }

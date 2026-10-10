@@ -128,6 +128,7 @@ CREATE TABLE account (
   server_url TEXT NOT NULL,
   server_account_id TEXT NOT NULL,
   display_name TEXT NOT NULL,
+  email TEXT NOT NULL DEFAULT '',
   active INTEGER NOT NULL DEFAULT 0 CHECK (active IN (0, 1)),
   UNIQUE (server_url, server_account_id)
 ) STRICT

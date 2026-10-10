@@ -10,7 +10,7 @@ use mivia_domain::source_file::SourceFileEvent;
 use mivia_ports::ipc::screens::{AccountView, HoldKind, NeedsAttention};
 use mivia_ports::queries::Queries;
 use mivia_ports::store::intake::FolderChange;
-use mivia_ports::store::{AttentionCleared, NewBatch, NewFolder, Origin, StoreExt};
+use mivia_ports::store::{AttentionCleared, NewBatch, NewFolder, Origin, SettingsScope, StoreExt};
 use mivia_store::StoreConfig;
 
 use crate::common::{account, fixture, new_batch, new_file, seed};
@@ -123,8 +123,18 @@ async fn holds_account_and_settings_read_back() {
                 None,
             )
             .unwrap();
-        tx.set_global_settings(1, r#"{"language":"de"}"#).unwrap();
-        tx.set_global_settings(1, r#"{"language":"en"}"#).unwrap();
+        tx.set_settings(SettingsScope::Global, 1, r#"{"language":"de"}"#)
+            .unwrap();
+        tx.set_settings(SettingsScope::Global, 1, r#"{"language":"en"}"#)
+            .unwrap();
+        tx.set_settings(SettingsScope::SetupDraft, 1, r#"{"step":"key"}"#)
+            .unwrap();
+        assert_eq!(
+            tx.settings(SettingsScope::SetupDraft).unwrap().as_deref(),
+            Some(r#"{"step":"key"}"#)
+        );
+        tx.clear_settings(SettingsScope::SetupDraft).unwrap();
+        assert_eq!(tx.settings(SettingsScope::SetupDraft).unwrap(), None);
         scope
     })
     .await;
@@ -137,10 +147,15 @@ async fn holds_account_and_settings_read_back() {
             display_name: "Lab".to_owned(),
             server_url: "https://app.mivia.ai".to_owned(),
             server_account_id: "Lab".to_owned(),
+            email: String::new(),
         })
     );
     assert_eq!(
-        fx.store.global_settings().await.unwrap().as_deref(),
+        fx.store
+            .settings(SettingsScope::Global)
+            .await
+            .unwrap()
+            .as_deref(),
         Some(r#"{"language":"en"}"#)
     );
 }

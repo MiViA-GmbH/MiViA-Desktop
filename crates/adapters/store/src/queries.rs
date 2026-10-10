@@ -6,7 +6,7 @@ use mivia_ports::ipc::views::{
     HistoryCursor, HistoryPage, NeedsAttentionView, OriginView,
 };
 use mivia_ports::queries::Queries;
-use mivia_ports::store::{AccountScope, StoreError};
+use mivia_ports::store::{AccountScope, SettingsScope, StoreError};
 use mivia_ports::time::iso_utc;
 use rusqlite::{OptionalExtension, Row, Transaction, params};
 
@@ -248,6 +248,7 @@ impl Queries for SqliteStore {
                             display_name: row.get(0)?,
                             server_url: row.get(1)?,
                             server_account_id: row.get(2)?,
+                            email: row.get(3)?,
                         })
                     })
                     .optional()
@@ -255,10 +256,10 @@ impl Queries for SqliteStore {
             .await
     }
 
-    async fn global_settings(&self) -> Result<Option<String>, StoreError> {
+    async fn settings(&self, scope: SettingsScope) -> Result<Option<String>, StoreError> {
         self.readers
             .read(move |tx, _| {
-                tx.query_row(sql::screens::GLOBAL_SETTINGS, [], |row| row.get(0))
+                tx.query_row(sql::screens::SETTINGS, [scope.name()], |row| row.get(0))
                     .optional()
             })
             .await

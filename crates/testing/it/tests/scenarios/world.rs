@@ -67,6 +67,7 @@ impl World {
                     server_url: "https://app.mivia.ai".to_owned(),
                     server_account_id: "lab".to_owned(),
                     display_name: "Lab".to_owned(),
+                    email: String::new(),
                 })?;
                 tx.accounts().activate(id)?;
                 Ok(AccountScope(id))

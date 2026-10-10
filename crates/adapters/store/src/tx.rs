@@ -24,9 +24,9 @@ use mivia_ports::store::intake::IntakeRepo;
 use mivia_ports::store::pipeline::PipelineRepo;
 use mivia_ports::store::{
     AccountRepo, AccountScope, BatchRepo, ComputationRepo, FolderRepo, HoldRepo, ReportRepo,
-    SourceFileRepo, TxError, WriteTx,
+    SettingsScope, SourceFileRepo, TxError, WriteTx,
 };
-use rusqlite::Transaction;
+use rusqlite::{OptionalExtension, Transaction};
 
 use crate::errors::SqlResult;
 
@@ -117,12 +117,37 @@ impl WriteTx for SqlTx<'_> {
         self.scoped(scope)
     }
 
-    fn set_global_settings(&mut self, version: u32, json: &str) -> Result<(), TxError> {
+    fn settings(&mut self, scope: SettingsScope) -> Result<Option<String>, TxError> {
+        self.tx
+            .query_row(crate::sql::screens::SETTINGS, [scope.name()], |row| {
+                row.get(0)
+            })
+            .optional()
+            .tx()
+    }
+
+    fn set_settings(
+        &mut self,
+        scope: SettingsScope,
+        version: u32,
+        json: &str,
+    ) -> Result<(), TxError> {
         self.tx
             .execute(
-                "INSERT INTO settings (scope, version, json) VALUES ('global', ?1, ?2) \
-                 ON CONFLICT (scope, ifnull(account_id, 0)) DO UPDATE SET version = ?1, json = ?2",
-                rusqlite::params![version, json],
+                "INSERT INTO settings (scope, version, json) VALUES (?1, ?2, ?3) \
+                 ON CONFLICT (scope, ifnull(account_id, 0)) DO UPDATE SET version = ?2, json = ?3",
+                rusqlite::params![scope.name(), version, json],
+            )
+            .tx()?;
+        self.record(Change::Settings);
+        Ok(())
+    }
+
+    fn clear_settings(&mut self, scope: SettingsScope) -> Result<(), TxError> {
+        self.tx
+            .execute(
+                "DELETE FROM settings WHERE scope = ?1 AND account_id IS NULL",
+                [scope.name()],
             )
             .tx()?;
         self.record(Change::Settings);

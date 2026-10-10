@@ -14,16 +14,18 @@ impl AccountRepo for SqlTx<'_> {
     fn upsert(&mut self, account: &NewAccount) -> Result<AccountId, TxError> {
         self.tx
             .prepare_cached(
-                "INSERT INTO account (server_url, server_account_id, display_name) \
-                 VALUES (?1, ?2, ?3) ON CONFLICT (server_url, server_account_id) \
-                 DO UPDATE SET display_name = excluded.display_name RETURNING id",
+                "INSERT INTO account (server_url, server_account_id, display_name, email) \
+                 VALUES (?1, ?2, ?3, ?4) ON CONFLICT (server_url, server_account_id) \
+                 DO UPDATE SET display_name = excluded.display_name, email = excluded.email \
+                 RETURNING id",
             )
             .and_then(|mut statement| {
                 statement.query_row(
                     params![
                         account.server_url,
                         account.server_account_id,
-                        account.display_name
+                        account.display_name,
+                        account.email
                     ],
                     |row| row.get(0),
                 )
@@ -46,6 +48,26 @@ impl AccountRepo for SqlTx<'_> {
 
     fn active(&mut self) -> Result<Option<AccountId>, TxError> {
         let ids: Vec<i64> = self.column("SELECT id FROM account WHERE active = 1", [])?;
+        Ok(ids.first().copied().map(AccountId))
+    }
+
+    fn deactivate(&mut self) -> Result<(), TxError> {
+        self.tx
+            .execute("UPDATE account SET active = 0 WHERE active = 1", [])
+            .tx()?;
+        self.record(Change::All);
+        Ok(())
+    }
+
+    fn find(
+        &mut self,
+        server_url: &str,
+        server_account_id: &str,
+    ) -> Result<Option<AccountId>, TxError> {
+        let ids: Vec<i64> = self.column(
+            "SELECT id FROM account WHERE server_url = ?1 AND server_account_id = ?2",
+            params![server_url, server_account_id],
+        )?;
         Ok(ids.first().copied().map(AccountId))
     }
 }

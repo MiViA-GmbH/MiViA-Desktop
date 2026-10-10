@@ -244,5 +244,5 @@ list batch analyses:
   SEARCH k USING PRIMARY KEY (account_id=? AND model_id=? AND customization_id=?)
 get account:
   SEARCH account USING INTEGER PRIMARY KEY (rowid=?)
-get global settings:
+get settings:
   SEARCH settings USING INDEX settings_scope (scope=? AND <expr>=?)
