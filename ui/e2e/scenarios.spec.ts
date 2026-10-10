@@ -205,15 +205,32 @@ test.describe
 			const outcomes = await page.evaluate(async () => {
 				type Internals = { invoke: (command: string, args?: Record<string, unknown>) => Promise<unknown> };
 				const { invoke } = (window as unknown as { __TAURI_INTERNALS__: Internals }).__TAURI_INTERNALS__;
-				const history = (await invoke('list_history', { after: null })) as { rows: { id: string }[] };
-				const id = history.rows[0]?.id ?? '0';
+				const filter = {
+					q: null,
+					folder: null,
+					manual: false,
+					analysis: null,
+					status: null,
+					from: null,
+					to: null,
+					sort: 'finished',
+					ascending: false,
+				};
+				const history = (await invoke('list_history', { filter, after: null })) as {
+					rows: { summary: { id: string } }[];
+				};
+				const id = history.rows[0]?.summary.id ?? '0';
 				const calls: [string, Record<string, unknown>][] = [
 					['get_locale', {}],
 					['get_account', {}],
 					['list_folders', {}],
 					['list_holds', {}],
 					['list_needs_attention', {}],
-					['list_history', { after: null }],
+					['list_history', { filter: { ...filter, q: 'probe', sort: 'name' }, after: null }],
+					['list_custom_reports', { q: null, after: null }],
+					['list_batch_events', { id, after: null }],
+					['get_custom_report_draft', { series: [id] }],
+					['list_backups', {}],
 					['get_batch', { id }],
 					['list_batch_items', { id, after: null }],
 					['list_series_reports', { id }],
@@ -229,6 +246,6 @@ test.describe
 				}
 				return results;
 			});
-			expect(Object.values(outcomes)).toEqual(Array(11).fill('ok'));
+			expect(Object.values(outcomes)).toEqual(Array(15).fill('ok'));
 		});
 	});
