@@ -11,3 +11,6 @@ workspace = true
 [dependencies]
 mivia-domain.workspace = true
 mivia-ports.workspace = true
+
+[dev-dependencies]
+proptest = "=1.11.0"
