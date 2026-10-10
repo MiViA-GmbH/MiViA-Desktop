@@ -1,0 +1,1 @@
+export const pick = (flag: boolean): number => (flag ? 1 : 2);

@@ -1,0 +1,27 @@
+pub(crate) fn first_copy(items: &[u32]) -> u32 {
+    let mut total = 0;
+    for item in items {
+        if *item > 10 {
+            total += item * 2;
+        } else {
+            total += item / 3;
+        }
+    }
+    let extra = items.iter().filter(|item| **item % 7 == 0).count();
+    let more = items.iter().map(|item| item.saturating_mul(3)).max().unwrap_or(0);
+    total + u32::try_from(extra).unwrap_or(0) + more + items.first().copied().unwrap_or(5)
+}
+
+pub(crate) fn second_copy(items: &[u32]) -> u32 {
+    let mut total = 0;
+    for item in items {
+        if *item > 10 {
+            total += item * 2;
+        } else {
+            total += item / 3;
+        }
+    }
+    let extra = items.iter().filter(|item| **item % 7 == 0).count();
+    let more = items.iter().map(|item| item.saturating_mul(3)).max().unwrap_or(0);
+    total + u32::try_from(extra).unwrap_or(0) + more + items.first().copied().unwrap_or(5)
+}

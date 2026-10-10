@@ -1,0 +1,5 @@
+import { alphaValue, first } from './features/alpha/index.ts';
+import { cloneA } from './features/beta/index.ts';
+import { cloneB } from './features/beta/copy.ts';
+
+document.title = String(alphaValue + first + cloneA([]) + cloneB([]));

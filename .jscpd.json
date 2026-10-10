@@ -1,0 +1,9 @@
+{
+	"path": ["crates", "src-tauri/src", "xtask/src"],
+	"format": ["rust"],
+	"minTokens": 100,
+	"threshold": 0,
+	"exitCode": 1,
+	"reporters": ["console"],
+	"ignore": ["**/tests/**", "**/tests.rs", "**/*_tests.rs", "crates/testing/**", "fuzz/**"]
+}

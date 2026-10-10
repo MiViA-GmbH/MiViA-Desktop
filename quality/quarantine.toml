@@ -1,0 +1,7 @@
+# Quarantined tests: at most 5 entries, each expiring within 14 days.
+# [[entry]]
+# test = "crate::module::test_name"
+# owner = "name"
+# issue = "link"
+# expires = "YYYY-MM-DD"
+entry = []

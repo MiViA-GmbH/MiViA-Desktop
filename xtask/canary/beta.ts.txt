@@ -1,0 +1,13 @@
+export const betaValue = 1;
+
+export function cloneA(items: number[]): number {
+	let total = 0;
+	for (const item of items) {
+		if (item > 10) {
+			total += item * 2;
+		} else {
+			total -= item;
+		}
+	}
+	return total + items.length * 3 - 7;
+}

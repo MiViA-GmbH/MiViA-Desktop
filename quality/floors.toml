@@ -1,0 +1,21 @@
+# Ratchet file. Coverage and mutation floors only go up, suppression budgets only go down.
+# Lowering a suppression budget: pnpm floors:lower. Raising one is a reviewed edit.
+
+[coverage]
+mivia-domain = 90
+mivia-ports = 80
+mivia-application = 85
+mivia-store = 80
+mivia-server = 80
+mivia-diagnostics = 80
+mivia-preview = 75
+mivia-os = 60
+ui = 80
+ui-entities = 90
+ui-shared-lib = 90
+
+[mutation]
+
+[suppressions]
+rust = 1
+ui = 0

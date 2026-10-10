@@ -1,0 +1,8 @@
+# Performance budget waivers: at most 3 entries, each expiring within 14 days.
+# [[entry]]
+# id = "budget id from perf/budgets.toml"
+# reason = "text"
+# owner = "name"
+# issue = "link"
+# expires = "YYYY-MM-DD"
+entry = []

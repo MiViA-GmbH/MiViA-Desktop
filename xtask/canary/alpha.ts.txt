@@ -1,0 +1,6 @@
+import { betaValue } from '../beta/index.ts';
+
+export const alphaValue: number = betaValue;
+export const unusedThing = 1;
+const values: number[] = [];
+export const first: number = values[0];

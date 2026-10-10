@@ -1,0 +1,800 @@
+[[rule]]
+id = "unsafe_code"
+why = "Unsafe code hides memory errors; only the Win32 bridge may use it."
+instead = "Call the safe wrappers in mivia_os::ffi."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "unreachable_pub"
+why = "pub items that are not reachable widen the API by accident."
+instead = "Use pub(crate) or export the item on purpose."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "unfulfilled_lint_expectations"
+why = "A stale expect keeps a suppression alive after the reason is gone."
+instead = "Delete the expect attribute."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "unused_qualifications"
+why = "Redundant paths add noise."
+instead = "Use the imported name."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "unused_lifetimes"
+why = "Unused lifetimes add noise to signatures."
+instead = "Remove the lifetime."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "redundant_lifetimes"
+why = "Two lifetimes that must be equal are one lifetime."
+instead = "Use a single lifetime."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "let_underscore_drop"
+why = "let _ = value drops it at once, which is easy to misread."
+instead = "Bind it to a name or call drop explicitly."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::all"
+why = "Every default clippy lint fails the build."
+instead = "Fix the code the lint points at."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::pedantic"
+why = "Pedantic lints catch casts, naming and API slips early."
+instead = "Fix the code the lint points at."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::missing_errors_doc"
+why = "Doc comments are banned, so error docs cannot exist."
+instead = "Name the error type so it explains itself."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::missing_panics_doc"
+why = "Doc comments are banned and panics are denied anyway."
+instead = "Return an error instead of panicking."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::must_use_candidate"
+why = "Marking every pure function must_use adds noise without value."
+instead = "Add must_use only where ignoring the result is a real bug."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::cognitive_complexity"
+why = "A backstop for functions that are hard to follow."
+instead = "Split the function into smaller named steps."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::unwrap_used"
+why = "unwrap turns a recoverable error into a crash."
+instead = "Return the error with ? or handle the None case."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::expect_used"
+why = "expect turns a recoverable error into a crash."
+instead = "Return the error with ? or handle the None case."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::panic"
+why = "A panic in the app loses work in progress."
+instead = "Return an error."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::todo"
+why = "Unfinished code must not be merged."
+instead = "Finish the code or leave it out."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::unimplemented"
+why = "Unfinished code must not be merged."
+instead = "Finish the code or leave it out."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::unreachable"
+why = "unreachable panics when the assumption is wrong."
+instead = "Model the case in the type or return an error."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::indexing_slicing"
+why = "Indexing panics on a bad index."
+instead = "Use get, iterators or pattern matching."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::string_slice"
+why = "Byte slicing a string panics on a char boundary."
+instead = "Use char_indices, split or strip_prefix."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::get_unwrap"
+why = "get followed by unwrap is indexing with extra steps."
+instead = "Handle the None case."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::unwrap_in_result"
+why = "A function that returns Result should not crash."
+instead = "Propagate the error with ?."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::wildcard_enum_match_arm"
+why = "A wildcard arm silently swallows new variants."
+instead = "List every variant so the compiler finds new ones."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::allow_attributes"
+why = "allow keeps a lint silenced forever."
+instead = "Fix the code or use expect with a reason."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::allow_attributes_without_reason"
+why = "A suppression without a reason cannot be reviewed."
+instead = "Add reason = \"...\"."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::dbg_macro"
+why = "dbg output leaks into logs and terminals."
+instead = "Use tracing or a test assertion."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::print_stdout"
+why = "Library and app code must not print."
+instead = "Use tracing."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::print_stderr"
+why = "Library and app code must not print."
+instead = "Use tracing."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::exit"
+why = "process::exit skips destructors and the shutdown routine."
+instead = "Return from main or run the shutdown routine."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::mem_forget"
+why = "mem::forget leaks resources."
+instead = "Let the value drop or use ManuallyDrop deliberately."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::mod_module_files"
+why = "mod.rs files make many tabs with the same name."
+instead = "Use module.rs next to the module directory."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::clone_on_ref_ptr"
+why = "rc.clone() hides that only a pointer is cloned."
+instead = "Write Arc::clone(&value)."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::rc_mutex"
+why = "Rc<Mutex> mixes single-thread and thread-safe types."
+instead = "Use Rc<RefCell> or Arc<Mutex>."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::undocumented_unsafe_blocks"
+why = "Every unsafe block needs its safety argument."
+instead = "Write a SAFETY line above the block in ffi."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::str_to_string"
+why = "to_string on &str hides that it allocates via Display."
+instead = "Use to_owned."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::lossy_float_literal"
+why = "The literal cannot be represented exactly."
+instead = "Write the exact value or use an integer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::float_cmp_const"
+why = "Exact float comparison with a constant is fragile."
+instead = "Compare with a tolerance."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::let_underscore_must_use"
+why = "Discarding a must_use value hides a mistake."
+instead = "Handle the value."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::if_then_some_else_none"
+why = "if c { Some(x) } else { None } has a shorter form."
+instead = "Use bool::then."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::empty_structs_with_brackets"
+why = "Empty braces add noise."
+instead = "Use a unit struct."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::rest_pat_in_fully_bound_structs"
+why = "A rest pattern after binding every field is noise."
+instead = "Remove the rest pattern."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::try_err"
+why = "Err(x)? hides an early return."
+instead = "Write return Err(x.into())."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::verbose_file_reads"
+why = "Manual read loops repeat the standard library."
+instead = "Use fs::read or read_to_string."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::use_self"
+why = "Repeating the type name inside impl adds noise."
+instead = "Use Self."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::redundant_clone"
+why = "A clone that is never needed costs memory."
+instead = "Move the value."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::needless_pass_by_ref_mut"
+why = "A mut reference that is never mutated misleads readers."
+instead = "Take a shared reference."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy::or_fun_call"
+why = "or(f()) evaluates f even when not needed."
+instead = "Use or_else(f)."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy.toml/cognitive-complexity-threshold"
+why = "Clippy's cognitive complexity is a coarse backstop at 15."
+instead = "Split the function."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy.toml/too-many-lines-threshold"
+why = "Functions over 40 lines are hard to read in one pass."
+instead = "Extract named steps."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy.toml/too-many-arguments-threshold"
+why = "More than 4 parameters hide a missing type."
+instead = "Group parameters into a struct."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy.toml/excessive-nesting-threshold"
+why = "Deep nesting hides the main path."
+instead = "Return early or extract a function."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy.toml/max-fn-params-bools"
+why = "Two bool parameters make call sites unreadable."
+instead = "Use an enum."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy.toml/max-struct-bools"
+why = "Many bool fields hide a state machine."
+instead = "Use an enum."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy.toml/type-complexity-threshold"
+why = "Complex types are hard to read."
+instead = "Introduce a type alias or struct."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy.toml/disallowed-types"
+why = "These types break determinism or poison on panic."
+instead = "Use the port or parking_lot type named in the message."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "clippy.toml/disallowed-methods"
+why = "These calls bypass the ports and make tests nondeterministic."
+instead = "Use the port named in the message."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/complexity/noExcessiveCognitiveComplexity"
+why = "Functions that are hard to follow hide bugs."
+instead = "Split the function or extract a component."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/complexity/noExcessiveLinesPerFunction"
+why = "Functions over 40 lines are hard to read in one pass."
+instead = "Extract named helpers or components."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/complexity/useMaxParams"
+why = "More than 4 parameters hide a missing type."
+instead = "Pass one object."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/complexity/noExcessiveNestedTestSuites"
+why = "Deeply nested describe blocks are hard to navigate."
+instead = "Flatten the suites."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/complexity/noUselessFragments"
+why = "Fragments around one child are noise."
+instead = "Return the child."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/complexity/noUselessTernary"
+why = "A ternary that returns booleans is noise."
+instead = "Use the condition directly."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/noNestedTernary"
+why = "Nested ternaries are hard to read."
+instead = "Use if/return, a lookup map or a component."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/noParameterAssign"
+why = "Reassigning a parameter hides the original value."
+instead = "Use a new variable."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/useBlockStatements"
+why = "Bodies without braces invite mistakes."
+instead = "Add braces."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/noUselessElse"
+why = "else after return adds nesting."
+instead = "Drop the else."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/noNegationElse"
+why = "if !x else reads backwards."
+instead = "Swap the branches."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/useCollapsedElseIf"
+why = "else { if } adds nesting."
+instead = "Use else if."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/useCollapsedIf"
+why = "Nested ifs without other code add nesting."
+instead = "Combine the conditions."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/noNonNullAssertion"
+why = "The ! assertion hides a possible undefined."
+instead = "Narrow the type or handle undefined."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/noDefaultExport"
+why = "Default exports make renames and searches unreliable."
+instead = "Use a named export."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/useFilenamingConvention"
+why = "One naming style keeps imports predictable."
+instead = "Rename the file to kebab-case."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/useConst"
+why = "let that is never reassigned misleads readers."
+instead = "Use const."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/useTemplate"
+why = "String concatenation is harder to read."
+instead = "Use a template literal."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/useImportType"
+why = "Type imports must not load runtime code."
+instead = "Use import type."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/useExportType"
+why = "Type exports must not look like values."
+instead = "Use export type."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/style/noRestrictedImports"
+why = "Tauri APIs, viz-kit and zod belong to fixed places."
+instead = "Import through src/shared/ipc or the owning feature."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/suspicious/noExplicitAny"
+why = "any switches off type checking."
+instead = "Use the generated binding type or unknown."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/suspicious/noTsIgnore"
+why = "ts-ignore hides type errors silently."
+instead = "Fix the type error."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/suspicious/noConsole"
+why = "console output bypasses the log pipeline."
+instead = "Use the log wrapper in src/shared/lib/log."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/suspicious/noDoubleEquals"
+why = "== coerces types."
+instead = "Use ===."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/suspicious/noAssignInExpressions"
+why = "Assignments inside expressions are easy to misread."
+instead = "Assign on its own line."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/suspicious/noArrayIndexKey"
+why = "Index keys break list state on reorder."
+instead = "Use a stable id."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/correctness/noUnusedVariables"
+why = "Unused variables are dead code."
+instead = "Remove them."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/correctness/noUnusedImports"
+why = "Unused imports are dead code."
+instead = "Remove them."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/correctness/noUndeclaredVariables"
+why = "Undeclared variables are runtime errors."
+instead = "Declare or import the name."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/correctness/noUnreachable"
+why = "Unreachable code is dead code."
+instead = "Remove it."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/performance/noReExportAll"
+why = "export * hides what a module exposes."
+instead = "Export names explicitly."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/performance/noAccumulatingSpread"
+why = "Spreading in a reduce is quadratic."
+instead = "Push into an array or use a Map."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/performance/noDelete"
+why = "delete deoptimises objects."
+instead = "Create a new object without the key."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/performance/noBarrelFile"
+why = "Feature index files are the public surface of a feature."
+instead = "Keep one index.ts per feature."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/security/noDangerouslySetInnerHtml"
+why = "Raw HTML from server text is a script injection risk."
+instead = "Render text."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "lint/security/noGlobalEval"
+why = "eval runs arbitrary code."
+instead = "Remove it."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "plugin"
+why = "Ternaries that hurt readability are banned (ui/quality/ternary.grit)."
+instead = "Use if/return, a lookup map or a component."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/unused-files"
+why = "Files nothing imports are dead code."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/unused-exports"
+why = "Exports nothing imports are dead code."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/unused-types"
+why = "Types nothing uses are dead code."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/unused-enum-members"
+why = "Enum members nothing uses are dead code."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/unused-class-members"
+why = "Class members nothing uses are dead code."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/unused-dependencies"
+why = "Unused dependencies cost install time and supply-chain risk."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/unused-dev-dependencies"
+why = "Unused dev dependencies cost install time and supply-chain risk."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/unresolved-imports"
+why = "An import that does not resolve is a build error waiting to happen."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/unlisted-dependencies"
+why = "Using a package that is not declared breaks clean installs."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/duplicate-exports"
+why = "The same name exported twice is ambiguous."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/circular-dependencies"
+why = "Import cycles make load order and refactors fragile."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/re-export-cycle"
+why = "Re-export cycles make load order fragile."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/boundary-violation"
+why = "Layers import only downward; features never import features."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/complexity-cyclomatic"
+why = "Biome owns complexity; fallow keeps it off to avoid two numbers."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/complexity-cognitive"
+why = "Biome owns complexity; fallow keeps it off to avoid two numbers."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "fallow/complexity-crap"
+why = "Biome owns complexity; fallow keeps it off to avoid two numbers."
+instead = "Remove the dead code or move the import to an allowed layer."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "no-comment"
+why = "Code explains itself through names, types and tests; comments go stale."
+instead = "Rename, extract a function, write a test or an ADR."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "no-doc-attribute"
+why = "Doc attributes are comments in another form."
+instead = "Rename or write an ADR."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "no-sql-comment-in-string"
+why = "SQL comments inside Rust strings bypass the comment ban."
+instead = "Move the SQL to a .sql file or drop the comment."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "no-allow"
+why = "allow and skip attributes silence checks forever."
+instead = "Fix the code or use expect with a reason."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "expect-reason"
+why = "A suppression without a reason cannot be reviewed."
+instead = "Write reason = \"...\" with at least 3 words."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "boolean-chain"
+why = "More than 2 logical operators in one expression are hard to read."
+instead = "Name the parts with variables or a function."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "file-length"
+why = "Long files mix concerns."
+instead = "Split the module."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "suppression-budget"
+why = "Suppressions only go down; quality/floors.toml holds the budget."
+instead = "Fix the code instead of suppressing."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "generated-list"
+why = "Generated files are excluded in one place only."
+instead = "Keep quality/generated.toml and the tool configs in sync."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "rules-registry"
+why = "Every rule has a recorded reason."
+instead = "Add the rule to quality/rules.toml."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "if-value"
+why = "An if used as a value must stay as simple as a ternary."
+instead = "Use a match, a named function or an early return."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "determinism"
+why = "Core code reaches time, files and the environment only through ports."
+instead = "Inject the port."
+adr = "0003-crate-boundaries-enforced-by-xtask.md"
+grep = ["std::fs", "tokio::fs", "std::env", "SystemTime", "thread::sleep"]
+scope = ["crates/core/"]
+extensions = ["rs"]
+
+[[rule]]
+id = "time-begin-period"
+why = "Raising the timer resolution drains laptop batteries."
+instead = "Keep the default timer resolution."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+grep = ["timeBeginPeriod"]
+
+[[rule]]
+id = "pkg-version"
+why = "The version lives in the root package.json, not in Cargo manifests."
+instead = "Read the version the shell embeds at build time."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+grep = ["CARGO_PKG_VERSION"]
+extensions = ["rs"]
+
+[[rule]]
+id = "tls-bypass"
+why = "TLS verification and redirects are never relaxed."
+instead = "Keep the platform verifier and redirects off."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+grep = ["danger_accept_invalid"]
+extensions = ["rs"]
+
+[[rule]]
+id = "arch"
+why = "Crate boundaries keep the core independent of IO."
+instead = "Depend only on the crates the rule table allows."
+adr = "0003-crate-boundaries-enforced-by-xtask.md"
+
+[[rule]]
+id = "command-size"
+why = "Tauri commands stay thin so logic lives in tested use cases."
+instead = "Move the logic into a use case."
+adr = "0003-crate-boundaries-enforced-by-xtask.md"
+
+[[rule]]
+id = "quality-diff"
+why = "Gates are never loosened in a pull request."
+instead = "Fix the code and record the friction in quality/retro.md."
+adr = "0046-quality-relaxation-guard-built-from-base.md"
+
+[[rule]]
+id = "ci-integrity"
+why = "Workflows must keep their security and gate shape."
+instead = "Follow the workflow rules of the CI design."
+adr = "0046-quality-relaxation-guard-built-from-base.md"
+
+[[rule]]
+id = "commit-text"
+why = "Commit text follows Conventional Commits and carries no co-author, session or generator trailers."
+instead = "Write type(scope): subject in lowercase, without attribution lines."
+adr = "0009-code-shape-rules-are-machine-enforced.md"
+patterns = ["co-authored-by:", "-session:", "generated with"]
+
+[[rule]]
+id = "canary"
+why = "A rule that never fires on a planted violation protects nothing."
+instead = "Fix the tool configuration until the canary fails as expected."
+adr = "0009-code-shape-rules-are-machine-enforced.md"

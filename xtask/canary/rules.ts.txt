@@ -1,0 +1,4 @@
+// planted comment
+// biome-ignore-all lint: planted whole file suppression
+// @ts-ignore
+export const chain = (a: boolean, b: boolean, c: boolean): boolean => a && b && c && !a;

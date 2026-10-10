@@ -1,0 +1,7 @@
+#[tauri::command]
+pub(crate) async fn planted(input: u8) -> u8 {
+    let a = input;
+    let b = a;
+    let c = b;
+    c
+}

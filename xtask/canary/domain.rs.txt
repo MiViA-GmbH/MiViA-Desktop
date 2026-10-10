@@ -1,0 +1,126 @@
+#![allow(dead_code)]
+// planted comment
+
+#[doc = "planted"]
+pub(crate) struct Documented;
+
+#[cfg_attr(test, allow(dead_code))]
+pub(crate) struct Conditional;
+
+#[allow(dead_code)]
+pub(crate) struct Allowed;
+
+#[expect(dead_code)]
+fn without_reason() {}
+
+pub(crate) fn long_function() -> u32 {
+    let mut total = 0;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total += 1;
+    total
+}
+
+pub(crate) fn five(a: u8, b: u8, c: u8, d: u8, e: u8) -> u8 {
+    a ^ b ^ c ^ d ^ e
+}
+
+pub(crate) fn nested(v: u8) -> u8 {
+    if v > 0 {
+        if v > 1 {
+            if v > 2 {
+                if v > 3 {
+                    if v > 4 {
+                        if v > 5 {
+                            if v > 6 {
+                                return v;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    0
+}
+
+pub(crate) fn unwrapped(v: Option<u8>) -> u8 {
+    v.unwrap()
+}
+
+pub(crate) fn mutex() -> std::sync::Mutex<u8> {
+    std::sync::Mutex::new(0)
+}
+
+pub(crate) enum Planted {
+    A,
+    B,
+    C,
+}
+
+pub(crate) fn wildcard(p: &Planted) -> u8 {
+    match p {
+        Planted::A => 1,
+        _ => 2,
+    }
+}
+
+pub(crate) fn read() -> std::io::Result<Vec<u8>> {
+    std::fs::read("planted")
+}
+
+pub(crate) fn chain(a: bool, b: bool, c: bool) -> bool {
+    a && b && c && !a
+}
+
+pub(crate) fn value(a: bool) -> u8 {
+    let v = if a {
+        let x = 1;
+        x
+    } else {
+        2
+    };
+    v
+}
+
+pub(crate) const SQL: &str = "SELECT 1
+-- planted";
