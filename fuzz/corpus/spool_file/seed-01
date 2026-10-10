@@ -1,1 +1,1 @@
-{"v":1,"pid":1,"paths":["rel\x.png","C:\a\..\b","\\?\C:\long\name.jpg","C:\CON\x.png"],"nonUnicode":2}
+{"v": 1, "pid": 1, "paths": ["rel\\x.png", "C:\\a\\..\\b", "\\\\?\\C:\\long\\name.jpg", "C:\\CON\\x.png"], "nonUnicode": 2}
