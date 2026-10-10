@@ -189,7 +189,7 @@ fn plant_manifests(work: &Work) -> Result<()> {
     )?;
     work.append(
         "crates/core/domain/Cargo.toml",
-        "\n[dependencies]\nserde = \"=1.0.228\"\n",
+        "\n[dependencies.serde]\nversion = \"=1.0.228\"\n",
     )
 }
 
