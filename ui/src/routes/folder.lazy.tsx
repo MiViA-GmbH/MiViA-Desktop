@@ -15,6 +15,7 @@ import { commands } from '../shared/ipc';
 import type { FolderView } from '../shared/ipc/bindings';
 import { EmptyState } from '../shared/ui/empty-state';
 import { CollectingIcon, PausedIcon, ResumeIcon, SettingsIcon } from '../shared/ui/icons';
+import { Notice } from '../shared/ui/notice';
 import { PageHeader } from '../shared/ui/page-header';
 import { Panel } from '../shared/ui/panel';
 import { PathText } from '../shared/ui/path-text';
@@ -116,12 +117,14 @@ function EarlierSeries({ folder }: { folder: FolderView }) {
 }
 
 function FolderSeries() {
+	const { t } = useTranslation();
 	const { folder, loaded } = useFolder();
 	if (!folder) {
 		return loaded ? <NotFound /> : null;
 	}
 	return (
 		<FolderPage folder={folder} tab="series">
+			{folder.waitingSince && <Notice tone="info">{t('desktop.folder.waitingDetail', { path: folder.path })}</Notice>}
 			<OpenSeriesCard folder={folder} />
 			<EarlierSeries folder={folder} />
 		</FolderPage>

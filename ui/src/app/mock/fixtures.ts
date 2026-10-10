@@ -89,6 +89,7 @@ function folder(id: string, path: string, extra: Partial<FolderView>): FolderVie
 		position: Number(id),
 		paused: false,
 		missing: false,
+		waitingSince: null,
 		quietSeconds: 300,
 		reportFolder: `${path}\\MiViA reports`,
 		openSeries: null,
@@ -119,10 +120,50 @@ export const ATTENTION: NeedsAttentionView = {
 	revision: '9',
 	total: 3,
 	items: [
-		{ kind: 'folderNotFound', folderId: '5', folderName: 'Gefüge Mikroskop 2' },
+		{
+			kind: 'folderNotFound',
+			folderId: '5',
+			folderName: 'Gefüge Mikroskop 2',
+			path: 'D:\\Gefuege\\Gefüge Mikroskop 2',
+			unreachableSince: null,
+		},
 		{ kind: 'reportNotSaved', series: { id: '88229', label: 'Charge 88-229' }, partId: '77' },
 		{ kind: 'seriesProblems', series: { id: '4710', label: 'Probe 4710' }, problems: 1 },
 	],
+};
+
+export const NETWORK_HOLDS: HoldsView = {
+	revision: '9',
+	holds: [{ kind: 'networkBlocked', since: '2026-10-12T08:42:00.000Z' }],
+};
+
+export const NETWORK_ATTENTION: NeedsAttentionView = {
+	revision: '9',
+	total: 2,
+	items: [
+		{
+			kind: 'folderNotFound',
+			folderId: '2',
+			folderName: 'Einschlüsse Labor 2',
+			path: '\\\\labserver\\mikroskopie\\Einschlüsse Labor 2',
+			unreachableSince: '2026-10-12T08:30:00.000Z',
+		},
+		{
+			kind: 'watchedElsewhere',
+			folderId: '1',
+			folderName: 'Schliffbilder Mikroskop 1',
+			machine: 'LAB-PC-2',
+			user: 'ben',
+		},
+	],
+};
+
+export const NETWORK = {
+	setting: { mode: 'system' },
+	managed: false,
+	host: 'app.mivia.ai',
+	issuer: 'Contoso Inspection CA',
+	block: 'tls',
 };
 
 export const HISTORY_SERIES = { head: [OPEN_4711, OPEN_88231], rows: RECENT };

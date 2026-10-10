@@ -3,11 +3,12 @@ import { ICON_STROKE } from '@mivia-ai/theme';
 import type { Icon } from '@tabler/icons-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { holdsQuery } from '../../entities/hold/queries';
+import { holdsQuery, networkQuery } from '../../entities/hold/queries';
 import { commands } from '../../shared/ipc';
-import type { HoldKind, HoldView } from '../../shared/ipc/bindings';
+import type { BlockKind, HoldKind, HoldView, NetworkView } from '../../shared/ipc/bindings';
 import { formatTime } from '../../shared/lib/format';
 import { KeyIcon, LicenseIcon, OfflineIcon, TooOldIcon } from '../../shared/ui/icons';
 import classes from './hold-banner.module.css';
@@ -71,6 +72,44 @@ function strongest(holds: HoldView[]): HoldView | undefined {
 	return [...holds].sort((a, b) => LOOK[a.kind].rank - LOOK[b.kind].rank)[0];
 }
 
+const BLOCK_TEXT = {
+	proxyAuth: 'desktop.hold.networkBlocked.proxyAuth',
+	tls: 'desktop.hold.networkBlocked.tls',
+	proxyRefused: 'desktop.hold.networkBlocked.proxyRefused',
+	redirect: 'desktop.hold.networkBlocked.redirect',
+} as const satisfies Record<BlockKind, string>;
+
+function useBlock(hold: HoldView): NetworkView | undefined {
+	const blocked = hold.kind === 'networkBlocked';
+	return useQuery({ ...networkQuery(hold.since), enabled: blocked }).data;
+}
+
+function holdText(hold: HoldView, network: NetworkView | undefined, t: TFunction): string {
+	if (hold.kind !== 'networkBlocked' || !network?.block) {
+		return t(LOOK[hold.kind].text);
+	}
+	const key =
+		network.block === 'tls' && !network.issuer ? 'desktop.hold.networkBlocked.tlsNoIssuer' : BLOCK_TEXT[network.block];
+	return t(key, { host: network.host, issuer: network.issuer });
+}
+
+function CopyDetails() {
+	const { t } = useTranslation();
+	const copy = useMutation({
+		mutationFn: async () => {
+			await navigator.clipboard.writeText(await commands.getNetworkDetails());
+			const message = t('desktop.hold.copied');
+			const { notifications } = await import('@mantine/notifications');
+			notifications.show({ message, role: 'status', withCloseButton: false });
+		},
+	});
+	return (
+		<Button flex="none" loading={copy.isPending} onClick={() => copy.mutate()} size="xs" variant="default">
+			{t('desktop.hold.copyDetails')}
+		</Button>
+	);
+}
+
 function HoldAction({ kind }: { kind: HoldKind }) {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -96,13 +135,10 @@ function HoldAction({ kind }: { kind: HoldKind }) {
 	return null;
 }
 
-export function HoldBanner() {
+function Banner({ hold }: { hold: HoldView }) {
 	const { t } = useTranslation();
-	const { data } = useQuery(holdsQuery);
-	const hold = strongest(data?.holds ?? []);
-	if (!hold) {
-		return null;
-	}
+	const network = useBlock(hold);
+	const copyable = hold.kind === 'networkBlocked' && network?.block && network.block !== 'redirect';
 	const look = LOOK[hold.kind];
 	const HoldIcon = look.icon;
 	return (
@@ -120,10 +156,22 @@ export function HoldBanner() {
 					<Text fw={600} inherit span>
 						{t(look.title, { time: formatTime(hold.since) })}
 					</Text>{' '}
-					{t(look.text)}
+					{holdText(hold, network, t)}
 				</Text>
-				<HoldAction kind={hold.kind} />
+				<Group flex="none" gap="xs" wrap="nowrap">
+					{copyable && <CopyDetails />}
+					<HoldAction kind={hold.kind} />
+				</Group>
 			</Group>
 		</Alert>
 	);
+}
+
+export function HoldBanner() {
+	const { data } = useQuery(holdsQuery);
+	const hold = strongest(data?.holds ?? []);
+	if (!hold) {
+		return null;
+	}
+	return <Banner hold={hold} />;
 }

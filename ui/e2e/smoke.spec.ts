@@ -56,6 +56,22 @@ for (const lang of ['en', 'de']) {
 	});
 }
 
+for (const lang of ['en', 'de']) {
+	test(`network block, waiting folder and a folder watched twice (${lang})`, async ({ page, context }) => {
+		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+		await open(page, `/?scenario=network&lang=${lang}`);
+		const banner = page.getByRole('status').filter({ hasText: 'Contoso Inspection CA' });
+		await expect(banner).toBeVisible();
+		await banner.getByRole('button').first().click();
+		await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('Host: app.mivia.ai');
+		await expect(page.getByText(/LAB-PC-2/)).toBeVisible();
+		await expect(page.getByText(/labserver/)).toBeVisible();
+		await structure(page);
+		await noHorizontalScroll(page);
+		await page.screenshot({ path: `${SHOTS}/o3-overview-network-${lang}.png` });
+	});
+}
+
 test('single images page', async ({ page }) => {
 	await open(page, '/single-images?scenario=calm');
 	await page.screenshot({ path: `${SHOTS}/m1-single-images-en.png` });

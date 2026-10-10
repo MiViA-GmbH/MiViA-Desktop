@@ -32,6 +32,7 @@ const FOLDER: FolderView = {
 	position: 0,
 	paused: false,
 	missing: false,
+	waitingSince: null,
 	quietSeconds: 60,
 	reportFolder: null,
 	openSeries: null,
@@ -42,6 +43,7 @@ const FOLDER: FolderView = {
 describe('folder status', () => {
 	it.each([
 		[{ missing: true, paused: true }, false, 'Folder not found'],
+		[{ waitingSince: '2026-10-12T08:30:00.000Z', paused: true }, false, 'Waiting for network folder'],
 		[{ paused: true }, true, 'Paused'],
 		[{ openSeries: { ...SERIES, open: true } }, true, 'Waiting for connection'],
 		[{ openSeries: { ...SERIES, open: true } }, false, 'Collecting images'],

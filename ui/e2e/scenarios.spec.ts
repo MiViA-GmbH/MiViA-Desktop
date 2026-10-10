@@ -213,6 +213,10 @@ test.describe
 			const saved = readFileSync(join(REPORTS, name ?? '')).toString('latin1');
 			const served: string[] = await (await fetch(`${origin}/__stub/served`)).json();
 			expect(served).toContain(saved);
+			const markers = readdirSync(REPORTS).filter((file) => /^\.mivia-watch-[0-9a-f]{12}\.json$/.test(file));
+			expect(markers).toHaveLength(1);
+			const marker = JSON.parse(readFileSync(join(REPORTS, markers[0] ?? ''), 'utf8'));
+			expect(marker.watchedPathUnc.toLowerCase()).toBe(WATCHED.toLowerCase());
 		});
 
 		test('scenario 3: images sent from a second process end in a report beside them', async () => {
@@ -273,7 +277,12 @@ test.describe
 					['list_pending_reports', {}],
 					['get_privacy', {}],
 					['list_sent_telemetry', {}],
+					['get_network', {}],
+					['get_network_details', {}],
 				];
+				const folders = (await invoke('list_folders')) as { folders: { id: string }[] };
+				const folderId = folders.folders[0]?.id ?? '0';
+				calls.push(['check_folder_again', { id: folderId }], ['dismiss_watched_elsewhere', { id: folderId }]);
 				const results: Record<string, string> = {};
 				for (const [command, args] of calls) {
 					results[command] = await invoke(command, args).then(
@@ -283,7 +292,7 @@ test.describe
 				}
 				return results;
 			});
-			expect(Object.values(outcomes)).toEqual(Array(19).fill('ok'));
+			expect(Object.values(outcomes)).toEqual(Array(23).fill('ok'));
 		});
 
 		test('scenario 6: a problem report is sent, saved after a 404 and the local logs are deleted', async () => {

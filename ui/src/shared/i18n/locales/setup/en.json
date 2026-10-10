@@ -93,7 +93,8 @@
 				"alsoExisting_other": "Also analyze the {{count}} existing images",
 				"existingLater": "You can still analyze them later from the folder page.",
 				"uploadCost": "Uses up to {{count}} of your {{remaining}} remaining image uploads.",
-				"legacyMissing": "The input folder of the old MiViA Desktop ({{path}}) no longer exists. Choose a folder."
+				"legacyMissing": "The input folder of the old MiViA Desktop ({{path}}) no longer exists. Choose a folder.",
+				"watchedElsewhere": "This folder is already watched by MiViA Desktop on “{{machine}}” (“{{user}}”). Images would be analyzed twice and reports saved twice. Pause or remove it on the other PC first."
 			},
 			"series": {
 				"title": "How do images arrive in this folder?",

@@ -1,6 +1,7 @@
 import { Button, Divider, Group, Stack, Text } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import type { TFunction } from 'i18next';
 import { Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -49,18 +50,79 @@ function FolderAction({ folderId }: { folderId: string }) {
 	);
 }
 
+function CheckAgain({ folderId }: { folderId: string }) {
+	const { t } = useTranslation();
+	const check = useMutation({ mutationFn: () => commands.checkFolderAgain(folderId) });
+	return (
+		<Button loading={check.isPending} onClick={() => check.mutate()} size="xs" variant="subtle">
+			{t('desktop.attention.checkAgain')}
+		</Button>
+	);
+}
+
+function WatchedElsewhereActions({ folderId }: { folderId: string }) {
+	const { t } = useTranslation();
+	const dismiss = useMutation({ mutationFn: () => commands.dismissWatchedElsewhere(folderId) });
+	const pause = useMutation({ mutationFn: () => commands.pauseFolder(folderId) });
+	return (
+		<>
+			<Button loading={dismiss.isPending} onClick={() => dismiss.mutate()} size="xs" variant="subtle">
+				{t('desktop.attention.dismiss')}
+			</Button>
+			<Button loading={pause.isPending} onClick={() => pause.mutate()} size="xs" variant="default">
+				{t('desktop.attention.pauseHere')}
+			</Button>
+		</>
+	);
+}
+
+function minutesSince(iso: string): number {
+	return Math.max(1, Math.round((Date.now() - Date.parse(iso)) / 60_000));
+}
+
+type Missing = Extract<NeedsAttention, { kind: 'folderNotFound' }>;
+type Marker = Extract<NeedsAttention, { kind: 'watchedElsewhere' }>;
+
+function missingText(item: Missing, t: TFunction): string {
+	if (!item.unreachableSince) {
+		return t('desktop.attention.folderNotFound');
+	}
+	return t('desktop.attention.networkMissing', { path: item.path, minutes: minutesSince(item.unreachableSince) });
+}
+
+function missingRow(item: Missing, t: TFunction): Row {
+	return {
+		key: `folder-${item.folderId}`,
+		status: { tone: 'problem', icon: FolderNotFoundIcon, label: t('desktop.folder.state.notFound') },
+		subject: item.folderName,
+		text: missingText(item, t),
+		actions: (
+			<>
+				{item.unreachableSince && <CheckAgain folderId={item.folderId} />}
+				<FolderAction folderId={item.folderId} />
+			</>
+		),
+	};
+}
+
+function markerRow(item: Marker, t: TFunction): Row {
+	return {
+		key: `marker-${item.folderId}`,
+		status: { tone: 'problem', icon: FolderNotFoundIcon, label: t('desktop.folder.state.watchedElsewhere') },
+		subject: item.folderName,
+		text: t('desktop.attention.watchedElsewhere', { machine: item.machine, user: item.user }),
+		actions: <WatchedElsewhereActions folderId={item.folderId} />,
+	};
+}
+
 function useRow(): (item: NeedsAttention) => Row {
 	const { t } = useTranslation();
 	return (item) => {
 		switch (item.kind) {
 			case 'folderNotFound':
-				return {
-					key: `folder-${item.folderId}`,
-					status: { tone: 'problem', icon: FolderNotFoundIcon, label: t('desktop.folder.state.notFound') },
-					subject: item.folderName,
-					text: t('desktop.attention.folderNotFound'),
-					actions: <FolderAction folderId={item.folderId} />,
-				};
+				return missingRow(item, t);
+			case 'watchedElsewhere':
+				return markerRow(item, t);
 			case 'reportNotSaved':
 				return {
 					key: `series-${item.series.id}`,

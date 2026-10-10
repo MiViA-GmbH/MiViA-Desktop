@@ -35,7 +35,11 @@
 			"reportFailed": "Der Bericht konnte nicht erstellt werden. Die Ergebnisse bleiben erhalten.",
 			"reportStale": "Ein Bericht enthält nicht die neuesten Ergebnisse.",
 			"seriesProblems_one": "1 Bild konnte nicht ausgewertet werden.",
-			"seriesProblems_other": "{{count}} Bilder konnten nicht ausgewertet werden."
+			"seriesProblems_other": "{{count}} Bilder konnten nicht ausgewertet werden.",
+			"networkMissing": "Netzwerkordner nicht erreichbar. MiViA erreicht {{path}} seit {{minutes}} Minuten nicht. Prüfen Sie die Netzwerk- oder VPN-Verbindung. Ihre Bilder und Einstellungen gehen nicht verloren.",
+			"checkAgain": "Erneut prüfen",
+			"watchedElsewhere": "Dieser Ordner wird auch von MiViA Desktop auf „{{machine}}“ („{{user}}“) überwacht. Bilder werden doppelt ausgewertet und Berichte doppelt gespeichert. Pausieren Sie den Ordner auf einem PC.",
+			"pauseHere": "Hier pausieren"
 		},
 		"hold": {
 			"offline": {
@@ -45,7 +49,12 @@
 				"title": "MiViA-Dienst nicht verfügbar seit {{time}}."
 			},
 			"networkBlocked": {
-				"title": "Das Netzwerk blockiert MiViA seit {{time}}."
+				"title": "Das Netzwerk blockiert MiViA seit {{time}}.",
+				"proxyAuth": "Ihr Netzwerk verlangt eine Proxy-Anmeldung, die MiViA Desktop nicht unterstützt. Ihre Bilder sind sicher. Bitten Sie Ihre IT, {{host}} ohne Proxy-Anmeldung freizugeben.",
+				"tls": "Die sichere Verbindung zu {{host}} konnte nicht geprüft werden (Zertifikat ausgestellt von „{{issuer}}“). Wenn Ihr Unternehmen HTTPS-Verkehr prüft, muss die IT ihr Stammzertifikat in Windows installieren oder {{host}} ausnehmen. Ihre Bilder sind sicher.",
+				"tlsNoIssuer": "Die sichere Verbindung zu {{host}} konnte nicht geprüft werden. Wenn Ihr Unternehmen HTTPS-Verkehr prüft, muss die IT ihr Stammzertifikat in Windows installieren oder {{host}} ausnehmen. Ihre Bilder sind sicher.",
+				"proxyRefused": "Der Proxy Ihres Netzwerks lässt keine Verbindung zu {{host}} zu. Ihre Bilder sind sicher. Bitten Sie Ihre IT, {{host}} freizugeben.",
+				"redirect": "Dieses Netzwerk verlangt zuerst eine Anmeldung (zum Beispiel Gast-WLAN). Öffnen Sie eine Webseite im Browser und melden Sie sich an. Ihre Bilder sind sicher."
 			},
 			"accessKey": {
 				"title": "Der Zugangsschlüssel funktioniert nicht mehr."
@@ -68,7 +77,9 @@
 			"continues": "Die Bilder sind sicher, es geht automatisch weiter.",
 			"safe": "Die Bilder sind sicher und warten hier.",
 			"checkNow": "Verbindung jetzt prüfen",
-			"enterKey": "Neuen Zugangsschlüssel eingeben"
+			"enterKey": "Neuen Zugangsschlüssel eingeben",
+			"copyDetails": "Details für die IT kopieren",
+			"copied": "Kopiert"
 		},
 		"folder": {
 			"state": {
@@ -77,7 +88,9 @@
 				"paused": "Pausiert",
 				"reportSaved": "Bericht gespeichert {{time}}",
 				"waitingConnection": "Wartet auf Verbindung",
-				"waitingImages": "Wartet auf neue Bilder"
+				"waitingImages": "Wartet auf neue Bilder",
+				"waitingNetwork": "Wartet auf Netzwerkordner",
+				"watchedElsewhere": "Auf zwei PCs überwacht"
 			},
 			"progress": "{{label}}: {{done}} von {{files}} fertig",
 			"doneOf": "{{done}} von {{files}} fertig",
@@ -96,7 +109,8 @@
 			"pathWithReports": "{{path}} → Berichte in {{reports}}",
 			"besideImages": "Neben den Bildern",
 			"seriesPanel": "Bildserie",
-			"quietSetting": "Eine Bildserie endet {{minutes}} Min. nach dem letzten neuen Bild."
+			"quietSetting": "Eine Bildserie endet {{minutes}} Min. nach dem letzten neuen Bild.",
+			"waitingDetail": "{{path}} ist noch nicht erreichbar (Netzwerk oder VPN nicht verbunden?). MiViA versucht es weiter und macht von selbst weiter."
 		},
 		"series": {
 			"meta_one": "{{origin}}, {{span}}, 1 Bild",

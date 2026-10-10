@@ -9,6 +9,9 @@ export function folderStatus(folder: FolderView, offline: boolean, t: TFunction)
 	if (folder.missing) {
 		return { tone: 'problem', icon: FolderNotFoundIcon, label: t('desktop.folder.state.notFound') };
 	}
+	if (folder.waitingSince) {
+		return { tone: 'waiting', icon: WaitingIcon, label: t('desktop.folder.state.waitingNetwork') };
+	}
 	if (folder.paused) {
 		return { tone: 'off', icon: PausedIcon, label: t('desktop.folder.state.paused') };
 	}

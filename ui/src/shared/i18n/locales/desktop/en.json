@@ -35,7 +35,11 @@
 			"reportFailed": "The report could not be created. The results are kept.",
 			"reportStale": "A report does not include the latest results.",
 			"seriesProblems_one": "1 image could not be analyzed.",
-			"seriesProblems_other": "{{count}} images could not be analyzed."
+			"seriesProblems_other": "{{count}} images could not be analyzed.",
+			"networkMissing": "Network folder not reachable. MiViA has not reached {{path}} for {{minutes}} minutes. Check the network or VPN connection. Your images and settings are not lost.",
+			"checkAgain": "Check again",
+			"watchedElsewhere": "This folder is also watched by MiViA Desktop on “{{machine}}” (“{{user}}”). Images are analyzed twice and reports saved twice. Pause the folder on one PC.",
+			"pauseHere": "Pause here"
 		},
 		"hold": {
 			"offline": {
@@ -45,7 +49,12 @@
 				"title": "MiViA service unavailable since {{time}}."
 			},
 			"networkBlocked": {
-				"title": "The network has blocked MiViA since {{time}}."
+				"title": "The network has blocked MiViA since {{time}}.",
+				"proxyAuth": "Your network requires a proxy sign-in that MiViA Desktop does not support. Your images are safe. Ask your IT to allow {{host}} without proxy sign-in.",
+				"tls": "The secure connection to {{host}} could not be verified (certificate issued by “{{issuer}}”). If your company inspects HTTPS traffic, IT must install its root certificate in Windows or exempt {{host}}. Your images are safe.",
+				"tlsNoIssuer": "The secure connection to {{host}} could not be verified. If your company inspects HTTPS traffic, IT must install its root certificate in Windows or exempt {{host}}. Your images are safe.",
+				"proxyRefused": "Your network’s proxy refuses connections to {{host}}. Your images are safe. Ask your IT to allow {{host}}.",
+				"redirect": "This network needs a sign-in first (for example guest Wi-Fi). Open a web page in your browser and sign in. Your images are safe."
 			},
 			"accessKey": {
 				"title": "The access key no longer works."
@@ -68,7 +77,9 @@
 			"continues": "Images are safe and continue automatically.",
 			"safe": "Images are safe and wait here.",
 			"checkNow": "Check connection now",
-			"enterKey": "Enter new access key"
+			"enterKey": "Enter new access key",
+			"copyDetails": "Copy details for IT",
+			"copied": "Copied"
 		},
 		"folder": {
 			"state": {
@@ -77,7 +88,9 @@
 				"paused": "Paused",
 				"reportSaved": "Report saved {{time}}",
 				"waitingConnection": "Waiting for connection",
-				"waitingImages": "Waiting for new images"
+				"waitingImages": "Waiting for new images",
+				"waitingNetwork": "Waiting for network folder",
+				"watchedElsewhere": "Watched on two PCs"
 			},
 			"progress": "{{label}}: {{done}} of {{files}} done",
 			"doneOf": "{{done}} of {{files}} done",
@@ -96,7 +109,8 @@
 			"pathWithReports": "{{path}} → reports in {{reports}}",
 			"besideImages": "Next to the images",
 			"seriesPanel": "Image series",
-			"quietSetting": "A series ends {{minutes}} min after the last new image."
+			"quietSetting": "A series ends {{minutes}} min after the last new image.",
+			"waitingDetail": "{{path}} is not reachable yet (network or VPN not connected?). MiViA keeps trying and continues on its own."
 		},
 		"series": {
 			"meta_one": "{{origin}}, {{span}}, 1 image",

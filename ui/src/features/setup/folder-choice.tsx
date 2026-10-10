@@ -67,6 +67,12 @@ function NoteText({ note }: { note: FolderNote }) {
 			return (
 				<Notice tone="info">{t('desktop.wizard.folder.mappedDrive', { letter: note.letter, unc: note.unc })}</Notice>
 			);
+		case 'watchedElsewhere':
+			return (
+				<Notice tone="warn">
+					{t('desktop.wizard.folder.watchedElsewhere', { machine: note.machine, user: note.user })}
+				</Notice>
+			);
 		default:
 			return note satisfies never;
 	}

@@ -93,7 +93,8 @@
 				"alsoExisting_other": "Auch die {{count}} vorhandenen Bilder auswerten",
 				"existingLater": "Sie können sie auch später auf der Ordnerseite auswerten.",
 				"uploadCost": "Verbraucht bis zu {{count}} Ihrer {{remaining}} verbleibenden Bild-Uploads.",
-				"legacyMissing": "Der Eingangsordner des alten MiViA Desktop ({{path}}) existiert nicht mehr. Wählen Sie einen Ordner."
+				"legacyMissing": "Der Eingangsordner des alten MiViA Desktop ({{path}}) existiert nicht mehr. Wählen Sie einen Ordner.",
+				"watchedElsewhere": "Dieser Ordner wird bereits von MiViA Desktop auf „{{machine}}“ („{{user}}“) überwacht. Bilder würden doppelt ausgewertet und Berichte doppelt gespeichert. Pausieren oder entfernen Sie ihn zuerst auf dem anderen PC."
 			},
 			"series": {
 				"title": "Wie kommen die Bilder in diesen Ordner?",
