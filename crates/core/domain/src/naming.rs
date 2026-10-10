@@ -40,6 +40,13 @@ impl Language {
         }
     }
 
+    pub const fn replaced_folder_name(self) -> &'static str {
+        match self {
+            Self::En => "Replaced",
+            Self::De => "Ersetzt",
+        }
+    }
+
     pub const fn decimal_comma(self) -> bool {
         matches!(self, Self::De)
     }
@@ -223,7 +230,7 @@ fn shorten(text: &str, keep: usize) -> String {
     format!("{}{ELLIPSIS}", kept.trim_end())
 }
 
-pub(crate) fn stamp(value: Stamp) -> String {
+pub fn stamp(value: Stamp) -> String {
     format!(
         "{:04}-{:02}-{:02} {:02}-{:02}",
         value.year, value.month, value.day, value.hour, value.minute

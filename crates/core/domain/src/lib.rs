@@ -2,6 +2,7 @@ pub mod access_key;
 pub mod batch;
 pub mod computation;
 pub mod fuzz;
+pub mod history;
 pub mod hold;
 pub mod ids;
 pub mod image_format;
