@@ -4,3 +4,7 @@ Friction with a gate goes here instead of loosening the gate. Each entry: rule i
 
 | Date | Rule | File | Why it hurt | Proposal |
 |---|---|---|---|---|
+| 2026-10-10 | cargo-deny licenses | deny.toml | `unused-allowed-license = "deny"` fails on the frozen scaffold list because the M0 graph only uses MIT, Apache-2.0, BSD-3-Clause, Unicode-3.0 and Zlib. The list was cut to those five; later milestones must re-add ISC, BSD-2-Clause, MPL-2.0 and BSL-1.0 when their crates arrive, which quality-diff reports as a relaxation. | Let quality-diff accept additions that are on the licence list frozen by the scaffold spike (kept as data in quality/), or accept the human bypass for each re-add. |
+| 2026-10-10 | no-sql-comment-in-string | xtask/src/source_rules/checks.rs | Glob strings such as `crates/**/Cargo.toml` contain `/*` and `*/`, so a literal "contains `/*`" check flags every glob. The check now needs an opener not followed by `*` or `/` and a later `*/`. | Keep the refined check; move SQL to .sql files when the store arrives so the string check rarely matters. |
+| 2026-10-10 | zizmor self-repository | .github/zizmor.yml | zizmor 1.30.1 asks for the `$/` self-repository syntax, actionlint 1.7.12 rejects it. The audit is disabled in zizmor.yml. | Re-enable when actionlint supports `$/`. |
+| 2026-10-10 | fallow duplicates | ui/.fallowrc.json | `duplicates.threshold: 0` means "no limit" in fallow 3.31, so clones never failed. Set to 0.001 so any clone fails. | None; recorded so the value is not read as a loosening. |
