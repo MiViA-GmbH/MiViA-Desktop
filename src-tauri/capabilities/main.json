@@ -44,6 +44,19 @@
 		"allow-set-integration",
 		"allow-confirm-one-off",
 		"allow-discard-one-off",
-		"allow-add-images"
+		"allow-add-images",
+		"allow-list-custom-reports",
+		"allow-list-batch-events",
+		"allow-get-custom-report-draft",
+		"allow-create-custom-report",
+		"allow-rename-series",
+		"allow-update-report",
+		"allow-keep-report",
+		"allow-move-report-to-replaced",
+		"allow-restore-report",
+		"allow-export-history",
+		"allow-list-backups",
+		"allow-set-backup-folder",
+		"allow-restore-backup"
 	]
 }

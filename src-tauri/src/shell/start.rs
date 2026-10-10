@@ -45,6 +45,7 @@ pub(super) async fn setup_state(cx: &Cx, services: &Services) -> bool {
 
 pub(super) async fn background(services: Arc<Services>, app: AppHandle, completed: bool) {
     tokio::time::sleep(BACKGROUND_DELAY).await;
+    tauri::async_runtime::spawn(super::backups::run(app.clone()));
     let ready = app.state::<Cx>().ready().await;
     integration::heal(&services, setup::language(&ready).await).await;
     if completed {

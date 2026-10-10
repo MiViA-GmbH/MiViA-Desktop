@@ -37,6 +37,19 @@ const COMMANDS: &[&str] = &[
     "confirm_one_off",
     "discard_one_off",
     "add_images",
+    "list_custom_reports",
+    "list_batch_events",
+    "get_custom_report_draft",
+    "create_custom_report",
+    "rename_series",
+    "update_report",
+    "keep_report",
+    "move_report_to_replaced",
+    "restore_report",
+    "export_history",
+    "list_backups",
+    "set_backup_folder",
+    "restore_backup",
 ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

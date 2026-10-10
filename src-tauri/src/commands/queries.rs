@@ -3,9 +3,7 @@ use mivia_domain::ids::BatchId;
 use mivia_ports::ipc::error::AppError;
 use mivia_ports::ipc::one_off::OneOffView;
 use mivia_ports::ipc::screens::{AccountView, HoldsView, LocaleView, SeriesReportsView};
-use mivia_ports::ipc::views::{
-    BatchItemsPage, BatchView, FoldersView, HistoryCursor, HistoryPage, NeedsAttentionView,
-};
+use mivia_ports::ipc::views::{BatchItemsPage, BatchView, FoldersView, NeedsAttentionView};
 use mivia_ports::queries::Queries;
 use tauri::State;
 
@@ -50,17 +48,6 @@ pub(crate) async fn list_needs_attention(
     let ready = cx.ready().await;
     let found = ready.store.list_needs_attention(ready.scope).await;
     found.map_err(|error| app_error(&error, "list_needs_attention"))
-}
-
-#[tauri::command]
-#[specta::specta]
-pub(crate) async fn list_history(
-    cx: State<'_, Cx>,
-    after: Option<HistoryCursor>,
-) -> Result<HistoryPage, AppError> {
-    let ready = cx.ready().await;
-    let found = ready.store.list_history(ready.scope, after).await;
-    found.map_err(|error| app_error(&error, "list_history"))
 }
 
 #[tauri::command]

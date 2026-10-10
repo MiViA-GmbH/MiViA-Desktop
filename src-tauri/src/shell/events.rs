@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::{Builder, Commands, ErrorHandlingMode, Event, collect_commands, collect_events};
 
-use crate::commands::{actions, queries, setup};
+use crate::commands::{actions, history, queries, setup};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct StoreChangedEvent(pub(crate) StoreChanged);
@@ -29,47 +29,66 @@ pub(crate) struct QuitRequested;
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct DropHover(pub(crate) bool);
 
+macro_rules! app_commands {
+    () => {
+        collect_commands![
+            queries::get_locale,
+            queries::get_account,
+            queries::list_folders,
+            queries::list_holds,
+            queries::list_needs_attention,
+            history::list_history,
+            queries::get_batch,
+            queries::list_batch_items,
+            queries::list_series_reports,
+            queries::get_one_off,
+            queries::get_remaining_uploads,
+            actions::ui_ready,
+            actions::set_language,
+            actions::finish_series,
+            actions::pause_folder,
+            actions::resume_folder,
+            actions::clear_series_attention,
+            actions::try_again_report_part,
+            actions::check_connection_now,
+            actions::open_target,
+            setup::get_setup,
+            setup::get_catalogue,
+            setup::get_integration,
+            setup::save_setup,
+            setup::pick_setup_folder,
+            setup::connect_access_key,
+            setup::import_legacy_key,
+            setup::close_legacy_app,
+            setup::complete_setup,
+            setup::quit_app,
+            setup::pick_folder,
+            setup::add_folder,
+            setup::switch_account,
+            setup::sign_out,
+            setup::set_integration,
+            actions::confirm_one_off,
+            actions::discard_one_off,
+            actions::add_images,
+            history::list_custom_reports,
+            history::list_batch_events,
+            history::get_custom_report_draft,
+            history::create_custom_report,
+            history::rename_series,
+            history::update_report,
+            history::keep_report,
+            history::move_report_to_replaced,
+            history::restore_report,
+            history::export_history,
+            history::list_backups,
+            history::set_backup_folder,
+            history::restore_backup,
+        ]
+    };
+}
+
 fn commands() -> Commands<tauri::Wry> {
-    collect_commands![
-        queries::get_locale,
-        queries::get_account,
-        queries::list_folders,
-        queries::list_holds,
-        queries::list_needs_attention,
-        queries::list_history,
-        queries::get_batch,
-        queries::list_batch_items,
-        queries::list_series_reports,
-        queries::get_one_off,
-        queries::get_remaining_uploads,
-        actions::ui_ready,
-        actions::set_language,
-        actions::finish_series,
-        actions::pause_folder,
-        actions::resume_folder,
-        actions::clear_series_attention,
-        actions::try_again_report_part,
-        actions::check_connection_now,
-        actions::open_target,
-        setup::get_setup,
-        setup::get_catalogue,
-        setup::get_integration,
-        setup::save_setup,
-        setup::pick_setup_folder,
-        setup::connect_access_key,
-        setup::import_legacy_key,
-        setup::close_legacy_app,
-        setup::complete_setup,
-        setup::quit_app,
-        setup::pick_folder,
-        setup::add_folder,
-        setup::switch_account,
-        setup::sign_out,
-        setup::set_integration,
-        actions::confirm_one_off,
-        actions::discard_one_off,
-        actions::add_images,
-    ]
+    app_commands!()
 }
 
 pub(crate) fn builder() -> Builder<tauri::Wry> {

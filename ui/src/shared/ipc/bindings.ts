@@ -15,14 +15,15 @@ export const commands = {
 	listFolders: () => __TAURI_INVOKE<FoldersView>("list_folders"),
 	listHolds: () => __TAURI_INVOKE<HoldsView>("list_holds"),
 	listNeedsAttention: () => __TAURI_INVOKE<NeedsAttentionView>("list_needs_attention"),
-	listHistory: (after: {
-	sortAt: string,
+	listHistory: (filter: HistoryFilter, after: {
+	key: string,
 	id: string,
-} | null) => __TAURI_INVOKE<HistoryPage>("list_history", { after }),
+} | null) => __TAURI_INVOKE<HistoryPage>("list_history", { filter, after }),
 	getBatch: (id: string) => __TAURI_INVOKE<{
 	revision: string,
 	summary: BatchSummary,
 	analyses: AnalysisView[],
+	renamable: boolean,
 } | null>("get_batch", { id }),
 	listBatchItems: (id: string, after: number | null) => __TAURI_INVOKE<BatchItemsPage>("list_batch_items", { id, after }),
 	listSeriesReports: (id: string) => __TAURI_INVOKE<SeriesReportsView>("list_series_reports", { id }),
@@ -71,6 +72,29 @@ export const commands = {
 	confirmOneOff: (input: OneOffInput) => __TAURI_INVOKE<string>("confirm_one_off", { input }),
 	discardOneOff: (group: number | null) => __TAURI_INVOKE<null>("discard_one_off", { group }),
 	addImages: () => __TAURI_INVOKE<number>("add_images"),
+	listCustomReports: (q: string | null, after: string | null) => __TAURI_INVOKE<CustomReportsPage>("list_custom_reports", { q, after }),
+	listBatchEvents: (id: string, after: string | null) => __TAURI_INVOKE<HistoryEventsPage>("list_batch_events", { id, after }),
+	getCustomReportDraft: (series: string[]) => __TAURI_INVOKE<CustomReportDraft>("get_custom_report_draft", { series }),
+	createCustomReport: (input: CustomReportInput) => __TAURI_INVOKE<number>("create_custom_report", { input }),
+	renameSeries: (id: string, label: string) => __TAURI_INVOKE<null>("rename_series", { id, label }),
+	updateReport: (id: string) => __TAURI_INVOKE<null>("update_report", { id }),
+	keepReport: (id: string) => __TAURI_INVOKE<null>("keep_report", { id }),
+	moveReportToReplaced: (id: string) => __TAURI_INVOKE<null>("move_report_to_replaced", { id }),
+	restoreReport: (id: string) => __TAURI_INVOKE<null>("restore_report", { id }),
+	exportHistory: (filter: {
+	q: string | null,
+	folder: string | null,
+	manual: boolean,
+	analysis: string | null,
+	status: HistoryStatus | null,
+	from: string | null,
+	to: string | null,
+	sort: HistorySort,
+	ascending: boolean,
+} | null, series: string | null, pick: string) => __TAURI_INVOKE<ExportView>("export_history", { filter, series, pick }),
+	listBackups: () => __TAURI_INVOKE<BackupsView>("list_backups"),
+	setBackupFolder: (pick: string | null) => __TAURI_INVOKE<BackupsView>("set_backup_folder", { pick }),
+	restoreBackup: (id: string) => __TAURI_INVOKE<null>("restore_backup", { id }),
 };
 
 /** Events */
@@ -118,6 +142,19 @@ export type AttentionSeries = {
 	label: string,
 };
 
+export type BackupView = {
+	id: string,
+	date: string,
+	inFolder: boolean,
+	series: number,
+};
+
+export type BackupsView = {
+	folder: string | null,
+	lastCopy: string | null,
+	backups: BackupView[],
+};
+
 export type BatchCounts = {
 	files: number,
 	done: number,
@@ -160,6 +197,7 @@ export type BatchView = {
 	revision: string,
 	summary: BatchSummary,
 	analyses: AnalysisView[],
+	renamable: boolean,
 };
 
 export type CatalogueModelView = {
@@ -196,6 +234,50 @@ export type ConnectionView = {
 	remainingUploads: number | null,
 };
 
+export type CustomAnalysisView = {
+	analysis: AnalysisView,
+	included: number,
+	omitted: OmittedView[],
+	parts: number,
+};
+
+export type CustomReportDraft = {
+	images: number,
+	tooMany: boolean,
+	analyses: CustomAnalysisView[],
+	language: Language,
+	folder: string,
+};
+
+export type CustomReportInput = {
+	series: string[],
+	name: string,
+	formats: string[],
+	language: Language,
+	decimalComma: boolean,
+	includeImages: boolean,
+	order: ReportOrder,
+	folderPick: string | null,
+};
+
+export type CustomReportRow = {
+	id: string,
+	name: string,
+	createdAt: string,
+	images: number,
+	analysis: AnalysisView,
+	state: string,
+	stale: boolean,
+	problem: boolean,
+	savedPart: string | null,
+};
+
+export type CustomReportsPage = {
+	revision: string,
+	rows: CustomReportRow[],
+	next: string | null,
+};
+
 export type CustomizationView = {
 	id: string,
 	name: string,
@@ -219,6 +301,11 @@ export type DoneView = {
 };
 
 export type DropHover = boolean;
+
+export type ExportView = {
+	folder: string,
+	files: string[],
+};
 
 export type FolderBlock = { kind: "notFound" } | { kind: "tooBroad" } | { kind: "nested"; name: string } | { kind: "insideReports" };
 
@@ -259,16 +346,61 @@ export type FoldersView = {
 };
 
 export type HistoryCursor = {
-	sortAt: string,
+	key: string,
 	id: string,
+};
+
+export type HistoryEventView = {
+	id: string,
+	at: string,
+	tz: string,
+	windowsUser: string,
+	action: string,
+	trigger: string,
+	before: string | null,
+	after: string | null,
+};
+
+export type HistoryEventsPage = {
+	revision: string,
+	events: HistoryEventView[],
+	next: string | null,
+};
+
+export type HistoryFilter = {
+	q: string | null,
+	folder: string | null,
+	manual: boolean,
+	analysis: string | null,
+	status: HistoryStatus | null,
+	from: string | null,
+	to: string | null,
+	sort: HistorySort,
+	ascending: boolean,
+};
+
+export type HistoryMatch = {
+	kind: MatchKind,
+	name: string,
 };
 
 export type HistoryPage = {
 	revision: string,
-	head: BatchSummary[],
-	rows: BatchSummary[],
+	head: HistoryRow[],
+	rows: HistoryRow[],
 	next: HistoryCursor | null,
 };
+
+export type HistoryRow = {
+	summary: BatchSummary,
+	analyses: AnalysisView[],
+	matched: HistoryMatch | null,
+	savedPart: string | null,
+};
+
+export type HistorySort = "finished" | "name";
+
+export type HistoryStatus = "problems" | "outOfDate" | "active";
 
 export type HoldKind = "offline" | "serviceUnavailable" | "networkBlocked" | "accessKey" | "accountBlocked" | "adminScope" | "license" | "clientTooOld";
 
@@ -320,6 +452,8 @@ export type LocaleView = {
 	formatLocale: string,
 };
 
+export type MatchKind = "image" | "report";
+
 export type ModelChoiceView = {
 	modelId: string,
 	customizationId: string | null,
@@ -351,6 +485,11 @@ export type NotIncludedReason = "missing" | "notImage" | "zipTemp";
 export type NotIncludedView = {
 	name: string,
 	reason: NotIncludedReason,
+};
+
+export type OmittedView = {
+	label: string,
+	reason: string,
 };
 
 export type OneOffInput = {
@@ -394,6 +533,8 @@ export type ReportFolderView = {
 
 export type ReportMode = "subfolder" | "beside" | "custom";
 
+export type ReportOrder = "name" | "date";
+
 export type ReportPartView = {
 	id: string,
 	partNo: number,
@@ -411,6 +552,8 @@ export type ReportView = {
 	analysisKey: string,
 	state: string,
 	stale: boolean,
+	replacedBy: string | null,
+	moved: boolean,
 	parts: ReportPartView[],
 };
 

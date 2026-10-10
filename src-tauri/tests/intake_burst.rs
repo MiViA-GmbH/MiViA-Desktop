@@ -11,6 +11,7 @@ use mivia_domain::label::LabelRule;
 use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_os::{NotifyWatcher, OsFileSystem, SystemClock};
+use mivia_ports::ipc::history::HistoryFilter;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::{AccountScope, NewAccount, StoreExt};
 use mivia_store::{SqliteStore, StoreConfig};
@@ -111,12 +112,15 @@ fn spawn(intake: &Arc<Intake>, worker: Worker) -> tokio::task::JoinHandle<()> {
 }
 
 async fn settled(store: &SqliteStore, scope: AccountScope) -> (u32, bool) {
-    let page = store.list_history(scope, None).await.unwrap();
+    let page = store
+        .list_history(scope, HistoryFilter::default(), None)
+        .await
+        .unwrap();
     let files = page
         .head
         .iter()
         .chain(&page.rows)
-        .map(|s| s.counts.files)
+        .map(|s| s.summary.counts.files)
         .sum();
     let detected = store
         .write(move |tx| tx.intake(scope).next_probe_at())

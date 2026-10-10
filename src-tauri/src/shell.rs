@@ -1,11 +1,14 @@
 pub(crate) mod account;
+pub(crate) mod backups;
 pub(crate) mod cx;
 
 #[cfg(feature = "e2e")]
 mod e2e;
 mod events;
+pub(crate) mod export;
 mod feed;
 pub(crate) mod folders;
+pub(crate) mod history;
 mod intake;
 pub(crate) mod integration;
 pub(crate) mod locale;
