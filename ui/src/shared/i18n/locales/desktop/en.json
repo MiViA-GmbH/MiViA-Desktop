@@ -196,7 +196,8 @@
 			"language": "Language",
 			"languageAuto": "Automatic (Windows)",
 			"explorer": "Explorer integration",
-			"support": "Support"
+			"support": "Support",
+			"privacy": "Privacy"
 		},
 		"status": {
 			"batch": {
@@ -378,6 +379,35 @@
 			"inFolder": "In the backup folder",
 			"series_one": "1 image series",
 			"series_other": "{{count}} image series"
+		},
+		"privacy": {
+			"telemetry": "Send technical and usage data to MiViA GmbH (app events, errors, timings, device facts, with a device ID) to find faults and improve the app. You can turn this off at any time in Settings.",
+			"telemetryNever": "Never sent: images, file, folder and series names, results, search text, your access key.",
+			"offNote": "While this is off, nothing is recorded or sent.",
+			"idsTitle": "Your IDs",
+			"idsHelp": "Quote these IDs to request access to or deletion of your data.",
+			"installId": "Installation ID",
+			"machineId": "Device ID",
+			"notRead": "not read",
+			"copy": "Copy",
+			"copied": "Copied",
+			"whatIsSent": "What is sent",
+			"viewSent": "View sent data",
+			"intro": "Each event carries only the fields listed here. File, folder and series names, search text, results, images and your access key are never sent.",
+			"diagnostics": "Error and performance data",
+			"usage": "Usage data",
+			"retention": "Kept for up to {{days}} days.",
+			"typeNumber": "number",
+			"typeFlag": "yes or no",
+			"typeId": "random ID",
+			"typeVersion": "version number",
+			"typeChoice": "one of: {{values}}",
+			"sentTitle": "Data sent in the last 7 days",
+			"sentEmpty": "Nothing was sent in the last 7 days.",
+			"sent_one": "{{time}}, {{count}} event",
+			"sent_other": "{{time}}, {{count}} events",
+			"serverAdds": "On receipt the server adds the time, your license type and one-way codes for your account, organization, installation and device. The account and organization codes are removed after 90 days. Nothing is kept longer than 400 days.",
+			"close": "Close"
 		},
 		"support": {
 			"title": "Report a problem",

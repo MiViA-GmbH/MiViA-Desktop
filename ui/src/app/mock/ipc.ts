@@ -3,6 +3,7 @@ import { mockIPC } from '@tauri-apps/api/mocks';
 import type { FolderView } from '../../shared/ipc/bindings';
 import { ATTENTION, BATCH, FOLDERS, HOLDS, ITEMS, ONE_OFF, REPORTS } from './fixtures';
 import { historyResponses } from './history';
+import { privacyResponses } from './privacy';
 import { setupResponses, setupView } from './setup';
 import { supportResponses } from './support';
 
@@ -41,7 +42,11 @@ const responses: Record<string, unknown> = {
 	...supportResponses(scenario),
 };
 
-const setup = { ...setupResponses(setupView(scenario)), ...historyResponses(scenario) };
+const setup = {
+	...setupResponses(setupView(scenario)),
+	...historyResponses(scenario),
+	...privacyResponses(scenario),
+};
 
 mockIPC((command, args) => setup[command]?.((args ?? {}) as Record<string, unknown>) ?? responses[command] ?? null, {
 	shouldMockEvents: true,

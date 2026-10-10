@@ -90,6 +90,30 @@ test('empty overview at the minimum window size shows the rail', async ({ page }
 });
 
 for (const lang of ['en', 'de']) {
+	test(`privacy settings, field list and sent data (${lang})`, async ({ page }) => {
+		await open(page, `/settings/privacy?scenario=calm&lang=${lang}`);
+		const sw = page.getByRole('switch');
+		await expect(sw).toBeChecked();
+		await expect(page.getByText('5f0c2a71-9e4b-4d2a-8c6f-1b7e3d9a0c42')).toBeVisible();
+		await structure(page);
+		await noHorizontalScroll(page);
+		await page.screenshot({ path: `${SHOTS}/g4-settings-privacy-${lang}.png`, fullPage: true });
+		await sw.click({ force: true });
+		await expect(sw).not.toBeChecked();
+		await page.getByRole('button', { name: /^(What is sent|Was gesendet wird)$/ }).click();
+		const fields = page.getByRole('dialog');
+		await expect(fields.getByText('session.start', { exact: true })).toBeVisible();
+		await structure(page);
+		await page.screenshot({ path: `${SHOTS}/g5-what-is-sent-${lang}.png` });
+		await page.keyboard.press('Escape');
+		await page.getByRole('button', { name: /^(View sent data|Gesendete Daten ansehen)$/ }).click();
+		const sent = page.getByRole('dialog');
+		await sent.getByRole('button').nth(1).click();
+		await expect(sent.getByText('folder.paused', { exact: false })).toBeVisible();
+		await structure(page);
+		await page.screenshot({ path: `${SHOTS}/g6-sent-data-${lang}.png` });
+	});
+
 	test(`support settings and the problem report dialog (${lang})`, async ({ page }) => {
 		await open(page, `/settings/support?scenario=calm&lang=${lang}`);
 		await expect(page.getByRole('row')).toHaveCount(15);
@@ -107,6 +131,19 @@ for (const lang of ['en', 'de']) {
 		await page.screenshot({ path: `${SHOTS}/r1-report-dialog-${lang}.png` });
 	});
 }
+
+test('a policy that sets telemetry locks the switch and hides the device id', async ({ page }) => {
+	await open(page, '/settings/privacy?scenario=privacy-locked');
+	await expect(page.getByRole('switch')).toBeDisabled();
+	await expect(page.getByText('not read')).toBeVisible();
+	await expect(page.getByText('Set by your IT department', { exact: false })).toBeVisible();
+});
+
+test('sent data shows an empty note when nothing was sent', async ({ page }) => {
+	await open(page, '/settings/privacy?scenario=privacy-empty');
+	await page.getByRole('button', { name: 'View sent data' }).click();
+	await expect(page.getByText('Nothing was sent in the last 7 days.')).toBeVisible();
+});
 
 test('a series with problems offers a problem report from its row', async ({ page }) => {
 	await open(page, '/history?scenario=calm');

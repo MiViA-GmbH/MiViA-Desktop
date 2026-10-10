@@ -1,5 +1,5 @@
-import { Checkbox, Text } from '@mantine/core';
-import type { ReactNode } from 'react';
+import { Anchor, Checkbox, Stack, Text } from '@mantine/core';
+import { lazy, type ReactNode, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { SetupOption, SetupView } from '../../shared/ipc/bindings';
@@ -30,6 +30,33 @@ function Choice({ view, option, locked, label, description }: ChoiceProps) {
 	);
 }
 
+const FieldListDialog = lazy(() =>
+	import('../../entities/privacy/field-list-dialog').then((module) => ({ default: module.FieldListDialog })),
+);
+
+function WhatIsSent() {
+	const { t } = useTranslation();
+	const [open, setOpen] = useState(false);
+	return (
+		<>
+			<Anchor
+				component="button"
+				onClick={() => setOpen(true)}
+				size="sm"
+				style={{ alignSelf: 'flex-start' }}
+				type="button"
+			>
+				{t('desktop.privacy.whatIsSent')}
+			</Anchor>
+			{open && (
+				<Suspense fallback={null}>
+					<FieldListDialog onClose={() => setOpen(false)} />
+				</Suspense>
+			)}
+		</>
+	);
+}
+
 function FinishChoices({ view }: { view: SetupView }) {
 	const { t } = useTranslation();
 	return (
@@ -41,13 +68,16 @@ function FinishChoices({ view }: { view: SetupView }) {
 				view={view}
 			/>
 			<Choice label={t('desktop.wizard.finish.explorer')} locked={view.locks.explorer} option="explorer" view={view} />
-			<Choice
-				description={t('desktop.wizard.finish.telemetryNever')}
-				label={t('desktop.wizard.finish.telemetry')}
-				locked={view.locks.telemetry}
-				option="telemetry"
-				view={view}
-			/>
+			<Stack gap={4}>
+				<Choice
+					description={t('desktop.wizard.finish.telemetryNever')}
+					label={t('desktop.wizard.finish.telemetry')}
+					locked={view.locks.telemetry}
+					option="telemetry"
+					view={view}
+				/>
+				<WhatIsSent />
+			</Stack>
 			<Text c="stone.7" size="sm">
 				{t('desktop.wizard.finish.later')}
 			</Text>

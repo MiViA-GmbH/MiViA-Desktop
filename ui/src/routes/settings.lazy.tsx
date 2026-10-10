@@ -4,6 +4,7 @@ import { createLazyRoute, Link, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import { localeQuery } from '../entities/account/queries';
+import { PrivacyPanel } from '../features/privacy/privacy-panel';
 import { AccountPanel } from '../features/settings/account-panel';
 import { BackupPanel } from '../features/settings/backup-panel';
 import { AutostartSwitch, ExplorerSwitch } from '../features/settings/integration-panel';
@@ -17,6 +18,7 @@ const SECTIONS = {
 	account: 'desktop.settings.account',
 	general: 'desktop.settings.general',
 	explorer: 'desktop.settings.explorer',
+	privacy: 'desktop.settings.privacy',
 	support: 'desktop.settings.support',
 } as const;
 
@@ -42,6 +44,7 @@ const PANELS = {
 	account: { title: 'desktop.settings.account', body: AccountPanel },
 	general: { title: 'desktop.settings.general', body: General },
 	explorer: { title: 'desktop.settings.explorer', body: ExplorerSwitch },
+	privacy: { title: 'desktop.settings.privacy', body: PrivacyPanel },
 	support: { title: 'desktop.settings.support', body: SupportPanel },
 } as const;
 

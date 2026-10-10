@@ -196,7 +196,8 @@
 			"language": "Sprache",
 			"languageAuto": "Automatisch (Windows)",
 			"explorer": "Explorer-Integration",
-			"support": "Support"
+			"support": "Support",
+			"privacy": "Datenschutz"
 		},
 		"status": {
 			"batch": {
@@ -378,6 +379,35 @@
 			"inFolder": "Im Sicherungsordner",
 			"series_one": "1 Bildserie",
 			"series_other": "{{count}} Bildserien"
+		},
+		"privacy": {
+			"telemetry": "Technische Daten und Nutzungsdaten an die MiViA GmbH senden (App-Ereignisse, Fehler, Zeiten, Geräteangaben, mit einer Geräte-ID), um Fehler zu finden und die App zu verbessern. Sie können dies jederzeit in den Einstellungen abschalten.",
+			"telemetryNever": "Nie gesendet: Bilder, Datei-, Ordner- und Seriennamen, Ergebnisse, Suchtexte, Ihr Zugangsschlüssel.",
+			"offNote": "Solange dies ausgeschaltet ist, wird nichts aufgezeichnet oder gesendet.",
+			"idsTitle": "Ihre Kennungen",
+			"idsHelp": "Nennen Sie diese Kennungen, wenn Sie Auskunft über Ihre Daten oder deren Löschung verlangen.",
+			"installId": "Installations-ID",
+			"machineId": "Geräte-ID",
+			"notRead": "nicht gelesen",
+			"copy": "Kopieren",
+			"copied": "Kopiert",
+			"whatIsSent": "Was gesendet wird",
+			"viewSent": "Gesendete Daten ansehen",
+			"intro": "Jedes Ereignis enthält nur die hier aufgeführten Felder. Datei-, Ordner- und Seriennamen, Suchtexte, Ergebnisse, Bilder und Ihr Zugangsschlüssel werden nie gesendet.",
+			"diagnostics": "Fehler- und Leistungsdaten",
+			"usage": "Nutzungsdaten",
+			"retention": "Wird bis zu {{days}} Tage gespeichert.",
+			"typeNumber": "Zahl",
+			"typeFlag": "ja oder nein",
+			"typeId": "zufällige Kennung",
+			"typeVersion": "Versionsnummer",
+			"typeChoice": "eines von: {{values}}",
+			"sentTitle": "In den letzten 7 Tagen gesendete Daten",
+			"sentEmpty": "In den letzten 7 Tagen wurde nichts gesendet.",
+			"sent_one": "{{time}}, {{count}} Ereignis",
+			"sent_other": "{{time}}, {{count}} Ereignisse",
+			"serverAdds": "Beim Empfang ergänzt der Server die Uhrzeit, Ihren Lizenztyp und Einwegcodes für Ihr Konto, Ihre Organisation, die Installation und das Gerät. Die Codes für Konto und Organisation werden nach 90 Tagen entfernt. Nichts wird länger als 400 Tage gespeichert.",
+			"close": "Schließen"
 		},
 		"support": {
 			"title": "Problem melden",

@@ -103,6 +103,10 @@ test('the setup can be finished with the keyboard alone', async ({ page }) => {
 	await heading(page, 'Windows and privacy');
 	await structure(page);
 	await page.screenshot({ path: `${SHOTS}/w12-finish-en.png` });
+	await tabTo(page, page.getByRole('button', { name: 'What is sent' }));
+	await page.keyboard.press('Enter');
+	await expect(page.getByRole('dialog').getByText('session.start', { exact: true })).toBeVisible();
+	await page.keyboard.press('Escape');
 	await tabTo(page, button(page, 'Finish setup'));
 	await page.keyboard.press('Enter');
 
