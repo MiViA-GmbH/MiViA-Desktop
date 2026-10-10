@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { t } from '../../shared/i18n/testing';
 import type { ReportPartView, ReportView } from '../../shared/ipc/bindings';
-import { reportRows, reportStatus } from './report-rows';
+import { reportCommands, reportRows, reportStatus } from './report-rows';
 
 function part(id: string, partNo: number, format: string, state: string): ReportPartView {
 	return {
@@ -22,6 +22,8 @@ const report = (parts: ReportPartView[], extra: Partial<ReportView> = {}): Repor
 	analysisKey: 'grain:',
 	state: 'creating',
 	stale: false,
+	replacedBy: null,
+	moved: false,
 	parts,
 	...extra,
 });
@@ -57,5 +59,18 @@ describe('report rows', () => {
 		expect(failed && reportStatus(failed, t).label).toBe('Report could not be created');
 		const [creating] = reportRows([report([part('1', 1, 'pdf', 'requested')])]);
 		expect(creating && reportStatus(creating, t).label).toBe('Creating report');
+	});
+});
+
+describe('report commands', () => {
+	it('offers update and keep on a saved stale report and moves after an update', () => {
+		const saved = [part('1', 1, 'pdf', 'saved'), part('2', 2, 'pdf', 'saved')];
+		const stale = reportRows([report(saved, { stale: true })]);
+		expect(stale.map(reportCommands)).toEqual([['update', 'keep'], []]);
+		const replaced = reportRows([report(saved, { stale: true, replacedBy: 's' })]);
+		expect(replaced.map(reportCommands)).toEqual([['move'], []]);
+		const moved = reportRows([report(saved, { stale: true, replacedBy: 's', moved: true })]);
+		expect(moved.map((row) => reportStatus(row, t).label)).toEqual(['Replaced', 'Replaced']);
+		expect(moved.map(reportCommands)).toEqual([['restore'], []]);
 	});
 });
