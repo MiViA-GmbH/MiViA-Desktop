@@ -46,6 +46,7 @@ pub struct RequestRow {
     pub members: Vec<(String, String)>,
     pub omitted: Vec<(String, OmittedReason)>,
     pub attempts: u32,
+    pub replaces: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -76,6 +77,7 @@ pub struct SaveRow {
     pub size: u64,
     pub sha256: Fingerprint,
     pub intended: Option<WinPath>,
+    pub update: Option<u32>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

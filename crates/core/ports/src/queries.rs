@@ -1,10 +1,12 @@
 use async_trait::async_trait;
 use mivia_domain::ids::BatchId;
 
-use crate::ipc::screens::{AccountView, HoldsView, SeriesReportsView};
-use crate::ipc::views::{
-    BatchItemsPage, BatchView, FoldersView, HistoryCursor, HistoryPage, NeedsAttentionView,
+use crate::export::{ExportRequest, ExportSink};
+use crate::ipc::history::{
+    CustomReportsPage, HistoryCursor, HistoryEventsPage, HistoryFilter, HistoryPage,
 };
+use crate::ipc::screens::{AccountView, HoldsView, SeriesReportsView};
+use crate::ipc::views::{BatchItemsPage, BatchView, FoldersView, NeedsAttentionView};
 use crate::store::{AccountScope, SettingsScope, StoreError};
 
 #[async_trait]
@@ -12,8 +14,27 @@ pub trait Queries: Send + Sync {
     async fn list_history(
         &self,
         scope: AccountScope,
+        filter: HistoryFilter,
         after: Option<HistoryCursor>,
     ) -> Result<HistoryPage, StoreError>;
+    async fn list_custom_reports(
+        &self,
+        scope: AccountScope,
+        q: Option<String>,
+        after: Option<String>,
+    ) -> Result<CustomReportsPage, StoreError>;
+    async fn list_batch_events(
+        &self,
+        scope: AccountScope,
+        id: BatchId,
+        after: Option<String>,
+    ) -> Result<HistoryEventsPage, StoreError>;
+    async fn export_history(
+        &self,
+        scope: AccountScope,
+        request: ExportRequest,
+        sink: Box<dyn ExportSink>,
+    ) -> Result<Box<dyn ExportSink>, StoreError>;
     async fn list_needs_attention(
         &self,
         scope: AccountScope,

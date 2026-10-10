@@ -3,12 +3,15 @@ use std::fmt::Debug;
 use mivia_domain::ids::Timestamp;
 use mivia_ports::ipc::change::{Change, StoreChanged};
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
+use mivia_ports::ipc::history::{HistoryCursor, HistoryFilter, HistoryPage, HistoryRow};
 use mivia_ports::ipc::screens::{AnalysisView, AttentionSeries, NeedsAttention};
 use mivia_ports::ipc::views::{
     BatchCounts, BatchItem, BatchItemsPage, BatchSummary, BatchView, ComputationItem, FolderView,
-    FoldersView, HistoryCursor, HistoryPage, NeedsAttentionView, OriginView,
+    FoldersView, NeedsAttentionView, OriginView,
 };
-use mivia_ports::time::{iso_utc, utc_date};
+use mivia_ports::time::{
+    iso_utc, iso_with_offset, offset_minutes, parse_iso_utc, utc_date, utc_stamp,
+};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 
@@ -51,15 +54,22 @@ fn views_round_trip_with_camel_case_fields() {
     let json = round_trip(&folder);
     assert!(json.contains(r#""origin":{"kind":"folder","folderId":"2"}"#));
     assert!(json.contains(r#""reportsSaved":1"#));
+    let row = |summary: BatchSummary| HistoryRow {
+        summary,
+        analyses: Vec::new(),
+        matched: None,
+        saved_part: Some("3".to_owned()),
+    };
     round_trip(&HistoryPage {
         revision: "4".to_owned(),
-        head: vec![summary(OriginView::OneOff)],
-        rows: vec![folder.clone()],
+        head: vec![row(summary(OriginView::OneOff))],
+        rows: vec![row(folder.clone())],
         next: Some(HistoryCursor {
-            sort_at: "9".to_owned(),
+            key: "9".to_owned(),
             id: "7".to_owned(),
         }),
     });
+    round_trip(&HistoryFilter::default());
     let attention = round_trip(&NeedsAttentionView {
         revision: "4".to_owned(),
         items: vec![NeedsAttention::ReportNotSaved {
@@ -80,6 +90,7 @@ fn views_round_trip_with_camel_case_fields() {
             model_id: "grain".to_owned(),
             names: [("en".to_owned(), "Grain size".to_owned())].into(),
         }],
+        renamable: true,
     });
     round_trip(&BatchItemsPage {
         revision: "4".to_owned(),
@@ -168,4 +179,22 @@ fn timestamps_format_as_iso_utc() {
     );
     assert_eq!(iso_utc(Timestamp(-1)), "1969-12-31T23:59:59.999Z");
     assert_eq!(utc_date(Timestamp(4_107_542_399_999)), "2100-02-28");
+}
+
+#[test]
+fn iso_times_parse_back_and_carry_local_offsets() {
+    for at in [0, 1_000, 1_760_000_123_456, -86_400_001] {
+        assert_eq!(parse_iso_utc(&iso_utc(Timestamp(at))), Some(Timestamp(at)));
+    }
+    assert_eq!(
+        parse_iso_utc("2026-10-10T08:00:00Z"),
+        Some(Timestamp(1_791_619_200_000))
+    );
+    assert_eq!(parse_iso_utc("2026-13-10T08:00:00Z"), None);
+    assert_eq!(parse_iso_utc("2026-10-10 08:00:00"), None);
+    let at = Timestamp(1_791_619_200_000);
+    let local = utc_stamp(at.plus_ms(120 * 60_000));
+    assert_eq!(offset_minutes(local, utc_stamp(at)), 120);
+    assert_eq!(iso_with_offset(at, 120), "2026-10-10T10:00:00+02:00");
+    assert_eq!(iso_with_offset(at, -330), "2026-10-10T02:30:00-05:30");
 }

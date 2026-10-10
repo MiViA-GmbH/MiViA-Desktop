@@ -5,6 +5,8 @@ use mivia_domain::naming::ReportName;
 use mivia_domain::output::ProbeResult;
 use mivia_domain::path::WinPath;
 
+use crate::export::ExportSink;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FsError {
     NotFound,
@@ -106,4 +108,11 @@ pub trait FileSystem: Send + Sync {
     async fn digest(&self, path: &WinPath) -> Result<(u64, Fingerprint), FsError>;
     async fn remove(&self, path: &WinPath) -> Result<(), FsError>;
     async fn probe_folder(&self, folder: &WinPath, create: bool) -> Result<ProbeResult, FsError>;
+    async fn move_report(&self, from: &WinPath, target: &SaveTarget) -> Result<WinPath, FsError>;
+    async fn export_sink(
+        &self,
+        dir: &WinPath,
+        stem: &str,
+        separator: char,
+    ) -> Result<Box<dyn ExportSink>, FsError>;
 }

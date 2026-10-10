@@ -117,6 +117,8 @@ pub struct ReportView {
     pub analysis_key: String,
     pub state: String,
     pub stale: bool,
+    pub replaced_by: Option<String>,
+    pub moved: bool,
     pub parts: Vec<ReportPartView>,
 }
 
@@ -134,6 +136,24 @@ pub struct SeriesReportsView {
 pub enum Language {
     En,
     De,
+}
+
+impl From<mivia_domain::naming::Language> for Language {
+    fn from(language: mivia_domain::naming::Language) -> Self {
+        match language {
+            mivia_domain::naming::Language::En => Self::En,
+            mivia_domain::naming::Language::De => Self::De,
+        }
+    }
+}
+
+impl From<Language> for mivia_domain::naming::Language {
+    fn from(language: Language) -> Self {
+        match language {
+            Language::En => Self::En,
+            Language::De => Self::De,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

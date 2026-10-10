@@ -1,3 +1,4 @@
+pub mod history;
 pub mod intake;
 pub mod pipeline;
 pub mod reports;
@@ -10,6 +11,7 @@ use mivia_domain::ids::{AccountId, Timestamp};
 use mivia_domain::transition::IllegalTransition;
 
 use crate::ipc::change::Change;
+use history::HistoryRepo;
 use intake::IntakeRepo;
 use pipeline::PipelineRepo;
 
@@ -62,6 +64,7 @@ pub trait WriteTx {
     fn reports(&mut self, scope: AccountScope) -> &mut dyn ReportRepo;
     fn intake(&mut self, scope: AccountScope) -> &mut dyn IntakeRepo;
     fn pipeline(&mut self, scope: AccountScope) -> &mut dyn PipelineRepo;
+    fn history(&mut self, scope: AccountScope) -> &mut dyn HistoryRepo;
     fn settings(&mut self, scope: SettingsScope) -> Result<Option<String>, TxError>;
     fn set_settings(
         &mut self,

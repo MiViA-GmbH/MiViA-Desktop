@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod clock;
+pub mod export;
 pub mod fs;
 pub mod id_gen;
 pub mod ipc;

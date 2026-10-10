@@ -47,24 +47,6 @@ pub struct BatchSummary {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
-pub struct HistoryCursor {
-    pub sort_at: String,
-    pub id: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "specta", derive(specta::Type))]
-#[serde(rename_all = "camelCase")]
-pub struct HistoryPage {
-    pub revision: String,
-    pub head: Vec<BatchSummary>,
-    pub rows: Vec<BatchSummary>,
-    pub next: Option<HistoryCursor>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "specta", derive(specta::Type))]
-#[serde(rename_all = "camelCase")]
 pub struct NeedsAttentionView {
     pub revision: String,
     pub items: Vec<NeedsAttention>,
@@ -78,6 +60,7 @@ pub struct BatchView {
     pub revision: String,
     pub summary: BatchSummary,
     pub analyses: Vec<AnalysisView>,
+    pub renamable: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
