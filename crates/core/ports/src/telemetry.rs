@@ -90,6 +90,7 @@ kinds! {
 pub enum Field {
     Tag(&'static str),
     Id(Uuid),
+    Entity(&'static str, i64),
     Version(String),
     Num(f64),
     Flag(bool),
@@ -121,6 +122,10 @@ impl ProductEvent {
 
     pub fn id(self, name: &'static str, value: Uuid) -> Self {
         self.with(name, Field::Id(value))
+    }
+
+    pub fn entity(self, name: &'static str, kind: &'static str, id: i64) -> Self {
+        self.with(name, Field::Entity(kind, id))
     }
 
     pub fn version(self, name: &'static str, value: &str) -> Self {

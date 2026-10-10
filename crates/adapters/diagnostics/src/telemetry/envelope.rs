@@ -85,3 +85,32 @@ pub fn gzip(json: &str) -> Vec<u8> {
     drop(encoder.write_all(json.as_bytes()));
     encoder.finish().unwrap_or_default()
 }
+
+pub struct SentBatch {
+    pub batch_id: String,
+    pub sent_at: i64,
+    pub events: usize,
+    pub json: String,
+}
+
+pub fn sent_batches(rows: &[TelemetryRow], account: Option<&str>) -> Vec<SentBatch> {
+    let mut found: Vec<(String, i64, Vec<Value>)> = Vec::new();
+    for row in rows {
+        let (Some(batch), Some(at)) = (&row.batch_id, row.sent_at) else {
+            continue;
+        };
+        match found.last_mut() {
+            Some((id, _, events)) if id == batch => events.push(event(row, account)),
+            Some(_) | None => found.push((batch.clone(), at, vec![event(row, account)])),
+        }
+    }
+    found
+        .into_iter()
+        .map(|(batch_id, sent_at, events)| SentBatch {
+            batch_id,
+            sent_at,
+            events: events.len(),
+            json: serde_json::to_string_pretty(&Value::Array(events)).unwrap_or_default(),
+        })
+        .collect()
+}

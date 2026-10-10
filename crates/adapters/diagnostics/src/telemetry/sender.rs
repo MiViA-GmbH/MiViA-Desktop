@@ -26,7 +26,7 @@ pub struct Conditions<'a> {
     pub open: bool,
     pub uploading: bool,
     pub install_id: &'a str,
-    pub machine_id: &'a dyn Fn() -> String,
+    pub machine_id: &'a (dyn Fn() -> String + Sync),
     pub account: Option<&'a str>,
 }
 
@@ -84,8 +84,8 @@ impl State {
                 0
             }
             Outcome::Missing => MISSING_ROUTE_MS,
-            Outcome::TooLarge { dropped } => {
-                self.limit = (self.limit / 2).max(1);
+            Outcome::TooLarge { dropped, sent } => {
+                self.limit = (sent / 2).max(1);
                 self.health.dropped += dropped;
                 pace
             }

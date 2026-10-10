@@ -2,6 +2,8 @@ use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
 use mivia_ports::telemetry::{EventKind, Field, ProductEvent};
+
+use crate::context::entity_id;
 use serde::Deserialize;
 use serde_json::{Map, Number, Value};
 
@@ -100,8 +102,14 @@ fn finite(value: f64) -> Option<Number> {
     value.is_finite().then(|| Number::from_f64(value)).flatten()
 }
 
-fn value(kind: &Kind, field: &Field) -> Result<Value, Reject> {
+const ENTITIES: [&str; 4] = ["folder", "batch", "report", "computation"];
+
+fn value(kind: &Kind, field: &Field, install_id: &str) -> Result<Value, Reject> {
     match (kind, field) {
+        (Kind::Plain(Plain::Uuid), Field::Entity(entity, id)) => ENTITIES
+            .contains(entity)
+            .then(|| Value::String(entity_id(install_id, entity, *id).hyphenated().to_string()))
+            .ok_or(Reject::NotAllowed),
         (Kind::Enum { values }, Field::Tag(tag)) => values
             .iter()
             .any(|allowed| allowed == tag)
@@ -124,12 +132,12 @@ impl Schema {
         self.event.iter().find(|def| def.name == kind.name())
     }
 
-    pub fn check(&self, event: &ProductEvent) -> Result<Checked, Reject> {
+    pub fn check(&self, event: &ProductEvent, install_id: &str) -> Result<Checked, Reject> {
         let def = self.def(event.kind).ok_or(Reject::UnknownEvent)?;
         let mut fields = Map::new();
         for (name, field) in &event.fields {
             let kind = def.fields.get(*name).ok_or(Reject::UnknownField)?;
-            let value = value(kind, field)?;
+            let value = value(kind, field, install_id)?;
             if fields.insert((*name).to_owned(), value).is_some() {
                 return Err(Reject::DuplicateField);
             }

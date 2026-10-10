@@ -70,3 +70,12 @@ pub fn delete_local_logs(logs_dir: &Path) -> usize {
     }
     deleted
 }
+
+pub fn entity_id(install_id: &str, kind: &str, id: i64) -> Uuid {
+    let digest = crate::redact::hmac(
+        install_id.as_bytes(),
+        format!("entity:{kind}:{id}").as_bytes(),
+    );
+    let bytes: [u8; 16] = std::array::from_fn(|at| digest.get(at).copied().unwrap_or(0));
+    uuid::Builder::from_random_bytes(bytes).into_uuid()
+}

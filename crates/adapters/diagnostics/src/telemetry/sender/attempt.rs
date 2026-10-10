@@ -21,7 +21,7 @@ pub(super) enum Outcome {
     Invalid,
     Auth,
     Missing,
-    TooLarge { dropped: u64 },
+    TooLarge { dropped: u64, sent: usize },
     Wait(i64),
     Backoff,
 }
@@ -32,7 +32,10 @@ fn outcome(error: &ServerError) -> Outcome {
             Outcome::Auth
         }
         ServerError::Gone => Outcome::Missing,
-        ServerError::TooLarge { .. } => Outcome::TooLarge { dropped: 0 },
+        ServerError::TooLarge { .. } => Outcome::TooLarge {
+            dropped: 0,
+            sent: 0,
+        },
         ServerError::BadRequest { .. } => Outcome::Invalid,
         ServerError::RateLimited { retry_after_ms } => {
             Outcome::Wait((*retry_after_ms).clamp(WAIT_MIN_MS, WAIT_MAX_MS))
@@ -163,7 +166,10 @@ async fn drop_first(store: &dyn Store, seq: i64, batch_id: &str) -> Outcome {
         })
         .await;
     match dropped {
-        Ok(()) => Outcome::TooLarge { dropped: 1 },
+        Ok(()) => Outcome::TooLarge {
+            dropped: 1,
+            sent: 1,
+        },
         Err(error) => store_failure(&error),
     }
 }
@@ -192,37 +198,37 @@ async fn send(
     mark_sent(conditions, batch_id, built.seqs.len(), ack.min_interval_s).await
 }
 
+async fn shrink(store: &dyn Store, id: String, rows: Vec<i64>) -> Outcome {
+    let alone = rows.len() <= 1;
+    let sent = rows.len();
+    let work = store.write(move |tx| {
+        tx.telemetry().release_batch(&id)?;
+        if alone {
+            tx.telemetry().drop_rows(&rows)?;
+        }
+        Ok(())
+    });
+    drop(work.await);
+    Outcome::TooLarge {
+        dropped: u64::from(alone),
+        sent,
+    }
+}
+
 async fn release_if_too_large(
     conditions: &Conditions<'_>,
     batch_id: &str,
     seqs: &[i64],
     failure: Outcome,
 ) -> Outcome {
-    let (id, rows, at) = (batch_id.to_owned(), seqs.to_vec(), conditions.now);
-    let store = conditions.store;
+    let (id, at) = (batch_id.to_owned(), conditions.now);
     match failure {
-        Outcome::TooLarge { .. } if rows.len() <= 1 => {
-            let work = store.write(move |tx| {
-                tx.telemetry().release_batch(&id)?;
-                tx.telemetry().drop_rows(&rows)
-            });
-            drop(work.await);
-            Outcome::TooLarge { dropped: 1 }
-        }
-        Outcome::TooLarge { .. } => {
-            drop(
-                store
-                    .write(move |tx| tx.telemetry().release_batch(&id))
-                    .await,
-            );
-            Outcome::TooLarge { dropped: 0 }
-        }
+        Outcome::TooLarge { .. } => shrink(conditions.store, id, seqs.to_vec()).await,
         Outcome::Invalid => {
-            drop(
-                store
-                    .write(move |tx| tx.telemetry().mark_sent(&id, at))
-                    .await,
-            );
+            let work = conditions
+                .store
+                .write(move |tx| tx.telemetry().mark_sent(&id, at));
+            drop(work.await);
             Outcome::Invalid
         }
         other @ (Outcome::Idle

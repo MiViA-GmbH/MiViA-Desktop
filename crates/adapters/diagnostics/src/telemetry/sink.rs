@@ -38,6 +38,7 @@ pub struct SqliteTelemetrySink {
     schema: &'static Schema,
     clock: Arc<dyn Clock>,
     session_id: String,
+    install_id: String,
     wake: Box<dyn Fn() + Send + Sync>,
     enabled: Arc<AtomicBool>,
     inner: Mutex<Inner>,
@@ -46,14 +47,15 @@ pub struct SqliteTelemetrySink {
 impl SqliteTelemetrySink {
     pub fn new(
         clock: Arc<dyn Clock>,
-        session_id: String,
+        ids: (String, String),
         enabled: bool,
         wake: Box<dyn Fn() + Send + Sync>,
     ) -> Self {
         Self {
             schema: schema(),
             clock,
-            session_id,
+            session_id: ids.0,
+            install_id: ids.1,
             wake,
             enabled: Arc::new(AtomicBool::new(enabled)),
             inner: Mutex::new(Inner::default()),
@@ -171,7 +173,7 @@ impl TelemetrySink for SqliteTelemetrySink {
         if !self.enabled() {
             return;
         }
-        let checked = match self.schema.check(&event) {
+        let checked = match self.schema.check(&event, &self.install_id) {
             Ok(checked) => checked,
             Err(reject) => {
                 tracing::warn!(event = event.kind.name(), ?reject, "telemetry.rejected");
