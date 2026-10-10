@@ -150,7 +150,10 @@ pub(crate) const FOLDER_CHOICES: &str = "SELECT model_id, customization_id \
 pub(crate) const LIVE_MEMBERS: &str = "SELECT s.id, s.batch_id, s.path, s.state, s.reason, \
      s.size, s.mtime FROM batch b INDEXED BY batch_open JOIN source_file s ON s.batch_id = b.id \
      WHERE b.account_id = ?1 AND b.open = 1 AND b.folder_id = ?2 \
-     AND s.state NOT IN ('vanished', 'unreadable')";
+     AND s.state NOT IN ('vanished', 'unreadable') \
+     UNION ALL SELECT s.id, s.batch_id, s.path, s.state, s.reason, s.size, s.mtime \
+     FROM source_file s INDEXED BY source_file_due JOIN batch b ON b.id = s.batch_id \
+     WHERE s.account_id = ?1 AND s.state = 'detected' AND b.open = 0 AND b.folder_id = ?2";
 
 pub(crate) const OPEN_BATCH_BY_KEY: &str =
     "SELECT id FROM batch WHERE account_id = ?1 AND batch_key = ?2 AND open = 1";

@@ -251,6 +251,27 @@ async fn a_full_series_closes_at_one_thousand_files() {
 }
 
 #[tokio::test]
+async fn a_late_event_for_a_waiting_file_of_a_full_series_adds_no_second_file() {
+    let world = World::new().await;
+    world.add(MINUTE_MS, false).await;
+    for index in 0..1000_u32 {
+        let mut bytes = jpeg(0);
+        bytes.splice(4..4, index.to_le_bytes());
+        world.drop_file(&format!(r"D:\Lab\f{index:04}.jpg"), &bytes);
+    }
+    world.intake.intake_tick().await.unwrap();
+    world.intake.intake_tick().await.unwrap();
+    world
+        .watcher
+        .emit(SignalKind::Touched(win(r"D:\Lab\f0999.jpg")));
+    world.settle().await;
+    let series = world.series().await;
+    assert_eq!(series.len(), 1);
+    assert_eq!(series[0].counts.files, 1000);
+    world.finish().await;
+}
+
+#[tokio::test]
 async fn a_file_still_waiting_at_the_time_cap_moves_to_the_next_series() {
     let world = World::new().await;
     world.add(0, false).await;

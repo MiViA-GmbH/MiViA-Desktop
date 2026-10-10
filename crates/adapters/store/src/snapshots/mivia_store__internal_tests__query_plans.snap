@@ -49,8 +49,13 @@ list item computations:
 list folder rows:
   SEARCH watched_folder USING INDEX watched_folder_by_account (account_id=?)
 list live members:
+  COMPOUND QUERY
+  LEFT-MOST SUBQUERY
   SEARCH b USING INDEX batch_open (account_id=?)
   SEARCH s USING INDEX source_file_by_batch (batch_id=?)
+  UNION ALL
+  SEARCH s USING INDEX source_file_due (account_id=? AND state=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
 find open batch by key:
   SEARCH batch USING COVERING INDEX batch_open_key (account_id=? AND batch_key=?)
 claim readiness probes:
