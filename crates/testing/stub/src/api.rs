@@ -34,7 +34,7 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/api/v2/jobs/{id}", get(detail))
 }
 
-fn denied(stub: &Stub, headers: &HeaderMap) -> Option<Response> {
+pub(crate) fn denied(stub: &Stub, headers: &HeaderMap) -> Option<Response> {
     let given = headers
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok());
