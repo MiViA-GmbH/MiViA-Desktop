@@ -20,6 +20,14 @@ const WRITERS: usize = 8;
 const READY_BUDGET: Duration = Duration::from_secs(30);
 const CHANNEL_BUDGET: usize = 32_768;
 
+struct RemoveOnDrop(PathBuf);
+
+impl Drop for RemoveOnDrop {
+    fn drop(&mut self) {
+        drop(std::fs::remove_dir_all(&self.0));
+    }
+}
+
 fn image(index: usize) -> Vec<u8> {
     let mut bytes = vec![0x5A; FILE_BYTES];
     bytes[..4].copy_from_slice(&[0xFF, 0xD8, 0xFF, 0xE0]);
@@ -84,7 +92,7 @@ async fn tick(intake: Arc<Intake>, worker: Worker) -> Result<Tick, IntakeError> 
     }
 }
 
-fn spawn(intake: &Arc<Intake>, worker: Worker) {
+fn spawn(intake: &Arc<Intake>, worker: Worker) -> tokio::task::JoinHandle<()> {
     let intake = Arc::clone(intake);
     tokio::spawn(async move {
         let wake = match worker {
@@ -96,7 +104,7 @@ fn spawn(intake: &Arc<Intake>, worker: Worker) {
             tick(Arc::clone(&intake), worker)
         })
         .await;
-    });
+    })
 }
 
 async fn settled(store: &SqliteStore, scope: AccountScope) -> (u32, bool) {
@@ -121,6 +129,7 @@ async fn burst_of_5000_files_loses_nothing() {
     let watched = base.path().join("watched");
     std::fs::create_dir(&watched).unwrap();
     let watched = std::fs::canonicalize(&watched).unwrap();
+    let _images = RemoveOnDrop(watched.clone());
     let (store, scope) = open_store(base.path()).await;
     let (sink, receiver) = IntakeSink::channel(SIGNAL_CAPACITY);
     let ports = Ports {
@@ -143,14 +152,15 @@ async fn burst_of_5000_files_loses_nothing() {
         })
         .await
         .unwrap();
-    for worker in [
+    let workers: Vec<_> = [
         Worker::Readiness,
         Worker::Readiness,
         Worker::Closer,
         Worker::Intake,
-    ] {
-        spawn(&intake, worker);
-    }
+    ]
+    .into_iter()
+    .map(|worker| spawn(&intake, worker))
+    .collect();
 
     let writing = write_burst(&watched);
     let written = Instant::now();
@@ -177,4 +187,10 @@ async fn burst_of_5000_files_loses_nothing() {
     let optimized = !cfg!(debug_assertions);
     assert!(!optimized || ready_after <= READY_BUDGET, "{report}");
     assert!(intake.high_water() < CHANNEL_BUDGET, "{report}");
+    for worker in workers {
+        worker.abort();
+        drop(worker.await);
+    }
+    drop((intake, store));
+    tokio::time::sleep(Duration::from_millis(500)).await;
 }
