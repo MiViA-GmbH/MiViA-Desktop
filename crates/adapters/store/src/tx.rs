@@ -8,6 +8,7 @@ mod folders;
 mod intake;
 mod intake_repo;
 mod ledger;
+mod one_off;
 mod pipeline;
 mod readiness;
 mod report_build;
@@ -18,13 +19,13 @@ mod reports;
 mod series;
 mod upkeep;
 
-use mivia_domain::ids::AccountId;
+use mivia_domain::ids::{AccountId, Timestamp};
 use mivia_ports::ipc::change::Change;
 use mivia_ports::store::intake::IntakeRepo;
 use mivia_ports::store::pipeline::PipelineRepo;
 use mivia_ports::store::{
     AccountRepo, AccountScope, BatchRepo, ComputationRepo, FolderRepo, HoldRepo, ReportRepo,
-    SettingsScope, SourceFileRepo, TxError, WriteTx,
+    SentImages, SettingsScope, SourceFileRepo, TxError, WriteTx,
 };
 use rusqlite::{OptionalExtension, Transaction};
 
@@ -152,5 +153,18 @@ impl WriteTx for SqlTx<'_> {
             .tx()?;
         self.record(Change::Settings);
         Ok(())
+    }
+
+    fn pending_one_off(&mut self, scope: AccountScope) -> Result<Option<SentImages>, TxError> {
+        self.read_pending(scope)
+    }
+
+    fn set_pending_one_off(
+        &mut self,
+        scope: AccountScope,
+        pending: Option<&SentImages>,
+        now: Timestamp,
+    ) -> Result<(), TxError> {
+        self.write_pending(scope, pending, now)
     }
 }

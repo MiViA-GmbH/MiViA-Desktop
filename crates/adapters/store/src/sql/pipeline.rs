@@ -17,7 +17,7 @@ pub(crate) fn upload_due(gated: bool) -> String {
         "SELECT s.id, s.batch_id, b.origin = 'one_off', b.opened_at, s.arrival_seq, s.path, \
          f.path, s.size, s.fingerprint, s.attempts \
          FROM source_file s JOIN batch b ON b.id = s.batch_id \
-         JOIN watched_folder f ON f.id = b.folder_id \
+         LEFT JOIN watched_folder f ON f.id = b.folder_id \
          WHERE s.account_id = ?1 AND s.state = 'ready' AND s.next_attempt_at <= ?2 \
          AND s.id NOT IN (SELECT value FROM json_each(?3)) \
          AND s.batch_id NOT IN (SELECT value FROM json_each(?5)) \

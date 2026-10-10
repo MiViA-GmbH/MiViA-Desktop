@@ -190,6 +190,15 @@ pub(crate) fn parse_path(text: &str) -> Result<WinPath, TxError> {
     WinPath::parse(text).map_err(|_| corrupt("path", text, None))
 }
 
+pub(crate) fn root_of(folder: Option<&str>, file: &WinPath) -> Result<WinPath, TxError> {
+    match folder {
+        Some(text) => parse_path(text),
+        None => file
+            .parent()
+            .ok_or_else(|| corrupt("path", &file.to_string(), None)),
+    }
+}
+
 pub(crate) const SOURCE_STATES: [SourceFileState; 15] = [
     SourceFileState::Detected,
     SourceFileState::Ready,

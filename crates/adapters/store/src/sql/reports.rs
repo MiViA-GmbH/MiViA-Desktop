@@ -85,7 +85,7 @@ pub(crate) const SAVE_ROW: &str = "SELECT p.format, p.part_no, p.part_count, r.l
      WHERE x.batch_id = b.id AND x.model_id = m.model_id) > 1, \
      f.path, f.report_folder_mode, f.report_folder_name, f.report_folder_path, f.probe_result, \
      (SELECT s.path FROM source_file s WHERE s.batch_id = b.id ORDER BY s.arrival_seq LIMIT 1), \
-     p.staging_path, p.size, p.sha256, p.intended_name, m.customization_id \
+     p.staging_path, p.size, p.sha256, p.intended_name, m.customization_id, json_extract(b.report_settings, '$.oneOffFolder') \
      FROM report_part p JOIN report r ON r.id = p.report_id JOIN batch b ON b.id = r.batch_id \
      JOIN batch_model_choice m ON m.batch_id = b.id AND m.model_choice_key = r.model_choice_key \
      LEFT JOIN watched_folder f ON f.id = b.folder_id WHERE p.id = ?1 AND r.account_id = ?2";

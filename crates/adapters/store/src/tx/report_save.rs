@@ -1,5 +1,5 @@
 use mivia_domain::ids::{ComputationId, Fingerprint, ReportId, ReportPartId, Timestamp};
-use mivia_domain::output::ProbeResult;
+use mivia_domain::output::{ProbeResult, ReportFolder};
 use mivia_domain::path::WinPath;
 use mivia_domain::report::{PartEvent, PartState, SAVE_RETRY_MS, SaveError};
 use mivia_ports::fs::Staged;
@@ -26,6 +26,7 @@ struct RawSave {
     folder: (Text, Text, Text, Text, Text),
     first_member: Text,
     staged: (Text, Option<i64>, Option<Vec<u8>>, Text),
+    one_off: Text,
 }
 
 fn raw_save(row: &Row<'_>) -> rusqlite::Result<RawSave> {
@@ -46,6 +47,7 @@ fn raw_save(row: &Row<'_>) -> rusqlite::Result<RawSave> {
         ),
         first_member: row.get(15)?,
         staged: (row.get(16)?, row.get(17)?, row.get(18)?, row.get(19)?),
+        one_off: row.get(21)?,
     })
 }
 
@@ -61,13 +63,32 @@ fn names_json(name: Text, id: &str) -> String {
     name.unwrap_or_else(|| format!("{{\"en\":{id:?},\"de\":{id:?}}}"))
 }
 
-fn save_row(id: ReportPartId, raw: RawSave) -> Result<SaveRow, TxError> {
-    let (model_names, custom_names, model_id, custom_id) = raw.names;
-    let (root, mode, name, custom, probe) = raw.folder;
-    let (staging, size, sha, intended) = raw.staged;
-    let report_folder = mode
-        .map(|mode| report_folder(&mode, name, custom.as_deref()))
+fn one_off_home(target: &str) -> Result<(WinPath, ReportFolder), TxError> {
+    let target = parse_path(target)?;
+    Ok(match (target.parent(), target.file_name()) {
+        (Some(parent), Some(name)) => (parent, ReportFolder::Subfolder(name.to_owned())),
+        _ => (target, ReportFolder::BesideSeries),
+    })
+}
+
+fn home(raw: &RawSave) -> Result<(Option<WinPath>, Option<ReportFolder>), TxError> {
+    let (root, mode, name, custom, _) = &raw.folder;
+    if let (None, Some(target)) = (root, &raw.one_off) {
+        let (root, folder) = one_off_home(target)?;
+        return Ok((Some(root), Some(folder)));
+    }
+    let folder = mode
+        .as_deref()
+        .map(|mode| report_folder(mode, name.clone(), custom.as_deref()))
         .transpose()?;
+    Ok((optional_path(root.as_deref())?, folder))
+}
+
+fn save_row(id: ReportPartId, raw: RawSave) -> Result<SaveRow, TxError> {
+    let (root, report_folder) = home(&raw)?;
+    let (model_names, custom_names, model_id, custom_id) = raw.names;
+    let probe = raw.folder.4;
+    let (staging, size, sha, intended) = raw.staged;
     let sha: [u8; 32] = sha
         .and_then(|bytes| bytes.try_into().ok())
         .ok_or_else(|| missing("hash"))?;
@@ -86,7 +107,7 @@ fn save_row(id: ReportPartId, raw: RawSave) -> Result<SaveRow, TxError> {
         closed_at: Timestamp(raw.closed_at),
         analysis_json: names_json(model_names, &model_id),
         variant_json,
-        root: optional_path(root.as_deref())?,
+        root,
         report_folder,
         probe: probe.as_deref().and_then(ProbeResult::from_code),
         first_member: optional_path(raw.first_member.as_deref())?,

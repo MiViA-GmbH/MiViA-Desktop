@@ -64,7 +64,7 @@ claim readiness probes:
   SCAN json_each VIRTUAL TABLE INDEX 1:
   CREATE BLOOM FILTER
   SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
-  SEARCH f USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH f USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
 next readiness probe:
   SEARCH source_file USING COVERING INDEX source_file_due (account_id=? AND state=?)
 find earlier copy in batch:
@@ -102,9 +102,9 @@ claim pipeline upload:
   LIST SUBQUERY 2
   SCAN json_each VIRTUAL TABLE INDEX 1:
   CREATE BLOOM FILTER
-  SEARCH c EXISTS USING INDEX computation_by_source (source_file_id=?)
   SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
-  SEARCH f USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH c EXISTS USING INDEX computation_by_source (source_file_id=?)
+  SEARCH f USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
 claim upload canary:
   SEARCH s USING INDEX source_file_due (account_id=? AND state=? AND next_attempt_at<?)
   LIST SUBQUERY 1
@@ -113,9 +113,9 @@ claim upload canary:
   LIST SUBQUERY 2
   SCAN json_each VIRTUAL TABLE INDEX 1:
   CREATE BLOOM FILTER
-  SEARCH c EXISTS USING INDEX computation_by_source (source_file_id=?)
   SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
-  SEARCH f USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH c EXISTS USING INDEX computation_by_source (source_file_id=?)
+  SEARCH f USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
 claim pipeline submit:
   SEARCH c USING INDEX computation_claim (state=? AND next_attempt_at<?)
   LIST SUBQUERY 1

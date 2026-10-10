@@ -4,7 +4,7 @@ use mivia_ports::store::pipeline::{AttemptRow, Fairness, PollRow, SubmitRow, Upl
 use rusqlite::{Row, params};
 
 use super::SqlTx;
-use crate::codec::parse_path;
+use crate::codec::{parse_path, root_of};
 use crate::errors::SqlResult;
 use crate::sql::pipeline as sql;
 
@@ -21,7 +21,7 @@ fn fairness(row: &Row<'_>) -> rusqlite::Result<Fairness> {
     })
 }
 
-pub(super) type RawUpload = (i64, Fairness, String, String, i64, Vec<u8>, i64);
+pub(super) type RawUpload = (i64, Fairness, String, Option<String>, i64, Vec<u8>, i64);
 
 pub(super) fn raw_upload(row: &Row<'_>) -> rusqlite::Result<RawUpload> {
     Ok((
@@ -39,11 +39,12 @@ pub(super) fn upload_row(raw: RawUpload) -> Result<UploadRow, TxError> {
     let (id, fairness, path, root, size, print, attempts) = raw;
     let fingerprint = <[u8; 32]>::try_from(print.as_slice())
         .map_err(|_| TxError::Corrupt("fingerprint".to_owned()))?;
+    let path = parse_path(&path)?;
     Ok(UploadRow {
         id: SourceFileId(id),
         fairness,
-        path: parse_path(&path)?,
-        root: parse_path(&root)?,
+        root: root_of(root.as_deref(), &path)?,
+        path,
         size: u64::try_from(size).unwrap_or_default(),
         fingerprint: Fingerprint(fingerprint),
         attempts: count(attempts),

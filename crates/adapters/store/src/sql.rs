@@ -172,7 +172,7 @@ pub(crate) const RELEASE_LEDGER_OF_FILE: &str = "DELETE FROM ledger_entry \
 
 pub(crate) const CLAIM_PROBES: &str = "SELECT s.id, f.path, s.path, s.attempts, s.first_busy_at \
      FROM source_file s JOIN batch b ON b.id = s.batch_id \
-     JOIN watched_folder f ON f.id = b.folder_id \
+     LEFT JOIN watched_folder f ON f.id = b.folder_id \
      WHERE s.account_id = ?1 AND s.state = 'detected' AND s.next_attempt_at <= ?2 \
      AND s.id NOT IN (SELECT value FROM json_each(?3)) \
      ORDER BY s.next_attempt_at, s.id LIMIT ?4";
@@ -215,7 +215,8 @@ pub(crate) const COMPUTATION_PLAN: &str = "SELECT s.batch_id, m.model_choice_key
 pub(crate) const CLAIM_LEDGER: &str = "INSERT INTO ledger_entry \
      (folder_id, fingerprint, model_choice_key, computation_id) \
      SELECT b.folder_id, s.fingerprint, ?2, ?3 FROM source_file s \
-     JOIN batch b ON b.id = s.batch_id WHERE s.id = ?1 ON CONFLICT DO NOTHING";
+     JOIN batch b ON b.id = s.batch_id WHERE s.id = ?1 AND b.folder_id IS NOT NULL \
+     ON CONFLICT DO NOTHING";
 
 pub(crate) const KNOWN_PATHS: &str =
     "SELECT path, size, mtime, fingerprint FROM ledger_path WHERE folder_id = ?1";

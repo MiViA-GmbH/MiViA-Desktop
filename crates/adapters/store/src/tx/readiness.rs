@@ -9,19 +9,19 @@ use rusqlite::{OptionalExtension, Row, params};
 
 use super::SqlTx;
 use super::ledger::known_path;
-use crate::codec::parse_path;
+use crate::codec::{parse_path, root_of};
 use crate::errors::SqlResult;
 use crate::sql;
 
 struct ReadyRow {
     batch: i64,
-    folder: FolderId,
+    folder: Option<FolderId>,
     path: String,
     old: Option<Vec<u8>>,
     copy_of: Option<i64>,
 }
 
-type RawProbe = (i64, String, String, i64, Option<i64>);
+type RawProbe = (i64, Option<String>, String, i64, Option<i64>);
 
 fn probe_row(row: &Row<'_>) -> rusqlite::Result<RawProbe> {
     Ok((
@@ -56,10 +56,11 @@ impl SqlTx<'_> {
             .tx()?;
         raws.into_iter()
             .map(|(id, root, path, count, first)| {
+                let path = parse_path(&path)?;
                 Ok(ProbeRow {
                     id: SourceFileId(id),
-                    root: parse_path(&root)?,
-                    path: parse_path(&path)?,
+                    root: root_of(root.as_deref(), &path)?,
+                    path,
                     attempts: Attempts {
                         count: u32::try_from(count).unwrap_or(u32::MAX),
                         first_busy_at: first.map(Timestamp),
@@ -100,7 +101,7 @@ impl SqlTx<'_> {
                 statement.query_row(params![id.0, self.account()], |row| {
                     Ok(ReadyRow {
                         batch: row.get(0)?,
-                        folder: FolderId(row.get(1)?),
+                        folder: row.get::<_, Option<i64>>(1)?.map(FolderId),
                         path: row.get(2)?,
                         old: row.get(3)?,
                         copy_of: row.get(4)?,
@@ -131,14 +132,16 @@ impl SqlTx<'_> {
             .prepare_cached(sql::IN_LEDGER)
             .and_then(|mut statement| {
                 statement
-                    .query_row(params![row.folder.0, print], |r| r.get::<_, i64>(0))
+                    .query_row(params![row.folder.map(|f| f.0), print], |r| {
+                        r.get::<_, i64>(0)
+                    })
                     .optional()
             })
             .tx()?
             .is_some();
         let mut statement = self.tx.prepare_cached(sql::PATHS_WITH_CONTENT).tx()?;
         let paths = statement
-            .query_map(params![row.folder.0, print], known_path)
+            .query_map(params![row.folder.map(|f| f.0), print], known_path)
             .and_then(Iterator::collect::<rusqlite::Result<Vec<_>>>)
             .tx()?;
         let (same, other): (Vec<KnownPath>, Vec<KnownPath>) = paths
@@ -148,7 +151,6 @@ impl SqlTx<'_> {
             .into_iter()
             .partition(|known| known.path.to_string() == row.path);
         Ok(ContentLookup {
-            folder: row.folder,
             earlier_in_batch: earlier.map(SourceFileId),
             in_ledger,
             same_path: !same.is_empty(),
@@ -194,11 +196,14 @@ impl SqlTx<'_> {
     }
 
     fn record_seen(&self, row: &ReadyRow, read: &ImageRead, now: Timestamp) -> Result<(), TxError> {
+        let Some(folder) = row.folder else {
+            return Ok(());
+        };
         self.tx
             .prepare_cached(sql::UPSERT_LEDGER_PATH)
             .and_then(|mut statement| {
                 statement.execute(params![
-                    row.folder.0,
+                    folder.0,
                     row.path,
                     read.fingerprint.0.as_slice(),
                     ms(read.stat.size),
