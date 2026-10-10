@@ -20,3 +20,4 @@ pub mod retry;
 pub mod sanitise;
 pub mod source_file;
 pub mod transition;
+pub mod update;

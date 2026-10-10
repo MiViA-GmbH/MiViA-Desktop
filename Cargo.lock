@@ -2273,6 +2273,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "minisign-verify"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22f9645cb765ea72b8111f36c522475d2daa0d22c957a9826437e97534bc4e9e"
+
+[[package]]
 name = "miniz_oxide"
 version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2525,15 +2531,27 @@ name = "mivia-testkit"
 version = "0.0.0"
 dependencies = [
  "async-trait",
+ "base64 0.22.1",
  "mivia-domain",
  "mivia-ports",
  "parking_lot",
+ "ring",
  "rustls",
  "secrecy",
  "sha2 0.11.0",
  "tokio",
  "tokio-rustls",
  "uuid",
+]
+
+[[package]]
+name = "mivia-update-sig"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "minisign-verify",
+ "mivia-domain",
+ "mivia-testkit",
 ]
 
 [[package]]
@@ -6019,6 +6037,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "cargo_metadata 0.23.1",
+ "mivia-update-sig",
  "serde",
  "serde_json",
  "syn 2.0.118",

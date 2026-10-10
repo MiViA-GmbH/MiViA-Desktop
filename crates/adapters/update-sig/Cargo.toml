@@ -1,0 +1,20 @@
+[package]
+name = "mivia-update-sig"
+edition.workspace = true
+version.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[lib]
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+base64 = "=0.22.1"
+minisign-verify = "=0.2.5"
+mivia-domain.workspace = true
+
+[dev-dependencies]
+mivia-testkit.workspace = true

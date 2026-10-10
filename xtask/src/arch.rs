@@ -72,6 +72,7 @@ const DESKTOP: &[&str] = &[
     "mivia-os",
     "mivia-diagnostics",
     "mivia-preview",
+    "mivia-update-sig",
 ];
 
 const fn rule(
@@ -106,6 +107,13 @@ pub(crate) const RULES: &[Rule] = &[
     rule("mivia-os", CORE, &["tauri", "reqwest", "rusqlite"]),
     rule("mivia-diagnostics", CORE, &["tauri", "rusqlite", "reqwest"]),
     rule("mivia-preview", CORE, &["tauri", "reqwest", "rusqlite"]),
+    Rule {
+        krate: "mivia-update-sig",
+        may_use: &["mivia-domain"],
+        dev_may_use: &["mivia-testkit"],
+        must_not_reach: &["tauri", "reqwest", "rusqlite", "tokio"],
+        no_direct: &[],
+    },
     rule("mivia-testkit", CORE, &["tauri", "wry", "rusqlite"]),
     Rule {
         krate: "mivia-it",
@@ -122,7 +130,7 @@ pub(crate) const RULES: &[Rule] = &[
         must_not_reach: &[],
         no_direct: &["rusqlite", "reqwest", "notify", "keyring-core"],
     },
-    rule("xtask", &[], &[]),
+    rule("xtask", &["mivia-update-sig"], &[]),
 ];
 
 const DIRECT_USERS: &[(&str, &[&str])] = &[("mivia-api", &["mivia-server"])];

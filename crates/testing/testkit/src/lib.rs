@@ -8,6 +8,7 @@ pub mod observer;
 pub mod server;
 pub mod telemetry;
 pub mod tls;
+pub mod update;
 pub mod watch;
 
 pub use mivia_domain as domain;

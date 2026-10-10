@@ -18,6 +18,7 @@ mod repo;
 mod source_rules;
 mod structured;
 mod telemetry_fields;
+mod update_sig;
 
 use std::path::Path;
 use std::process::ExitCode;
@@ -27,7 +28,7 @@ use anyhow::{Result, anyhow, bail};
 const USAGE: &str = "usage: cargo xtask <arch | command-size | source-rules [paths] | canary | why <id> | \
 quality-diff --base <rev> --head <rev> | ci-integrity [--base <rev>] [--head <rev>] | \
 commit-text (--file <path> | --title <text> [--body <text>]) | floors-lower | \
-telemetry-fields [--check]>";
+telemetry-fields [--check] | update-sig verify <asset> <sig> <version>>";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -55,6 +56,7 @@ fn run(args: &[String]) -> Result<bool> {
         "commit-text" => commit_text::run(&root, rest),
         "floors-lower" => floors::lower(&root),
         "telemetry-fields" => telemetry_fields::run(&root, rest),
+        "update-sig" => update_sig::run(rest),
         other => bail!("unknown command {other}\n{USAGE}"),
     }
 }

@@ -9,6 +9,7 @@ members = [
     "crates/adapters/server",
     "crates/adapters/os",
     "crates/adapters/diagnostics",
+    "crates/adapters/update-sig",
     "crates/testing/testkit",
     "crates/testing/it",
     "crates/testing/stub",
@@ -31,6 +32,7 @@ mivia-api = { path = "crates/adapters/api" }
 mivia-server = { path = "crates/adapters/server" }
 mivia-os = { path = "crates/adapters/os" }
 mivia-diagnostics = { path = "crates/adapters/diagnostics" }
+mivia-update-sig = { path = "crates/adapters/update-sig" }
 mivia-testkit = { path = "crates/testing/testkit" }
 mivia-stub = { path = "crates/testing/stub" }
 
