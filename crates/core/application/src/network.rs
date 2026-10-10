@@ -226,6 +226,11 @@ impl Network {
         self.route.untrusted()
     }
 
+    pub async fn route_for(&self, url: &str) -> Route {
+        let inputs = self.inputs.lock().clone();
+        choose(&inputs, url, self.resolver.as_ref()).await
+    }
+
     pub async fn refresh(&self, rebuild: bool) -> Route {
         let inputs = self.inputs.lock().clone();
         let route = choose(&inputs, &self.url, self.resolver.as_ref()).await;

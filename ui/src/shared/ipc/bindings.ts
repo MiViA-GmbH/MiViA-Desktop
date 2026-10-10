@@ -113,6 +113,10 @@ export const commands = {
 	getNetwork: () => __TAURI_INVOKE<NetworkView>("get_network"),
 	getNetworkDetails: () => __TAURI_INVOKE<string>("get_network_details"),
 	setProxySetting: (setting: ProxySetting) => __TAURI_INVOKE<NetworkView>("set_proxy_setting", { setting }),
+	getUpdate: () => __TAURI_INVOKE<UpdateView>("get_update"),
+	checkForUpdates: () => __TAURI_INVOKE<UpdateView>("check_for_updates"),
+	installUpdate: () => __TAURI_INVOKE<UpdateView>("install_update"),
+	setUpdateSettings: (input: UpdateSettingsInput) => __TAURI_INVOKE<UpdateView>("set_update_settings", { input }),
 };
 
 /** Events */
@@ -650,7 +654,12 @@ export type ReportView = {
 	parts: ReportPartView[],
 };
 
-export type Route = "overview" | "problemReport";
+export type RequiredUpdate = {
+	min: string | null,
+	signed: boolean,
+};
+
+export type Route = "overview" | "problemReport" | "updates";
 
 export type SendOutcome = { kind: "sent"; reference: string } | { kind: "queued"; reference: string } | { kind: "saveAndEmail"; reference: string };
 
@@ -725,6 +734,29 @@ export type SupportView = {
 	sessionId: string,
 	installId: string,
 	pending: number,
+};
+
+export type UpdateChannel = "stable" | "beta";
+
+export type UpdatePolicy = "on" | "notifyOnly" | "off";
+
+export type UpdateSettingsInput = {
+	channel: UpdateChannel,
+	automatic: boolean,
+};
+
+export type UpdateState = "idle" | "checking" | "upToDate" | "available" | "downloading" | "ready" | "failed";
+
+export type UpdateView = {
+	current: string,
+	channel: UpdateChannel,
+	automatic: boolean,
+	policy: UpdatePolicy | null,
+	state: UpdateState,
+	version: string | null,
+	lastCheckAt: string | null,
+	failedInstall: string | null,
+	required: RequiredUpdate | null,
 };
 
 export type WaitingReason = "noModels" | "license" | "offline";

@@ -76,7 +76,7 @@ pub(crate) async fn complete_setup(
 #[tauri::command]
 #[specta::specta]
 pub(crate) async fn quit_app(app: AppHandle) {
-    app.exit(0);
+    crate::shell::update::quit(&app).await;
 }
 
 #[tauri::command]

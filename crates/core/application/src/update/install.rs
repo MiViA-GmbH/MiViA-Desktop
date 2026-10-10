@@ -59,7 +59,7 @@ impl Updates {
                 );
                 Ok(())
             }
-            None => self.install(InstallTrigger::IdleAuto).await,
+            None => self.install(InstallTrigger::IdleAuto).await.map(drop),
         }
     }
 
@@ -82,13 +82,12 @@ impl Updates {
         if ready.is_none() || ready == failed {
             return Ok(false);
         }
-        self.install(InstallTrigger::Quit).await?;
-        Ok(true)
+        self.install(InstallTrigger::Quit).await
     }
 
-    async fn install(&self, trigger: InstallTrigger) -> Result<(), StoreError> {
+    async fn install(&self, trigger: InstallTrigger) -> Result<bool, StoreError> {
         let Some(to) = self.inner.lock().ready.clone() else {
-            return Ok(());
+            return Ok(false);
         };
         let from = self.config.current.clone();
         let record = PendingInstall {
@@ -115,7 +114,8 @@ impl Updates {
                 global.update.pending_install = None;
             })
             .await?;
+            return Ok(false);
         }
-        Ok(())
+        Ok(true)
     }
 }

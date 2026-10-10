@@ -215,6 +215,18 @@ impl Pipeline {
         Ok(())
     }
 
+    pub async fn client_too_old(&self, held: bool) -> Result<(), PipelineError> {
+        let active = self
+            .active_holds()
+            .await?
+            .contains(&HoldReason::ClientTooOld);
+        match (held, active) {
+            (true, false) => self.raise_hold(HoldReason::ClientTooOld).await,
+            (false, true) => self.lift_hold(HoldReason::ClientTooOld).await,
+            (true, true) | (false, false) => Ok(()),
+        }
+    }
+
     pub fn busy(&self) -> bool {
         let in_flight = self.in_flight.lock();
         !in_flight.uploads.is_empty() || !in_flight.submits.is_empty()

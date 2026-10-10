@@ -2,12 +2,14 @@ use tauri::menu::{Menu, MenuEvent, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Wry};
 
+use super::cx::Cx;
 use super::events::Route;
-use super::window;
+use super::{update, window};
 
 const OPEN: &str = "open";
 const QUIT: &str = "quit";
 const REPORT: &str = "report";
+const UPDATES: &str = "updates";
 
 struct Starting {
     menu: Menu<Wry>,
@@ -19,8 +21,9 @@ pub(super) fn build(app: &AppHandle) -> tauri::Result<()> {
     let starting = MenuItem::with_id(app, "starting", "Starting...", false, None::<&str>)?;
     let open = MenuItem::with_id(app, OPEN, "Open MiViA Desktop", true, None::<&str>)?;
     let report = MenuItem::with_id(app, REPORT, "Report a problem...", true, None::<&str>)?;
+    let updates = MenuItem::with_id(app, UPDATES, "Check for updates", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, QUIT, "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&starting, &open, &report, &quit])?;
+    let menu = Menu::with_items(app, &[&starting, &open, &report, &updates, &quit])?;
     app.manage(Starting {
         menu: menu.clone(),
         item: starting,
@@ -84,7 +87,21 @@ fn on_menu(app: &AppHandle, event: &MenuEvent) {
     match event.id().as_ref() {
         OPEN => window::open(app),
         REPORT => window::open_at(app, Route::ProblemReport),
-        QUIT => app.exit(0),
+        UPDATES => check_updates(app),
+        QUIT => {
+            let app = app.clone();
+            tauri::async_runtime::spawn(async move { update::quit(&app).await });
+        }
         _ => {}
     }
+}
+
+fn check_updates(app: &AppHandle) {
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        window::open_at(&app, Route::Updates);
+        if let Err(error) = update::check(&app.state::<Cx>()).await {
+            tracing::warn!(?error, "tray.updateCheckFailed");
+        }
+    });
 }

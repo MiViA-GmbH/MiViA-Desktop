@@ -68,6 +68,10 @@ const COMMANDS: &[&str] = &[
     "get_network",
     "get_network_details",
     "set_proxy_setting",
+    "get_update",
+    "check_for_updates",
+    "install_update",
+    "set_update_settings",
 ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

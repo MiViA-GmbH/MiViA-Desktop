@@ -19,7 +19,7 @@ use super::cx::Services;
 
 const UPLOAD_PERMITS: usize = 2;
 
-struct SystemIds;
+pub(crate) struct SystemIds;
 
 impl IdGen for SystemIds {
     fn uuid(&self) -> Uuid {

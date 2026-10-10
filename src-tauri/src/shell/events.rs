@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::{Builder, Commands, ErrorHandlingMode, Event, collect_commands, collect_events};
 
-use crate::commands::{actions, history, network, privacy, queries, setup, support};
+use crate::commands::{actions, history, network, privacy, queries, setup, support, update};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct StoreChangedEvent(pub(crate) StoreChanged);
@@ -17,6 +17,7 @@ pub(crate) struct LanguageChanged(pub(crate) LocaleView);
 pub(crate) enum Route {
     Overview,
     ProblemReport,
+    Updates,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
@@ -102,6 +103,10 @@ macro_rules! app_commands {
             network::get_network,
             network::get_network_details,
             network::set_proxy_setting,
+            update::get_update,
+            update::check_for_updates,
+            update::install_update,
+            update::set_update_settings,
         ]
     };
 }

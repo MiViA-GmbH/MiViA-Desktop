@@ -26,7 +26,17 @@
 	},
 	"bundle": {
 		"active": false,
+		"createUpdaterArtifacts": false,
 		"icon": ["icons/icon.ico"]
+	},
+	"plugins": {
+		"updater": {
+			"pubkey": "",
+			"requireSignedVersion": true,
+			"windows": {
+				"installMode": "quiet"
+			}
+		}
 	},
 	"build": {
 		"frontendDist": "../ui/dist",

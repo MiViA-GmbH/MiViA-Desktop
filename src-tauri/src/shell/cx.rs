@@ -1,6 +1,6 @@
 use std::path::PathBuf;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, OnceLock};
 
 use arc_swap::ArcSwap;
 use mivia_application::intake::Intake;
@@ -8,6 +8,7 @@ use mivia_application::network::Network;
 use mivia_application::pipeline::Pipeline;
 use mivia_application::policy::Policies;
 use mivia_application::report_offer::OfferGate;
+use mivia_application::update::Updates;
 use mivia_diagnostics::{DiagnosticsContext, Logging};
 use mivia_domain::ids::{AccountId, Timestamp};
 use mivia_os::SystemClock;
@@ -116,6 +117,7 @@ pub(crate) struct Cx {
     pub(crate) setup_completed: AtomicBool,
     pub(crate) offers: Mutex<OfferGate>,
     pub(crate) report_draft: Mutex<Option<super::support::Draft>>,
+    pub(crate) updates: OnceLock<Arc<Updates>>,
     ready: RwLock<Option<Arc<Ready>>>,
     set: Notify,
 }
@@ -128,6 +130,7 @@ impl Cx {
             setup_completed: AtomicBool::new(false),
             offers: Mutex::new(OfferGate::default()),
             report_draft: Mutex::new(None),
+            updates: OnceLock::new(),
             ready: RwLock::new(None),
             set: Notify::new(),
         }

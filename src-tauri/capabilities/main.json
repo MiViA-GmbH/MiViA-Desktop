@@ -75,6 +75,10 @@
 		"allow-note-privacy-viewed",
 		"allow-get-network",
 		"allow-get-network-details",
-		"allow-set-proxy-setting"
+		"allow-set-proxy-setting",
+		"allow-get-update",
+		"allow-check-for-updates",
+		"allow-install-update",
+		"allow-set-update-settings"
 	]
 }

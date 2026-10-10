@@ -24,6 +24,7 @@ mod start;
 pub(crate) mod support;
 pub(crate) mod telemetry;
 mod tray;
+pub(crate) mod update;
 pub(crate) mod window;
 
 use std::io;
@@ -125,6 +126,7 @@ fn builder(
 ) -> tauri::Builder<tauri::Wry> {
     let specta = events::builder();
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(specta.invoke_handler())
         .on_window_event(window::on_event)
         .setup(move |app| {
@@ -221,6 +223,7 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
         return;
     };
     shutdown.attach_services(Arc::clone(&services));
+    update::start(&app, &services, Arc::clone(&shutdown)).await;
     telemetry::refresh_gate(&services).await;
     let completed = setup_state(&app.state::<Cx>(), &services).await;
     telemetry::run(&services, &launch, completed);

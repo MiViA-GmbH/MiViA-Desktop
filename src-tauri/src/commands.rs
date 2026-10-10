@@ -10,3 +10,4 @@ pub(crate) mod privacy;
 pub(crate) mod queries;
 pub(crate) mod setup;
 pub(crate) mod support;
+pub(crate) mod update;
