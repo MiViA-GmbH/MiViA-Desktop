@@ -162,6 +162,7 @@ pub struct AccountView {
     pub display_name: String,
     pub server_url: String,
     pub server_account_id: String,
+    pub email: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

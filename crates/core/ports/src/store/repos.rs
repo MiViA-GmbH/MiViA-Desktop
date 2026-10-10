@@ -17,12 +17,19 @@ pub struct NewAccount {
     pub server_url: String,
     pub server_account_id: String,
     pub display_name: String,
+    pub email: String,
 }
 
 pub trait AccountRepo {
     fn upsert(&mut self, account: &NewAccount) -> Result<AccountId, TxError>;
     fn activate(&mut self, id: AccountId) -> Result<(), TxError>;
     fn active(&mut self) -> Result<Option<AccountId>, TxError>;
+    fn deactivate(&mut self) -> Result<(), TxError>;
+    fn find(
+        &mut self,
+        server_url: &str,
+        server_account_id: &str,
+    ) -> Result<Option<AccountId>, TxError>;
 }
 
 pub trait HoldRepo {

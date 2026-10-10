@@ -65,6 +65,7 @@ pub struct CatalogueCustomization {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CatalogueModel {
     pub model_id: String,
+    pub internal_name: String,
     pub display_name: String,
     pub customizations: Vec<CatalogueCustomization>,
 }

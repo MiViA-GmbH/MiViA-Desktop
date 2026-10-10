@@ -62,7 +62,29 @@ pub trait WriteTx {
     fn reports(&mut self, scope: AccountScope) -> &mut dyn ReportRepo;
     fn intake(&mut self, scope: AccountScope) -> &mut dyn IntakeRepo;
     fn pipeline(&mut self, scope: AccountScope) -> &mut dyn PipelineRepo;
-    fn set_global_settings(&mut self, version: u32, json: &str) -> Result<(), TxError>;
+    fn settings(&mut self, scope: SettingsScope) -> Result<Option<String>, TxError>;
+    fn set_settings(
+        &mut self,
+        scope: SettingsScope,
+        version: u32,
+        json: &str,
+    ) -> Result<(), TxError>;
+    fn clear_settings(&mut self, scope: SettingsScope) -> Result<(), TxError>;
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SettingsScope {
+    Global,
+    SetupDraft,
+}
+
+impl SettingsScope {
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Global => "global",
+            Self::SetupDraft => "setup_draft",
+        }
+    }
 }
 
 #[async_trait]

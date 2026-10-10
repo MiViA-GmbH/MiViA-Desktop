@@ -5,7 +5,7 @@ use crate::ipc::screens::{AccountView, HoldsView, SeriesReportsView};
 use crate::ipc::views::{
     BatchItemsPage, BatchView, FoldersView, HistoryCursor, HistoryPage, NeedsAttentionView,
 };
-use crate::store::{AccountScope, StoreError};
+use crate::store::{AccountScope, SettingsScope, StoreError};
 
 #[async_trait]
 pub trait Queries: Send + Sync {
@@ -37,5 +37,5 @@ pub trait Queries: Send + Sync {
         id: BatchId,
     ) -> Result<SeriesReportsView, StoreError>;
     async fn get_account(&self, scope: AccountScope) -> Result<Option<AccountView>, StoreError>;
-    async fn global_settings(&self) -> Result<Option<String>, StoreError>;
+    async fn settings(&self, scope: SettingsScope) -> Result<Option<String>, StoreError>;
 }

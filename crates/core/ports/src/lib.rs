@@ -3,6 +3,7 @@ pub mod clock;
 pub mod fs;
 pub mod id_gen;
 pub mod ipc;
+pub mod policy;
 pub mod queries;
 pub mod server;
 pub mod store;
