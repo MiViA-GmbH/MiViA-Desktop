@@ -3,6 +3,8 @@ import { useMediaQuery } from '@mantine/hooks';
 import { Outlet } from '@tanstack/react-router';
 
 import { HoldBanner } from '../../features/hold/hold-banner';
+import { DropOverlay } from './drop-overlay';
+import { OneOffHost } from './one-off-host';
 import { Sidebar } from './sidebar';
 
 export function Shell() {
@@ -21,6 +23,8 @@ export function Shell() {
 						</Stack>
 					</ScrollArea>
 				</Stack>
+				<OneOffHost />
+				<DropOverlay />
 			</AppShell.Main>
 		</AppShell>
 	);

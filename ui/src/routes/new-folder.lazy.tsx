@@ -5,12 +5,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
+import { ModelChoices } from '../entities/catalogue/model-choices';
 import { catalogueQuery, setupQuery } from '../entities/setup/queries';
 import { PresetChoice, ReportChoice } from '../features/setup/arrival-choice';
 import { FolderChoice, FolderDetails } from '../features/setup/folder-choice';
 import { blockText } from '../features/setup/folder-text';
-import { ModelChoices } from '../features/setup/model-choices';
 import { commands } from '../shared/ipc';
 import type { ArrivalPreset, FolderPick, ModelChoiceView, ReportMode } from '../shared/ipc/bindings';
 import { Notice } from '../shared/ui/notice';

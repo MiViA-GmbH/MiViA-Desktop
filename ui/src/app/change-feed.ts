@@ -20,6 +20,8 @@ function keys(change: Change): string[][] {
 			return [['locale']];
 		case 'catalogue':
 			return [['series']];
+		case 'oneOff':
+			return [['oneOff']];
 		case 'all':
 			return [[]];
 		default:

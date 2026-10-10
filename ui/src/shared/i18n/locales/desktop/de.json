@@ -132,7 +132,8 @@
 		"singleImages": {
 			"meta": "Bilder, die Sie aus dem Explorer gesendet haben.",
 			"emptyTitle": "Noch keine Bilder gesendet",
-			"emptyText": "Klicken Sie Bilder im Explorer mit der rechten Maustaste an und wählen Sie Mit MiViA auswerten. Sie erscheinen dann hier."
+			"emptyText": "Bilder, die Sie aus dem Explorer senden, erscheinen hier. Klicken Sie mit der rechten Maustaste auf Bilder, wählen Sie Weitere Optionen anzeigen und dann Mit MiViA auswerten (Umschalt+F10 öffnet das ganze Menü). Sie können Bilder auch in dieses Fenster ziehen. Mehr als 100 Bilder? Senden oder ziehen Sie den Ordner.",
+			"add": "Bilder hinzufügen"
 		},
 		"settings": {
 			"general": "Allgemein",
@@ -187,6 +188,44 @@
 			"toOverview": "Zurück zur Übersicht",
 			"loadFailedTitle": "Laden nicht möglich",
 			"loadFailedText": "MiViA Desktop konnte seine Daten nicht lesen. Schließen Sie das Fenster und öffnen Sie es erneut."
+		},
+		"oneOff": {
+			"title_one": "{{count}} Bild auswerten",
+			"title_other": "{{count}} Bilder auswerten",
+			"analyze_one": "{{count}} Bild auswerten",
+			"analyze_other": "{{count}} Bilder auswerten",
+			"noneTitle": "Keine Bilder zum Auswerten",
+			"noneText": "MiViA wertet JPG-, PNG-, TIFF- und BMP-Bilder aus. Exportieren Sie Mikroskopformate zuerst als TIFF.",
+			"close": "Schließen",
+			"cancel": "Abbrechen",
+			"more": "und {{count}} weitere",
+			"from": "aus {{folder}}",
+			"remove": "Diese Bilder entfernen",
+			"notIncluded": "Nicht enthalten: {{name}} ({{reason}})",
+			"reason": {
+				"missing": "nicht gefunden",
+				"notImage": "kein Bild, das MiViA auswerten kann",
+				"zipTemp": "ZIP-Datei zuerst entpacken"
+			},
+			"subfolders_one": "{{count}} Unterordner nicht berücksichtigt",
+			"subfolders_other": "{{count}} Unterordner nicht berücksichtigt",
+			"holdNote": "Sie können jetzt starten. Lassen Sie die Bilder an ihrem Ort, bis sie hochgeladen sind.",
+			"name": "Name",
+			"models": "Modelle",
+			"lastTime": "Wie beim letzten Mal ausgewählt ({{date}})",
+			"tryAgain": "Erneut versuchen",
+			"uploadCost": "Verbraucht bis zu {{count}} Ihrer {{remaining}} verbleibenden Bild-Uploads.",
+			"tooMany": "MiViA wertet höchstens 1000 Bilder auf einmal aus. Verwenden Sie für größere Mengen einen Eingangsordner.",
+			"report": "Bericht: {{formats}}, {{language}} · {{folder}}",
+			"changeReport": "Berichtseinstellungen ändern",
+			"formatCsv": "Daten (CSV)",
+			"reportLanguage": "Berichtssprache",
+			"chooseFolder": "Ordner wählen…",
+			"fallback": "Berichte können nicht neben diesen Bildern gespeichert werden. Sie werden in {{path}} gespeichert.",
+			"account": "Konto: {{name}}",
+			"cancelled": "Es wurde nichts ausgewertet. Ihre Bilder bleiben unverändert.",
+			"waitingForSetup": "Schließen Sie die Einrichtung ab, um die gesendeten Bilder auszuwerten.",
+			"dropHere": "Bilder hier ablegen, um sie auszuwerten"
 		}
 	}
 }

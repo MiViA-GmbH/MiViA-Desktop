@@ -43,7 +43,24 @@ for (const lang of ['en', 'de']) {
 		await noHorizontalScroll(page);
 		await page.screenshot({ path: `${SHOTS}/s1-series-${lang}.png` });
 	});
+
+	test(`single images dialog (${lang})`, async ({ page }) => {
+		await open(page, `/single-images?scenario=one-off&lang=${lang}`);
+		const dialog = page.getByRole('dialog');
+		await expect(dialog.getByRole('checkbox').first()).toBeChecked();
+		await structure(page);
+		await noHorizontalScroll(page);
+		await page.screenshot({ path: `${SHOTS}/d1-one-off-${lang}.png` });
+		await dialog.getByRole('button').last().scrollIntoViewIfNeeded();
+		await page.screenshot({ path: `${SHOTS}/d2-one-off-footer-${lang}.png` });
+	});
 }
+
+test('single images page', async ({ page }) => {
+	await open(page, '/single-images?scenario=calm');
+	await page.screenshot({ path: `${SHOTS}/m1-single-images-en.png` });
+	await structure(page);
+});
 
 test('calm overview, folder page and settings', async ({ page }) => {
 	await open(page, '/?scenario=calm');

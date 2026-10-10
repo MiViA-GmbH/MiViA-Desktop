@@ -6,6 +6,7 @@ import type {
 	HistoryPage,
 	HoldsView,
 	NeedsAttentionView,
+	OneOffView,
 	ReportPartView,
 	SeriesReportsView,
 } from '../../shared/ipc/bindings';
@@ -199,4 +200,23 @@ export const ITEMS = {
 	revision: '9',
 	next: null,
 	items: [item(1, 'done'), item(2, 'done'), item(3, 'failed', 'server_failed'), item(4, 'done'), item(5, 'computing')],
+};
+
+export const ONE_OFF: OneOffView = {
+	count: 12,
+	groups: [
+		{
+			folder: 'D:\\Labor\\Kunde Müller\\A-2026-0412',
+			names: Array.from({ length: 12 }, (_, index) => `Probe Gefüge ${String(index + 1).padStart(4, '0')}.png`),
+		},
+	],
+	notIncluded: [{ name: 'Messprotokoll.docx', reason: 'notImage' }],
+	subfolders: 2,
+	tooMany: false,
+	label: 'Probe Gefüge 0001 +11',
+	lastChoices: [{ modelId: 'grain', customizationId: null }],
+	lastChosenAt: '2026-10-11T14:20:00.000Z',
+	reportFolder: 'D:\\Labor\\Kunde Müller\\A-2026-0412\\MiViA reports',
+	reportFallback: false,
+	language: 'en',
 };

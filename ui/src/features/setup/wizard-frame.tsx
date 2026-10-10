@@ -108,6 +108,7 @@ function Content({ view, step, title, children }: ContentProps) {
 		<ScrollArea flex={1} type="auto">
 			<Stack gap="md" px={36} py="lg">
 				{resumed && <Notice tone="info">{t('desktop.wizard.resume.note')}</Notice>}
+				{view.imagesSent > 0 && <Notice tone="info">{t('desktop.oneOff.waitingForSetup')}</Notice>}
 				<Title classNames={heading} order={3} ref={titleRef} tabIndex={-1}>
 					{title}
 				</Title>

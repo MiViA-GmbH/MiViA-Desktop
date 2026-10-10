@@ -7,6 +7,7 @@ import { followChanges } from './app/change-feed';
 import { App } from './app/providers';
 import { queryClient } from './app/query-client';
 import { router } from './app/router';
+import { DROP_HOVER } from './entities/one-off/queries';
 import { QUIT_REQUESTED } from './entities/setup/queries';
 import { changeLanguage, startI18n } from './shared/i18n/i18n';
 import { commands, events } from './shared/ipc';
@@ -21,6 +22,9 @@ async function start(root: HTMLElement): Promise<void> {
 	});
 	await events.quitRequested.listen(() => {
 		queryClient.setQueryData(QUIT_REQUESTED, true);
+	});
+	await events.dropHover.listen(({ payload }) => {
+		queryClient.setQueryData(DROP_HOVER, payload);
 	});
 	await events.navigate.listen(() => {
 		router.navigate({ to: '/' });

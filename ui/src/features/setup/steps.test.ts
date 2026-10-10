@@ -20,6 +20,7 @@ function view(changes: Partial<SetupView> = {}): SetupView {
 		report: null,
 		models: [],
 		options: ['autostart', 'explorer', 'telemetry'],
+		imagesSent: 0,
 		...changes,
 	};
 }

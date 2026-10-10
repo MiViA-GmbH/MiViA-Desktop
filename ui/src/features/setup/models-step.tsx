@@ -2,11 +2,10 @@ import { Button, Loader, Stack, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
+import { ModelChoices } from '../../entities/catalogue/model-choices';
 import { catalogueQuery } from '../../entities/setup/queries';
 import type { CatalogueView, SetupView } from '../../shared/ipc/bindings';
 import { Notice } from '../../shared/ui/notice';
-import { ModelChoices } from './model-choices';
 import { previousStep } from './steps';
 import { useAdvance } from './use-advance';
 import { useGo, useSave } from './use-setup';

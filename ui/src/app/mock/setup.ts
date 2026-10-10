@@ -65,6 +65,7 @@ export function setupView(scenario: string): SetupView {
 		report: null,
 		models: [],
 		options: ['autostart', 'explorer', 'telemetry', 'legacyStop'],
+		imagesSent: 0,
 	};
 }
 

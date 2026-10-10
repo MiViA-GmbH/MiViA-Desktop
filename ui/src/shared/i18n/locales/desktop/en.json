@@ -132,7 +132,8 @@
 		"singleImages": {
 			"meta": "Images you sent from Explorer.",
 			"emptyTitle": "No images sent yet",
-			"emptyText": "Right-click images in Explorer and choose Analyze with MiViA. They appear here."
+			"emptyText": "Images you send from Explorer appear here. Right-click images, choose Show more options, then Analyze with MiViA (Shift+F10 opens the full menu). You can also drag images into this window. More than 100 images? Send or drag the folder.",
+			"add": "Add images"
 		},
 		"settings": {
 			"general": "General",
@@ -187,6 +188,44 @@
 			"toOverview": "Back to Overview",
 			"loadFailedTitle": "Could not load",
 			"loadFailedText": "MiViA Desktop could not read its data. Close the window and open it again."
+		},
+		"oneOff": {
+			"title_one": "Analyze {{count}} image",
+			"title_other": "Analyze {{count}} images",
+			"analyze_one": "Analyze {{count}} image",
+			"analyze_other": "Analyze {{count}} images",
+			"noneTitle": "No images to analyze",
+			"noneText": "MiViA analyzes JPG, PNG, TIFF and BMP images. Export microscope formats as TIFF first.",
+			"close": "Close",
+			"cancel": "Cancel",
+			"more": "and {{count}} more",
+			"from": "from {{folder}}",
+			"remove": "Remove these images",
+			"notIncluded": "Not included: {{name}} ({{reason}})",
+			"reason": {
+				"missing": "not found",
+				"notImage": "not an image MiViA can analyze",
+				"zipTemp": "extract the ZIP file first"
+			},
+			"subfolders_one": "{{count}} subfolder not included",
+			"subfolders_other": "{{count}} subfolders not included",
+			"holdNote": "You can start now. Leave the images where they are until they are uploaded.",
+			"name": "Name",
+			"models": "Models",
+			"lastTime": "Selected as last time ({{date}})",
+			"tryAgain": "Try again",
+			"uploadCost": "Uses up to {{count}} of your {{remaining}} remaining image uploads.",
+			"tooMany": "MiViA analyzes at most 1000 images at once. Use an input folder for larger sets.",
+			"report": "Report: {{formats}}, {{language}} · {{folder}}",
+			"changeReport": "Change report settings",
+			"formatCsv": "Data (CSV)",
+			"reportLanguage": "Report language",
+			"chooseFolder": "Choose folder…",
+			"fallback": "Reports cannot be saved next to these images. They are saved to {{path}}.",
+			"account": "Account: {{name}}",
+			"cancelled": "Nothing was analyzed. Your images are unchanged.",
+			"waitingForSetup": "Finish setup to analyze the images you sent.",
+			"dropHere": "Drop images here to analyze them"
 		}
 	}
 }

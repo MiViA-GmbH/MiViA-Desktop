@@ -1,7 +1,7 @@
 import { mockIPC } from '@tauri-apps/api/mocks';
 
 import type { FolderView } from '../../shared/ipc/bindings';
-import { ATTENTION, BATCH, FOLDERS, HISTORY, HOLDS, ITEMS, REPORTS } from './fixtures';
+import { ATTENTION, BATCH, FOLDERS, HISTORY, HOLDS, ITEMS, ONE_OFF, REPORTS } from './fixtures';
 import { setupResponses, setupView } from './setup';
 
 const params = new URLSearchParams(window.location.search);
@@ -35,6 +35,8 @@ const responses: Record<string, unknown> = {
 	get_batch: BATCH,
 	list_batch_items: ITEMS,
 	list_series_reports: REPORTS,
+	get_one_off: scenario === 'one-off' ? ONE_OFF : null,
+	get_remaining_uploads: 1176,
 };
 
 const setup = setupResponses(setupView(scenario));

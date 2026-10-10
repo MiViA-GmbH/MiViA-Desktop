@@ -20,6 +20,7 @@ export {
 	IconLayoutDashboard as OverviewIcon,
 	IconLicense as LicenseIcon,
 	IconLoader2 as WorkingIcon,
+	IconPhotoPlus as AddImagesIcon,
 	IconPlayerPause as PausedIcon,
 	IconPlayerPlay as ResumeIcon,
 	IconRefreshAlert as TooOldIcon,
