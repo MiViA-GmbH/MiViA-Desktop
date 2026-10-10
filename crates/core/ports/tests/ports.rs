@@ -38,6 +38,7 @@ fn summary(origin: OriginView) -> BatchSummary {
             reports_stale: 0,
         },
         needs_attention: true,
+        closure_reason: Some("quiet_period".to_owned()),
     }
 }
 

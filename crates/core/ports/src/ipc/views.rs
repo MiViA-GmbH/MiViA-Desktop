@@ -36,6 +36,7 @@ pub struct BatchSummary {
     pub closed_at: Option<String>,
     pub counts: BatchCounts,
     pub needs_attention: bool,
+    pub closure_reason: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

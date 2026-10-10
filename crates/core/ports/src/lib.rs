@@ -6,3 +6,4 @@ pub mod queries;
 pub mod server;
 pub mod store;
 pub mod time;
+pub mod watch;

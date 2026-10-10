@@ -11,6 +11,7 @@ use mivia_domain::report::{PartEvent, PartState};
 use mivia_domain::source_file::{SourceFileEvent, SourceFileState};
 
 use super::TxError;
+use super::intake::{FolderChange, FolderRow};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NewAccount {
@@ -22,6 +23,7 @@ pub struct NewAccount {
 pub trait AccountRepo {
     fn upsert(&mut self, account: &NewAccount) -> Result<AccountId, TxError>;
     fn activate(&mut self, id: AccountId) -> Result<(), TxError>;
+    fn active(&mut self) -> Result<Option<AccountId>, TxError>;
 }
 
 pub trait HoldRepo {
@@ -44,10 +46,15 @@ pub struct NewFolder {
     pub quiet_period_ms: i64,
     pub label_rule: LabelRule,
     pub report_settings_json: String,
+    pub model_choices: Vec<ModelChoice>,
 }
 
 pub trait FolderRepo {
     fn add(&mut self, folder: &NewFolder) -> Result<FolderId, TxError>;
+    fn get(&mut self, id: FolderId) -> Result<FolderRow, TxError>;
+    fn list(&mut self) -> Result<Vec<FolderRow>, TxError>;
+    fn every_path(&mut self) -> Result<Vec<WinPath>, TxError>;
+    fn update(&mut self, id: FolderId, change: &FolderChange) -> Result<(), TxError>;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -125,6 +132,7 @@ pub struct NewComputation {
     pub model_version: Option<String>,
     pub app_version: String,
     pub next_attempt_at: Timestamp,
+    pub reused_from: Option<ComputationId>,
 }
 
 pub trait ComputationRepo {

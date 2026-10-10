@@ -1,3 +1,4 @@
+pub mod intake;
 mod repos;
 
 use std::any::Any;
@@ -7,6 +8,7 @@ use mivia_domain::ids::AccountId;
 use mivia_domain::transition::IllegalTransition;
 
 use crate::ipc::change::Change;
+use intake::IntakeRepo;
 
 pub use repos::{
     AccountRepo, BatchModelChoice, BatchRepo, ComputationRepo, FolderRepo, HoldRepo, NewAccount,
@@ -54,6 +56,7 @@ pub trait WriteTx {
     fn source_files(&mut self, scope: AccountScope) -> &mut dyn SourceFileRepo;
     fn computations(&mut self, scope: AccountScope) -> &mut dyn ComputationRepo;
     fn reports(&mut self, scope: AccountScope) -> &mut dyn ReportRepo;
+    fn intake(&mut self, scope: AccountScope) -> &mut dyn IntakeRepo;
 }
 
 #[async_trait]
