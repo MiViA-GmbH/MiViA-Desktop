@@ -66,6 +66,15 @@ impl SqliteStore {
         self.writer.call(work).await.map_err(call_error)
     }
 
+    pub async fn close(&self) -> Result<(), StoreError> {
+        self.readers.close().await;
+        self.writer
+            .clone()
+            .close()
+            .await
+            .map_err(|_| StoreError::Unavailable)
+    }
+
     pub async fn checkpoint(&self) -> Result<(), StoreError> {
         self.call(|conn| {
             conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")

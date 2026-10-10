@@ -62,8 +62,11 @@ impl Readers {
     }
 
     pub(crate) async fn close(&self) {
-        self.first.lock().await.take();
-        self.second.lock().await.take();
+        for slot in [&self.first, &self.second] {
+            if let Some(conn) = slot.lock().await.take() {
+                drop(conn.close().await);
+            }
+        }
     }
 
     pub(crate) async fn open_count(&self) -> usize {
