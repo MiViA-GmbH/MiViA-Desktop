@@ -38,3 +38,35 @@ fn install_id(data_dir: &Path) -> io::Result<String> {
     std::fs::write(&path, &id)?;
     Ok(id)
 }
+
+const MACHINE_KEY: &[u8] = b"mivia-desktop-machine-id";
+
+pub fn machine_id(machine_guid: &str) -> String {
+    let digest = crate::redact::hmac(MACHINE_KEY, machine_guid.trim().to_lowercase().as_bytes());
+    let value = digest
+        .iter()
+        .take(16)
+        .fold(0_u128, |value, byte| value << 8 | u128::from(*byte));
+    format!("{value:032x}")
+}
+
+pub fn delete_local_logs(logs_dir: &Path) -> usize {
+    let Ok(entries) = std::fs::read_dir(logs_dir) else {
+        return 0;
+    };
+    let mut deleted = 0;
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if matches!(name.as_str(), "mivia.log" | "mivia.lock" | "session.json") {
+            continue;
+        }
+        let path = entry.path();
+        let removed = if path.is_dir() {
+            std::fs::remove_dir_all(&path)
+        } else {
+            std::fs::remove_file(&path)
+        };
+        deleted += usize::from(removed.is_ok());
+    }
+    deleted
+}

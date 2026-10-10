@@ -8,17 +8,29 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[features]
+default = ["logging"]
+logging = ["dep:logroller", "dep:tracing-appender", "dep:tracing-subscriber"]
+
 [dependencies]
+flate2 = "=1.1.10"
+getrandom = "=0.4.3"
+hmac = "=0.13.0"
+logroller = { version = "=0.1.12", optional = true }
 mivia-domain.workspace = true
 mivia-ports.workspace = true
-logroller = "=0.1.12"
 parking_lot = "=0.12.5"
+regex = "=1.13.1"
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.150"
-tracing = { version = "=0.1.44", features = ["release_max_level_debug"] }
-tracing-appender = "=0.2.5"
-tracing-subscriber = { version = "=0.3.23", default-features = false, features = ["fmt", "json", "registry", "std"] }
+sha2 = "=0.11.0"
+tracing = { version = "=0.1.44", default-features = false, features = ["std", "release_max_level_debug"] }
+tracing-appender = { version = "=0.2.5", optional = true }
+tracing-subscriber = { version = "=0.3.23", optional = true, default-features = false, features = ["fmt", "json", "registry", "std"] }
 uuid = { version = "=1.26.1", default-features = false, features = ["v4"] }
+zip = { version = "=8.6.0", default-features = false, features = ["deflate-flate2"] }
 
 [dev-dependencies]
+flate2 = "=1.1.10"
+proptest = "=1.11.0"
 tempfile = "=3.27.0"

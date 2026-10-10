@@ -10,6 +10,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "=0.4.13"
 mivia-application = { path = "../crates/core/application" }
+mivia-diagnostics = { path = "../crates/adapters/diagnostics", default-features = false }
 mivia-domain = { path = "../crates/core/domain" }
 
 [workspace]
@@ -60,6 +61,13 @@ bench = false
 [[bin]]
 name = "legacy_config"
 path = "fuzz_targets/legacy_config.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "redaction"
+path = "fuzz_targets/redaction.rs"
 test = false
 doc = false
 bench = false

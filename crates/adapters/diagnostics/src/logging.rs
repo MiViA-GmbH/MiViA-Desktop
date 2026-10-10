@@ -1,11 +1,15 @@
+use std::backtrace::Backtrace;
 use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{self, Write};
-use std::path::Path;
+use std::panic::PanicHookInfo;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
 use logroller::{Compression, LogRollerBuilder, Rotation, RotationSize};
+use mivia_domain::ids::Timestamp;
+use mivia_ports::time::iso_utc;
 use parking_lot::Mutex;
 use tracing::Level;
 use tracing_appender::non_blocking::{NonBlocking, WorkerGuard};
@@ -14,6 +18,8 @@ use tracing_subscriber::filter::Targets;
 use tracing_subscriber::fmt::MakeWriter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
+
+use crate::{DiagnosticsContext, now_ms};
 
 const TAIL_LINES: usize = 1000;
 const KEEP_FILES: u64 = 20;
@@ -181,6 +187,41 @@ fn sweep(logs_dir: &Path, now: SystemTime) {
 
 fn is_swept(name: &str) -> bool {
     name.starts_with("mivia") && name != "mivia.log" && name != "mivia.lock"
+}
+
+pub fn install_panic_hook(logs_dir: PathBuf, context: DiagnosticsContext, logging: Arc<Logging>) {
+    std::panic::set_hook(Box::new(move |info| {
+        let at = now_ms();
+        let written = write_crash_file(&logs_dir.join("crashes"), &context, info, at);
+        tracing::error!(
+            location = info.location().map(ToString::to_string),
+            crash_file_written = written.is_ok(),
+            "panic"
+        );
+        logging.flush();
+    }));
+}
+
+fn write_crash_file(
+    dir: &Path,
+    context: &DiagnosticsContext,
+    info: &PanicHookInfo<'_>,
+    at: i64,
+) -> io::Result<()> {
+    let message = info.payload_as_str().unwrap_or("non-string panic payload");
+    let record = serde_json::json!({
+        "kind": "panic",
+        "message": message,
+        "location": info.location().map(ToString::to_string),
+        "thread": std::thread::current().name().unwrap_or("unnamed"),
+        "backtrace": Backtrace::force_capture().to_string(),
+        "sessionId": context.session_id,
+        "version": context.version,
+        "at": iso_utc(Timestamp(at)),
+    });
+    std::fs::create_dir_all(dir)?;
+    let name = format!("crash-{}.json", iso_utc(Timestamp(at)).replace(':', "-"));
+    std::fs::write(dir.join(name), serde_json::to_vec_pretty(&record)?)
 }
 
 #[cfg(test)]
