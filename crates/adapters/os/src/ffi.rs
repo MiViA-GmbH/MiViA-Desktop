@@ -1,8 +1,10 @@
+mod files;
 mod pipe;
 mod process;
 mod security;
 mod window;
 
+pub(crate) use files::{file_times, final_path_of, free_bytes};
 pub use pipe::{
     PIPE_INSTANCE_LIMIT, accept_pipe_client, create_pipe_instance, pipe_client, pipe_server_pid,
 };
