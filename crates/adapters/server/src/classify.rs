@@ -32,7 +32,14 @@ fn chain<'a>(
 
 fn untrusted(error: &reqwest::Error) -> bool {
     chain(error).any(|cause| {
-        cause
+        let mut inner = cause;
+        while let Some(wrapped) = inner
+            .downcast_ref::<std::io::Error>()
+            .and_then(std::io::Error::get_ref)
+        {
+            inner = wrapped;
+        }
+        inner
             .downcast_ref::<rustls::Error>()
             .is_some_and(|tls| matches!(tls, rustls::Error::InvalidCertificate(_)))
     })
