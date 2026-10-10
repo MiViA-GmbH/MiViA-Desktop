@@ -798,3 +798,12 @@ id = "canary"
 why = "A rule that never fires on a planted violation protects nothing."
 instead = "Fix the tool configuration until the canary fails as expected."
 adr = "0009-code-shape-rules-are-machine-enforced.md"
+
+[[rule]]
+id = "sql-now"
+why = "Every current time reaches SQL as a bound parameter from the Clock port, so tests control time."
+instead = "Bind the timestamp from Clock::now."
+adr = "0003-crate-boundaries-enforced-by-xtask.md"
+grep = ["datetime('now')", "unixepoch(", "CURRENT_TIMESTAMP", "julianday('now')"]
+scope = ["crates/adapters/store/"]
+extensions = ["sql", "rs"]

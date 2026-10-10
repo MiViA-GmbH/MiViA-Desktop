@@ -1,0 +1,66 @@
+---
+source: crates/adapters/store/src/internal_tests.rs
+expression: report
+---
+claim source probe:
+  SEARCH source_file USING COVERING INDEX source_file_due (account_id=? AND state=? AND next_attempt_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+claim source upload:
+  SEARCH source_file USING COVERING INDEX source_file_due (account_id=? AND state=? AND next_attempt_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SCALAR SUBQUERY 2
+  SEARCH h USING PRIMARY KEY (account_id=?)
+claim computation submit:
+  SEARCH computation USING INDEX computation_claim (state=? AND next_attempt_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SCALAR SUBQUERY 2
+  SEARCH h USING PRIMARY KEY (account_id=?)
+claim computation poll:
+  SEARCH computation USING COVERING INDEX computation_poll (account_id=? AND next_poll_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SCALAR SUBQUERY 2
+  SEARCH h USING PRIMARY KEY (account_id=?)
+claim report request:
+  SEARCH p USING INDEX report_part_queue (state=?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SCALAR SUBQUERY 2
+  SEARCH h USING PRIMARY KEY (account_id=?)
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+claim report poll:
+  SEARCH p USING INDEX report_part_due (state=? AND next_poll_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SCALAR SUBQUERY 2
+  SEARCH h USING PRIMARY KEY (account_id=?)
+  SEARCH r USING INTEGER PRIMARY KEY (rowid=?)
+claim hold probe:
+  SEARCH account_hold USING COVERING INDEX account_hold_probe (account_id=? AND next_probe_at<?)
+claim open batches:
+  SEARCH batch USING COVERING INDEX batch_open (account_id=?)
+list history body:
+  SEARCH batch USING INDEX batch_hist_time (account_id=? AND sort_at<?)
+list history head:
+  SEARCH batch USING INDEX batch_open (account_id=?)
+list attention series:
+  SEARCH batch USING INDEX batch_attention (account_id=?)
+count attention series:
+  SEARCH batch USING COVERING INDEX batch_attention (account_id=?)
+get batch:
+  SEARCH batch USING INTEGER PRIMARY KEY (rowid=?)
+list batch items:
+  SEARCH source_file USING INDEX source_file_by_batch (batch_id=? AND arrival_seq>?)
+list item computations:
+  SEARCH computation USING INDEX computation_by_source (source_file_id=?)
+list folders:
+  SEARCH watched_folder USING INDEX watched_folder_by_account (account_id=?)

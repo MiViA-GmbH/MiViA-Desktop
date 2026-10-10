@@ -2,3 +2,6 @@
 lint = "clippy --workspace --lib --bins --locked -- -D warnings"
 lint-tests = "clippy --workspace --tests --benches --examples --locked -- -D warnings -A clippy::too_many_lines -A clippy::cognitive_complexity -A clippy::excessive_nesting -A clippy::too_many_arguments -A clippy::unwrap_used -A clippy::expect_used -A clippy::panic -A clippy::indexing_slicing"
 xtask = "run -q --release -p xtask --"
+
+[env]
+LIBSQLITE3_FLAGS = "-DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DQS=0 -DSQLITE_OMIT_DEPRECATED -DSQLITE_OMIT_SHARED_CACHE"
