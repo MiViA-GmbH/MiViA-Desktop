@@ -1,16 +1,17 @@
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read};
 use std::os::windows::fs::{FileExt, OpenOptionsExt};
-use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use async_trait::async_trait;
 use mivia_domain::ids::{Fingerprint, Timestamp};
 use mivia_domain::image_format::{ByteSource, check_source};
+use mivia_domain::output::ProbeResult;
 use mivia_domain::path::WinPath;
 use mivia_domain::sanitise::is_reserved;
 use mivia_ports::fs::{
-    ChunkSource, Expected, FileStat, FileSystem, FsError, ImageRead, Walk, WalkEntry,
+    ByteSink, ChunkSource, Expected, FileStat, FileSystem, FsError, ImageRead, SaveTarget, Walk,
+    WalkEntry,
 };
 use sha2::{Digest, Sha256};
 use windows_sys::Win32::Storage::FileSystem::{
@@ -18,6 +19,7 @@ use windows_sys::Win32::Storage::FileSystem::{
     FILE_SHARE_WRITE,
 };
 
+use crate::reports::{self, bounded, native};
 use crate::{ffi, upload};
 
 const SHARE_ALL: u32 = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
@@ -31,20 +33,17 @@ pub struct OsFileSystem;
 pub(crate) fn fs_error(error: &io::Error) -> FsError {
     match error.raw_os_error() {
         Some(2 | 3) => FsError::NotFound,
-        Some(5) => FsError::AccessDenied,
+        Some(5 | 19) => FsError::AccessDenied,
         Some(32 | 33) => FsError::SharingViolation,
-        Some(53 | 55 | 59 | 64 | 67) => FsError::NetworkUnavailable,
-        Some(112) => FsError::DiskFull,
-        Some(123) => FsError::InvalidName,
+        Some(53 | 55 | 59 | 64 | 67 | 121 | 1231) => FsError::NetworkUnavailable,
+        Some(39 | 112) => FsError::DiskFull,
+        Some(80 | 183) => FsError::Exists,
+        Some(123 | 206) => FsError::InvalidName,
         Some(267) => FsError::NotADirectory,
         Some(362..=405) => FsError::CloudOnly,
         _ if error.kind() == io::ErrorKind::NotFound => FsError::NotFound,
         _ => FsError::Io,
     }
-}
-
-fn native(path: &WinPath) -> PathBuf {
-    PathBuf::from(path.to_string())
 }
 
 pub(crate) fn open_shared(path: &WinPath, flags: u32) -> Result<File, FsError> {
@@ -92,7 +91,7 @@ impl ByteSource for Source<'_> {
     }
 }
 
-fn hash(file: &mut File) -> Result<Fingerprint, FsError> {
+pub(crate) fn hash(file: &mut File) -> Result<Fingerprint, FsError> {
     let mut hasher = Sha256::new();
     let mut buffer = vec![0; READ_CHUNK];
     loop {
@@ -176,7 +175,7 @@ fn write_atomic(path: &WinPath, bytes: &[u8]) -> Result<(), FsError> {
     })
 }
 
-async fn blocking<T: Send + 'static>(
+pub(crate) async fn blocking<T: Send + 'static>(
     work: impl FnOnce() -> Result<T, FsError> + Send + 'static,
 ) -> Result<T, FsError> {
     tokio::task::spawn_blocking(work)
@@ -238,5 +237,45 @@ impl FileSystem for OsFileSystem {
     async fn free_space(&self, path: &WinPath) -> Result<u64, FsError> {
         let path = path.to_string();
         blocking(move || ffi::free_bytes(&path).map_err(|error| fs_error(&error))).await
+    }
+
+    async fn create_staging(&self, path: &WinPath) -> Result<Box<dyn ByteSink>, FsError> {
+        let path = path.clone();
+        let file = bounded(move || reports::create_staging(&path)).await?;
+        Ok(Box::new(file))
+    }
+
+    async fn list_names(&self, folder: &WinPath) -> Result<Vec<String>, FsError> {
+        let folder = folder.clone();
+        bounded(move || reports::list_names(&folder)).await
+    }
+
+    async fn save_report(
+        &self,
+        staging: &WinPath,
+        target: &SaveTarget,
+    ) -> Result<WinPath, FsError> {
+        let (staging, target) = (staging.clone(), target.clone());
+        bounded(move || reports::save(&staging, &target)).await
+    }
+
+    async fn digest(&self, path: &WinPath) -> Result<(u64, Fingerprint), FsError> {
+        let path = path.clone();
+        bounded(move || {
+            let mut file = open_shared(&path, FILE_FLAG_SEQUENTIAL_SCAN)?;
+            let size = file.metadata().map_err(|error| fs_error(&error))?.len();
+            Ok((size, hash(&mut file)?))
+        })
+        .await
+    }
+
+    async fn remove(&self, path: &WinPath) -> Result<(), FsError> {
+        let path = path.clone();
+        bounded(move || std::fs::remove_file(native(&path)).map_err(|error| fs_error(&error))).await
+    }
+
+    async fn probe_folder(&self, folder: &WinPath, create: bool) -> Result<ProbeResult, FsError> {
+        let folder = folder.clone();
+        bounded(move || reports::probe(&folder, create)).await
     }
 }

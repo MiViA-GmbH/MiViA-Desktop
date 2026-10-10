@@ -2378,6 +2378,7 @@ name = "mivia-os"
 version = "0.0.0"
 dependencies = [
  "async-trait",
+ "iana-time-zone",
  "keyring-core",
  "mivia-domain",
  "mivia-ports",
@@ -2387,6 +2388,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.11.0",
+ "tempfile",
  "tokio",
  "walkdir",
  "windows-native-keyring-store",
@@ -2448,8 +2450,10 @@ dependencies = [
 name = "mivia-stub"
 version = "0.0.0"
 dependencies = [
+ "async-trait",
  "axum",
  "mivia-testkit",
+ "parking_lot",
  "serde",
  "serde_json",
  "tokio",

@@ -4,6 +4,7 @@ mod credentials;
 mod ffi;
 mod fs;
 mod pipe;
+mod reports;
 mod upload;
 mod watch;
 
