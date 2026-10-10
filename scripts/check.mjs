@@ -23,6 +23,10 @@ const steps = {
 	biome: ['pnpm', ['exec', 'biome', 'ci', '.']],
 	tsc: ui('typecheck'),
 	fallow: ui('fallow'),
+	i18n: ui('i18n:check'),
+	'ui-test': ui('test'),
+	playwright: ui('playwright'),
+	e2e: ['node', ['scripts/e2e.mjs']],
 	canary: ['cargo', ['xtask', 'canary']],
 	deny: [tool('cargo-deny'), ['check']],
 	'deny-fuzz': [tool('cargo-deny'), ['--manifest-path', 'fuzz/Cargo.toml', 'check']],
@@ -40,7 +44,19 @@ const steps = {
 	'clippy-fix': ['cargo', ['clippy', '--fix', '--allow-dirty', '--workspace', '--lib', '--bins']],
 };
 
-const check = ['fmt', 'lint', 'lint-tests', 'source-rules', 'arch', 'command-size', 'biome', 'tsc', 'fallow'];
+const check = [
+	'fmt',
+	'lint',
+	'lint-tests',
+	'source-rules',
+	'arch',
+	'command-size',
+	'biome',
+	'tsc',
+	'fallow',
+	'i18n',
+	'ui-test',
+];
 const groups = {
 	check,
 	full: [
@@ -52,6 +68,8 @@ const groups = {
 		'machete',
 		'jscpd',
 		'size',
+		'playwright',
+		'e2e',
 		'ci-integrity',
 		'actionlint',
 		'zizmor',

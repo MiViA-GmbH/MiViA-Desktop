@@ -12,6 +12,9 @@ pre-commit:
     - name: source-rules
       glob: "*.{rs,ts,tsx,js,mjs,css,sql,html}"
       run: cargo xtask source-rules {staged_files}
+    - name: i18n
+      glob: "{ui/src/**/*.{ts,tsx,json},src-tauri/src/**/*.rs,src-tauri/locales/*.json}"
+      run: node ui/scripts/i18n-check.mjs
     - name: cargo-manifests
       glob: "{**/Cargo.toml,Cargo.toml,Cargo.lock}"
       run: node scripts/check.mjs machete arch
