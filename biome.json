@@ -7,9 +7,7 @@
 			"!packages/theme-shim/assets/favicon.svg",
 			"!packages/theme-shim/src/MiviaLogo.tsx",
 			"!packages/theme-shim/src/theme.ts",
-			"!ui/src/shared/ipc/bindings.ts",
-			"!ui/src/shared/telemetry/field-list.de.json",
-			"!ui/src/shared/telemetry/field-list.en.json"
+			"!ui/src/shared/ipc/bindings.ts"
 		]
 	},
 	"plugins": ["./ui/quality/ternary.grit"],

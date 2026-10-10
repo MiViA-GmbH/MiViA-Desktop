@@ -11,6 +11,7 @@ mod command_size;
 mod commit_text;
 mod finding;
 mod floors;
+mod json_format;
 mod quality_diff;
 mod registry;
 mod repo;

@@ -3,7 +3,7 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 use serde_json::{Map, Value, json};
 
-use crate::{repo, structured};
+use crate::{json_format, repo, structured};
 
 const SOURCE: &str = "crates/adapters/diagnostics/telemetry/events.toml";
 const TARGETS: [(&str, &str); 2] = [
@@ -69,7 +69,7 @@ fn render(language: &str, table: &Value) -> Result<String> {
         "retentionDays": table.get("retention_days").context("no retention")?,
         "events": events,
     });
-    Ok(format!("{}\n", serde_json::to_string_pretty(&list)?))
+    Ok(json_format::biome(&list))
 }
 
 pub(crate) fn run(root: &Path, args: &[String]) -> Result<bool> {
