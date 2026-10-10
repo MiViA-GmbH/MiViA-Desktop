@@ -208,20 +208,24 @@ impl SqlTx<'_> {
         now: Timestamp,
     ) -> Result<PartState, TxError> {
         let head = self.part_head(id)?;
-        let (event, counted) = match why {
-            Rerequest::Expired => (PartEvent::Expired, 0),
-            Rerequest::Cancelled => (
-                PartEvent::Cancelled {
-                    rerequests: head.rerequests,
-                },
-                1,
-            ),
+        let event = match why {
+            Rerequest::Expired => PartEvent::Expired,
+            Rerequest::Cancelled => PartEvent::Cancelled {
+                rerequests: head.rerequests,
+            },
+            Rerequest::TryAgain => PartEvent::TryAgain,
         };
         let after = self.part_event(id, event, now)?;
+        let rerequests = match why {
+            Rerequest::Expired => i64::from(head.rerequests),
+            Rerequest::Cancelled => i64::from(head.rerequests) + 1,
+            Rerequest::TryAgain => 0,
+        };
         self.run(
-            "UPDATE report_part SET server_report_id = NULL, next_attempt_at = 0, \
-             rerequests = rerequests + ?2 WHERE id = ?1",
-            params![id.0, counted],
+            "UPDATE report_part SET next_attempt_at = 0, rerequests = ?2, \
+             server_report_id = CASE WHEN staging_path IS NULL THEN NULL \
+             ELSE server_report_id END WHERE id = ?1",
+            params![id.0, rerequests],
         )?;
         Ok(after)
     }

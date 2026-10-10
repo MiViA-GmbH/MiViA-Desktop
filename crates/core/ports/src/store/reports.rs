@@ -82,6 +82,7 @@ pub struct SaveRow {
 pub enum Rerequest {
     Expired,
     Cancelled,
+    TryAgain,
 }
 
 pub trait ReportRepo {
