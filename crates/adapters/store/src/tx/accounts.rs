@@ -1,12 +1,12 @@
 use mivia_domain::hold::{Access, Gate, HoldReason, SERVICE_UNAVAILABLE_POLL_MS};
-use mivia_domain::ids::{AccountId, FolderId, Timestamp};
+use mivia_domain::ids::{AccountId, Timestamp};
 use mivia_ports::ipc::change::Change;
-use mivia_ports::store::{AccountRepo, FolderRepo, HoldRepo, NewAccount, NewFolder, TxError};
+use mivia_ports::store::{AccountRepo, HoldRepo, NewAccount, TxError};
 use rusqlite::params;
 use rusqlite::types::FromSql;
 
 use super::SqlTx;
-use crate::codec::{hold_reason, label_rule, parse_hold_reason};
+use crate::codec::{hold_reason, parse_hold_reason};
 use crate::errors::SqlResult;
 use crate::sql;
 
@@ -42,6 +42,11 @@ impl AccountRepo for SqlTx<'_> {
             .tx()?;
         self.record(Change::All);
         (updated == 1).then_some(()).ok_or(TxError::NotFound)
+    }
+
+    fn active(&mut self) -> Result<Option<AccountId>, TxError> {
+        let ids: Vec<i64> = self.column("SELECT id FROM account WHERE active = 1", [])?;
+        Ok(ids.first().copied().map(AccountId))
     }
 }
 
@@ -123,34 +128,5 @@ impl SqlTx<'_> {
             .query_map(values, |row| row.get(0))
             .and_then(Iterator::collect)
             .tx()
-    }
-}
-
-impl FolderRepo for SqlTx<'_> {
-    fn add(&mut self, folder: &NewFolder) -> Result<FolderId, TxError> {
-        let id = self
-            .tx
-            .prepare_cached(
-                "INSERT INTO watched_folder (account_id, path, path_key, position, quiet_period, \
-                 label_rule, report_settings) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) RETURNING id",
-            )
-            .and_then(|mut statement| {
-                statement.query_row(
-                    params![
-                        self.account(),
-                        folder.path.to_string(),
-                        folder.path.key(),
-                        folder.position,
-                        folder.quiet_period_ms,
-                        label_rule(folder.label_rule),
-                        folder.report_settings_json
-                    ],
-                    |row| row.get(0),
-                )
-            })
-            .map(FolderId)
-            .tx()?;
-        self.record(Change::Folder { id: id.to_string() });
-        Ok(id)
     }
 }

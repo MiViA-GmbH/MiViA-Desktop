@@ -85,6 +85,7 @@ async fn folders_list_by_position_and_claims_follow_holds() {
                     quiet_period_ms: 2_000,
                     label_rule: LabelRule::Auto,
                     report_settings_json: "{}".to_owned(),
+                    model_choices: Vec::new(),
                 })
                 .unwrap();
         }
@@ -145,6 +146,7 @@ async fn claims_follow_state_and_skip_in_flight_ids() {
                 model_version: None,
                 app_version: "2.0.0".to_owned(),
                 next_attempt_at: Timestamp(1_000),
+                reused_from: None,
             })
             .unwrap();
         let now = Timestamp(2_000);

@@ -10,8 +10,11 @@ use crate::errors::SqlResult;
 use crate::sql;
 
 const INSERT_COMPUTATION: &str = "INSERT INTO computation (account_id, batch_id, source_file_id, \
-     model_choice_key, model_version, state, next_attempt_at, app_version) \
-     SELECT ?1, s.batch_id, s.id, ?3, ?4, 'queued', ?5, ?6 FROM source_file s \
+     model_choice_key, model_version, state, reason, reused_from, done_at, next_attempt_at, \
+     app_version) SELECT ?1, s.batch_id, s.id, ?3, ?4, \
+     CASE WHEN ?8 IS NULL THEN 'queued' ELSE 'done' END, \
+     CASE WHEN ?8 IS NULL THEN NULL ELSE 'reused' END, ?8, \
+     CASE WHEN ?8 IS NULL THEN NULL ELSE ?5 END, ?5, ?6 FROM source_file s \
      WHERE s.id = ?2 AND s.account_id = ?1 AND s.batch_id = ?7 RETURNING id";
 
 const UPDATE_STATE: &str = "UPDATE computation SET state = ?2, reason = ?3, \
@@ -34,15 +37,21 @@ impl ComputationRepo for SqlTx<'_> {
                         computation.model_version,
                         computation.next_attempt_at.0,
                         computation.app_version,
-                        computation.batch_id.0
+                        computation.batch_id.0,
+                        computation.reused_from.map(|from| from.0)
                     ],
                     |row| row.get(0),
                 )
             })
             .tx()?;
+        let state = if computation.reused_from.is_some() {
+            ComputationState::Done { reused: true }
+        } else {
+            ComputationState::Queued
+        };
         let change = (
             counters::computation(None),
-            counters::computation(Some(ComputationState::Queued)),
+            counters::computation(Some(state)),
         );
         self.batch_changed(computation.batch_id.0, change, computation.next_attempt_at)?;
         Ok(ComputationId(id))

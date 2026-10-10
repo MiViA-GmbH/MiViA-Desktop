@@ -64,3 +64,44 @@ list item computations:
   SEARCH computation USING INDEX computation_by_source (source_file_id=?)
 list folders:
   SEARCH watched_folder USING INDEX watched_folder_by_account (account_id=?)
+list folder rows:
+  SEARCH watched_folder USING INDEX watched_folder_by_account (account_id=?)
+list live members:
+  SEARCH b USING INDEX batch_open (account_id=?)
+  SEARCH s USING INDEX source_file_by_batch (batch_id=?)
+find open batch by key:
+  SEARCH batch USING COVERING INDEX batch_open_key (account_id=? AND batch_key=?)
+claim readiness probes:
+  SEARCH s USING INDEX source_file_due (account_id=? AND state=? AND next_attempt_at<?)
+  LIST SUBQUERY 1
+  SCAN json_each VIRTUAL TABLE INDEX 1:
+  CREATE BLOOM FILTER
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH f USING INTEGER PRIMARY KEY (rowid=?)
+next readiness probe:
+  SEARCH source_file USING COVERING INDEX source_file_due (account_id=? AND state=?)
+find earlier copy in batch:
+  SEARCH source_file USING INDEX source_file_by_batch (batch_id=?)
+find content in ledger:
+  SEARCH ledger_entry USING PRIMARY KEY (folder_id=? AND fingerprint=?)
+list paths with content:
+  SEARCH ledger_path USING INDEX ledger_path_by_fingerprint (folder_id=? AND fingerprint=?)
+plan computations:
+  SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH m USING PRIMARY KEY (batch_id=?)
+  SEARCH e USING PRIMARY KEY (folder_id=? AND fingerprint=? AND model_choice_key=?) LEFT-JOIN
+  SEARCH c USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+list known paths:
+  SEARCH ledger_path USING PRIMARY KEY (folder_id=?)
+list baseline paths:
+  SEARCH ledger_path USING INDEX ledger_path_by_fingerprint (folder_id=? AND fingerprint=?)
+list open batch rows:
+  SEARCH b USING INDEX batch_open (account_id=?)
+  SEARCH f USING INTEGER PRIMARY KEY (rowid=?)
+  CORRELATED SCALAR SUBQUERY 1
+  SEARCH s USING INDEX source_file_by_batch (batch_id=?)
+list member paths:
+  SEARCH source_file USING INDEX source_file_by_batch (batch_id=?)
+list detected members:
+  SEARCH source_file USING INDEX source_file_by_batch (batch_id=?)

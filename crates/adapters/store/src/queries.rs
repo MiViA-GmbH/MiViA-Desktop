@@ -38,6 +38,7 @@ fn summary(row: &Row<'_>) -> rusqlite::Result<(BatchSummary, i64)> {
             reports_stale: row.get(15)?,
         },
         needs_attention: row.get(16)?,
+        closure_reason: row.get(18)?,
     };
     Ok((summary, row.get(17)?))
 }

@@ -3,10 +3,17 @@ mod batches;
 mod computations;
 mod counters;
 mod files;
+mod folders;
+mod intake;
+mod intake_repo;
+mod ledger;
+mod readiness;
 mod reports;
+mod series;
 
 use mivia_domain::ids::AccountId;
 use mivia_ports::ipc::change::Change;
+use mivia_ports::store::intake::IntakeRepo;
 use mivia_ports::store::{
     AccountRepo, AccountScope, BatchRepo, ComputationRepo, FolderRepo, HoldRepo, ReportRepo,
     SourceFileRepo, WriteTx,
@@ -89,6 +96,10 @@ impl WriteTx for SqlTx<'_> {
     }
 
     fn reports(&mut self, scope: AccountScope) -> &mut dyn ReportRepo {
+        self.scoped(scope)
+    }
+
+    fn intake(&mut self, scope: AccountScope) -> &mut dyn IntakeRepo {
         self.scoped(scope)
     }
 }

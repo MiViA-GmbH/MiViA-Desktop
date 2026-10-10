@@ -2,6 +2,7 @@ use mivia_domain::batch::ClosureReason;
 use mivia_domain::computation::{ComputationState, FailReason};
 use mivia_domain::hold::{HoldReason, KeyProblem, LicenseScope, NetworkBlock};
 use mivia_domain::label::LabelRule;
+use mivia_domain::path::WinPath;
 use mivia_domain::report::{PartFailure, PartState};
 use mivia_domain::source_file::{RejectReason, SourceFileState, UnreadableReason};
 use mivia_ports::store::TxError;
@@ -151,6 +152,17 @@ pub(crate) const fn label_rule(rule: LabelRule) -> &'static str {
         LabelRule::Range => "range",
         LabelRule::Folder => "folder",
     }
+}
+
+pub(crate) fn parse_label_rule(text: &str) -> Result<LabelRule, TxError> {
+    [LabelRule::Auto, LabelRule::Range, LabelRule::Folder]
+        .into_iter()
+        .find(|rule| label_rule(*rule) == text)
+        .ok_or_else(|| corrupt("label rule", text, None))
+}
+
+pub(crate) fn parse_path(text: &str) -> Result<WinPath, TxError> {
+    WinPath::parse(text).map_err(|_| corrupt("path", text, None))
 }
 
 pub(crate) const SOURCE_STATES: [SourceFileState; 15] = [

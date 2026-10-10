@@ -62,6 +62,9 @@ CREATE INDEX history_event_batch ON history_event(batch_id, id)
 index history_event_time
 CREATE INDEX history_event_time ON history_event(account_id, id)
 
+index ledger_path_by_fingerprint
+CREATE INDEX ledger_path_by_fingerprint ON ledger_path(folder_id, fingerprint)
+
 index report_by_batch
 CREATE INDEX report_by_batch ON report(batch_id) WHERE batch_id IS NOT NULL
 

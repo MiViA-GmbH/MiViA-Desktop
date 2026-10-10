@@ -108,6 +108,7 @@ async fn run(store: &SqliteStore, scope: AccountScope, batch: BatchId, op: Op, i
                         model_version: None,
                         app_version: "2.0.0".to_owned(),
                         next_attempt_at: now,
+                        reused_from: None,
                     })
                 })
                 .await

@@ -102,7 +102,7 @@ pub(crate) const BATCH_OPEN: &str =
 
 pub(crate) const BATCH_COLUMNS: &str = "id, label, origin, folder_id, open, opened_at, closed_at, \
      files, done, failed, problems, active_count, reports_saved, reports_problem, reports_total, \
-     reports_stale, needs_attention, sort_at";
+     reports_stale, needs_attention, sort_at, closure_reason";
 
 pub(crate) fn history_body() -> String {
     format!(
@@ -149,6 +149,108 @@ pub(crate) const ITEM_COMPUTATIONS: &str = "SELECT id, model_choice_key, state F
 pub(crate) const FOLDERS: &str = "SELECT id, path, position, active FROM watched_folder \
      WHERE account_id = ?1 AND removed_at IS NULL ORDER BY position, id";
 
+pub(crate) const FOLDER_ROWS: &str = "SELECT id, path, active, quiet_period, label_rule, \
+     missing_since FROM watched_folder WHERE account_id = ?1 AND removed_at IS NULL \
+     ORDER BY position, id";
+
+pub(crate) const FOLDER_BY_ID: &str = "SELECT id, path, active, quiet_period, label_rule, \
+     missing_since FROM watched_folder WHERE account_id = ?1 AND id = ?2";
+
+pub(crate) const FOLDER_CHOICES: &str = "SELECT model_id, customization_id \
+     FROM folder_model_choice WHERE folder_id = ?1 ORDER BY position";
+
+pub(crate) const LIVE_MEMBERS: &str = "SELECT s.id, s.batch_id, s.path, s.state, s.reason, \
+     s.size, s.mtime FROM batch b INDEXED BY batch_open JOIN source_file s ON s.batch_id = b.id \
+     WHERE b.account_id = ?1 AND b.open = 1 AND b.folder_id = ?2 \
+     AND s.state NOT IN ('vanished', 'unreadable')";
+
+pub(crate) const OPEN_BATCH_BY_KEY: &str =
+    "SELECT id FROM batch WHERE account_id = ?1 AND batch_key = ?2 AND open = 1";
+
+pub(crate) const OPEN_COMPUTATIONS_OF_FILE: &str = "SELECT id FROM computation \
+     WHERE source_file_id = ?1 AND state IN ('queued', 'submitting', 'computing')";
+
+pub(crate) const DONE_COMPUTATIONS_OF_FILE: &str =
+    "SELECT id FROM computation WHERE source_file_id = ?1 AND state = 'done'";
+
+pub(crate) const RELEASE_LEDGER_OF_FILE: &str = "DELETE FROM ledger_entry \
+     WHERE (folder_id, fingerprint) IN (SELECT b.folder_id, s.fingerprint FROM source_file s \
+     JOIN batch b ON b.id = s.batch_id WHERE s.id = ?1) \
+     AND computation_id IN (SELECT id FROM computation WHERE source_file_id = ?1 \
+     AND state = 'cancelled')";
+
+pub(crate) const CLAIM_PROBES: &str = "SELECT s.id, f.path, s.path, s.attempts, s.first_busy_at \
+     FROM source_file s JOIN batch b ON b.id = s.batch_id \
+     JOIN watched_folder f ON f.id = b.folder_id \
+     WHERE s.account_id = ?1 AND s.state = 'detected' AND s.next_attempt_at <= ?2 \
+     AND s.id NOT IN (SELECT value FROM json_each(?3)) \
+     ORDER BY s.next_attempt_at, s.id LIMIT ?4";
+
+pub(crate) const NEXT_PROBE: &str = "SELECT min(next_attempt_at) FROM source_file \
+     WHERE account_id = ?1 AND state = 'detected'";
+
+pub(crate) const READY_ROW: &str = "SELECT s.batch_id, b.folder_id, s.path, s.fingerprint, \
+     s.copy_of FROM source_file s JOIN batch b ON b.id = s.batch_id \
+     WHERE s.id = ?1 AND s.account_id = ?2";
+
+pub(crate) const STORE_READ: &str = "UPDATE source_file SET fingerprint = ?2, size = ?3, \
+     mtime = ?4, change_time = ?5, attempts = 0, first_busy_at = NULL WHERE id = ?1";
+
+pub(crate) const EARLIER_IN_BATCH: &str = "SELECT id FROM source_file \
+     WHERE batch_id = ?1 AND fingerprint = ?2 AND id <> ?3 AND copy_of IS NULL \
+     AND state IN ('ready', 'known_content', 'uploading', 'uploaded') \
+     ORDER BY arrival_seq LIMIT 1";
+
+pub(crate) const IN_LEDGER: &str =
+    "SELECT 1 FROM ledger_entry WHERE folder_id = ?1 AND fingerprint = ?2 LIMIT 1";
+
+pub(crate) const PATHS_WITH_CONTENT: &str = "SELECT path, size, mtime, fingerprint \
+     FROM ledger_path INDEXED BY ledger_path_by_fingerprint \
+     WHERE folder_id = ?1 AND fingerprint = ?2";
+
+pub(crate) const UPSERT_LEDGER_PATH: &str = "INSERT INTO ledger_path \
+     (folder_id, path, fingerprint, size, mtime, seen_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6) \
+     ON CONFLICT (folder_id, path) DO UPDATE SET fingerprint = excluded.fingerprint, \
+     size = excluded.size, mtime = excluded.mtime, seen_at = excluded.seen_at";
+
+pub(crate) const COMPUTATION_PLAN: &str = "SELECT s.batch_id, m.model_choice_key, \
+     b.app_version, e.computation_id, ifnull(c.state = 'done', 0) FROM source_file s \
+     JOIN batch b ON b.id = s.batch_id JOIN batch_model_choice m ON m.batch_id = s.batch_id \
+     LEFT JOIN ledger_entry e ON e.folder_id = b.folder_id AND e.fingerprint = s.fingerprint \
+     AND e.model_choice_key = m.model_choice_key \
+     LEFT JOIN computation c ON c.id = e.computation_id \
+     WHERE s.id = ?1 ORDER BY m.model_choice_key";
+
+pub(crate) const CLAIM_LEDGER: &str = "INSERT INTO ledger_entry \
+     (folder_id, fingerprint, model_choice_key, computation_id) \
+     SELECT b.folder_id, s.fingerprint, ?2, ?3 FROM source_file s \
+     JOIN batch b ON b.id = s.batch_id WHERE s.id = ?1 ON CONFLICT DO NOTHING";
+
+pub(crate) const KNOWN_PATHS: &str =
+    "SELECT path, size, mtime, fingerprint FROM ledger_path WHERE folder_id = ?1";
+
+pub(crate) const BASELINE_PATHS: &str = "SELECT path FROM ledger_path \
+     INDEXED BY ledger_path_by_fingerprint \
+     WHERE folder_id = ?1 AND fingerprint = ?2 AND seen_at >= ?3 ORDER BY path";
+
+pub(crate) const OPEN_BATCH_ROWS: &str = "SELECT b.id, b.folder_id, b.batch_key, b.opened_at, \
+     ifnull(b.last_member_at, b.opened_at), b.files, \
+     (SELECT count(*) FROM source_file s WHERE s.batch_id = b.id AND s.state = 'detected'), \
+     f.quiet_period FROM batch b INDEXED BY batch_open \
+     JOIN watched_folder f ON f.id = b.folder_id \
+     WHERE b.account_id = ?1 AND b.open = 1 ORDER BY b.id";
+
+pub(crate) const MEMBER_PATHS: &str = "SELECT path FROM source_file \
+     WHERE batch_id = ?1 AND account_id = ?2 \
+     AND state NOT IN ('vanished', 'unreadable', 'known_file') ORDER BY arrival_seq";
+
+pub(crate) const DETECTED_IN_BATCH: &str =
+    "SELECT id FROM source_file WHERE batch_id = ?1 AND state = 'detected' ORDER BY arrival_seq";
+
+pub(crate) const MOVE_MEMBER: &str = "UPDATE source_file SET batch_id = ?2, \
+     arrival_seq = COALESCE((SELECT max(arrival_seq) FROM source_file WHERE batch_id = ?2), 0) + 1 \
+     WHERE id = ?1";
+
 #[cfg(test)]
 pub(crate) fn planned() -> Vec<(&'static str, String)> {
     vec![
@@ -168,5 +270,19 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("list batch items", batch_items()),
         ("list item computations", ITEM_COMPUTATIONS.to_owned()),
         ("list folders", FOLDERS.to_owned()),
+        ("list folder rows", FOLDER_ROWS.to_owned()),
+        ("list live members", LIVE_MEMBERS.to_owned()),
+        ("find open batch by key", OPEN_BATCH_BY_KEY.to_owned()),
+        ("claim readiness probes", CLAIM_PROBES.to_owned()),
+        ("next readiness probe", NEXT_PROBE.to_owned()),
+        ("find earlier copy in batch", EARLIER_IN_BATCH.to_owned()),
+        ("find content in ledger", IN_LEDGER.to_owned()),
+        ("list paths with content", PATHS_WITH_CONTENT.to_owned()),
+        ("plan computations", COMPUTATION_PLAN.to_owned()),
+        ("list known paths", KNOWN_PATHS.to_owned()),
+        ("list baseline paths", BASELINE_PATHS.to_owned()),
+        ("list open batch rows", OPEN_BATCH_ROWS.to_owned()),
+        ("list member paths", MEMBER_PATHS.to_owned()),
+        ("list detected members", DETECTED_IN_BATCH.to_owned()),
     ]
 }

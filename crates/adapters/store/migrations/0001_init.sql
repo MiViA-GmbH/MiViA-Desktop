@@ -230,6 +230,8 @@ CREATE TABLE ledger_path (
   PRIMARY KEY (folder_id, path)
 ) STRICT, WITHOUT ROWID;
 
+CREATE INDEX ledger_path_by_fingerprint ON ledger_path(folder_id, fingerprint);
+
 CREATE TABLE report (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   account_id INTEGER NOT NULL REFERENCES account(id),
