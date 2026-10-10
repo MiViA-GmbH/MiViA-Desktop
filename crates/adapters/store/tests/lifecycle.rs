@@ -139,10 +139,12 @@ async fn revision_moves_only_with_changes_and_observer_sees_it() {
 }
 
 #[tokio::test]
-async fn readers_open_lazily_and_close_on_request() {
+async fn readers_are_kept_only_on_request() {
     let fx = fixture(StoreConfig::for_tests()).await;
     let scope = fx.store.write(|tx| Ok(account(tx, "a"))).await.unwrap();
+    fx.store.list_folders(scope).await.unwrap();
     assert_eq!(fx.store.open_readers().await, 0);
+    fx.store.keep_readers();
     fx.store.list_folders(scope).await.unwrap();
     assert_eq!(fx.store.open_readers().await, 1);
     fx.store.list_folders(scope).await.unwrap();
@@ -150,6 +152,7 @@ async fn readers_open_lazily_and_close_on_request() {
     fx.store.close_readers().await;
     assert_eq!(fx.store.open_readers().await, 0);
     fx.store.list_folders(scope).await.unwrap();
+    assert_eq!(fx.store.open_readers().await, 0);
 }
 
 #[tokio::test]

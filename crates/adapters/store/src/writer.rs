@@ -148,6 +148,10 @@ impl SqliteStore {
         .await
     }
 
+    pub fn keep_readers(&self) {
+        self.readers.keep();
+    }
+
     pub async fn close_readers(&self) {
         self.readers.close().await;
     }

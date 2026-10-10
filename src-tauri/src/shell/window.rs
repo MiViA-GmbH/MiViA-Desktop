@@ -133,6 +133,9 @@ fn show(window: &WebviewWindow) {
 }
 
 pub(crate) fn shown(app: &AppHandle) {
+    if let Some(ready) = app.state::<Cx>().get() {
+        ready.store.keep_readers();
+    }
     if let Some(window) = app.get_webview_window(LABEL) {
         show(&window);
         super::mark(if PAINTED.swap(true, Ordering::SeqCst) {
