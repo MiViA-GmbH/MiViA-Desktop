@@ -1,0 +1,3225 @@
+{
+	"components": {
+		"schemas": {
+			"CreateJobsDto": {
+				"properties": {
+					"customizationConfigOverride": {
+						"additionalProperties": true,
+						"description": "Inline customization config (admin-only). Replaces the resolved customization config for these jobs only. The stored customization group is not modified.",
+						"type": "object"
+					},
+					"customizationId": {
+						"description": "ID of the customization to use for processing",
+						"format": "uuid",
+						"type": "string"
+					},
+					"forceCompute": {
+						"description": "Compute even when a result for the same image and configuration already exists. Defaults to false, which returns the existing result instead of computing again.",
+						"type": "boolean"
+					},
+					"imageIds": {
+						"description": "List of image IDs to process",
+						"items": {
+							"format": "uuid",
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"modelId": {
+						"description": "ID of the model to use for processing",
+						"format": "uuid",
+						"type": "string"
+					},
+					"shareResults": {
+						"description": "Whether the results these jobs produce may be offered to other requests for the same image and configuration. Defaults to true. Independent of forceCompute.",
+						"type": "boolean"
+					},
+					"source": {
+						"description": "Source of the job",
+						"enum": ["WEB", "API", "SANDBOX", "TEST", "IDENTIFICATION"],
+						"format": "enum",
+						"type": "string"
+					}
+				},
+				"required": ["imageIds", "modelId"],
+				"type": "object"
+			},
+			"CreatePanoramaDto": {
+				"properties": {
+					"gridConfig": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/GridConfigDto"
+							}
+						],
+						"description": "Stitching grid configuration"
+					},
+					"name": {
+						"description": "Optional panorama name",
+						"maxLength": 255,
+						"type": "string"
+					},
+					"tileIds": {
+						"description": "Ordered tile image IDs to stitch",
+						"items": {
+							"format": "uuid",
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["tileIds", "gridConfig"],
+				"type": "object"
+			},
+			"CreateReportDto": {
+				"properties": {
+					"includeImages": {
+						"default": true,
+						"description": "If true, the report will contains images zipped with the report. Applies to csv reports only.",
+						"type": "boolean"
+					},
+					"jobsIds": {
+						"description": "IDs of the jobs, at most 100",
+						"items": {
+							"format": "uuid",
+							"type": "string"
+						},
+						"maxItems": 100,
+						"type": "array"
+					},
+					"quality": {
+						"description": "If set, images in the archive are re-encoded as JPEG with this quality (1-100) instead of the original PNG. Applies to csv reports only.",
+						"maximum": 100,
+						"minimum": 1,
+						"type": "number"
+					},
+					"timezone": {
+						"default": "UTC",
+						"description": "IANA name of the client time zone, e.g. Europe/Berlin",
+						"type": "string"
+					},
+					"tzOffset": {
+						"deprecated": true,
+						"description": "Deprecated 2026-08-19, removed after 2026-12-01, use timezone: client time zone offset in minutes compared to UTC time",
+						"type": "number"
+					}
+				},
+				"required": ["jobsIds"],
+				"type": "object"
+			},
+			"CreateUserCustomizationDto": {
+				"properties": {
+					"config": {
+						"description": "Values overriding the inherited config",
+						"type": "object"
+					},
+					"description": {
+						"type": "string"
+					},
+					"name": {
+						"description": "Display name of the customization",
+						"type": "string"
+					},
+					"parentId": {
+						"description": "Customization to inherit from. Must be one you can already use, and it cannot be another user-owned customization. The model is taken from it.",
+						"type": "string"
+					},
+					"showInApp": {
+						"default": false,
+						"description": "Show this customization in your model dropdown in the web app",
+						"type": "boolean"
+					}
+				},
+				"required": ["name"],
+				"type": "object"
+			},
+			"FilePresignDto": {
+				"properties": {
+					"fileName": {
+						"description": "Only its extension is kept; the key itself is generated",
+						"example": "scan.png",
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"FormatNotSupportedError": {
+				"properties": {
+					"code": {
+						"description": "Not JPEG, PNG, TIFF or BMP",
+						"enum": ["IMAGE_FORMAT_NOT_SUPPORTED"],
+						"type": "string"
+					},
+					"filename": {
+						"example": "scan.png",
+						"type": "string"
+					},
+					"message": {
+						"description": "Human-readable reason",
+						"type": "string"
+					}
+				},
+				"required": ["filename", "message", "code"],
+				"type": "object"
+			},
+			"GridConfigDto": {
+				"properties": {
+					"autoAlign": {
+						"description": "Enable automatic tile alignment",
+						"type": "boolean"
+					},
+					"gridColumns": {
+						"description": "Number of tile columns",
+						"minimum": 1,
+						"type": "number"
+					},
+					"gridRows": {
+						"description": "Number of tile rows",
+						"minimum": 1,
+						"type": "number"
+					},
+					"imageResize": {
+						"description": "Per-tile resize percentage",
+						"maximum": 400,
+						"minimum": 10,
+						"type": "number"
+					},
+					"overlapX": {
+						"description": "Horizontal tile overlap in percent",
+						"maximum": 100,
+						"minimum": -10,
+						"type": "number"
+					},
+					"overlapY": {
+						"description": "Vertical tile overlap in percent",
+						"maximum": 100,
+						"minimum": -10,
+						"type": "number"
+					},
+					"pixelPerUm": {
+						"description": "Image scale in pixels per micrometer, 0 = no calibration",
+						"type": "number"
+					},
+					"zigzag": {
+						"description": "Tiles were captured in a zigzag (boustrophedon) order",
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"gridRows",
+					"gridColumns",
+					"overlapX",
+					"overlapY",
+					"imageResize",
+					"pixelPerUm",
+					"zigzag",
+					"autoAlign"
+				],
+				"type": "object"
+			},
+			"ImageDto": {
+				"properties": {
+					"createdAt": {
+						"description": "Date of upload in ISO format",
+						"format": "date-time",
+						"type": "string"
+					},
+					"duplicate": {
+						"description": "Whether this image was already uploaded (duplicate by hash)",
+						"type": "boolean"
+					},
+					"height": {
+						"description": "Image height in pixels",
+						"type": "number"
+					},
+					"id": {
+						"description": "ID of the image",
+						"format": "uuid",
+						"type": "string"
+					},
+					"orginalFilename": {
+						"description": "Original filename",
+						"type": "string"
+					},
+					"placeholder": {
+						"description": "BlurHash string for instant placeholder (ASCII-safe encoded)",
+						"type": "string"
+					},
+					"thumbnailUrl": {
+						"description": "Presigned storage URL for the thumbnail, so the browser never loads it through an authenticated route",
+						"type": "string"
+					},
+					"validated": {
+						"deprecated": true,
+						"description": "Deprecated 2026-09-28, removed after 2026-12-27. Always true for new uploads; false only on images uploaded earlier with forced set.",
+						"type": "boolean"
+					},
+					"width": {
+						"description": "Image width in pixels",
+						"type": "number"
+					}
+				},
+				"required": ["id", "createdAt", "orginalFilename", "validated", "thumbnailUrl"],
+				"type": "object"
+			},
+			"LicenseDto": {
+				"properties": {
+					"createdAt": {
+						"description": "License creation date",
+						"format": "date-time",
+						"type": "string"
+					},
+					"limits": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/LicenseLimitsDto"
+							}
+						],
+						"description": "License limits"
+					},
+					"type": {
+						"description": "License type",
+						"enum": ["TIME_LIMITED", "IMAGES_LIMITED", "UNLIMITED", "FLOATING", "DEMO"],
+						"type": "string"
+					}
+				},
+				"required": ["type", "createdAt", "limits"],
+				"type": "object"
+			},
+			"LicenseLimitsDto": {
+				"properties": {
+					"extended": {
+						"description": "Whether a DEMO license has already been extended",
+						"type": "boolean"
+					},
+					"finish": {
+						"description": "License expiration date",
+						"format": "date-time",
+						"type": "string"
+					},
+					"images": {
+						"description": "Images limit",
+						"type": "number"
+					},
+					"used": {
+						"description": "Images used",
+						"type": "number"
+					}
+				},
+				"type": "object"
+			},
+			"ModelCustomizationDto": {
+				"properties": {
+					"id": {
+						"description": "ID of the customization",
+						"format": "uuid",
+						"type": "string"
+					},
+					"name": {
+						"$ref": "#/components/schemas/ModelCustomizationNameDto"
+					}
+				},
+				"required": ["id", "name"],
+				"type": "object"
+			},
+			"ModelCustomizationNameDto": {
+				"properties": {
+					"de": {
+						"description": "Name in German",
+						"type": "string"
+					},
+					"en": {
+						"description": "Name in English",
+						"type": "string"
+					}
+				},
+				"required": ["en", "de"],
+				"type": "object"
+			},
+			"ModelDto": {
+				"properties": {
+					"accessType": {
+						"description": "Access type of the model",
+						"enum": ["PUBLIC", "PRIVATE"],
+						"type": "string"
+					},
+					"description_de": {
+						"description": "Description in German",
+						"type": "string"
+					},
+					"description_en": {
+						"description": "Description in English",
+						"type": "string"
+					},
+					"displayName": {
+						"description": "Display name of the model",
+						"type": "string"
+					},
+					"id": {
+						"description": "ID of the model",
+						"format": "uuid",
+						"type": "string"
+					},
+					"isDefaultVisible": {
+						"description": "Whether the model is default visible",
+						"type": "boolean"
+					},
+					"name": {
+						"description": "Internal name of the model",
+						"type": "string"
+					}
+				},
+				"required": ["id", "name", "displayName", "accessType", "isDefaultVisible"],
+				"type": "object"
+			},
+			"PanoramaDto": {
+				"properties": {
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"error": {
+						"type": "string"
+					},
+					"gridConfig": {
+						"type": "object"
+					},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"resultImageId": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"resultThumbnailUrl": {
+						"type": "string"
+					},
+					"status": {
+						"enum": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"],
+						"type": "string"
+					},
+					"tiles": {
+						"items": {
+							"$ref": "#/components/schemas/ImageDto"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["id", "status", "createdAt", "gridConfig", "tiles"],
+				"type": "object"
+			},
+			"ResolutionTooLowError": {
+				"properties": {
+					"code": {
+						"description": "Below minWidth x minHeight",
+						"enum": ["IMAGE_RESOLUTION_TOO_LOW"],
+						"type": "string"
+					},
+					"filename": {
+						"example": "scan.png",
+						"type": "string"
+					},
+					"height": {
+						"example": 200,
+						"type": "number"
+					},
+					"message": {
+						"description": "Human-readable reason",
+						"type": "string"
+					},
+					"minHeight": {
+						"example": 512,
+						"type": "number"
+					},
+					"minWidth": {
+						"example": 512,
+						"type": "number"
+					},
+					"width": {
+						"example": 200,
+						"type": "number"
+					}
+				},
+				"required": ["filename", "message", "code", "width", "height", "minWidth", "minHeight"],
+				"type": "object"
+			},
+			"TooLargeError": {
+				"properties": {
+					"code": {
+						"description": "More pixels than maxPixels",
+						"enum": ["IMAGE_TOO_LARGE"],
+						"type": "string"
+					},
+					"filename": {
+						"example": "scan.png",
+						"type": "string"
+					},
+					"maxPixels": {
+						"example": 1200000000,
+						"type": "number"
+					},
+					"message": {
+						"description": "Human-readable reason",
+						"type": "string"
+					}
+				},
+				"required": ["filename", "message", "code", "maxPixels"],
+				"type": "object"
+			},
+			"UpdateUserCustomizationDto": {
+				"properties": {
+					"description": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"parentId": {
+						"description": "null detaches the customization from its parent",
+						"type": "string"
+					},
+					"showInApp": {
+						"description": "Show this customization in your model dropdown in the web app",
+						"type": "boolean"
+					}
+				},
+				"type": "object"
+			},
+			"UploadRejectedBody": {
+				"properties": {
+					"code": {
+						"enum": ["IMAGE_UPLOAD_REJECTED"],
+						"type": "string"
+					},
+					"errors": {
+						"description": "One entry per rejected file, discriminated by code",
+						"items": {
+							"discriminator": {
+								"mapping": {
+									"IMAGE_FORMAT_NOT_SUPPORTED": "#/components/schemas/FormatNotSupportedError",
+									"IMAGE_RESOLUTION_TOO_LOW": "#/components/schemas/ResolutionTooLowError",
+									"IMAGE_TOO_LARGE": "#/components/schemas/TooLargeError"
+								},
+								"propertyName": "code"
+							},
+							"oneOf": [
+								{
+									"$ref": "#/components/schemas/FormatNotSupportedError"
+								},
+								{
+									"$ref": "#/components/schemas/TooLargeError"
+								},
+								{
+									"$ref": "#/components/schemas/ResolutionTooLowError"
+								}
+							]
+						},
+						"type": "array"
+					},
+					"message": {
+						"example": "1 of 2 files rejected, nothing was saved.",
+						"type": "string"
+					}
+				},
+				"required": ["code", "message", "errors"],
+				"type": "object"
+			},
+			"UserJobDto": {
+				"properties": {
+					"archived": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/boolean"
+							}
+						],
+						"description": "Is the job moved to the archive?"
+					},
+					"createdAt": {
+						"description": "Date when the job was created in ISO format",
+						"format": "date-time",
+						"type": "string"
+					},
+					"finishedAt": {
+						"description": "Date when the job was finished in ISO format",
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {
+						"description": "ID of the model",
+						"format": "uuid",
+						"type": "string"
+					},
+					"imageId": {
+						"description": "ID of the image",
+						"format": "uuid",
+						"type": "string"
+					},
+					"modelId": {
+						"description": "ID of the model",
+						"format": "uuid",
+						"type": "string"
+					},
+					"outdated": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/boolean"
+							}
+						],
+						"description": "Is the job outdated? Outdated jobs were created with older model version."
+					},
+					"result": {
+						"description": "Model result. The structure depends on the model type.",
+						"type": "object"
+					},
+					"startedAt": {
+						"description": "Date when the job was started in ISO format",
+						"format": "date-time",
+						"type": "string"
+					},
+					"status": {
+						"description": "Status of the job",
+						"enum": ["CACHED", "NEW", "FAILED", "PENDING"],
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"imageId",
+					"finishedAt",
+					"startedAt",
+					"createdAt",
+					"status",
+					"result",
+					"modelId",
+					"archived",
+					"outdated"
+				],
+				"type": "object"
+			},
+			"boolean": {
+				"properties": {},
+				"type": "object"
+			}
+		},
+		"securitySchemes": {
+			"apiKey": {
+				"description": "MiViA access key",
+				"in": "header",
+				"name": "authorization",
+				"type": "apiKey"
+			}
+		}
+	},
+	"info": {
+		"contact": {},
+		"description": "\n## Changelog\n\nChanges to the API are published as markdown at\n[/api/docs/changelog.md](/api/docs/changelog.md) and as JSON at\n[/api/docs/changelog.json](/api/docs/changelog.json).",
+		"title": "MiViA API",
+		"version": "snapshot"
+	},
+	"openapi": "3.0.0",
+	"paths": {
+		"/api/customizations/assigned": {
+			"get": {
+				"description": "Prepared by an administrator. Readable and runnable, not editable.",
+				"operationId": "AssignedCustomizationsController_list",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"properties": {
+											"description": {
+												"nullable": true,
+												"type": "string"
+											},
+											"id": {
+												"format": "uuid",
+												"type": "string"
+											},
+											"modelId": {
+												"format": "uuid",
+												"nullable": true,
+												"type": "string"
+											},
+											"nameDe": {
+												"type": "string"
+											},
+											"nameEn": {
+												"type": "string"
+											},
+											"parentId": {
+												"format": "uuid",
+												"nullable": true,
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": ""
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					}
+				},
+				"summary": "List customizations assigned to you",
+				"tags": ["Customizations"]
+			}
+		},
+		"/api/customizations/assigned/{customizationId}": {
+			"get": {
+				"description": "Returns the config with inheritance resolved. Pass `resolved=false` for the values stored on this node alone, which is what an edit would change.",
+				"operationId": "AssignedCustomizationsController_getResolved",
+				"parameters": [
+					{
+						"description": "Merge in inherited values. Defaults to true.",
+						"in": "query",
+						"name": "resolved",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "path",
+						"name": "customizationId",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"additionalProperties": true,
+									"example": {
+										"GENERAL": {
+											"MEASUREMENT_TYPE": "LIKE_NOTHING",
+											"MIN_SIZE_UM_COMPUTATION": 4
+										},
+										"MODELS": {
+											"MAGNIFICATION": {
+												"LENGTH": 100,
+												"UNIT": "um"
+											}
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Resolved config, or this node alone when `resolved=false`"
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"403": {
+						"description": "Not assigned to you"
+					}
+				},
+				"summary": "Read a customization assigned to you",
+				"tags": ["Customizations"]
+			}
+		},
+		"/api/customizations/mine": {
+			"get": {
+				"description": "Hidden from the web app unless `showInApp` is set.",
+				"operationId": "UserCustomizationsController_list",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"properties": {
+											"createdAt": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"description": {
+												"nullable": true,
+												"type": "string"
+											},
+											"id": {
+												"format": "uuid",
+												"type": "string"
+											},
+											"modelId": {
+												"format": "uuid",
+												"nullable": true,
+												"type": "string"
+											},
+											"nameEn": {
+												"type": "string"
+											},
+											"parentId": {
+												"format": "uuid",
+												"nullable": true,
+												"type": "string"
+											},
+											"showInApp": {
+												"type": "boolean"
+											}
+										},
+										"type": "object"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": ""
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					}
+				},
+				"summary": "List your own customizations",
+				"tags": ["Customizations"]
+			},
+			"post": {
+				"description": "Store only what differs from the parent: objects merge key by key, arrays and scalars replace.\nWith `parentId` the model is taken from the parent; without one it works with any model and `config` must be complete.\nCannot inherit from another user-owned customization. Use the returned id as `customizationId` when creating jobs.",
+				"operationId": "UserCustomizationsController_create",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateUserCustomizationDto"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": ""
+					},
+					"400": {
+						"description": "Config too large, limit of 50 reached, or parent is user-owned"
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"403": {
+						"description": "Cannot use that parent"
+					}
+				},
+				"summary": "Create your own customization",
+				"tags": ["Customizations"]
+			}
+		},
+		"/api/customizations/mine/file": {
+			"get": {
+				"description": "File storage for the onboarding app.",
+				"operationId": "UserCustomizationsController_presignFileDownload",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "key",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "contentType",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"expiresAt": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"key": {
+											"example": "9a3f.../0199....png",
+											"type": "string"
+										},
+										"url": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": ""
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"403": {
+						"description": "Key belongs to another user"
+					}
+				},
+				"summary": "Get a presigned URL to read one of your files",
+				"tags": ["Customizations"]
+			},
+			"post": {
+				"description": "File storage for the onboarding app. PUT the bytes to the returned url, then keep the key.",
+				"operationId": "UserCustomizationsController_presignFileUpload",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/FilePresignDto"
+							}
+						}
+					},
+					"required": false
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"expiresAt": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"key": {
+											"example": "9a3f.../0199....png",
+											"type": "string"
+										},
+										"url": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": ""
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					}
+				},
+				"summary": "Get a presigned URL to upload a file",
+				"tags": ["Customizations"]
+			}
+		},
+		"/api/customizations/mine/{customizationId}": {
+			"delete": {
+				"description": "Existing jobs keep their frozen config and results.",
+				"operationId": "UserCustomizationsController_remove",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "customizationId",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": ""
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"404": {
+						"description": "Not yours or does not exist"
+					}
+				},
+				"summary": "Delete one of your customizations",
+				"tags": ["Customizations"]
+			},
+			"get": {
+				"description": "Returns the config with inheritance resolved. Pass `resolved=false` for the values stored on this node alone, which is what an edit would change.",
+				"operationId": "UserCustomizationsController_getResolved",
+				"parameters": [
+					{
+						"description": "Merge in inherited values. Defaults to true.",
+						"in": "query",
+						"name": "resolved",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "path",
+						"name": "customizationId",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"additionalProperties": true,
+									"example": {
+										"GENERAL": {
+											"MEASUREMENT_TYPE": "LIKE_NOTHING",
+											"MIN_SIZE_UM_COMPUTATION": 4
+										},
+										"MODELS": {
+											"MAGNIFICATION": {
+												"LENGTH": 100,
+												"UNIT": "um"
+											}
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Resolved config, or this node alone when `resolved=false`"
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"404": {
+						"description": "Not yours or does not exist"
+					}
+				},
+				"summary": "Read one of your customizations",
+				"tags": ["Customizations"]
+			},
+			"put": {
+				"description": "`showInApp` shows it in your model dropdown; clearing it hides it again. Only you ever see it.",
+				"operationId": "UserCustomizationsController_update",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "customizationId",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateUserCustomizationDto"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": ""
+					},
+					"400": {
+						"description": "Parent is user-owned"
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"404": {
+						"description": "Not yours or does not exist"
+					}
+				},
+				"summary": "Rename, re-parent or show/hide one of your customizations",
+				"tags": ["Customizations"]
+			}
+		},
+		"/api/customizations/mine/{customizationId}/settings": {
+			"put": {
+				"description": "Body is the config itself. Replaces stored values whole; unmentioned keys keep coming from the parent.",
+				"operationId": "UserCustomizationsController_updateSettings",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "customizationId",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"additionalProperties": true,
+								"example": {
+									"GENERAL": {
+										"MIN_SIZE_UM_COMPUTATION": 8
+									}
+								},
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": ""
+					},
+					"400": {
+						"description": "Config exceeds 64 KB"
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"404": {
+						"description": "Not yours or does not exist"
+					}
+				},
+				"summary": "Replace the config of one of your customizations",
+				"tags": ["Customizations"]
+			}
+		},
+		"/api/customizations/mine/{customizationId}/user-data": {
+			"get": {
+				"description": "Free-form storage for your own data, capped at 64 KB. MiVIA never reads, merges or displays it, and it is never shown in the web app. Empty until you store something.",
+				"operationId": "UserCustomizationsController_getUserData",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "customizationId",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"additionalProperties": true,
+									"example": {
+										"reference": "ACME-1",
+										"tags": ["batch-7"]
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": ""
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"404": {
+						"description": "Not yours or does not exist"
+					}
+				},
+				"summary": "Read the data you stored on one of your customizations",
+				"tags": ["Customizations"]
+			},
+			"put": {
+				"description": "Free-form storage for your own data, capped at 64 KB. MiVIA never reads, merges or displays it, and it is never shown in the web app. Empty until you store something. Body is the value itself and replaces the stored one whole.",
+				"operationId": "UserCustomizationsController_replaceUserData",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "customizationId",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"additionalProperties": true,
+								"example": {
+									"reference": "ACME-1",
+									"tags": ["batch-7"]
+								},
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"additionalProperties": true,
+									"example": {
+										"reference": "ACME-1",
+										"tags": ["batch-7"]
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": ""
+					},
+					"400": {
+						"description": "userData exceeds 64 KB"
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"404": {
+						"description": "Not yours or does not exist"
+					}
+				},
+				"summary": "Replace the data you stored on one of your customizations",
+				"tags": ["Customizations"]
+			}
+		},
+		"/api/customizations/public": {
+			"get": {
+				"description": "Customizations tied to no model and no user, so usable with any model.\n\nEvery entry carries its `path`: the names from the root of the tree down to itself.\nThe optional `path` query filters that tree like a directory listing, case-insensitively.\n`*` matches within one segment, `**` spans any number of them, and a trailing `/` is\nshorthand for `/**`.\n\nGiven this tree:\n\n    ROOT\n    └── PARENT\n        ├── CHILD 1\n        └── CHILD 2\n\nthese are the possible filters:\n\n    path             returns\n    ---------------  --------------------------------------------\n    (omitted)        everything, flat\n    ROOT/PARENT      that node only\n    ROOT/PARENT/*    its direct children\n    ROOT/PARENT/**   its whole subtree, without PARENT itself\n    ROOT/PARENT/     same as ROOT/PARENT/**\n    ROOT/**          PARENT and both children\n    **/PARENT        that node wherever it sits in the tree\n    **/CHILD *       both children, at any depth\n    *                roots only, so ROOT\n\nThe pattern always spans the whole path, so a bare `PARENT` means \"a root called\nPARENT\" and matches nothing here. Prefix it with `**/` to search by name instead.\n\nEvery other character is a literal, so a customization called `v1.4` or `a?b`\nneeds no escaping. Globs longer than 200 characters are rejected.",
+				"operationId": "PublicCustomizationsController_list",
+				"parameters": [
+					{
+						"description": "Directory-style glob over the full path. See the description above.",
+						"examples": {
+							"anywhere": {
+								"summary": "By name pattern, at any depth",
+								"value": "**/CHILD *"
+							},
+							"byName": {
+								"summary": "By name, at any depth",
+								"value": "**/PARENT"
+							},
+							"children": {
+								"summary": "Direct children only",
+								"value": "ROOT/PARENT/*"
+							},
+							"node": {
+								"summary": "One exact node",
+								"value": "ROOT/PARENT"
+							},
+							"roots": {
+								"summary": "Roots only",
+								"value": "*"
+							},
+							"subtree": {
+								"summary": "Whole subtree, without its root",
+								"value": "ROOT/PARENT/**"
+							}
+						},
+						"in": "query",
+						"name": "path",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"properties": {
+											"description": {
+												"nullable": true,
+												"type": "string"
+											},
+											"id": {
+												"format": "uuid",
+												"type": "string"
+											},
+											"modelId": {
+												"format": "uuid",
+												"nullable": true,
+												"type": "string"
+											},
+											"nameDe": {
+												"type": "string"
+											},
+											"nameEn": {
+												"type": "string"
+											},
+											"parentId": {
+												"format": "uuid",
+												"nullable": true,
+												"type": "string"
+											},
+											"path": {
+												"description": "Names from the root of the tree down to this one",
+												"example": ["ROOT", "PARENT", "CHILD 1"],
+												"items": {
+													"type": "string"
+												},
+												"type": "array"
+											}
+										},
+										"type": "object"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": ""
+					},
+					"400": {
+						"description": "Path glob longer than 200 characters"
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					}
+				},
+				"summary": "List public customizations",
+				"tags": ["Customizations"]
+			}
+		},
+		"/api/customizations/public/{customizationId}": {
+			"get": {
+				"description": "Returns the config with inheritance resolved. Pass `resolved=false` for the values stored on this node alone, which is what an edit would change.",
+				"operationId": "PublicCustomizationsController_getResolved",
+				"parameters": [
+					{
+						"description": "Merge in inherited values. Defaults to true.",
+						"in": "query",
+						"name": "resolved",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "path",
+						"name": "customizationId",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"additionalProperties": true,
+									"example": {
+										"GENERAL": {
+											"MEASUREMENT_TYPE": "LIKE_NOTHING",
+											"MIN_SIZE_UM_COMPUTATION": 4
+										},
+										"MODELS": {
+											"MAGNIFICATION": {
+												"LENGTH": 100,
+												"UNIT": "um"
+											}
+										}
+									},
+									"type": "object"
+								}
+							}
+						},
+						"description": "Resolved config, or this node alone when `resolved=false`"
+					},
+					"401": {
+						"description": "Invalid access key or session"
+					},
+					"404": {
+						"description": "Not public or does not exist"
+					}
+				},
+				"summary": "Read a public customization",
+				"tags": ["Customizations"]
+			}
+		},
+		"/api/image": {
+			"get": {
+				"operationId": "ImageController_listUserImages",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ImageDto"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "List of images"
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"summary": "List uploaded images",
+				"tags": ["Image", "Images"]
+			},
+			"post": {
+				"operationId": "ImageController_uploadImages",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"properties": {
+									"files": {
+										"description": "JPEG, PNG, TIFF or BMP, at least 512x512 px",
+										"items": {
+											"format": "binary",
+											"type": "string"
+										},
+										"type": "array"
+									},
+									"forced": {
+										"deprecated": true,
+										"description": "Deprecated 2026-09-28, removed after 2026-12-27. Ignored: every upload is validated on the server.",
+										"items": {
+											"default": [false],
+											"type": "boolean"
+										},
+										"type": "array"
+									},
+									"panoramaTile": {
+										"description": "Per file: upload as a panorama tile. Tiles skip the minimum resolution and use no licence.",
+										"items": {
+											"default": false,
+											"type": "boolean"
+										},
+										"type": "array"
+									}
+								},
+								"type": "object"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ImageDto"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "List of uploaded images"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UploadRejectedBody"
+								}
+							}
+						},
+						"description": "IMAGE_UPLOAD_REJECTED: at least one file failed validation, errors lists each one. Nothing is saved, no licence is used. Without code: the user already has 110 unassigned panorama tiles."
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"403": {
+						"description": "Licence exhausted."
+					},
+					"413": {
+						"description": "A file exceeds the upload size limit."
+					}
+				},
+				"summary": "Upload image",
+				"tags": ["Image", "Images"]
+			}
+		},
+		"/api/image/{id}": {
+			"delete": {
+				"operationId": "ImageController_removeImage",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": ""
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"summary": "Delete image",
+				"tags": ["Image", "Images"]
+			}
+		},
+		"/api/jobs": {
+			"get": {
+				"operationId": "JobsController_getJobs",
+				"parameters": [
+					{
+						"description": "Show only archived jobs",
+						"in": "query",
+						"name": "archived",
+						"required": false,
+						"schema": {
+							"default": false,
+							"type": "boolean"
+						}
+					},
+					{
+						"description": "Filter by model ID",
+						"in": "query",
+						"name": "modelId",
+						"required": false,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter by customization template ID",
+						"in": "query",
+						"name": "customizationId",
+						"required": false,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"description": "Sort by field",
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"default": "createdAt",
+							"enum": ["createdAt", "filename", "uploadDate"],
+							"type": "string"
+						}
+					},
+					{
+						"description": "Sort order",
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"default": "desc",
+							"enum": ["asc", "desc"],
+							"type": "string"
+						}
+					},
+					{
+						"description": "Page number",
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"type": "number"
+						}
+					},
+					{
+						"description": "Page size",
+						"in": "query",
+						"name": "pageSize",
+						"required": false,
+						"schema": {
+							"default": 10,
+							"maximum": 1000,
+							"minimum": 1,
+							"type": "number"
+						}
+					},
+					{
+						"description": "Filter by project ID",
+						"in": "query",
+						"name": "projectId",
+						"required": false,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"description": "Return only IDs of the jobs",
+						"in": "query",
+						"name": "idOnly",
+						"required": false,
+						"schema": {
+							"default": false,
+							"type": "boolean"
+						}
+					},
+					{
+						"description": "Source of the job. Defaults to both WEB and API.",
+						"in": "query",
+						"name": "source",
+						"required": false,
+						"schema": {
+							"enum": ["WEB", "API"],
+							"type": "string"
+						}
+					},
+					{
+						"description": "Return only jobs created within this duration (e.g. \"1h\", \"30m\", \"2d\")",
+						"in": "query",
+						"name": "since",
+						"required": false,
+						"schema": {
+							"example": "1h",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/UserJobDto"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "User job info",
+						"headers": {
+							"X-Total-Count": {
+								"description": "Total number of users jobs",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"summary": "List user jobs",
+				"tags": ["Jobs", "Jobs"]
+			},
+			"post": {
+				"description": "Returns one job per submitted image id. An image whose result was already computed still gets a job, with status CACHED and the existing result attached, at no computation cost.",
+				"operationId": "JobsController_createJobs",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateJobsDto"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/UserJobDto"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "List of users jobs, sorted by date",
+						"headers": {
+							"X-Total-Count": {
+								"description": "Total number of users jobs",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"summary": "Schedule computation job",
+				"tags": ["Jobs", "Jobs"]
+			}
+		},
+		"/api/jobs/{id}": {
+			"get": {
+				"operationId": "JobsController_getJob",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserJobDto"
+								}
+							}
+						},
+						"description": "Job details"
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"404": {
+						"description": "Job not found"
+					}
+				},
+				"summary": "Get job details",
+				"tags": ["Jobs", "Jobs"]
+			}
+		},
+		"/api/models/{id}/customizations": {
+			"get": {
+				"operationId": "ModelsController_getModelCustomizations",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ModelCustomizationDto"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "List of model customizations"
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"summary": "List a model's customizations available to the user",
+				"tags": ["Models"]
+			}
+		},
+		"/api/panorama": {
+			"get": {
+				"operationId": "PanoramaController_list",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/PanoramaDto"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "List of panoramas"
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"summary": "List user panoramas",
+				"tags": ["Panorama", "Panorama"]
+			},
+			"post": {
+				"operationId": "PanoramaController_create",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreatePanoramaDto"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PanoramaDto"
+								}
+							}
+						},
+						"description": "Created panorama (stitching queued)"
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"403": {
+						"description": "Invalid license"
+					}
+				},
+				"summary": "Create panorama and queue stitching",
+				"tags": ["Panorama", "Panorama"]
+			}
+		},
+		"/api/panorama/{id}": {
+			"delete": {
+				"operationId": "PanoramaController_remove",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": ""
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"404": {
+						"description": "Panorama not found"
+					}
+				},
+				"summary": "Delete panorama",
+				"tags": ["Panorama", "Panorama"]
+			},
+			"get": {
+				"operationId": "PanoramaController_getById",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PanoramaDto"
+								}
+							}
+						},
+						"description": "Panorama details"
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"404": {
+						"description": "Panorama not found"
+					}
+				},
+				"summary": "Get panorama details",
+				"tags": ["Panorama", "Panorama"]
+			}
+		},
+		"/api/reports/csv": {
+			"post": {
+				"description": "Cancels a queued report of the same caller. Returns DONE at once when an identical report is still stored. Archive of CSV files, images included unless includeImages is false. Set quality to re-encode those images as JPEG at that quality (1-100).",
+				"operationId": "ReportingController_createCsv",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateReportDto"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"202": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"reportId": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"status": {
+											"enum": ["PENDING", "DONE"],
+											"type": "string"
+										}
+									}
+								}
+							}
+						},
+						"description": "PENDING, or DONE when reused. Poll GET /reports/{id}."
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"403": {
+						"description": "One or more jobs are not available"
+					},
+					"404": {
+						"description": "No requested job has a result"
+					},
+					"429": {
+						"description": "Too many reports in flight"
+					},
+					"503": {
+						"description": "Report service unavailable"
+					}
+				},
+				"summary": "Queue a CSV report",
+				"tags": ["Reporting", "Reporting"]
+			}
+		},
+		"/api/reports/pdf": {
+			"post": {
+				"description": "Cancels a queued report of the same caller. Returns DONE at once when an identical report is still stored.",
+				"operationId": "ReportingController_createPdf",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateReportDto"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"202": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"reportId": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"status": {
+											"enum": ["PENDING", "DONE"],
+											"type": "string"
+										}
+									}
+								}
+							}
+						},
+						"description": "PENDING, or DONE when reused. Poll GET /reports/{id}."
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"403": {
+						"description": "One or more jobs are not available"
+					},
+					"404": {
+						"description": "No requested job has a result"
+					},
+					"429": {
+						"description": "Too many reports in flight"
+					},
+					"503": {
+						"description": "Report service unavailable"
+					}
+				},
+				"summary": "Queue a PDF report",
+				"tags": ["Reporting", "Reporting"]
+			}
+		},
+		"/api/reports/{id}": {
+			"get": {
+				"operationId": "ReportingController_getReport",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"bytes": {
+											"nullable": true,
+											"type": "number"
+										},
+										"completedAt": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"createdAt": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"error": {
+											"nullable": true,
+											"type": "string"
+										},
+										"errorCode": {
+											"enum": ["REPORT_TOO_LARGE", "REPORT_FAILED"],
+											"nullable": true,
+											"type": "string"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"pages": {
+											"nullable": true,
+											"type": "number"
+										},
+										"status": {
+											"enum": ["PENDING", "DONE", "FAILED", "CANCELLED"],
+											"type": "string"
+										}
+									}
+								}
+							}
+						},
+						"description": "CANCELLED means a newer report of the same caller replaced this one. A FAILED report carries errorCode: REPORT_TOO_LARGE when the file would exceed 4800000000 bytes (select fewer jobs or leave out images), REPORT_FAILED otherwise."
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"404": {
+						"description": "Report not found"
+					}
+				},
+				"summary": "Report status",
+				"tags": ["Reporting", "Reporting"]
+			}
+		},
+		"/api/reports/{id}/download": {
+			"get": {
+				"description": "Presigned URL, valid 1 hour.",
+				"operationId": "ReportingController_downloadReport",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"oneOf": [
+										{
+											"properties": {
+												"url": {
+													"type": "string"
+												}
+											}
+										},
+										{
+											"properties": {
+												"status": {
+													"enum": ["expired"],
+													"type": "string"
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "URL, or expired when the object is gone."
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"404": {
+						"description": "Report not found"
+					}
+				},
+				"summary": "Download link",
+				"tags": ["Reporting", "Reporting"]
+			}
+		},
+		"/api/settings/available-models": {
+			"get": {
+				"operationId": "SettingsController_getPublicAndPrivateModels",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ModelDto"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "List of available models"
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"summary": "List available models",
+				"tags": ["Settings", "Models"]
+			}
+		},
+		"/api/users/license": {
+			"get": {
+				"operationId": "UserController_getMyLicense",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LicenseDto"
+								}
+							}
+						},
+						"description": "User license"
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"summary": "Get user license",
+				"tags": ["User", "User"]
+			}
+		},
+		"/api/v2/jobs": {
+			"delete": {
+				"description": "Deletes the listed jobs, which must all belong to the caller. The batch is all-or-nothing: an unknown ID returns 404 and a foreign ID returns 403, in both cases without deleting anything. Deletion mode follows the account preference: by default the jobs are soft deleted and their masks removed, while an account with permanent removal enabled has the job data stripped irreversibly. Cached results are invalidated either way.",
+				"operationId": "JobsV2Controller_deleteJobs",
+				"parameters": [
+					{
+						"description": "Comma-separated job IDs, at most 100",
+						"in": "query",
+						"name": "ids",
+						"required": true,
+						"schema": {
+							"example": "4e9a1f2c-0000-4000-8000-000000000001",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "The jobs were deleted"
+					},
+					"400": {
+						"description": "Malformed query or path parameters"
+					},
+					"401": {
+						"description": "Missing or invalid session / access key"
+					},
+					"403": {
+						"description": "At least one job belongs to another user, nothing was deleted"
+					},
+					"404": {
+						"description": "At least one of the IDs does not exist"
+					}
+				},
+				"summary": "Delete several of your own jobs",
+				"tags": ["Jobs V2"]
+			},
+			"get": {
+				"description": "One page of the caller own web jobs, ordered by the requested field. Every field needed to render a row is included, but the computed results are not: fetch those per job from GET /v2/jobs/{id} when they are actually displayed. Archived and deleted jobs are excluded.",
+				"operationId": "JobsV2Controller_getJobsLight",
+				"parameters": [
+					{
+						"description": "Filter by model ID",
+						"in": "query",
+						"name": "modelId",
+						"required": false,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter by customization template ID",
+						"in": "query",
+						"name": "customizationId",
+						"required": false,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter by job source. Defaults to both WEB and API.",
+						"in": "query",
+						"name": "source",
+						"required": false,
+						"schema": {
+							"enum": ["WEB", "API"],
+							"type": "string"
+						}
+					},
+					{
+						"description": "Sort by field",
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"default": "createdAt",
+							"enum": ["createdAt", "filename", "uploadDate"],
+							"type": "string"
+						}
+					},
+					{
+						"description": "Sort order",
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"default": "desc",
+							"enum": ["asc", "desc"],
+							"type": "string"
+						}
+					},
+					{
+						"description": "Page number",
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"type": "number"
+						}
+					},
+					{
+						"description": "Page size",
+						"in": "query",
+						"name": "pageSize",
+						"required": false,
+						"schema": {
+							"default": 10,
+							"maximum": 100,
+							"minimum": 1,
+							"type": "number"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"additionalProperties": false,
+									"properties": {
+										"data": {
+											"items": {
+												"additionalProperties": false,
+												"properties": {
+													"createdAt": {
+														"format": "date-time",
+														"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+														"type": "string"
+													},
+													"cropped": {
+														"type": "boolean"
+													},
+													"customizationId": {
+														"format": "uuid",
+														"nullable": true,
+														"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+														"type": "string"
+													},
+													"finishedAt": {
+														"format": "date-time",
+														"nullable": true,
+														"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+														"type": "string"
+													},
+													"hasResults": {
+														"type": "boolean"
+													},
+													"id": {
+														"format": "uuid",
+														"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+														"type": "string"
+													},
+													"image": {
+														"additionalProperties": false,
+														"nullable": true,
+														"properties": {
+															"createdAt": {
+																"format": "date-time",
+																"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+																"type": "string"
+															},
+															"orginalFilename": {
+																"type": "string"
+															},
+															"thumbnailUrl": {
+																"type": "string"
+															}
+														},
+														"required": ["orginalFilename", "createdAt", "thumbnailUrl"],
+														"type": "object"
+													},
+													"imageId": {
+														"format": "uuid",
+														"nullable": true,
+														"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+														"type": "string"
+													},
+													"masksPending": {
+														"maximum": 9007199254740991,
+														"minimum": -9007199254740991,
+														"type": "integer"
+													},
+													"masksSubmitted": {
+														"maximum": 9007199254740991,
+														"minimum": -9007199254740991,
+														"type": "integer"
+													},
+													"modelId": {
+														"format": "uuid",
+														"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+														"type": "string"
+													},
+													"modelVersion": {
+														"type": "string"
+													},
+													"outdated": {
+														"type": "boolean"
+													},
+													"result": {
+														"additionalProperties": false,
+														"nullable": true,
+														"properties": {
+															"feedback": {
+																"items": {
+																	"additionalProperties": false,
+																	"properties": {
+																		"name": {
+																			"type": "string"
+																		},
+																		"score": {
+																			"type": "number"
+																		},
+																		"value": {
+																			"type": "boolean"
+																		}
+																	},
+																	"required": ["name", "value", "score"],
+																	"type": "object"
+																},
+																"nullable": true,
+																"type": "array"
+															}
+														},
+														"required": ["feedback"],
+														"type": "object"
+													},
+													"resultId": {
+														"format": "uuid",
+														"nullable": true,
+														"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+														"type": "string"
+													},
+													"startedAt": {
+														"format": "date-time",
+														"nullable": true,
+														"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+														"type": "string"
+													},
+													"status": {
+														"enum": ["CACHED", "NEW", "FAILED", "PENDING"],
+														"type": "string"
+													},
+													"userFeedback": {
+														"additionalProperties": false,
+														"nullable": true,
+														"properties": {
+															"comment": {
+																"nullable": true,
+																"type": "string"
+															},
+															"rating": {
+																"maximum": 9007199254740991,
+																"minimum": -9007199254740991,
+																"type": "integer"
+															}
+														},
+														"required": ["rating", "comment"],
+														"type": "object"
+													},
+													"withMasks": {
+														"type": "boolean"
+													}
+												},
+												"required": [
+													"id",
+													"imageId",
+													"modelId",
+													"resultId",
+													"status",
+													"hasResults",
+													"outdated",
+													"withMasks",
+													"cropped",
+													"createdAt",
+													"startedAt",
+													"finishedAt",
+													"modelVersion",
+													"image",
+													"customizationId",
+													"userFeedback",
+													"masksPending",
+													"masksSubmitted",
+													"result"
+												],
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"pagination": {
+											"additionalProperties": false,
+											"properties": {
+												"page": {
+													"maximum": 9007199254740991,
+													"minimum": -9007199254740991,
+													"type": "integer"
+												},
+												"pageSize": {
+													"maximum": 9007199254740991,
+													"minimum": -9007199254740991,
+													"type": "integer"
+												},
+												"total": {
+													"maximum": 9007199254740991,
+													"minimum": -9007199254740991,
+													"type": "integer"
+												},
+												"totalPages": {
+													"maximum": 9007199254740991,
+													"minimum": -9007199254740991,
+													"type": "integer"
+												}
+											},
+											"required": ["total", "page", "pageSize", "totalPages"],
+											"type": "object"
+										}
+									},
+									"required": ["data", "pagination"],
+									"type": "object"
+								}
+							}
+						},
+						"description": "One page of jobs plus pagination counters"
+					},
+					"400": {
+						"description": "Malformed query or path parameters"
+					},
+					"401": {
+						"description": "Missing or invalid session / access key"
+					}
+				},
+				"summary": "List jobs without their results",
+				"tags": ["Jobs V2"]
+			}
+		},
+		"/api/v2/jobs/status": {
+			"get": {
+				"description": "Returns only the fields that change while a job runs. A finished job is immutable, so a client tracking in-flight work polls this instead of refetching the list. Unknown or foreign job IDs are omitted from the response.",
+				"operationId": "JobsV2Controller_getJobsStatus",
+				"parameters": [
+					{
+						"description": "Comma-separated job IDs, at most 100",
+						"in": "query",
+						"name": "ids",
+						"required": true,
+						"schema": {
+							"example": "4e9a1f2c-0000-4000-8000-000000000001",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"additionalProperties": false,
+										"properties": {
+											"finishedAt": {
+												"format": "date-time",
+												"nullable": true,
+												"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+												"type": "string"
+											},
+											"id": {
+												"format": "uuid",
+												"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+												"type": "string"
+											},
+											"resultId": {
+												"format": "uuid",
+												"nullable": true,
+												"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+												"type": "string"
+											},
+											"status": {
+												"enum": ["CACHED", "NEW", "FAILED", "PENDING"],
+												"type": "string"
+											}
+										},
+										"required": ["id", "status", "resultId", "finishedAt"],
+										"type": "object"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "Current state of the requested jobs"
+					},
+					"400": {
+						"description": "Malformed query or path parameters"
+					},
+					"401": {
+						"description": "Missing or invalid session / access key"
+					}
+				},
+				"summary": "Poll the current state of specific jobs",
+				"tags": ["Jobs V2"]
+			}
+		},
+		"/api/v2/jobs/{id}": {
+			"delete": {
+				"description": "The job must belong to the caller. Deletion mode follows the account preference: by default the jobs are soft deleted and their masks removed, while an account with permanent removal enabled has the job data stripped irreversibly. Cached results are invalidated either way.",
+				"operationId": "JobsV2Controller_deleteJob",
+				"parameters": [
+					{
+						"description": "Job ID",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "The job was deleted"
+					},
+					"400": {
+						"description": "Malformed query or path parameters"
+					},
+					"401": {
+						"description": "Missing or invalid session / access key"
+					},
+					"403": {
+						"description": "At least one job belongs to another user, nothing was deleted"
+					},
+					"404": {
+						"description": "No job with this ID"
+					}
+				},
+				"summary": "Delete one of your own jobs",
+				"tags": ["Jobs V2"]
+			},
+			"get": {
+				"description": "Everything the list omits: the computed results, the customization config, the masks and short-lived presigned URLs for the source image. Accessible to the job owner and to members of the project it was archived into.",
+				"operationId": "JobsV2Controller_getJobResults",
+				"parameters": [
+					{
+						"description": "Job ID",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"additionalProperties": false,
+									"properties": {
+										"createdAt": {
+											"format": "date-time",
+											"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+											"type": "string"
+										},
+										"cropped": {
+											"type": "boolean"
+										},
+										"customization": {
+											"additionalProperties": false,
+											"nullable": true,
+											"properties": {
+												"config": {},
+												"template": {
+													"additionalProperties": false,
+													"nullable": true,
+													"properties": {
+														"config": {},
+														"nameDe": {
+															"type": "string"
+														},
+														"nameEn": {
+															"type": "string"
+														}
+													},
+													"required": ["nameEn", "nameDe", "config"],
+													"type": "object"
+												}
+											},
+											"required": ["config", "template"],
+											"type": "object"
+										},
+										"customizationId": {
+											"format": "uuid",
+											"nullable": true,
+											"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+											"type": "string"
+										},
+										"finishedAt": {
+											"format": "date-time",
+											"nullable": true,
+											"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+											"type": "string"
+										},
+										"hasResults": {
+											"type": "boolean"
+										},
+										"id": {
+											"format": "uuid",
+											"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+											"type": "string"
+										},
+										"image": {
+											"additionalProperties": false,
+											"nullable": true,
+											"properties": {
+												"createdAt": {
+													"format": "date-time",
+													"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+													"type": "string"
+												},
+												"id": {
+													"format": "uuid",
+													"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+													"type": "string"
+												},
+												"orginalFilename": {
+													"type": "string"
+												}
+											},
+											"required": ["id", "orginalFilename", "createdAt"],
+											"type": "object"
+										},
+										"imageId": {
+											"format": "uuid",
+											"nullable": true,
+											"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+											"type": "string"
+										},
+										"imageUrls": {
+											"additionalProperties": false,
+											"nullable": true,
+											"properties": {
+												"displayUrl": {
+													"type": "string"
+												},
+												"height": {
+													"type": "number"
+												},
+												"originalUrl": {
+													"type": "string"
+												},
+												"viewUrl": {
+													"type": "string"
+												},
+												"width": {
+													"type": "number"
+												}
+											},
+											"required": ["displayUrl", "originalUrl"],
+											"type": "object"
+										},
+										"masks": {
+											"items": {
+												"additionalProperties": false,
+												"properties": {
+													"filename": {
+														"type": "string"
+													},
+													"id": {
+														"maximum": 9007199254740991,
+														"minimum": -9007199254740991,
+														"type": "integer"
+													},
+													"isSubmitted": {
+														"type": "boolean"
+													},
+													"label": {
+														"type": "string"
+													},
+													"parentId": {
+														"maximum": 9007199254740991,
+														"minimum": -9007199254740991,
+														"nullable": true,
+														"type": "integer"
+													}
+												},
+												"required": ["id", "parentId", "label", "filename", "isSubmitted"],
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"masksPending": {
+											"maximum": 9007199254740991,
+											"minimum": -9007199254740991,
+											"type": "integer"
+										},
+										"masksSubmitted": {
+											"maximum": 9007199254740991,
+											"minimum": -9007199254740991,
+											"type": "integer"
+										},
+										"model": {
+											"additionalProperties": false,
+											"properties": {
+												"displayName": {
+													"type": "string"
+												}
+											},
+											"required": ["displayName"],
+											"type": "object"
+										},
+										"modelId": {
+											"format": "uuid",
+											"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+											"type": "string"
+										},
+										"modelVersion": {
+											"type": "string"
+										},
+										"outdated": {
+											"type": "boolean"
+										},
+										"result": {
+											"additionalProperties": false,
+											"nullable": true,
+											"properties": {
+												"feedback": {
+													"items": {
+														"additionalProperties": false,
+														"properties": {
+															"name": {
+																"type": "string"
+															},
+															"score": {
+																"type": "number"
+															},
+															"value": {
+																"type": "boolean"
+															}
+														},
+														"required": ["name", "value", "score"],
+														"type": "object"
+													},
+													"nullable": true,
+													"type": "array"
+												},
+												"id": {
+													"format": "uuid",
+													"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+													"type": "string"
+												},
+												"results": {
+													"items": {
+														"oneOf": [
+															{
+																"additionalProperties": false,
+																"properties": {
+																	"data": {
+																		"items": {
+																			"additionalProperties": false,
+																			"properties": {
+																				"color": {
+																					"type": "string"
+																				},
+																				"label": {
+																					"type": "string"
+																				}
+																			},
+																			"required": ["label", "color"],
+																			"type": "object"
+																		},
+																		"type": "array"
+																	},
+																	"keys": {
+																		"items": {
+																			"type": "string"
+																		},
+																		"type": "array"
+																	},
+																	"type": {
+																		"enum": ["bar-chart"],
+																		"type": "string"
+																	},
+																	"xLabel": {
+																		"type": "string"
+																	},
+																	"yLabels": {
+																		"items": {
+																			"type": "string"
+																		},
+																		"type": "array"
+																	}
+																},
+																"required": ["type", "keys", "data"],
+																"type": "object"
+															},
+															{
+																"additionalProperties": false,
+																"properties": {
+																	"filename": {
+																		"type": "string"
+																	},
+																	"label": {
+																		"type": "string"
+																	},
+																	"preview": {
+																		"type": "string"
+																	},
+																	"type": {
+																		"enum": ["image"],
+																		"type": "string"
+																	}
+																},
+																"required": ["type", "filename"],
+																"type": "object"
+															},
+															{
+																"additionalProperties": false,
+																"properties": {
+																	"data": {
+																		"items": {
+																			"additionalProperties": false,
+																			"properties": {
+																				"group": {
+																					"type": "string"
+																				},
+																				"label": {
+																					"type": "string"
+																				},
+																				"labelTooltip": {
+																					"type": "string"
+																				},
+																				"unit": {
+																					"type": "string"
+																				},
+																				"value": {
+																					"type": "number"
+																				}
+																			},
+																			"required": ["label", "value"],
+																			"type": "object"
+																		},
+																		"type": "array"
+																	},
+																	"type": {
+																		"enum": ["data-table"],
+																		"type": "string"
+																	}
+																},
+																"required": ["type", "data"],
+																"type": "object"
+															},
+															{
+																"additionalProperties": false,
+																"properties": {
+																	"data": {
+																		"items": {
+																			"additionalProperties": false,
+																			"properties": {
+																				"color": {
+																					"type": "string"
+																				},
+																				"x": {
+																					"anyOf": [
+																						{
+																							"type": "number"
+																						},
+																						{
+																							"type": "string"
+																						},
+																						{
+																							"items": {
+																								"anyOf": [
+																									{
+																										"type": "number"
+																									},
+																									{
+																										"type": "number"
+																									}
+																								]
+																							},
+																							"maxItems": 2,
+																							"minItems": 2,
+																							"type": "array"
+																						}
+																					]
+																				},
+																				"y": {
+																					"type": "number"
+																				}
+																			},
+																			"required": ["x", "y", "color"],
+																			"type": "object"
+																		},
+																		"type": "array"
+																	},
+																	"label": {
+																		"type": "string"
+																	},
+																	"type": {
+																		"enum": ["histogram"],
+																		"type": "string"
+																	},
+																	"unit": {
+																		"type": "string"
+																	},
+																	"xLabel": {
+																		"type": "string"
+																	},
+																	"yLabel": {
+																		"type": "string"
+																	}
+																},
+																"required": ["type", "data"],
+																"type": "object"
+															},
+															{
+																"additionalProperties": false,
+																"properties": {
+																	"data": {
+																		"additionalProperties": false,
+																		"properties": {
+																			"content": {
+																				"type": "string"
+																			},
+																			"status": {
+																				"enum": ["info", "warning", "error"],
+																				"type": "string"
+																			},
+																			"title": {
+																				"type": "string"
+																			}
+																		},
+																		"required": ["title", "content", "status"],
+																		"type": "object"
+																	},
+																	"type": {
+																		"enum": ["message"],
+																		"type": "string"
+																	}
+																},
+																"required": ["type", "data"],
+																"type": "object"
+															},
+															{
+																"additionalProperties": false,
+																"properties": {
+																	"data": {
+																		"items": {
+																			"items": {
+																				"anyOf": [
+																					{
+																						"type": "string"
+																					},
+																					{
+																						"type": "number"
+																					},
+																					{
+																						"enum": [null],
+																						"nullable": true,
+																						"type": "string"
+																					}
+																				]
+																			},
+																			"type": "array"
+																		},
+																		"type": "array"
+																	},
+																	"headers": {
+																		"items": {
+																			"type": "string"
+																		},
+																		"type": "array"
+																	},
+																	"label": {
+																		"type": "string"
+																	},
+																	"type": {
+																		"enum": ["multi-column-table"],
+																		"type": "string"
+																	},
+																	"unit": {
+																		"items": {
+																			"nullable": true,
+																			"type": "string"
+																		},
+																		"type": "array"
+																	},
+																	"units": {
+																		"items": {
+																			"nullable": true,
+																			"type": "string"
+																		},
+																		"type": "array"
+																	}
+																},
+																"required": ["type", "data"],
+																"type": "object"
+															},
+															{
+																"additionalProperties": false,
+																"properties": {
+																	"columns": {
+																		"items": {
+																			"type": "string"
+																		},
+																		"type": "array"
+																	},
+																	"data": {
+																		"items": {
+																			"items": {
+																				"type": "number"
+																			},
+																			"type": "array"
+																		},
+																		"type": "array"
+																	},
+																	"label": {
+																		"type": "string"
+																	},
+																	"type": {
+																		"enum": ["raw-feature"],
+																		"type": "string"
+																	}
+																},
+																"required": ["type", "label", "columns", "data"],
+																"type": "object"
+															}
+														]
+													},
+													"type": "array"
+												}
+											},
+											"required": ["id", "feedback", "results"],
+											"type": "object"
+										},
+										"resultId": {
+											"format": "uuid",
+											"nullable": true,
+											"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+											"type": "string"
+										},
+										"resultPreviewUrls": {
+											"additionalProperties": {
+												"type": "string"
+											},
+											"type": "object"
+										},
+										"source": {
+											"enum": ["WEB", "API", "SANDBOX", "TEST", "IDENTIFICATION"],
+											"type": "string"
+										},
+										"startedAt": {
+											"format": "date-time",
+											"nullable": true,
+											"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+											"type": "string"
+										},
+										"status": {
+											"enum": ["CACHED", "NEW", "FAILED", "PENDING"],
+											"type": "string"
+										},
+										"userFeedback": {
+											"additionalProperties": false,
+											"nullable": true,
+											"properties": {
+												"comment": {
+													"nullable": true,
+													"type": "string"
+												},
+												"rating": {
+													"maximum": 9007199254740991,
+													"minimum": -9007199254740991,
+													"type": "integer"
+												}
+											},
+											"required": ["rating", "comment"],
+											"type": "object"
+										},
+										"withMasks": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"id",
+										"imageId",
+										"modelId",
+										"resultId",
+										"status",
+										"hasResults",
+										"outdated",
+										"withMasks",
+										"cropped",
+										"createdAt",
+										"startedAt",
+										"finishedAt",
+										"modelVersion",
+										"image",
+										"customizationId",
+										"userFeedback",
+										"masksPending",
+										"masksSubmitted",
+										"result",
+										"source",
+										"model",
+										"imageUrls",
+										"resultPreviewUrls",
+										"masks",
+										"customization"
+									],
+									"type": "object"
+								}
+							}
+						},
+						"description": "The job, its results and presigned source image URLs"
+					},
+					"400": {
+						"description": "Malformed query or path parameters"
+					},
+					"401": {
+						"description": "Missing or invalid session / access key"
+					},
+					"403": {
+						"description": "The job exists but the caller cannot access it"
+					},
+					"404": {
+						"description": "No job with this ID"
+					}
+				},
+				"summary": "Get a single job with its results",
+				"tags": ["Jobs V2"]
+			}
+		}
+	},
+	"security": [
+		{
+			"apiKey": []
+		}
+	],
+	"tags": [
+		{
+			"description": "Upload and manage source images",
+			"name": "Images"
+		},
+		{
+			"description": "Schedule and retrieve computation jobs",
+			"name": "Jobs"
+		},
+		{
+			"description": "Job listing split into a light page and per-job results (v2)",
+			"name": "Jobs V2"
+		},
+		{
+			"description": "Generate PDF and CSV reports",
+			"name": "Reporting"
+		},
+		{
+			"description": "Create and manage stitched panoramas",
+			"name": "Panorama"
+		},
+		{
+			"description": "Available computation models",
+			"name": "Models"
+		},
+		{
+			"description": "User account and licensing",
+			"name": "User"
+		},
+		{
+			"description": "Create and manage your own model customizations",
+			"name": "Customizations"
+		}
+	]
+}

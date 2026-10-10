@@ -1,0 +1,18 @@
+[
+	{
+		"id": "1a2b3c4d-0000-4000-8000-000000000001",
+		"name": "grain-size",
+		"displayName": "Grain size",
+		"accessType": "PUBLIC",
+		"isDefaultVisible": true,
+		"description_en": "Grain size analysis",
+		"description_de": "Korngroessenanalyse"
+	},
+	{
+		"id": "1a2b3c4d-0000-4000-8000-000000000002",
+		"name": "porosity",
+		"displayName": "Porosity",
+		"accessType": "SHARED",
+		"isDefaultVisible": false
+	}
+]

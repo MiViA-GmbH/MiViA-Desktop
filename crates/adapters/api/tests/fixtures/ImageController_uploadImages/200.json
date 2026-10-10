@@ -1,0 +1,11 @@
+[
+	{
+		"id": "9d2e4f6a-0000-4000-8000-000000000001",
+		"createdAt": "2026-10-09T10:00:00.000Z",
+		"orginalFilename": "image-1.png",
+		"thumbnailUrl": "https://example.invalid/thumb/1",
+		"width": 1024,
+		"height": 1024,
+		"duplicate": false
+	}
+]

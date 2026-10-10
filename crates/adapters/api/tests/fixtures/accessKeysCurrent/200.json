@@ -1,0 +1,11 @@
+{
+	"account": { "id": "acc-0000-4000-8000-000000000001", "name": "CI Lab", "email": "ci@example.invalid" },
+	"key": {
+		"id": "key-1",
+		"name": "Desktop",
+		"start": "mv-AbCdEf",
+		"createdAt": "2026-09-01T00:00:00.000Z",
+		"expiresAt": null
+	},
+	"adminScope": false
+}

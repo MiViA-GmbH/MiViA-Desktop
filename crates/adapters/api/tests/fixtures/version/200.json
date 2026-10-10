@@ -1,0 +1,7 @@
+{
+	"version": "2.45.0",
+	"buildId": "build-1",
+	"minDesktopVersion": "2.0.0",
+	"maxUploadSizeMb": 300,
+	"blockedDesktopVersions": ["2.0.1"]
+}

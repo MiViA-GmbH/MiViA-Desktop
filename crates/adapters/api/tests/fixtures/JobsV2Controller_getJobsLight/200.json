@@ -1,0 +1,30 @@
+{
+	"data": [
+		{
+			"id": "4e9a1f2c-0000-4000-8000-000000000021",
+			"imageId": "9d2e4f6a-0000-4000-8000-000000000021",
+			"modelId": "1a2b3c4d-0000-4000-8000-000000000001",
+			"modelVersion": "3.2.0",
+			"customizationId": null,
+			"status": "NEW",
+			"resultId": "7b1c0d3e-0000-4000-8000-000000000021",
+			"createdAt": "2026-10-09T09:00:00.000Z",
+			"startedAt": "2026-10-09T09:00:01.000Z",
+			"finishedAt": "2026-10-09T09:00:30.000Z",
+			"cropped": false,
+			"hasResults": true,
+			"masksPending": 0,
+			"masksSubmitted": 1,
+			"outdated": false,
+			"withMasks": true,
+			"image": {
+				"createdAt": "2026-10-09T08:59:00.000Z",
+				"orginalFilename": "image-1.png",
+				"thumbnailUrl": "https://example.invalid/thumb/1"
+			},
+			"result": null,
+			"userFeedback": null
+		}
+	],
+	"pagination": { "page": 1, "pageSize": 100, "total": 1, "totalPages": 1 }
+}

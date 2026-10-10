@@ -1,0 +1,15 @@
+{
+	"code": "IMAGE_UPLOAD_REJECTED",
+	"message": "1 of 1 files rejected, nothing was saved.",
+	"errors": [
+		{
+			"code": "IMAGE_RESOLUTION_TOO_LOW",
+			"filename": "image-1.png",
+			"message": "Image is smaller than 512x512 px",
+			"minWidth": 512,
+			"minHeight": 512,
+			"width": 300,
+			"height": 200
+		}
+	]
+}

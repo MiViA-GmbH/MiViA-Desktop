@@ -1,0 +1,27 @@
+[
+	{
+		"id": "4e9a1f2c-0000-4000-8000-000000000011",
+		"imageId": "9d2e4f6a-0000-4000-8000-000000000001",
+		"modelId": "1a2b3c4d-0000-4000-8000-000000000001",
+		"status": "PENDING",
+		"result": {},
+		"createdAt": "2026-10-09T10:00:00.000Z",
+		"startedAt": "2026-10-09T10:00:00.000Z",
+		"finishedAt": "2026-10-09T10:00:00.000Z",
+		"archived": false,
+		"outdated": false
+	},
+	{
+		"id": "4e9a1f2c-0000-4000-8000-000000000012",
+		"imageId": "9d2e4f6a-0000-4000-8000-000000000002",
+		"modelId": "1a2b3c4d-0000-4000-8000-000000000001",
+		"status": "CACHED",
+		"result": { "results": [] },
+		"createdAt": "2026-10-09T10:00:00.000Z",
+		"startedAt": "2026-10-09T10:00:00.000Z",
+		"finishedAt": "2026-10-09T10:00:00.000Z",
+		"archived": false,
+		"outdated": false,
+		"customizationId": null
+	}
+]

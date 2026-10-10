@@ -1,0 +1,1 @@
+{ "statusCode": 400, "message": ["imageIds must be an array"], "error": "Bad Request" }

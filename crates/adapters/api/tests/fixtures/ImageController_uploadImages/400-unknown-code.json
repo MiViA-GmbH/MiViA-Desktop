@@ -1,0 +1,5 @@
+{
+	"code": "IMAGE_UPLOAD_REJECTED",
+	"message": "1 of 1 files rejected, nothing was saved.",
+	"errors": [{ "code": "IMAGE_CORRUPT", "filename": "image-1.png", "message": "The file could not be decoded" }]
+}
