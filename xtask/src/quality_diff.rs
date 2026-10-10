@@ -21,6 +21,7 @@ pub(crate) struct Ctx<'a> {
     pub(crate) base: Value,
     pub(crate) head: Value,
     pub(crate) generated: Vec<String>,
+    pub(crate) approved_licences: Value,
 }
 
 struct Spec {
@@ -69,8 +70,9 @@ const SPECS: &[Spec] = &[
     spec(".cargo/config.toml", &[], custom::aliases),
     spec("rustfmt.toml", &[], custom::frozen),
     spec("ui/quality/ternary.grit", &[], custom::frozen),
-    spec("deny.toml", DENY, none),
-    spec("fuzz/deny.toml", DENY, none),
+    spec("deny.toml", DENY, custom::licences),
+    spec("fuzz/deny.toml", DENY, custom::licences),
+    spec(LICENCES, &[], custom::frozen),
     spec("biome.json", BIOME, custom::biome_includes),
     spec("ui/tsconfig*.json", &[], custom::ts_strict),
     spec("ui/.fallowrc.json", FALLOW, none),
@@ -128,9 +130,9 @@ const SPECS: &[Spec] = &[
     spec("quality/perf-waivers.toml", &[], |ctx| custom::caps(ctx, 3)),
 ];
 
+const LICENCES: &str = "quality/licences.toml";
+
 const DENY: &[checks::Check] = &[
-    NoAdd("licenses.allow.*"),
-    NoAdd("licenses.exceptions.**"),
     NoAdd("advisories.ignore.**"),
     NoAdd("bans.skip.**"),
     NoAdd("bans.skip-tree.**"),
@@ -206,6 +208,7 @@ pub(crate) fn diff(root: &Path, base: &str, head: Option<&str>) -> Result<Vec<Fi
         None => repo::files(root)?.into_iter().collect(),
     };
     let generated = generated_at(root, head)?;
+    let approved_licences = parse_side(LICENCES, repo::show(root, base, LICENCES).as_deref())?;
     let mut found = third_clippy(&base_files, &head_files);
     for path in base_files.union(&head_files) {
         let Some(spec) = SPECS.iter().find(|spec| glob_match(spec.pattern, path)) else {
@@ -219,6 +222,7 @@ pub(crate) fn diff(root: &Path, base: &str, head: Option<&str>) -> Result<Vec<Fi
             base: parse_side(path, base_text.as_deref())?,
             head: parse_side(path, head_text.as_deref())?,
             generated: generated.clone(),
+            approved_licences: approved_licences.clone(),
         };
         let messages = compare(spec, &ctx);
         found.extend(

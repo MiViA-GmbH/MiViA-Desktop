@@ -25,6 +25,11 @@ const LOOSENED: &[(&str, &str, &str)] = &[
         "\"noUncheckedIndexedAccess\": true",
         "\"noUncheckedIndexedAccess\": false",
     ),
+    (
+        "quality/licences.toml",
+        "\"BSL-1.0\"]",
+        "\"BSL-1.0\", \"GPL-3.0\"]",
+    ),
     ("quality/floors.toml", "rust = 1", "rust = 9"),
     (
         "rustfmt.toml",
@@ -67,20 +72,25 @@ fn quality_diff_probes(work: &Work) -> Result<Vec<Probe>> {
         ]
         .concat(),
     )?;
+    work.replace("deny.toml", "\"Zlib\"]", "\"Zlib\", \"ISC\"]")?;
+    let approved = quality_diff::diff(&work.root, "HEAD", None)?;
+    let mut probes = vec![Probe::expect(
+        "quality-diff",
+        "approved licence accepted",
+        approved.is_empty(),
+    )];
     for (path, from, to) in LOOSENED {
         work.replace(path, from, to)?;
     }
     let findings = quality_diff::diff(&work.root, "HEAD", None)?;
-    Ok(LOOSENED
-        .iter()
-        .map(|(path, _, _)| {
-            Probe::expect(
-                "quality-diff",
-                *path,
-                findings.iter().any(|f| f.path == *path),
-            )
-        })
-        .collect())
+    probes.extend(LOOSENED.iter().map(|(path, _, _)| {
+        Probe::expect(
+            "quality-diff",
+            *path,
+            findings.iter().any(|f| f.path == *path),
+        )
+    }));
+    Ok(probes)
 }
 
 fn ci_integrity_probes(work: &Work) -> Result<Vec<Probe>> {

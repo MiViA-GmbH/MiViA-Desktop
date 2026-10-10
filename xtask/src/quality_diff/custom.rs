@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::{Value, json};
@@ -232,4 +233,41 @@ pub(crate) fn days_from_date(date: &str) -> Option<i64> {
     let day_of_year = (153 * month_index + 2) / 5 + day - 1;
     let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
     Some(era * 146_097 + day_of_era - 719_468)
+}
+
+pub(crate) fn licences(ctx: &Ctx<'_>) -> Vec<String> {
+    let approved = licence_pairs(Some(&ctx.approved_licences));
+    let base = licence_pairs(ctx.base.get("licenses"));
+    licence_pairs(ctx.head.get("licenses"))
+        .difference(&base)
+        .filter(|pair| !approved.contains(*pair))
+        .map(|(owner, licence)| {
+            format!("licence {licence} for {owner} is not in quality/licences.toml")
+        })
+        .collect()
+}
+
+fn licence_pairs(table: Option<&Value>) -> BTreeSet<(String, String)> {
+    let Some(table) = table else {
+        return BTreeSet::new();
+    };
+    let allowed = strings(table, "/allow")
+        .into_iter()
+        .map(|licence| ("every crate".to_owned(), licence));
+    let excepted = table
+        .get("exceptions")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .flat_map(|entry| {
+            let owner = entry
+                .get("crate")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_owned();
+            strings(entry, "/allow")
+                .into_iter()
+                .map(move |licence| (owner.clone(), licence))
+        });
+    allowed.chain(excepted).collect()
 }
