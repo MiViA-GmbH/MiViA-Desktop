@@ -245,6 +245,28 @@ jobs:
           path: target/nextest/ci-windows/junit.xml
           retention-days: 7
 
+  proxy:
+    name: Proxy tests (Windows)
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: windows-2025
+    timeout-minutes: 30
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up toolchains
+        uses: ./.github/actions/setup
+        with:
+          profile: windows-ci
+          rust: "true"
+          extra-endpoints: pypi.org:443 files.pythonhosted.org:443
+      - name: Proxy tests
+        run: node scripts/proxy-tests.mjs
+
   e2e:
     name: End to end
     needs: [changes]
@@ -302,7 +324,7 @@ jobs:
 
   gate:
     name: gate
-    needs: [changes, repo-checks, ui, coverage, mutants-domain, perf-instr, test-core-windows, e2e, playwright-visual]
+    needs: [changes, repo-checks, ui, coverage, mutants-domain, perf-instr, test-core-windows, proxy, e2e, playwright-visual]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -316,7 +338,7 @@ jobs:
       - name: All required jobs passed or were skipped by design
         env:
           NEEDS: ${{ toJSON(needs) }}
-          SKIPPABLE: '["repo-checks","ui","coverage","mutants-domain","perf-instr","test-core-windows","e2e","playwright-visual"]'
+          SKIPPABLE: '["repo-checks","ui","coverage","mutants-domain","perf-instr","test-core-windows","proxy","e2e","playwright-visual"]'
         run: |
           echo "$NEEDS" | jq -e --argjson skippable "$SKIPPABLE" \
             '.changes.result == "success" and (to_entries | all(.value.result == "success" or
