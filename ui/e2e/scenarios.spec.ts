@@ -271,6 +271,8 @@ test.describe
 					['get_remaining_uploads', {}],
 					['get_support', {}],
 					['list_pending_reports', {}],
+					['get_privacy', {}],
+					['list_sent_telemetry', {}],
 				];
 				const results: Record<string, string> = {};
 				for (const [command, args] of calls) {
@@ -281,7 +283,7 @@ test.describe
 				}
 				return results;
 			});
-			expect(Object.values(outcomes)).toEqual(Array(17).fill('ok'));
+			expect(Object.values(outcomes)).toEqual(Array(19).fill('ok'));
 		});
 
 		test('scenario 6: a problem report is sent, saved after a 404 and the local logs are deleted', async () => {
