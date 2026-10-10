@@ -6,7 +6,8 @@
 			"singleImages": "Single images",
 			"inputFolders": "Input folders",
 			"settings": "Settings",
-			"account": "Account"
+			"account": "Account",
+			"addFolder": "Add input folder"
 		},
 		"overview": {
 			"title": "Overview",
@@ -138,7 +139,7 @@
 			"account": "Account",
 			"language": "Language",
 			"languageAuto": "Automatic (Windows)",
-			"noAccount": "No account connected yet."
+			"explorer": "Explorer integration"
 		},
 		"status": {
 			"batch": {

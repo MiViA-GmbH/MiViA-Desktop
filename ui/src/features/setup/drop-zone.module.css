@@ -1,0 +1,7 @@
+.root {
+	border: 1px dashed var(--mantine-color-stone-4);
+
+	&[data-error] {
+		border-color: var(--mantine-color-red-6);
+	}
+}

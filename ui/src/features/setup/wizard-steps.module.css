@@ -1,0 +1,8 @@
+.root {
+	flex: 0 0 200px;
+	border-right: 1px solid var(--mantine-color-stone-2);
+
+	@media (max-width: 899px) {
+		display: none;
+	}
+}

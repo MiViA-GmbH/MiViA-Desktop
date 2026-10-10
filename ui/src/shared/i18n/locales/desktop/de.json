@@ -6,7 +6,8 @@
 			"singleImages": "Einzelbilder",
 			"inputFolders": "Eingangsordner",
 			"settings": "Einstellungen",
-			"account": "Konto"
+			"account": "Konto",
+			"addFolder": "Eingangsordner hinzufügen"
 		},
 		"overview": {
 			"title": "Übersicht",
@@ -138,7 +139,7 @@
 			"account": "Konto",
 			"language": "Sprache",
 			"languageAuto": "Automatisch (Windows)",
-			"noAccount": "Noch kein Konto verbunden."
+			"explorer": "Explorer-Integration"
 		},
 		"status": {
 			"batch": {

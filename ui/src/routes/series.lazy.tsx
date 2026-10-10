@@ -83,7 +83,7 @@ function SeriesContent({ series, id }: { series: BatchSummary; id: string }) {
 }
 
 function Series() {
-	const { seriesId } = useParams({ from: '/series/$seriesId' });
+	const { seriesId } = useParams({ from: '/app/series/$seriesId' });
 	const view = useQuery(seriesQuery(seriesId));
 	useOpened(view.data?.summary);
 	if (view.data === null) {
@@ -92,4 +92,4 @@ function Series() {
 	return view.data ? <SeriesContent id={seriesId} series={view.data.summary} /> : null;
 }
 
-export const SeriesRoute = createLazyRoute('/series/$seriesId')({ component: Series });
+export const SeriesRoute = createLazyRoute('/app/series/$seriesId')({ component: Series });

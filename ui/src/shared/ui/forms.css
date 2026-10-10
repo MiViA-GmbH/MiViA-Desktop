@@ -1,0 +1,13 @@
+@import "@mantine/core/styles/BackgroundImage.layer.css";
+@import "@mantine/core/styles/Stepper.layer.css";
+@import "@mantine/core/styles/Radio.layer.css";
+@import "@mantine/core/styles/RadioCard.layer.css";
+@import "@mantine/core/styles/RadioIndicator.layer.css";
+@import "@mantine/core/styles/CheckboxCard.layer.css";
+@import "@mantine/core/styles/CheckboxIndicator.layer.css";
+@import "@mantine/core/styles/PasswordInput.layer.css";
+@import "@mantine/core/styles/Modal.layer.css";
+@import "@mantine/core/styles/Switch.layer.css";
+@import "@mantine/core/styles/List.layer.css";
+@import "@mantine/core/styles/Code.layer.css";
+@import "@mantine/core/styles/Fieldset.layer.css";

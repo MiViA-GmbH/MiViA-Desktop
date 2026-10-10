@@ -59,5 +59,5 @@ function SingleImages() {
 	);
 }
 
-export const HistoryRoute = createLazyRoute('/history')({ component: History });
-export const SingleImagesRoute = createLazyRoute('/single-images')({ component: SingleImages });
+export const HistoryRoute = createLazyRoute('/app/history')({ component: History });
+export const SingleImagesRoute = createLazyRoute('/app/single-images')({ component: SingleImages });

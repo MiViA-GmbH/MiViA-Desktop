@@ -151,5 +151,5 @@ function FolderSettings() {
 	);
 }
 
-export const FolderSeriesRoute = createLazyRoute('/folders/$folderId')({ component: FolderSeries });
-export const FolderSettingsRoute = createLazyRoute('/folders/$folderId/settings')({ component: FolderSettings });
+export const FolderSeriesRoute = createLazyRoute('/app/folders/$folderId')({ component: FolderSeries });
+export const FolderSettingsRoute = createLazyRoute('/app/folders/$folderId/settings')({ component: FolderSettings });

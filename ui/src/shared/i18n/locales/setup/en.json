@@ -1,0 +1,221 @@
+{
+	"desktop": {
+		"wizard": {
+			"common": {
+				"next": "Next",
+				"back": "Back",
+				"tryAgain": "Try again",
+				"stepOf": "Step {{n}} of {{m}}",
+				"policy": "Set by your IT department",
+				"server": "Server: {{host}}",
+				"help": "Help: {{contact}}"
+			},
+			"steps": {
+				"legacy": "Old version",
+				"key": "Access key",
+				"folder": "Input folder",
+				"series": "Image series",
+				"models": "Models",
+				"finish": "Finish",
+				"skipped": "skipped"
+			},
+			"welcome": {
+				"title": "Welcome to MiViA Desktop",
+				"lead": "MiViA Desktop analyzes your microscope images automatically. New images in a folder you choose are sent to MiViA, and the reports are saved on this PC.",
+				"need": "Setup takes about 3 minutes. You need your MiViA access key, and this PC needs an internet connection.",
+				"noKey": "No key yet? You can close MiViA Desktop and continue later. Nothing is lost.",
+				"language": "Sprache / Language",
+				"langAuto": "Automatisch, wie Windows ({{language}}) / Automatic, like Windows ({{language}})",
+				"legacyManual": "I used the old MiViA Desktop before",
+				"start": "Start setup"
+			},
+			"legacy": {
+				"title": "Take over your old settings?",
+				"found": "The old MiViA Desktop is on this PC, in <code>{{path}}</code>. It has these settings:",
+				"hasKey": "Access key",
+				"hasFolder": "Input folder: <code>{{path}}</code>",
+				"hasModels": "Models: {{count}}",
+				"safe": "Your images and earlier reports stay where they are.",
+				"takeAll": "Take over all",
+				"keyOnly": "Only the access key",
+				"none": "Start without old settings",
+				"stop": "Switch off the old MiViA Desktop (recommended, prevents images being analyzed twice). It is not deleted.",
+				"stopNetwork": "The old MiViA Desktop is in a network folder. Other PCs may still use it, so it is not switched off.",
+				"running": "The old MiViA Desktop is still running.",
+				"closeIt": "Close old MiViA Desktop",
+				"other": "Not the right one? Choose the folder of the old MiViA Desktop",
+				"notInFolder": "No settings of the old MiViA Desktop were found in this folder. Choose the folder that contains “MiViA Desktop.exe”.",
+				"unreadable": "The settings of the old MiViA Desktop could not be read. Enter your access key in the next step."
+			},
+			"key": {
+				"title": "Connect to your MiViA account",
+				"lead": "Paste or type your access key. It connects this PC to your MiViA account.",
+				"label": "Access key",
+				"helpTitle": "Where do I find my access key?",
+				"help": "Ask the person who manages MiViA in your lab, or sign in at {{host}} and open Access keys. A key starts with “mv-” and has 64 letters after it.",
+				"malformed": "This does not look like an access key. Copy the whole key again.",
+				"rejected": "This access key was not accepted. Check that you copied the whole key, or ask for a new one.",
+				"blocked": "Your MiViA account is blocked. Contact MiViA support.",
+				"adminScope": "This key has administrator rights. Use an access key of a normal account.",
+				"offline": "MiViA cannot be reached. Check the internet connection. If it works in the browser, ask your IT to allow {{host}}.",
+				"autoRetry": "MiViA tries again every 30 seconds. You can also close MiViA Desktop and continue later.",
+				"copyForIt": "Copy details for IT",
+				"connected": "Connected as {{name}} ({{email}})",
+				"imported": "The access key of the old MiViA Desktop was accepted.",
+				"importedInvalid": "The access key of the old MiViA Desktop is no longer accepted. Enter a new one.",
+				"stored": "The key is stored safely in Windows. For security, the copy in the clipboard was deleted.",
+				"storedOnly": "The key is stored safely in Windows.",
+				"licenseInactive": "Your MiViA license is not active. You can finish setup now; analysis starts as soon as the license is active.",
+				"storeFailed": "Windows could not store the access key. You will need to enter it again after restarting MiViA Desktop.",
+				"other": "Use a different key",
+				"otherAccount": "This key belongs to another account. The models you chose were reset."
+			},
+			"folder": {
+				"title": "Where does your microscope save images?",
+				"lead": "Choose that folder. MiViA analyzes every new image that arrives there. Your images are never moved or deleted.",
+				"choose": "Choose folder…",
+				"change": "Choose another folder",
+				"notSure": "Not sure? Save one test image in the microscope program and look where it is saved. You can change the folder later.",
+				"skip": "Skip: I only want to analyze single images from Explorer. You can add a folder later.",
+				"required": "Choose a folder, or skip this step.",
+				"notFound": "MiViA cannot open this folder. Choose another folder.",
+				"tooBroad": "Choose a folder only for microscope images, not a whole drive or a system folder.",
+				"general": "MiViA would analyze every image saved in this folder, including images that are not from the microscope. A separate folder is better.",
+				"nested": "This folder is inside the input folder {{name}}, or contains it. Choose another folder.",
+				"network": "This is a network folder. New images there are noticed a little later. If a colleague’s PC also watches this folder, each PC analyzes the images. Agree on one PC.",
+				"oneDrive": "This folder is stored in OneDrive. Images and reports in it are copied to your organization’s OneDrive. Images that are only online are downloaded before they are analyzed. If a colleague’s PC also watches this folder, each PC analyzes the images.",
+				"mappedDrive": "Drive {{letter}} is a network drive. MiViA uses its full address {{unc}}, so the folder is found even when the drive letter is missing.",
+				"existing_one": "This folder already contains 1 image.",
+				"existing_other": "This folder already contains {{count}} images.",
+				"existingMany": "This folder already contains more than {{count}} images.",
+				"onlyNew": "Only analyze new images (recommended)",
+				"alsoExisting_one": "Also analyze the existing image",
+				"alsoExisting_other": "Also analyze the {{count}} existing images",
+				"existingLater": "You can still analyze them later from the folder page.",
+				"uploadCost": "Uses up to {{count}} of your {{remaining}} remaining image uploads.",
+				"legacyMissing": "The input folder of the old MiViA Desktop ({{path}}) no longer exists. Choose a folder."
+			},
+			"series": {
+				"title": "How do images arrive in this folder?",
+				"lead": "MiViA collects images that arrive together, for example the images of one sample, and saves one report for them per model.",
+				"microscope": "The microscope software saves each image here",
+				"microscopeHint": "The report is made 15 minutes after the last new image.",
+				"wholeFolder": "I copy a whole folder per sample",
+				"wholeFolderHint": "The report is made 1 minute after the folder is copied. Each subfolder gets its own report.",
+				"byHand": "I copy images by hand",
+				"byHandHint": "The report is made 5 minutes after the last new image.",
+				"later": "You can always finish a series early with “Finish series now”, and change this later in the folder settings.",
+				"reportsIn": "Reports are saved in:",
+				"reportsChange": "Change",
+				"modeSubfolder": "In the subfolder “{{name}}” of the input folder (recommended)",
+				"modeBeside": "Next to the images (in the subfolder of each image series)",
+				"asBefore": "like the old MiViA Desktop",
+				"modeCustom": "In another folder…",
+				"probeDenied": "MiViA cannot save reports in {{folder}}. Reports go to {{fallback}} instead.",
+				"longPath": "This folder path is long, report names will be shortened."
+			},
+			"models": {
+				"title": "Which models should analyze the images?",
+				"lead": "Choose one or more. Each new image is analyzed with every model you choose, and each model gets its own report.",
+				"search": "Search models",
+				"customization": "Customization",
+				"customizationHint": "Settings saved for your lab on {{host}}",
+				"standard": "Standard settings",
+				"choosePlaceholder": "Choose a customization",
+				"loading": "Loading models…",
+				"required": "Choose at least one model.",
+				"none": "Your account has no models yet. Contact the person responsible for MiViA in your lab or {{contact}}. You can finish setup now; the folder starts working as soon as a model is available.",
+				"loadFailed": "The list of models could not be loaded. Check the internet connection.",
+				"legacyGone": "{{name}} from the old MiViA Desktop is no longer available for your account. Ask the person responsible for MiViA in your lab or {{contact}}.",
+				"legacyCustomGone": "The customization the old MiViA Desktop used for {{name}} is no longer available. Choose one."
+			},
+			"finish": {
+				"title": "Windows and privacy",
+				"autostart": "Start MiViA Desktop when I sign in to Windows (recommended, so no new image is missed)",
+				"explorer": "Add MiViA to the Explorer right-click menu, to analyze single images (“Analyze with MiViA”)",
+				"telemetry": "Send technical and usage data to MiViA GmbH (app events, errors, timings, device facts, with a device ID) to find faults and improve the app. You can turn this off at any time in Settings.",
+				"telemetryNever": "Never sent: images, file, folder and series names, results, search text, your access key.",
+				"later": "You can change all of this later in Settings.",
+				"button": "Finish setup"
+			},
+			"done": {
+				"title": "MiViA Desktop is ready",
+				"titleWaiting": "MiViA Desktop is set up, but cannot analyze yet",
+				"reasonNoModels": "Your account has no models yet.",
+				"reasonLicense": "Your MiViA license is not active.",
+				"reasonOffline": "MiViA cannot be reached at the moment.",
+				"waitingSafe": "New images wait in the folder and are analyzed as soon as this is solved.",
+				"watching": "Watching <b>{{folder}}</b>",
+				"models": "Models: {{models}}",
+				"reports": "Reports are saved in {{folder}}",
+				"nextTitle": "What happens now",
+				"how": "Save or copy images into <b>{{folder}}</b>. MiViA analyzes them and saves the report there.",
+				"existing_one": "The existing image is analyzed now.",
+				"existing_other": "The {{count}} existing images are analyzed now.",
+				"single": "Single images: right-click them in Explorer, choose “Show more options”, then “Analyze with MiViA”.",
+				"tray": "MiViA Desktop keeps running after you close this window. You find it in the Start menu and next to the clock (click ^ if you do not see the icon).",
+				"perUser": "Other Windows users on this PC set up MiViA Desktop for themselves.",
+				"legacyStopped": "The old MiViA Desktop is switched off. Its folder contains only program files, no reports; you can delete it.",
+				"legacyClose": "Close the old MiViA Desktop. It is switched off at the next start of MiViA Desktop.",
+				"legacyFailed": "The old MiViA Desktop could not be switched off. Close it and delete its folder.",
+				"legacyStartup": "An administrator must remove this startup entry of the old MiViA Desktop: {{path}}",
+				"autostartFailed": "MiViA Desktop could not be set to start with Windows. Try again in Settings › General.",
+				"explorerFailed": "MiViA could not be added to the right-click menu. Try again in Settings › Explorer integration.",
+				"open": "Go to overview"
+			},
+			"quit": {
+				"title": "Finish setup later?",
+				"text": "Until setup is finished, no images are analyzed, also not overnight. Your entries are kept. MiViA Desktop asks again the next time you sign in to Windows.",
+				"continue": "Continue setup",
+				"close": "Quit MiViA Desktop"
+			},
+			"resume": {
+				"note": "Setup is not finished yet. You are back where you left off."
+			}
+		},
+		"addFolder": {
+			"page": {
+				"title": "Add input folder",
+				"folder": "Input folder",
+				"arrival": "Image series",
+				"models": "Models",
+				"add": "Add folder",
+				"overlaps": "This folder is inside another input folder, or contains one. Choose another folder.",
+				"denied": "MiViA cannot save reports in this folder. Choose another report folder."
+			}
+		},
+		"account": {
+			"key": {
+				"replace": "Replace access key",
+				"connect": "Connect with an access key",
+				"connectLead": "No account is connected. Paste your access key to connect this PC again.",
+				"save": "Save key",
+				"saved": "New access key saved. Connected as {{name}}.",
+				"hint": "Tip for the key owner: the old key can be deleted at {{host}} › Access keys."
+			},
+			"switch": {
+				"title": "Switch account?",
+				"text": "This key belongs to {{next}}, not {{current}}. If you continue, the input folders of {{current}} are no longer watched. Their reports and history stay on this PC.",
+				"confirm": "Switch account",
+				"cancel": "Cancel"
+			},
+			"signOut": {
+				"button": "Sign out",
+				"title": "Sign out of {{name}}?",
+				"text": "Input folders are no longer watched. Images in the folders are not deleted. Image series that are still collecting are closed; their analyses and reports continue when you sign in to {{name}} again.",
+				"cancel": "Cancel"
+			}
+		},
+		"integration": {
+			"autostart": {
+				"label": "Start MiViA Desktop when I sign in to Windows",
+				"turnedOff": "Turned off in Task Manager"
+			},
+			"explorer": {
+				"label": "Show “Analyze with MiViA” in the Explorer right-click menu",
+				"help": "Windows 11 shows the entry under “Show more options”. More than 100 images? Send or drag the folder.",
+				"unavailable": "Available in the installed MiViA Desktop only."
+			}
+		}
+	}
+}

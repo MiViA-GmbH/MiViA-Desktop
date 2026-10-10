@@ -1,15 +1,21 @@
-import { Group, NavLink, Stack, Text } from '@mantine/core';
+import { Group, NavLink, Stack } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { createLazyRoute, Link, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
-import { accountQuery, localeQuery } from '../entities/account/queries';
+import { localeQuery } from '../entities/account/queries';
+import { AccountPanel } from '../features/settings/account-panel';
+import { AutostartSwitch, ExplorerSwitch } from '../features/settings/integration-panel';
 import { LanguageSelect } from '../features/settings/language-select';
 import { PageHeader } from '../shared/ui/page-header';
 import { Panel } from '../shared/ui/panel';
 import { NotFound } from './errors';
 
-const SECTIONS = { general: 'desktop.settings.general', account: 'desktop.settings.account' } as const;
+const SECTIONS = {
+	account: 'desktop.settings.account',
+	general: 'desktop.settings.general',
+	explorer: 'desktop.settings.explorer',
+} as const;
 
 type Section = keyof typeof SECTIONS;
 
@@ -18,33 +24,34 @@ function isSection(value: string): value is Section {
 }
 
 function General() {
-	const { t } = useTranslation();
 	const locale = useQuery(localeQuery).data;
-	return <Panel title={t('desktop.settings.general')}>{locale && <LanguageSelect setting={locale.setting} />}</Panel>;
+	return (
+		<Stack gap="md">
+			{locale && <LanguageSelect setting={locale.setting} />}
+			<AutostartSwitch />
+		</Stack>
+	);
 }
 
-function Account() {
+const PANELS = {
+	account: { title: 'desktop.settings.account', body: AccountPanel },
+	general: { title: 'desktop.settings.general', body: General },
+	explorer: { title: 'desktop.settings.explorer', body: ExplorerSwitch },
+} as const;
+
+function Section({ section }: { section: Section }) {
 	const { t } = useTranslation();
-	const account = useQuery(accountQuery).data;
+	const Body = PANELS[section].body;
 	return (
-		<Panel title={t('desktop.settings.account')}>
-			<Stack gap="xs">
-				<Text fw={600} size="sm">
-					{account?.displayName ?? t('desktop.settings.noAccount')}
-				</Text>
-				{account && (
-					<Text c="stone.7" size="sm">
-						{account.serverUrl}
-					</Text>
-				)}
-			</Stack>
+		<Panel title={t(PANELS[section].title)}>
+			<Body />
 		</Panel>
 	);
 }
 
 function Settings() {
 	const { t } = useTranslation();
-	const { section } = useParams({ from: '/settings/$section' });
+	const { section } = useParams({ from: '/app/settings/$section' });
 	if (!isSection(section)) {
 		return <NotFound />;
 	}
@@ -63,11 +70,11 @@ function Settings() {
 					))}
 				</Stack>
 				<Stack flex={1} miw={0}>
-					{section === 'general' ? <General /> : <Account />}
+					<Section section={section} />
 				</Stack>
 			</Group>
 		</>
 	);
 }
 
-export const SettingsRoute = createLazyRoute('/settings/$section')({ component: Settings });
+export const SettingsRoute = createLazyRoute('/app/settings/$section')({ component: Settings });

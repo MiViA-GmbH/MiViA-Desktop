@@ -2,6 +2,7 @@ import { mockIPC } from '@tauri-apps/api/mocks';
 
 import type { FolderView } from '../../shared/ipc/bindings';
 import { ATTENTION, BATCH, FOLDERS, HISTORY, HOLDS, ITEMS, REPORTS } from './fixtures';
+import { setupResponses, setupView } from './setup';
 
 const params = new URLSearchParams(window.location.search);
 const scenario = params.get('scenario') ?? 'hold';
@@ -21,7 +22,12 @@ const calm = scenario !== 'hold';
 
 const responses: Record<string, unknown> = {
 	get_locale: { language, setting: 'auto', formatLocale: `${language}-DE` },
-	get_account: { displayName: 'Dr. Katrin Möller', serverUrl: 'https://app.mivia.ai', serverAccountId: 'a1' },
+	get_account: {
+		displayName: 'Dr. Katrin Möller',
+		serverUrl: 'https://app.mivia.ai',
+		serverAccountId: 'a1',
+		email: 'k.moeller@kessler-werkstoff.de',
+	},
 	list_folders: { revision: '9', folders: folders() },
 	list_holds: calm ? { revision: '9', holds: [] } : HOLDS,
 	list_needs_attention: calm ? { revision: '9', total: 0, items: [] } : ATTENTION,
@@ -31,4 +37,8 @@ const responses: Record<string, unknown> = {
 	list_series_reports: REPORTS,
 };
 
-mockIPC((command) => responses[command] ?? null, { shouldMockEvents: true });
+const setup = setupResponses(setupView(scenario));
+
+mockIPC((command, args) => setup[command]?.((args ?? {}) as Record<string, unknown>) ?? responses[command] ?? null, {
+	shouldMockEvents: true,
+});

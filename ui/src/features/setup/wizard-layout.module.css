@@ -1,0 +1,9 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 100dvh;
+	padding: var(--mantine-spacing-xl) var(--mantine-spacing-md);
+	background-color: var(--mantine-color-jade-9);
+}

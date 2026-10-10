@@ -1,0 +1,9 @@
+.root {
+	position: absolute;
+	top: var(--mantine-spacing-md);
+	left: var(--mantine-spacing-md);
+
+	@media (max-width: 899px) {
+		display: none;
+	}
+}

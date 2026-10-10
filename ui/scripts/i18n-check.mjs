@@ -132,9 +132,10 @@ function checkUsage(all, ui, rust) {
 	checkLiterals(ui, rust);
 }
 
-const ui = ['ui/src/shared/i18n/locales/desktop', '%{'];
+const ui = [['ui/src/shared/i18n/locales/desktop', 'ui/src/shared/i18n/locales/setup'], '%{'];
 const rust = ['src-tauri/locales', '{{'];
-const [en, de, rustEn, rustDe] = [load(ui[0], 'en'), load(ui[0], 'de'), load(rust[0], 'en'), load(rust[0], 'de')];
+const loadAll = (dirs, language) => new Map(dirs.flatMap((dir) => [...load(dir, language)]));
+const [en, de, rustEn, rustDe] = [loadAll(ui[0], 'en'), loadAll(ui[0], 'de'), load(rust[0], 'en'), load(rust[0], 'de')];
 checkPairs(en, de, ui[1]);
 checkPairs(rustEn, rustDe, rust[1]);
 const all = new Map([...en, ...rustEn]);

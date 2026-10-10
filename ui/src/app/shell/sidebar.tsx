@@ -10,6 +10,7 @@ import { accountQuery } from '../../entities/account/queries';
 import { foldersQuery } from '../../entities/folder/queries';
 import { folderStatus } from '../../entities/folder/status';
 import { holdsQuery } from '../../entities/hold/queries';
+import { AddFolderIcon } from '../../shared/ui/icons';
 import type { Tone } from '../../shared/ui/tone';
 import { NAVIGATION } from './navigation';
 import classes from './sidebar.module.css';
@@ -76,6 +77,13 @@ function Folders({ rail }: { rail: boolean }) {
 						/>
 					);
 				})}
+				<Item
+					active={path === '/folders/new'}
+					icon={<AddFolderIcon {...ICON} />}
+					label={t('desktop.nav.addFolder')}
+					link={(props) => <Link to="/folders/new" {...props} />}
+					rail={rail}
+				/>
 			</Stack>
 		</ScrollArea>
 	);

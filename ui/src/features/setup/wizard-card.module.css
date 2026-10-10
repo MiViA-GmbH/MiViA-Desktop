@@ -1,0 +1,7 @@
+.root {
+	display: flex;
+	width: 100%;
+	max-width: 760px;
+	height: min(624px, calc(100dvh - 64px));
+	overflow: hidden;
+}

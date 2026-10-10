@@ -17,7 +17,7 @@ import { commands } from '../shared/ipc';
 import type { FolderView } from '../shared/ipc/bindings';
 import { formatTime } from '../shared/lib/format';
 import { EmptyState } from '../shared/ui/empty-state';
-import { DoneIcon, ResumeIcon } from '../shared/ui/icons';
+import { AddFolderIcon, DoneIcon, ResumeIcon } from '../shared/ui/icons';
 import { PageHeader } from '../shared/ui/page-header';
 import { Panel } from '../shared/ui/panel';
 
@@ -88,6 +88,11 @@ function Overview() {
 			<>
 				<PageHeader title={t('desktop.overview.title')} />
 				<EmptyState
+					action={
+						<Button component={Link} leftSection={<AddFolderIcon size={16} stroke={ICON_STROKE} />} to="/folders/new">
+							{t('desktop.nav.addFolder')}
+						</Button>
+					}
 					hint={t('desktop.overview.emptyHint')}
 					text={t('desktop.overview.emptyText')}
 					title={t('desktop.overview.emptyTitle')}
@@ -118,4 +123,4 @@ function Overview() {
 	);
 }
 
-export const OverviewRoute = createLazyRoute('/')({ component: Overview });
+export const OverviewRoute = createLazyRoute('/app/')({ component: Overview });
