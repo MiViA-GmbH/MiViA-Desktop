@@ -17,6 +17,7 @@ use crate::server::sim_id;
 pub trait ServerHarness: Send + Sync {
     fn sut(&self) -> Arc<dyn ServerApi>;
     async fn finish_jobs(&self);
+    async fn seed_results(&self, job_id: &str, results: &str, image: (&str, &[u8]));
 }
 
 pub struct BytesSource {
@@ -217,6 +218,7 @@ macro_rules! server_contract_tests {
             reports_render_and_download,
             reports_refuse_unknown_jobs,
             reports_unknown_report_is_gone,
+            results_and_result_images_round_trip,
         );
     };
 }

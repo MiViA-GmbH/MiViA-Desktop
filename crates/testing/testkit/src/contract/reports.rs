@@ -87,3 +87,26 @@ pub async fn reports_unknown_report_is_gone(harness: &impl ServerHarness) -> Cas
     let outcome = harness.sut().report_status(&sim_id(4, 997)).await;
     check_eq(&outcome, &Err(ServerError::Gone), "unknown report")
 }
+
+pub async fn results_and_result_images_round_trip(harness: &impl ServerHarness) -> CaseResult {
+    let job = finished_job(harness, b"pictured").await?;
+    let server = harness.sut();
+    let results = r#"[{"filename":"r.png","type":"image"}]"#;
+    harness
+        .seed_results(&job, results, ("r.png", b"\x89PNG-body"))
+        .await;
+    let found = server.job_results(&job).await.map_err(|e| failed(&e))?;
+    check_eq(&found.as_deref(), &Some(results), "results")?;
+    let download = server
+        .download_result_image(&job, "r.png", Box::new(MemorySink::new()))
+        .await
+        .map_err(|e| failed(&e))?;
+    let Download::Staged(staged) = download else {
+        return Err("image expired".to_owned());
+    };
+    check_eq(&staged.size, &9, "image size")?;
+    let missing = server
+        .download_result_image(&job, "other.png", Box::new(MemorySink::new()))
+        .await;
+    check_eq(&missing, &Ok(Download::Expired), "unknown image")
+}

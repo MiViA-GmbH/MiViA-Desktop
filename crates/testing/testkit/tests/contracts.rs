@@ -147,6 +147,14 @@ impl ServerHarness for FakeServerHarness {
     async fn finish_jobs(&self) {
         self.0.with_sim(ServerSim::finish_all);
     }
+
+    async fn seed_results(&self, job_id: &str, results: &str, image: (&str, &[u8])) {
+        self.0.with_sim(|sim| {
+            sim.results.insert(job_id.to_owned(), results.to_owned());
+            sim.result_images
+                .insert((job_id.to_owned(), image.0.to_owned()), image.1.to_vec());
+        });
+    }
 }
 
 struct FakeCredentialHarness(Arc<FakeCredentialStore>);
