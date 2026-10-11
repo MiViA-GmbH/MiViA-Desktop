@@ -1,5 +1,6 @@
 mod cache;
 pub mod decode;
+pub mod fuzz;
 
 use std::fs::{self, File};
 use std::io::Read;
@@ -98,6 +99,7 @@ fn render_in(cache: &Cache, input: &Path) -> Result<Rendering, Unavailable> {
             out.tier(Tier::View, decode::resize(&source, VIEW_EDGE)?)?;
         }
         out.tier(Tier::Display, decode::resize(&source, DISPLAY_EDGE)?)?;
+        tracing::info!(target: "perf", "preview_decoded");
     }
     Ok(Rendering {
         width: header.width,

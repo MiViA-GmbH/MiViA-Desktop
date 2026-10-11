@@ -12,6 +12,7 @@ libfuzzer-sys = "=0.4.13"
 mivia-application = { path = "../crates/core/application" }
 mivia-diagnostics = { path = "../crates/adapters/diagnostics", default-features = false }
 mivia-domain = { path = "../crates/core/domain" }
+mivia-preview = { path = "../crates/adapters/preview" }
 
 [workspace]
 members = ["."]
@@ -68,6 +69,13 @@ bench = false
 [[bin]]
 name = "redaction"
 path = "fuzz_targets/redaction.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "preview_render"
+path = "fuzz_targets/preview_render.rs"
 test = false
 doc = false
 bench = false
