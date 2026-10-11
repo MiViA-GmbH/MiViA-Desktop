@@ -1,246 +1,14 @@
 {
 	"data": [
 		{
-			"createdAt": "2026-10-11T13:59:58.568Z",
+			"createdAt": "2026-10-11T16:07:12.062Z",
 			"cropped": false,
 			"customizationId": null,
 			"finishedAt": null,
 			"hasResults": true,
-			"id": "c3c79770-142c-439b-96bb-0fd25958c4e8",
+			"id": "dd2bc89b-aa1c-4dd5-a20f-1682d46d9863",
 			"image": {
-				"createdAt": "2026-10-11T13:59:58.444Z",
-				"orginalFilename": "image-4.png",
-				"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b41-b79f-74be-a4c2-48087498395d.png"
-			},
-			"imageId": "f4c09abe-fbe9-4d45-b05c-5ca5d906222e",
-			"masksPending": 2,
-			"masksSubmitted": 0,
-			"modelId": "36423fa1-7d4c-42fb-aac0-ef722a2b968f",
-			"modelVersion": "20250507",
-			"outdated": false,
-			"result": {
-				"feedback": [
-					{
-						"name": "IFRA",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "MAG",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "INC",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "FFRA",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "TOM",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "RES",
-						"score": 0.01,
-						"value": false
-					}
-				]
-			},
-			"resultId": "e4afded9-8721-42eb-a519-c9c60b0035b7",
-			"startedAt": null,
-			"status": "CACHED",
-			"userFeedback": null,
-			"withMasks": false
-		},
-		{
-			"createdAt": "2026-10-11T13:59:58.496Z",
-			"cropped": false,
-			"customizationId": null,
-			"finishedAt": null,
-			"hasResults": true,
-			"id": "bab3fa40-7d61-4555-9a9d-173efc6dc306",
-			"image": {
-				"createdAt": "2026-10-11T13:59:58.444Z",
-				"orginalFilename": "image-4.png",
-				"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b41-b79f-74be-a4c2-48087498395d.png"
-			},
-			"imageId": "f4c09abe-fbe9-4d45-b05c-5ca5d906222e",
-			"masksPending": 2,
-			"masksSubmitted": 0,
-			"modelId": "36423fa1-7d4c-42fb-aac0-ef722a2b968f",
-			"modelVersion": "20250507",
-			"outdated": false,
-			"result": {
-				"feedback": [
-					{
-						"name": "IFRA",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "MAG",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "INC",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "FFRA",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "TOM",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "RES",
-						"score": 0.01,
-						"value": false
-					}
-				]
-			},
-			"resultId": "e4afded9-8721-42eb-a519-c9c60b0035b7",
-			"startedAt": null,
-			"status": "CACHED",
-			"userFeedback": null,
-			"withMasks": false
-		},
-		{
-			"createdAt": "2026-10-11T13:59:58.029Z",
-			"cropped": false,
-			"customizationId": null,
-			"finishedAt": null,
-			"hasResults": true,
-			"id": "5fdde892-f155-43b2-985a-760998501ae3",
-			"image": {
-				"createdAt": "2026-10-11T13:59:57.938Z",
-				"orginalFilename": "image-3.png",
-				"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b41-3a86-731e-b663-a9b99a298934.png"
-			},
-			"imageId": "0d3e4973-9bb0-4a85-9336-10adc84f686f",
-			"masksPending": 2,
-			"masksSubmitted": 0,
-			"modelId": "91d340a2-c5fe-49d9-907d-9ffcb17eaf42",
-			"modelVersion": "20240308",
-			"outdated": false,
-			"result": {
-				"feedback": [
-					{
-						"name": "IFRA",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "MAG",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "INC",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "FFRA",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "TOM",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "RES",
-						"score": 0.01,
-						"value": false
-					}
-				]
-			},
-			"resultId": "d99e24fe-f44c-446b-894e-58f186927cd5",
-			"startedAt": null,
-			"status": "CACHED",
-			"userFeedback": null,
-			"withMasks": false
-		},
-		{
-			"createdAt": "2026-10-11T13:59:57.979Z",
-			"cropped": false,
-			"customizationId": null,
-			"finishedAt": null,
-			"hasResults": true,
-			"id": "7c80342b-bcac-462d-bf18-bfa86df49dc8",
-			"image": {
-				"createdAt": "2026-10-11T13:59:57.938Z",
-				"orginalFilename": "image-3.png",
-				"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b41-3a86-731e-b663-a9b99a298934.png"
-			},
-			"imageId": "0d3e4973-9bb0-4a85-9336-10adc84f686f",
-			"masksPending": 2,
-			"masksSubmitted": 0,
-			"modelId": "91d340a2-c5fe-49d9-907d-9ffcb17eaf42",
-			"modelVersion": "20240308",
-			"outdated": false,
-			"result": {
-				"feedback": [
-					{
-						"name": "IFRA",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "MAG",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "INC",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "FFRA",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "TOM",
-						"score": 1,
-						"value": true
-					},
-					{
-						"name": "RES",
-						"score": 0.01,
-						"value": false
-					}
-				]
-			},
-			"resultId": "d99e24fe-f44c-446b-894e-58f186927cd5",
-			"startedAt": null,
-			"status": "CACHED",
-			"userFeedback": null,
-			"withMasks": false
-		},
-		{
-			"createdAt": "2026-10-11T13:59:57.581Z",
-			"cropped": false,
-			"customizationId": null,
-			"finishedAt": null,
-			"hasResults": true,
-			"id": "6f448cc0-6613-443f-9d0a-9cf1ceb837b8",
-			"image": {
-				"createdAt": "2026-10-11T13:59:57.456Z",
+				"createdAt": "2026-10-11T16:07:11.934Z",
 				"orginalFilename": "image-2.png",
 				"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b41-3865-75eb-a4cc-b43ff79a5afd.png"
 			},
@@ -289,12 +57,244 @@
 			"status": "CACHED",
 			"userFeedback": null,
 			"withMasks": false
+		},
+		{
+			"createdAt": "2026-10-11T16:07:12.008Z",
+			"cropped": false,
+			"customizationId": null,
+			"finishedAt": null,
+			"hasResults": true,
+			"id": "a41fdfdc-6804-4a61-85be-6fa3fd6ddb3b",
+			"image": {
+				"createdAt": "2026-10-11T16:07:11.934Z",
+				"orginalFilename": "image-2.png",
+				"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b41-3865-75eb-a4cc-b43ff79a5afd.png"
+			},
+			"imageId": "0ef1ef6b-1710-4483-848a-ce5de58cc58b",
+			"masksPending": 2,
+			"masksSubmitted": 0,
+			"modelId": "85a9b7d4-377e-48e6-ba42-c12489bad78f",
+			"modelVersion": "20240821",
+			"outdated": false,
+			"result": {
+				"feedback": [
+					{
+						"name": "IFRA",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "MAG",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "INC",
+						"score": 1,
+						"value": false
+					},
+					{
+						"name": "FFRA",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "TOM",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "RES",
+						"score": 0.01,
+						"value": false
+					}
+				]
+			},
+			"resultId": "7c2ba8f9-7091-44bc-aaac-f4f62fb535b7",
+			"startedAt": null,
+			"status": "CACHED",
+			"userFeedback": null,
+			"withMasks": false
+		},
+		{
+			"createdAt": "2026-10-11T16:07:10.755Z",
+			"cropped": false,
+			"customizationId": null,
+			"finishedAt": null,
+			"hasResults": true,
+			"id": "69281d67-b0d8-429c-82f0-9ebcd0684466",
+			"image": {
+				"createdAt": "2026-10-11T16:07:10.619Z",
+				"orginalFilename": "image-3.png",
+				"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b41-3a86-731e-b663-a9b99a298934.png"
+			},
+			"imageId": "0d3e4973-9bb0-4a85-9336-10adc84f686f",
+			"masksPending": 2,
+			"masksSubmitted": 0,
+			"modelId": "91d340a2-c5fe-49d9-907d-9ffcb17eaf42",
+			"modelVersion": "20240308",
+			"outdated": false,
+			"result": {
+				"feedback": [
+					{
+						"name": "IFRA",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "MAG",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "INC",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "FFRA",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "TOM",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "RES",
+						"score": 0.01,
+						"value": false
+					}
+				]
+			},
+			"resultId": "d99e24fe-f44c-446b-894e-58f186927cd5",
+			"startedAt": null,
+			"status": "CACHED",
+			"userFeedback": null,
+			"withMasks": false
+		},
+		{
+			"createdAt": "2026-10-11T16:07:10.682Z",
+			"cropped": false,
+			"customizationId": null,
+			"finishedAt": null,
+			"hasResults": true,
+			"id": "b9e5a981-fa3e-4634-96e8-d45d1320957e",
+			"image": {
+				"createdAt": "2026-10-11T16:07:10.619Z",
+				"orginalFilename": "image-3.png",
+				"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b41-3a86-731e-b663-a9b99a298934.png"
+			},
+			"imageId": "0d3e4973-9bb0-4a85-9336-10adc84f686f",
+			"masksPending": 2,
+			"masksSubmitted": 0,
+			"modelId": "91d340a2-c5fe-49d9-907d-9ffcb17eaf42",
+			"modelVersion": "20240308",
+			"outdated": false,
+			"result": {
+				"feedback": [
+					{
+						"name": "IFRA",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "MAG",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "INC",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "FFRA",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "TOM",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "RES",
+						"score": 0.01,
+						"value": false
+					}
+				]
+			},
+			"resultId": "d99e24fe-f44c-446b-894e-58f186927cd5",
+			"startedAt": null,
+			"status": "CACHED",
+			"userFeedback": null,
+			"withMasks": false
+		},
+		{
+			"createdAt": "2026-10-11T16:07:08.803Z",
+			"cropped": false,
+			"customizationId": null,
+			"finishedAt": null,
+			"hasResults": true,
+			"id": "b9599571-784f-497f-92f6-0e17173c455c",
+			"image": {
+				"createdAt": "2026-10-11T16:07:08.676Z",
+				"orginalFilename": "image-1.png",
+				"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b40-3e66-759f-a6ad-d41fd054af26.png"
+			},
+			"imageId": "53e71187-bda4-4c4b-becd-67988b0fcfe8",
+			"masksPending": 2,
+			"masksSubmitted": 0,
+			"modelId": "e206d47a-7e99-4b0a-b81e-8630111a071d",
+			"modelVersion": "20240724",
+			"outdated": false,
+			"result": {
+				"feedback": [
+					{
+						"name": "IFRA",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "MAG",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "INC",
+						"score": 1,
+						"value": false
+					},
+					{
+						"name": "FFRA",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "TOM",
+						"score": 1,
+						"value": true
+					},
+					{
+						"name": "RES",
+						"score": 0.01,
+						"value": false
+					}
+				]
+			},
+			"resultId": "ed65fdb1-f9a5-4cf1-add4-8e80fb69d9de",
+			"startedAt": null,
+			"status": "CACHED",
+			"userFeedback": null,
+			"withMasks": false
 		}
 	],
 	"pagination": {
 		"page": 1,
 		"pageSize": 5,
-		"total": 22,
-		"totalPages": 5
+		"total": 32,
+		"totalPages": 7
 	}
 }
