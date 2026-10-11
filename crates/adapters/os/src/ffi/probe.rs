@@ -1,10 +1,17 @@
 use std::io;
+use std::ops::Range;
 
 use windows_sys::Wdk::System::SystemInformation::NtQuerySystemInformation;
-use windows_sys::Win32::Foundation::{CloseHandle, HWND, LPARAM, LocalFree};
+use windows_sys::Wdk::System::Threading::{
+    NtQueryInformationThread, ThreadQuerySetWin32StartAddress,
+};
+use windows_sys::Win32::Foundation::{CloseHandle, HWND, INVALID_HANDLE_VALUE, LPARAM, LocalFree};
+use windows_sys::Win32::System::Diagnostics::ToolHelp::{
+    CreateToolhelp32Snapshot, MODULEENTRY32W, Module32FirstW, TH32CS_SNAPMODULE,
+};
 use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
 use windows_sys::Win32::System::Threading::{
-    GetThreadDescription, OpenThread, THREAD_QUERY_LIMITED_INFORMATION,
+    GetThreadDescription, OpenThread, THREAD_QUERY_INFORMATION, THREAD_QUERY_LIMITED_INFORMATION,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     EnumWindows, GetWindowTextLengthW, GetWindowThreadProcessId, IsWindowVisible, PostMessageW,
@@ -169,4 +176,85 @@ pub fn thread_name(id: u32) -> Option<String> {
     // SAFETY: the handle was opened above and is closed once.
     unsafe { CloseHandle(handle) };
     name.filter(|name| !name.is_empty())
+}
+
+fn image_range(pid: u32) -> Option<Range<usize>> {
+    // SAFETY: plain value arguments; the handle is checked and closed by the guard.
+    let snapshot = unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid) };
+    if snapshot == INVALID_HANDLE_VALUE {
+        return None;
+    }
+    let snapshot = super::system::Owned(snapshot);
+    let mut entry = MODULEENTRY32W {
+        dwSize: u32::try_from(size_of::<MODULEENTRY32W>()).ok()?,
+        ..MODULEENTRY32W::default()
+    };
+    // SAFETY: the entry is a live local with dwSize set and the snapshot is open.
+    (unsafe { Module32FirstW(snapshot.0, &raw mut entry) } != 0).then(|| {
+        let base = entry.modBaseAddr.addr();
+        base..base.saturating_add(entry.modBaseSize as usize)
+    })
+}
+
+fn start_address(id: u32) -> Option<usize> {
+    // SAFETY: plain value arguments; the handle is checked and closed by the guard.
+    let handle = unsafe { OpenThread(THREAD_QUERY_INFORMATION, 0, id) };
+    if handle.is_null() {
+        return None;
+    }
+    let handle = super::system::Owned(handle);
+    let mut start = 0_usize;
+    // SAFETY: the handle is open and `start` is a live pointer-sized local, as the class requires.
+    let status = unsafe {
+        NtQueryInformationThread(
+            handle.0,
+            ThreadQuerySetWin32StartAddress,
+            (&raw mut start).cast(),
+            u32::try_from(size_of::<usize>()).ok()?,
+            std::ptr::null_mut(),
+        )
+    };
+    (status >= 0).then_some(start)
+}
+
+fn is_own(start: Option<usize>, image: Option<&Range<usize>>) -> bool {
+    match (start, image) {
+        (Some(start), Some(image)) => image.contains(&start),
+        _ => true,
+    }
+}
+
+pub fn own_thread_count(pid: u32, threads: &[ThreadRow]) -> usize {
+    let image = image_range(pid);
+    threads
+        .iter()
+        .filter(|thread| is_own(start_address(thread.id), image.as_ref()))
+        .count()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{image_range, is_own, own_thread_count, process_table, start_address};
+
+    #[test]
+    fn unknown_starts_count_as_own() {
+        let image = 0x1000..0x2000;
+        assert!(is_own(Some(0x1800), Some(&image)));
+        assert!(!is_own(Some(0x7FFF_0000), Some(&image)));
+        assert!(is_own(None, Some(&image)));
+        assert!(is_own(Some(0x7FFF_0000), None));
+    }
+
+    #[test]
+    fn counts_threads_started_by_this_image() {
+        let pid = std::process::id();
+        let table = process_table().unwrap();
+        let me = table.iter().find(|row| row.pid == pid).unwrap();
+        let own = own_thread_count(pid, &me.threads);
+        assert!((1..=me.threads.len()).contains(&own));
+        // SAFETY: no arguments.
+        let current = unsafe { windows_sys::Win32::System::Threading::GetCurrentThreadId() };
+        let start = start_address(current).unwrap();
+        assert!(image_range(pid).unwrap().contains(&start));
+    }
 }

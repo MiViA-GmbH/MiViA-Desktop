@@ -18,7 +18,8 @@ pub use pipe::{
     PIPE_INSTANCE_LIMIT, accept_pipe_client, create_pipe_instance, pipe_client, pipe_server_pid,
 };
 pub use probe::{
-    ProcessRow, ThreadRow, close_windows_of, physical_memory_bytes, process_table, thread_name,
+    ProcessRow, ThreadRow, close_windows_of, own_thread_count, physical_memory_bytes,
+    process_table, thread_name,
 };
 pub(crate) use process::process_session;
 pub use process::{

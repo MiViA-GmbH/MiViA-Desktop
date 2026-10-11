@@ -131,7 +131,7 @@ pub(crate) fn notify_associations_changed() {
     }
 }
 
-struct Owned(HANDLE);
+pub(super) struct Owned(pub(super) HANDLE);
 
 impl Drop for Owned {
     fn drop(&mut self) {
