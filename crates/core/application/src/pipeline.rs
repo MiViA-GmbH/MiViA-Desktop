@@ -232,6 +232,16 @@ impl Pipeline {
         !in_flight.uploads.is_empty() || !in_flight.submits.is_empty()
     }
 
+    pub async fn working(&self) -> Result<bool, PipelineError> {
+        if self.busy() {
+            return Ok(true);
+        }
+        let computing = self
+            .write(|tx, scope| tx.pipeline(scope).computing_count())
+            .await?;
+        Ok(computing > 0)
+    }
+
     fn now(&self) -> Timestamp {
         self.ports.clock.now()
     }
