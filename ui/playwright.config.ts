@@ -16,14 +16,15 @@ export default defineConfig({
 	projects: [
 		{
 			name: 'smoke',
-			testMatch: ['smoke.spec.ts', 'wizard.spec.ts', 'history.spec.ts', 'preview.spec.ts'],
-			use: { baseURL: 'http://localhost:4319' },
+			testMatch: ['smoke.spec.ts', 'wizard.spec.ts', 'history.spec.ts', 'preview.spec.ts', 'review.spec.ts'],
+			use: { baseURL: 'http://127.0.0.1:4319' },
 		},
 		{ name: 'e2e', testMatch: 'scenarios.spec.ts', timeout: 240_000 },
 	],
 	webServer: {
-		command: 'vite build --mode mock --outDir dist-mock && vite preview --outDir dist-mock --port 4319 --strictPort',
-		url: 'http://localhost:4319',
+		command:
+			'vite build --mode mock --outDir dist-mock && vite preview --outDir dist-mock --host 127.0.0.1 --port 4319 --strictPort',
+		url: 'http://127.0.0.1:4319',
 		reuseExistingServer: false,
 	},
 });
