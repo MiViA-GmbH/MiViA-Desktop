@@ -29,7 +29,7 @@ fn decoder(operation: &str, status: &str) -> Option<Decode> {
         ("ImageController_uploadImages", "200") => parses::<Vec<ImageDto>>,
         ("ImageController_uploadImages", "400") => parses::<UploadRejectedBody>,
         ("version", "200") => parses::<Version>,
-        ("accessKeysCurrent", "200") => parses::<AccessKeyCurrent>,
+        ("accessKeysInfo", "200") => parses::<AccessKeyCurrent>,
         ("errors", _) => parses::<ApiErrorBody>,
         _ => return None,
     };

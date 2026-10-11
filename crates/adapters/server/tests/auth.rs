@@ -196,13 +196,13 @@ async fn identify_reads_the_account_and_tells_blocked_from_invalid_keys() {
         "adminScope": false
     });
     Mock::given(method("GET"))
-        .and(path("/api/access-keys/current"))
+        .and(path("/api/access-keys/info"))
         .and(header("authorization", KEY))
         .respond_with(ResponseTemplate::new(200).set_body_json(body))
         .mount(&mock)
         .await;
     Mock::given(method("GET"))
-        .and(path("/api/access-keys/current"))
+        .and(path("/api/access-keys/info"))
         .and(header("authorization", "blocked-key"))
         .respond_with(
             ResponseTemplate::new(401)
@@ -211,7 +211,7 @@ async fn identify_reads_the_account_and_tells_blocked_from_invalid_keys() {
         .mount(&mock)
         .await;
     Mock::given(method("GET"))
-        .and(path("/api/access-keys/current"))
+        .and(path("/api/access-keys/info"))
         .and(header("authorization", "wrong-key"))
         .respond_with(
             ResponseTemplate::new(401)

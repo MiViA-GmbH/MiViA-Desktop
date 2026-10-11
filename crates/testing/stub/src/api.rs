@@ -22,7 +22,7 @@ static KEYS: AtomicU64 = AtomicU64::new(1);
 pub(crate) fn routes() -> Router<Stub> {
     Router::new()
         .route("/api/version", get(version))
-        .route("/api/access-keys/current", get(identify))
+        .route("/api/access-keys/info", get(identify))
         .route("/api/users/license", get(license))
         .route("/api/settings/available-models", get(models))
         .route("/api/models/{id}/customizations", get(customizations))
