@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use mivia_application::feed::Coalescer;
+use mivia_ports::ipc::change::Change;
 use mivia_ports::store::{CommitObserver, Committed};
 use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
@@ -27,6 +28,17 @@ pub(crate) fn channel() -> (Feed, UnboundedReceiver<Committed>) {
     (Feed(sender), receiver)
 }
 
+const fn moves_tray(change: &Change) -> bool {
+    matches!(
+        change,
+        Change::Holds
+            | Change::NeedsAttention
+            | Change::BatchSummary { .. }
+            | Change::BatchItems { .. }
+            | Change::All
+    )
+}
+
 pub(crate) async fn run(app: AppHandle, mut commits: UnboundedReceiver<Committed>) {
     let mut coalescer = Coalescer::default();
     while let Some(first) = commits.recv().await {
@@ -41,6 +53,9 @@ pub(crate) async fn run(app: AppHandle, mut commits: UnboundedReceiver<Committed
         if let Some(ready) = app.state::<Cx>().get() {
             ready.wake();
         }
+        if changed.changes.iter().any(moves_tray) {
+            super::tray::refresh(&app).await;
+        }
         if app.get_webview_window(LABEL).is_some()
             && let Err(error) = StoreChangedEvent(changed).emit(&app)
         {
@@ -51,8 +66,6 @@ pub(crate) async fn run(app: AppHandle, mut commits: UnboundedReceiver<Committed
 
 #[cfg(test)]
 mod tests {
-    use mivia_ports::ipc::change::Change;
-
     use super::*;
 
     #[test]

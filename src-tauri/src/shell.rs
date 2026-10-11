@@ -70,7 +70,9 @@ fn watch_session(shutdown: &Arc<Shutdown>) -> io::Result<UnboundedReceiver<Syste
     let (signal, signals) = unbounded_channel();
     mivia_os::spawn_session_watcher(move |event| match event {
         SystemSignal::SessionEnding => watcher.session_ending(),
-        other @ (SystemSignal::Resumed | SystemSignal::NetworkChanged) => {
+        other @ (SystemSignal::Resumed
+        | SystemSignal::NetworkChanged
+        | SystemSignal::ThemeChanged) => {
             if signal.send(other).is_err() {
                 tracing::debug!("system.signalDropped");
             }
@@ -231,6 +233,7 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
         .set(account::compose(&services, launch.minimized, None).await);
     let reporting = services.policies.issue_reporting != Some(IssueReporting::Off);
     tray::started(&app, reporting);
+    tray::refresh(&app).await;
     one_off::ingest_inbox(&app, &instance::inbox(&launch.data_dir)).await;
     if !completed {
         tray::hide(&app);

@@ -60,10 +60,18 @@ pub(super) async fn begin(services: &Arc<Services>) -> Route {
 pub(super) async fn follow(app: AppHandle, mut signals: UnboundedReceiver<SystemSignal>) {
     while let Some(first) = signals.recv().await {
         tokio::time::sleep(SETTLE).await;
-        let mut resumed = first == SystemSignal::Resumed;
+        let mut seen = vec![first];
         while let Ok(next) = signals.try_recv() {
-            resumed |= next == SystemSignal::Resumed;
+            seen.push(next);
         }
+        if seen.contains(&SystemSignal::ThemeChanged) {
+            super::tray::theme_changed(&app);
+        }
+        seen.retain(|signal| *signal != SystemSignal::ThemeChanged);
+        if seen.is_empty() {
+            continue;
+        }
+        let resumed = seen.contains(&SystemSignal::Resumed);
         tracing::info!(resumed, "system.networkChanged");
         react(&*app.state::<Cx>().ready().await, resumed).await;
     }
