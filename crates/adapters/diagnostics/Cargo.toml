@@ -13,7 +13,7 @@ default = ["logging"]
 logging = ["dep:logroller", "dep:tracing-appender", "dep:tracing-subscriber"]
 
 [dependencies]
-flate2 = "=1.1.10"
+flate2 = "=1.1.9"
 getrandom = "=0.4.3"
 hmac = "=0.13.0"
 logroller = { version = "=0.1.12", optional = true }
@@ -32,6 +32,6 @@ uuid = { version = "=1.26.1", default-features = false, features = ["v4"] }
 zip = { version = "=8.6.0", default-features = false, features = ["deflate-flate2"] }
 
 [dev-dependencies]
-flate2 = "=1.1.10"
+flate2 = "=1.1.9"
 proptest = "=1.11.0"
 tempfile = "=3.27.0"

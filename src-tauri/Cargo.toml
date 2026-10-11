@@ -43,7 +43,7 @@ tracing = "=0.1.44"
 uuid = { version = "=1.26.1", default-features = false, features = ["v7"] }
 
 [dev-dependencies]
-flate2 = "=1.1.10"
+flate2 = "=1.1.9"
 mivia-stub.workspace = true
 mivia-testkit.workspace = true
 tauri = { version = "=2.12.1", features = ["protocol-asset", "tray-icon", "specta", "test"] }

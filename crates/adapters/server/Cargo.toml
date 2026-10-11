@@ -30,7 +30,7 @@ uuid = { version = "=1.26.1", default-features = false }
 
 [dev-dependencies]
 tokio = { version = "=1.53.1", features = ["macros", "rt", "net", "io-util", "sync", "time", "test-util"] }
-flate2 = "=1.1.10"
+flate2 = "=1.1.9"
 tempfile = "=3.27.0"
 tokio-rustls = { version = "=0.26.6", default-features = false, features = ["ring", "tls12"] }
 wiremock = "=0.6.5"

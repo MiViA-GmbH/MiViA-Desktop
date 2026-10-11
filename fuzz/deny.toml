@@ -16,10 +16,6 @@ private = { ignore = true }
 
 [bans]
 multiple-versions = "deny"
-skip = [
-    { crate = "miniz_oxide@0.8.9", reason = "png pins 0.8 while flate2 uses 0.9" },
-    { crate = "syn@2.0.119", reason = "zerocopy-derive under tiff still uses syn 2" },
-]
 wildcards = "deny"
 allow-wildcard-paths = true
 deny = [
