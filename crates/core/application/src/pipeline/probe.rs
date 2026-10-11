@@ -1,5 +1,6 @@
 use mivia_domain::hold::{HoldReason, LicenseScope};
 use mivia_domain::source_file::SourceFileEvent;
+use mivia_ports::server::ServerError;
 
 use super::submit::Member;
 use super::{Pipeline, PipelineError, Tick};
@@ -29,7 +30,10 @@ impl Pipeline {
                 self.ports.network.refresh(false).await;
                 server.version().await.is_ok()
             }
-            HoldReason::ServiceUnavailable => server.license().await.is_ok(),
+            HoldReason::ServiceUnavailable => matches!(
+                server.license().await,
+                Ok(_) | Err(ServerError::LicenseInvalid)
+            ),
             HoldReason::AccessKeyInvalid(_) => self.key_accepted().await,
             HoldReason::LicenseInvalid(LicenseScope::Uploads) => self.upload_canary().await?,
             HoldReason::LicenseInvalid(LicenseScope::All) => self.submit_canary().await?,

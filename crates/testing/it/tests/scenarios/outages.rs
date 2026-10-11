@@ -75,6 +75,23 @@ async fn an_hour_of_service_errors_fails_nothing_and_stays_within_the_request_bu
 }
 
 #[tokio::test]
+async fn a_service_hold_lifts_when_the_server_answers_without_a_licence() {
+    let line = Line::new().await;
+    line.server
+        .set_down(&API, Some(&ServerError::Unavailable { status: 503 }));
+    line.files(4).await;
+    line.run_for(HOUR_MS, 5 * SECOND_MS).await;
+    assert_eq!(line.holds().await, [HoldReason::ServiceUnavailable]);
+
+    line.server.set_down(&API, None);
+    line.server
+        .set_down(&[Op::License], Some(&ServerError::LicenseInvalid));
+    line.run_for(10 * MINUTE_MS, 5 * SECOND_MS).await;
+    assert!(!line.holds().await.contains(&HoldReason::ServiceUnavailable));
+    line.finish().await;
+}
+
+#[tokio::test]
 async fn a_rejected_access_key_holds_work_until_the_key_is_accepted_again() {
     let line = Line::new().await;
     let invalid = ServerError::Unauthorized(KeyProblem::Invalid);
