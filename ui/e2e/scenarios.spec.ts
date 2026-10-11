@@ -1,6 +1,7 @@
 import { type ChildProcess, spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { crc32, deflateSync } from 'node:zlib';
 import { type Browser, chromium, expect, type Page, test } from '@playwright/test';
 
 const REPO = resolve(import.meta.dirname, '../..');
@@ -84,6 +85,53 @@ function stop(child: ChildProcess | undefined): Promise<void> {
 
 function jpeg(seed: number): Buffer {
 	return Buffer.from([0xff, 0xd8, 0xff, 0xe0, seed, 0x00, 0x10, seed, 0xff, 0xd9]);
+}
+
+function png(width: number, height: number): Buffer {
+	const raw = Buffer.alloc(height * (1 + width * 3));
+	for (let y = 0; y < height; y += 1) {
+		for (let x = 0; x < width; x += 1) {
+			raw.set([Math.floor((x * 255) / width), Math.floor((y * 255) / height), 96], y * (1 + width * 3) + 1 + x * 3);
+		}
+	}
+	const chunk = (type: string, body: Buffer) => {
+		const named = Buffer.concat([Buffer.from(type), body]);
+		const length = Buffer.alloc(4);
+		length.writeUInt32BE(body.length);
+		const check = Buffer.alloc(4);
+		check.writeUInt32BE(crc32(named));
+		return Buffer.concat([length, named, check]);
+	};
+	const header = Buffer.alloc(13);
+	header.writeUInt32BE(width, 0);
+	header.writeUInt32BE(height, 4);
+	header.set([8, 2, 0, 0, 0], 8);
+	return Buffer.concat([
+		Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+		chunk('IHDR', header),
+		chunk('IDAT', deflateSync(raw)),
+		chunk('IEND', Buffer.alloc(0)),
+	]);
+}
+
+async function publishResults(origin: string): Promise<number> {
+	const listed = await fetch(`${origin}/api/v2/jobs?modelId=${MODEL}&page=1`, { headers: { authorization: STUB_KEY } });
+	const jobs: { id: string }[] = ((await listed.json()) as { data: { id: string }[] }).data;
+	const results = [
+		{ type: 'data-table', data: [{ label: 'GRAIN_MEAN', unit: 'um', value: 12.5 }] },
+		{ type: 'image', label: 'GRAIN_OVERLAY', filename: 'overlay.png' },
+		{ type: 'message', label: '' },
+	];
+	const picture = png(3000, 2000);
+	for (const { id } of jobs) {
+		const body = JSON.stringify({ job_id: id, results });
+		await fetch(`${origin}/__stub/result`, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
+		await fetch(`${origin}/__stub/result-image?job_id=${id}&name=overlay.png`, {
+			method: 'POST',
+			body: new Uint8Array(picture),
+		});
+	}
+	return jobs.length;
 }
 
 function pdfs(folder: string): string[] {
@@ -303,6 +351,30 @@ test.describe
 				return results;
 			});
 			expect(Object.values(outcomes)).toEqual(Array(24).fill('ok'));
+		});
+
+		test('scenario 8: a result image is previewed through the asset protocol and the source falls back', async () => {
+			const { page, origin } = running;
+			expect(await publishResults(origin)).toBeGreaterThan(0);
+			await page.getByRole('link', { name: 'History', exact: true }).click();
+			await page.locator('a[href^="/series/"]').first().click();
+			await page
+				.getByRole('link', { name: /^Preview / })
+				.first()
+				.click();
+			await expect(page.getByText('Preview not available')).toBeVisible({ timeout: 30_000 });
+			await expect(page.getByText('GRAIN_MEAN')).toBeVisible();
+			await expect(page.getByText('This result cannot be shown')).toBeVisible();
+			await page.getByRole('button', { name: /GRAIN_OVERLAY/ }).click();
+			const picture = page.locator('img[src*="asset.localhost"], img[src^="asset:"]').first();
+			await expect(picture).toBeVisible({ timeout: 30_000 });
+			await expect.poll(() => picture.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(2048);
+			const zoomIn = page.getByRole('button', { name: 'Zoom in' });
+			for (let step = 0; step < 10 && (await zoomIn.isEnabled()); step += 1) {
+				await zoomIn.click();
+			}
+			await expect(zoomIn).toBeDisabled();
+			await expect.poll(() => picture.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(3000);
 		});
 
 		test('scenario 6: a problem report is sent, saved after a 404 and the local logs are deleted', async () => {

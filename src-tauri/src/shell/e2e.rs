@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::Arc;
 
 use arc_swap::ArcSwap;
@@ -14,6 +15,7 @@ use mivia_ports::store::{AccountScope, NewAccount, SettingsScope, StoreExt};
 use mivia_server::{HttpIdentityApi, build_clients};
 use mivia_store::SqliteStore;
 use secrecy::SecretString;
+use tauri::{AppHandle, Manager};
 
 use super::setup::SessionCredentials;
 
@@ -39,6 +41,13 @@ pub(crate) fn seed_from_env() -> Option<Seed> {
         model: var("MIVIA_E2E_MODEL")?,
         quiet_secs: var("MIVIA_E2E_QUIET_SECS")?.parse().ok()?,
     })
+}
+
+pub(crate) fn allow_previews(app: &AppHandle, data_dir: &Path) {
+    let cache = data_dir.join("previews").join("v1");
+    if let Err(error) = app.asset_protocol_scope().allow_directory(cache, true) {
+        tracing::error!(%error, "e2e.assetScopeFailed");
+    }
 }
 
 pub(crate) fn no_suspend() -> bool {
