@@ -66,13 +66,17 @@ const series = createRoute({ getParentRoute: () => app, path: '/series/$seriesId
 	import('../routes/series.lazy').then((module) => module.SeriesRoute),
 );
 
+const preview = createRoute({ getParentRoute: () => app, path: '/preview/$seriesId/$itemId' }).lazy(() =>
+	import('../routes/preview.lazy').then((module) => module.PreviewRoute),
+);
+
 const settings = createRoute({ getParentRoute: () => app, path: '/settings/$section', loader: loadSetupTexts }).lazy(
 	() => import('../routes/settings.lazy').then((module) => module.SettingsRoute),
 );
 
 const tree = root.addChildren([
 	welcome,
-	app.addChildren([overview, history, singleImages, newFolder, folder, folderSettings, series, settings]),
+	app.addChildren([overview, history, singleImages, newFolder, folder, folderSettings, series, preview, settings]),
 ]);
 
 export const router = createRouter({ routeTree: tree, defaultPreload: false });

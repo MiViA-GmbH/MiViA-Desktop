@@ -116,7 +116,7 @@ function SeriesContent({ series, id }: { series: BatchSummary; id: string }) {
 			/>
 			<SeriesSummary series={series} />
 			<ReportsPanel analyses={analyses} language={language} reports={reports?.reports ?? []} />
-			<ImagesPanel analyses={analyses} items={items?.items ?? []} language={language} />
+			<ImagesPanel analyses={analyses} items={items?.items ?? []} language={language} seriesId={id} />
 			<ChangesPanel events={events?.events ?? []} />
 		</>
 	);

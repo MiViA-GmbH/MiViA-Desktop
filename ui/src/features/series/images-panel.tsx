@@ -1,4 +1,7 @@
-import { Chip, Group, Table, Text } from '@mantine/core';
+import { ActionIcon, Chip, Group, Table, Text } from '@mantine/core';
+import { ICON_STROKE } from '@mivia-ai/theme';
+import { IconEye } from '@tabler/icons-react';
+import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -8,7 +11,7 @@ import type { AnalysisView, BatchItem, Language } from '../../shared/ipc/binding
 import { Panel } from '../../shared/ui/panel';
 import { StatusBadge } from '../../shared/ui/status-badge';
 
-type ImagesPanelProps = { items: BatchItem[]; analyses: AnalysisView[]; language: Language };
+type ImagesPanelProps = { seriesId: string; items: BatchItem[]; analyses: AnalysisView[]; language: Language };
 
 function Filter({ problems, value, onChange }: { problems: number; value: string; onChange: (next: string) => void }) {
 	const { t } = useTranslation();
@@ -26,7 +29,7 @@ function Filter({ problems, value, onChange }: { problems: number; value: string
 	);
 }
 
-export function ImagesPanel({ items, analyses, language }: ImagesPanelProps) {
+export function ImagesPanel({ seriesId, items, analyses, language }: ImagesPanelProps) {
 	const { t } = useTranslation();
 	const [filter, setFilter] = useState('all');
 	const problems = items.filter(hasProblem);
@@ -51,9 +54,22 @@ export function ImagesPanel({ items, analyses, language }: ImagesPanelProps) {
 					{shown.map((item) => (
 						<Table.Tr key={item.id}>
 							<Table.Td>
-								<Text size="sm" truncate>
-									{item.label}
-								</Text>
+								<Group gap="xs" wrap="nowrap">
+									<Text size="sm" truncate>
+										{item.label}
+									</Text>
+									<ActionIcon
+										aria-label={t('desktop.preview.open', { name: item.label })}
+										color="stone"
+										renderRoot={(props) => (
+											<Link params={{ seriesId, itemId: item.id }} to="/preview/$seriesId/$itemId" {...props} />
+										)}
+										size="sm"
+										variant="subtle"
+									>
+										<IconEye size={16} stroke={ICON_STROKE} />
+									</ActionIcon>
+								</Group>
 							</Table.Td>
 							{analyses.map((analysis) => (
 								<Table.Td key={analysis.key}>
