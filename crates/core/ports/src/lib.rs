@@ -6,6 +6,7 @@ pub mod id_gen;
 pub mod ipc;
 pub mod network;
 pub mod policy;
+pub mod preview;
 pub mod queries;
 pub mod server;
 pub mod store;

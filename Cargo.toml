@@ -10,6 +10,7 @@ members = [
     "crates/adapters/os",
     "crates/adapters/diagnostics",
     "crates/adapters/update-sig",
+    "crates/adapters/preview",
     "crates/testing/testkit",
     "crates/testing/it",
     "crates/testing/stub",
@@ -33,6 +34,7 @@ mivia-server = { path = "crates/adapters/server" }
 mivia-os = { path = "crates/adapters/os" }
 mivia-diagnostics = { path = "crates/adapters/diagnostics" }
 mivia-update-sig = { path = "crates/adapters/update-sig" }
+mivia-preview = { path = "crates/adapters/preview" }
 mivia-testkit = { path = "crates/testing/testkit" }
 mivia-stub = { path = "crates/testing/stub" }
 
@@ -93,6 +95,21 @@ debug = "line-tables-only"
 
 [profile.dev.package."*"]
 opt-level = 1
+
+[profile.dev.package.mivia-preview]
+opt-level = 3
+
+[profile.dev.package.fast_image_resize]
+opt-level = 3
+
+[profile.dev.package.jpeg-decoder]
+opt-level = 3
+
+[profile.dev.package.jpeg-encoder]
+opt-level = 3
+
+[profile.dev.package.zune-jpeg]
+opt-level = 3
 
 [profile.release]
 lto = "fat"
