@@ -1,11 +1,13 @@
 use std::path::{Path, PathBuf};
 
 use mivia_api::types::{
-    ImageDto, JobV2ListResponse, JobV2StatusListItem, JobV2StatusListItemStatus, LicenseDto,
-    LicenseDtoType, ModelCustomizationDto, ModelDto, UploadRejectedBody,
-    UploadRejectedBodyErrorsItem, UserJobDto,
+    ClientTelemetryControllerReceiveResponse, ImageDto, IssueReportReceivedDto, JobV2Detail,
+    JobV2ListResponse, JobV2StatusListItem, JobV2StatusListItemStatus, LicenseDto, LicenseDtoType,
+    ModelCustomizationDto, ModelDto, ReportingControllerDownloadReportResponse,
+    ReportingControllerGetReportResponse, UploadRejectedBody, UploadRejectedBodyErrorsItem,
+    UserJobDto,
 };
-use mivia_api::{AccessKeyCurrent, ApiErrorBody, Version};
+use mivia_api::{AccessKeyCurrent, ApiErrorBody, ReportCreated, Version};
 use serde::de::DeserializeOwned;
 
 type Decode = fn(&[u8]) -> Result<(), String>;
@@ -21,13 +23,25 @@ fn decoder(operation: &str, status: &str) -> Option<Decode> {
         ("JobsV2Controller_getJobsStatus", "200") => parses::<Vec<JobV2StatusListItem>>,
         ("JobsController_createJobs", "201") => parses::<Vec<UserJobDto>>,
         ("JobsV2Controller_getJobsLight", "200") => parses::<JobV2ListResponse>,
-        ("UserController_getMyLicense", "200") => parses::<LicenseDto>,
+        ("UserController_getMyLicense", "200") => parses::<Option<LicenseDto>>,
         ("SettingsController_getPublicAndPrivateModels", "200") => parses::<Vec<ModelDto>>,
         ("ModelsController_getModelCustomizations", "200") => parses::<Vec<ModelCustomizationDto>>,
         ("ImageController_uploadImages", "200") => parses::<Vec<ImageDto>>,
         ("ImageController_uploadImages", "400") => parses::<UploadRejectedBody>,
         ("version", "200") => parses::<Version>,
         ("accessKeysInfo", "200") => parses::<AccessKeyCurrent>,
+        ("JobsV2Controller_getJobResults", "200") => parses::<JobV2Detail>,
+        ("ReportingController_createPdf", "202") => parses::<ReportCreated>,
+        ("ReportingController_getReport", "200") => parses::<ReportingControllerGetReportResponse>,
+        ("ReportingController_downloadReport", "200") => {
+            parses::<ReportingControllerDownloadReportResponse>
+        }
+        ("ClientTelemetryController_receive", "200") => {
+            parses::<ClientTelemetryControllerReceiveResponse>
+        }
+        ("ClientDiagnosticsController_createIssueReport", "201") => {
+            parses::<IssueReportReceivedDto>
+        }
         ("errors", _) => parses::<ApiErrorBody>,
         _ => return None,
     };
@@ -108,4 +122,27 @@ fn unknown_rejection_code_falls_into_the_catch_all() {
         known.errors[0],
         UploadRejectedBodyErrorsItem::Variant0(_)
     ));
+}
+
+#[test]
+fn fixtures_hold_no_internal_hosts_accounts_or_signed_links() {
+    let banned = [
+        ".internal.",
+        "@mivia.ai",
+        "desktop-ci",
+        "amazonaws",
+        "X-Amz-",
+        "Signature=",
+    ];
+    for file in fixtures() {
+        let text = std::fs::read_to_string(&file).unwrap();
+        for word in banned {
+            assert!(!text.contains(word), "{file:?} contains {word}");
+        }
+        for url in text.split('"').filter(|part| part.starts_with("http")) {
+            let allowed = url.starts_with("https://app.mivia.ai/")
+                || url.starts_with("https://example.invalid/");
+            assert!(allowed && !url.contains('?'), "{file:?} links to {url}");
+        }
+    }
 }

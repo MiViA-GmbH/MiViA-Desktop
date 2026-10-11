@@ -1,0 +1,107 @@
+{
+	"createdAt": "2026-10-11T13:59:57.078Z",
+	"cropped": false,
+	"customization": null,
+	"customizationId": null,
+	"finishedAt": null,
+	"hasResults": true,
+	"id": "d19fdcca-cbd5-42f7-b1e6-718df3fca2f7",
+	"image": {
+		"createdAt": "2026-10-11T13:59:57.031Z",
+		"id": "53e71187-bda4-4c4b-becd-67988b0fcfe8",
+		"orginalFilename": "image-1.png"
+	},
+	"imageId": "53e71187-bda4-4c4b-becd-67988b0fcfe8",
+	"imageUrls": {
+		"displayUrl": "https://example.invalid/test-images-display/c9b8942c-7211-482e-8f6a-995050a25833/01a12b40-3e66-759f-a6ad-d41fd054af26.png",
+		"height": 896,
+		"originalUrl": "https://example.invalid/test-images-original/c9b8942c-7211-482e-8f6a-995050a25833/01a12b40-3e66-759f-a6ad-d41fd054af26.png",
+		"width": 1200
+	},
+	"masks": [
+		{
+			"filename": "01a12b40-76d9-74fd-bfbc-6800f79deecc.png",
+			"id": 131827,
+			"isSubmitted": false,
+			"label": "RESIN",
+			"parentId": null
+		},
+		{
+			"filename": "01a12b40-7741-7692-9bf6-f0a0a9c12c3e.png",
+			"id": 131828,
+			"isSubmitted": false,
+			"label": "PEARLITE",
+			"parentId": null
+		}
+	],
+	"masksPending": 2,
+	"masksSubmitted": 0,
+	"model": {
+		"displayName": "Pearlite"
+	},
+	"modelId": "e206d47a-7e99-4b0a-b81e-8630111a071d",
+	"modelVersion": "20240724",
+	"outdated": false,
+	"result": {
+		"feedback": [
+			{
+				"name": "IFRA",
+				"score": 1,
+				"value": true
+			},
+			{
+				"name": "MAG",
+				"score": 1,
+				"value": true
+			},
+			{
+				"name": "INC",
+				"score": 1,
+				"value": false
+			},
+			{
+				"name": "FFRA",
+				"score": 1,
+				"value": true
+			},
+			{
+				"name": "TOM",
+				"score": 1,
+				"value": true
+			},
+			{
+				"name": "RES",
+				"score": 0.01,
+				"value": false
+			}
+		],
+		"id": "ed65fdb1-f9a5-4cf1-add4-8e80fb69d9de",
+		"results": [
+			{
+				"data": [
+					{
+						"label": "PEARLITE_FEATURE_FRACTION",
+						"unit": "%",
+						"value": 2.4748599529266357
+					}
+				],
+				"type": "data-table"
+			},
+			{
+				"filename": "01a12b40-74fe-744f-9a11-b987260d07d8.png",
+				"label": "PEARLITE_",
+				"preview": "01a12b40-74fe-744f-9a11-b987260d07d8.webp",
+				"type": "image"
+			}
+		]
+	},
+	"resultId": "ed65fdb1-f9a5-4cf1-add4-8e80fb69d9de",
+	"resultPreviewUrls": {
+		"01a12b40-74fe-744f-9a11-b987260d07d8.png": "https://example.invalid/test-result-previews/01/01a12b40-74fe-744f-9a11-b987260d07d8.webp"
+	},
+	"source": "API",
+	"startedAt": null,
+	"status": "CACHED",
+	"userFeedback": null,
+	"withMasks": false
+}

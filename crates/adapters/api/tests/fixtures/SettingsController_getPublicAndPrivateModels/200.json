@@ -1,18 +1,172 @@
 [
 	{
-		"id": "1a2b3c4d-0000-4000-8000-000000000001",
-		"name": "grain-size",
-		"displayName": "Grain size",
 		"accessType": "PUBLIC",
+		"displayName": "2_7 test2",
+		"id": "3e199d99-ea72-403a-8eba-7b5e56adaae9",
 		"isDefaultVisible": true,
-		"description_en": "Grain size analysis",
-		"description_de": "Korngroessenanalyse"
+		"name": "2_7 test2"
 	},
 	{
-		"id": "1a2b3c4d-0000-4000-8000-000000000002",
-		"name": "porosity",
-		"displayName": "Porosity",
-		"accessType": "SHARED",
-		"isDefaultVisible": false
+		"accessType": "PUBLIC",
+		"displayName": "Airbus Porosity",
+		"id": "d5056b26-1262-421e-9079-cad471b12727",
+		"isDefaultVisible": true,
+		"name": "Airbus Porosity"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Bouble",
+		"id": "c953ccab-c78f-4b29-87cd-81e75661f122",
+		"isDefaultVisible": true,
+		"name": "BOUBLE"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Carbides",
+		"id": "36423fa1-7d4c-42fb-aac0-ef722a2b968f",
+		"isDefaultVisible": false,
+		"name": "CARBIDES"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Cracks",
+		"id": "4065e70d-3fc7-4220-95a6-94fda31e563d",
+		"isDefaultVisible": true,
+		"name": "CRACKS"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Crimp",
+		"id": "9cb5b9f7-8610-4b6a-a016-60a08947a3c3",
+		"isDefaultVisible": true,
+		"name": "CRIMP"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Decarburization",
+		"id": "53cfd871-3b10-4ffd-a57a-bf1fc4d4e078",
+		"isDefaultVisible": true,
+		"name": "DECARBURIZATION_ALL"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Dendrites",
+		"id": "99a3454e-b892-454d-9b71-f3bb26aa3a52",
+		"isDefaultVisible": true,
+		"name": "DENDRITES"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Ferrite",
+		"id": "91d340a2-c5fe-49d9-907d-9ffcb17eaf42",
+		"isDefaultVisible": true,
+		"name": "FERRITE"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Global AUS",
+		"id": "fe41f2a2-90d8-4e77-9297-623ef3de05ea",
+		"isDefaultVisible": true,
+		"name": "Global AUS"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Grain Global 2",
+		"id": "a2bf99f6-7152-41fc-b280-9269b977c7d2",
+		"isDefaultVisible": true,
+		"name": "20260407_global_Fer2"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Grain size",
+		"id": "85a9b7d4-377e-48e6-ba42-c12489bad78f",
+		"isDefaultVisible": true,
+		"name": "GRAIN"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Inclusion",
+		"id": "034638d9-b463-402e-a377-6d8665f32b06",
+		"isDefaultVisible": true,
+		"name": "INCLUSIONS"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Martensite",
+		"id": "796bb97a-b24a-488b-98e4-2f3cb3521507",
+		"isDefaultVisible": true,
+		"name": "MARTENSITE"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Nitride",
+		"id": "48834881-7e9b-480b-b056-2ef56042175e",
+		"isDefaultVisible": true,
+		"name": "Nitride"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Oxidation",
+		"id": "8a95d9ed-0525-4c02-9919-99dd708b8356",
+		"isDefaultVisible": true,
+		"name": "OXIDATION"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Pearlite",
+		"id": "e206d47a-7e99-4b0a-b81e-8630111a071d",
+		"isDefaultVisible": true,
+		"name": "PEARLITE"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Resin",
+		"id": "1a087260-904c-4169-a24c-09801db598e7",
+		"isDefaultVisible": true,
+		"name": "RESIN"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Retained austenite",
+		"id": "8d64c137-229d-4673-a842-36ce3d475a7c",
+		"isDefaultVisible": true,
+		"name": "RETAINED_AUSTENITE"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "SegmentAll",
+		"id": "e44811c1-bdc0-472b-8cb2-fafb5e98bf4b",
+		"isDefaultVisible": true,
+		"name": "SEGMENT_ALL"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Segmentation",
+		"id": "19303ce8-f642-419d-a49d-9ed3a98d5f1b",
+		"isDefaultVisible": true,
+		"name": "SEGMENT"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Siemens cracks keras",
+		"id": "6297f93c-e606-467e-8e8f-1b746b26eac3",
+		"isDefaultVisible": true,
+		"name": "Siemens cracks keras"
+	},
+	{
+		"accessType": "PUBLIC",
+		"description_de": "<p>test 1</p>",
+		"description_en": "<p>test 1</p>",
+		"displayName": "Test",
+		"id": "3804f802-0f97-4e64-9448-57992c607b4e",
+		"isDefaultVisible": true,
+		"name": "TEST"
+	},
+	{
+		"accessType": "PUBLIC",
+		"displayName": "Weld_VW",
+		"id": "f4c3024e-0653-46d5-ac06-a6ba573ef584",
+		"isDefaultVisible": true,
+		"name": "WELD"
 	}
 ]

@@ -1,7 +1,7 @@
 {
-	"version": "2.45.0",
-	"buildId": "build-1",
-	"minDesktopVersion": "2.0.0",
-	"maxUploadSizeMb": 300,
-	"blockedDesktopVersions": ["2.0.1"]
+	"blockedDesktopVersions": [],
+	"buildId": "9f390939ba",
+	"maxUploadSizeMb": 200,
+	"minDesktopVersion": null,
+	"version": "202610111154"
 }

@@ -1,27 +1,25 @@
 [
 	{
-		"id": "4e9a1f2c-0000-4000-8000-000000000011",
-		"imageId": "9d2e4f6a-0000-4000-8000-000000000001",
-		"modelId": "1a2b3c4d-0000-4000-8000-000000000001",
-		"status": "PENDING",
-		"result": {},
-		"createdAt": "2026-10-09T10:00:00.000Z",
-		"startedAt": "2026-10-09T10:00:00.000Z",
-		"finishedAt": "2026-10-09T10:00:00.000Z",
 		"archived": false,
-		"outdated": false
-	},
-	{
-		"id": "4e9a1f2c-0000-4000-8000-000000000012",
-		"imageId": "9d2e4f6a-0000-4000-8000-000000000002",
-		"modelId": "1a2b3c4d-0000-4000-8000-000000000001",
-		"status": "CACHED",
-		"result": { "results": [] },
-		"createdAt": "2026-10-09T10:00:00.000Z",
-		"startedAt": "2026-10-09T10:00:00.000Z",
-		"finishedAt": "2026-10-09T10:00:00.000Z",
-		"archived": false,
+		"createdAt": "2026-10-11T13:59:58.568Z",
+		"deleted": false,
+		"executorId": null,
+		"finishedAt": null,
+		"id": "c3c79770-142c-439b-96bb-0fd25958c4e8",
+		"imageId": "f4c09abe-fbe9-4d45-b05c-5ca5d906222e",
+		"launcherVersion": "",
+		"modelId": "36423fa1-7d4c-42fb-aac0-ef722a2b968f",
+		"modelVersion": "20250507",
+		"order": 0,
+		"originJobId": null,
 		"outdated": false,
-		"customizationId": null
+		"ownerId": "c9b8942c-7211-482e-8f6a-995050a25833",
+		"projectId": null,
+		"rating": 0,
+		"resultId": "e4afded9-8721-42eb-a519-c9c60b0035b7",
+		"source": "API",
+		"startedAt": null,
+		"status": "CACHED",
+		"withMasks": false
 	}
 ]

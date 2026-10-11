@@ -1,11 +1,16 @@
 {
-	"account": { "id": "acc-0000-4000-8000-000000000001", "name": "CI Lab", "email": "ci@example.invalid" },
-	"key": {
-		"id": "key-1",
-		"name": "Desktop",
-		"start": "mv-AbCdEf",
-		"createdAt": "2026-09-01T00:00:00.000Z",
-		"expiresAt": null
+	"account": {
+		"email": "ci@example.invalid",
+		"id": "c9b8942c-7211-482e-8f6a-995050a25833",
+		"name": "CI Lab"
 	},
-	"adminScope": false
+	"adminScope": false,
+	"key": {
+		"createdAt": "2026-10-11T15:37:36.408Z",
+		"expiresAt": null,
+		"id": "04d4265a-5005-4267-8e8c-04dc8d3f596f",
+		"name": "Desktop",
+		"scopes": [],
+		"start": "mv-AbCdEf"
+	}
 }

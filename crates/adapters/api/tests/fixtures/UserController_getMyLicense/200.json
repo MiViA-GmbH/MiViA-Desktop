@@ -1,5 +1,5 @@
 {
-	"type": "IMAGES_LIMITED",
-	"createdAt": "2026-01-01T00:00:00.000Z",
-	"limits": { "images": 5000, "used": 120, "finish": "2027-01-01T00:00:00.000Z" }
+	"createdAt": "2026-10-11T15:37:36.408Z",
+	"limits": {},
+	"type": "UNLIMITED"
 }

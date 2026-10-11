@@ -1,11 +1,15 @@
 [
 	{
-		"id": "9d2e4f6a-0000-4000-8000-000000000001",
-		"createdAt": "2026-10-09T10:00:00.000Z",
-		"orginalFilename": "image-1.png",
-		"thumbnailUrl": "https://example.invalid/thumb/1",
-		"width": 1024,
-		"height": 1024,
-		"duplicate": false
+		"createdAt": "2026-10-11T13:59:58.255Z",
+		"duplicate": true,
+		"filename": "01a12b41-b79f-74be-a4c2-48087498395d.png",
+		"height": 896,
+		"id": "f4c09abe-fbe9-4d45-b05c-5ca5d906222e",
+		"orginalFilename": "image-4.png",
+		"placeholder": "|AE30S~p9FD%xuD%%M-pD%IUD%4nt7%Mof%MRjM{004n?b_3%MWVRjt7-;?a?b%M%MIU00M{WAWC-;IUIUWB%Mxu?b-;f6D%WBofD%M{xtWBM{%MM{%M~pIUay%MRj9Ft7RjM{xuWBxu%MxuWBIUM{xuWBayM{WBt7xuof",
+		"thumbnail": "01a12b41-b79f-74be-a4c2-48087498395d.png",
+		"thumbnailUrl": "https://example.invalid/test-images-thumbnails/c9b8942c-7211-482e-8f6a-995050a25833/01a12b41-b79f-74be-a4c2-48087498395d.png",
+		"validated": true,
+		"width": 1200
 	}
 ]
