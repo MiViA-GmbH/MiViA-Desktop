@@ -18,7 +18,6 @@ pub const GLOBAL_VERSION: u32 = 1;
 pub struct GlobalSettings {
     pub language: LanguageSetting,
     pub setup_completed: bool,
-    #[serde(rename = "telemetryOptIn")]
     pub telemetry: bool,
     pub integration: Integration,
     pub send_to_name: Option<String>,
