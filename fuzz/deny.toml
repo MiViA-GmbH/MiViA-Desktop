@@ -10,12 +10,16 @@ ignore = []
 [licenses]
 confidence-threshold = 0.93
 unused-allowed-license = "deny"
-allow = ["MIT", "Apache-2.0", "Unicode-3.0", "Zlib"]
+allow = ["MIT", "Apache-2.0", "IJG", "Unicode-3.0", "Zlib"]
 exceptions = [{ crate = "libfuzzer-sys", allow = ["NCSA"] }]
 private = { ignore = true }
 
 [bans]
 multiple-versions = "deny"
+skip = [
+    { crate = "miniz_oxide@0.8.9", reason = "png pins 0.8 while flate2 uses 0.9" },
+    { crate = "syn@2.0.119", reason = "zerocopy-derive under tiff still uses syn 2" },
+]
 wildcards = "deny"
 allow-wildcard-paths = true
 deny = [
