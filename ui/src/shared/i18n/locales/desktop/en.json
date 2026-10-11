@@ -416,7 +416,7 @@
 			"series_other": "{{count}} image series"
 		},
 		"privacy": {
-			"telemetry": "Send technical and usage data to MiViA GmbH (app events, errors, timings, device facts, with a device ID) to find faults and improve the app. You can turn this off at any time in Settings.",
+			"telemetry": "Optional: send technical and usage data to MiViA GmbH (app events, errors, timings, device facts, with a device ID) to find faults and improve the app. Off unless you turn it on; you can withdraw this at any time here.",
 			"telemetryNever": "Never sent: images, file, folder and series names, results, search text, your access key.",
 			"offNote": "While this is off, nothing is recorded or sent.",
 			"idsTitle": "Your IDs",

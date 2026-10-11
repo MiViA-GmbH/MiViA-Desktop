@@ -101,6 +101,7 @@ test('the setup can be finished with the keyboard alone', async ({ page }) => {
 	await page.keyboard.press('Enter');
 
 	await heading(page, 'Windows and privacy');
+	await expect(page.getByRole('checkbox', { name: /send technical and usage data/ })).not.toBeChecked();
 	await structure(page);
 	await page.screenshot({ path: `${SHOTS}/w12-finish-en.png` });
 	await tabTo(page, page.getByRole('button', { name: 'What is sent' }));

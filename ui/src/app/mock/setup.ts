@@ -64,7 +64,7 @@ export function setupView(scenario: string): SetupView {
 		preset: 'byHand',
 		report: null,
 		models: [],
-		options: ['autostart', 'explorer', 'telemetry', 'legacyStop'],
+		options: ['autostart', 'explorer', 'legacyStop'],
 		imagesSent: 0,
 	};
 }

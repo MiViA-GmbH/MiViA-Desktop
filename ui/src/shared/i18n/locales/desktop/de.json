@@ -416,7 +416,7 @@
 			"series_other": "{{count}} Bildserien"
 		},
 		"privacy": {
-			"telemetry": "Technische Daten und Nutzungsdaten an die MiViA GmbH senden (App-Ereignisse, Fehler, Zeiten, Geräteangaben, mit einer Geräte-ID), um Fehler zu finden und die App zu verbessern. Sie können dies jederzeit in den Einstellungen abschalten.",
+			"telemetry": "Optional: Technische Daten und Nutzungsdaten an die MiViA GmbH senden (App-Ereignisse, Fehler, Zeiten, Geräteangaben, mit einer Geräte-ID), um Fehler zu finden und die App zu verbessern. Aus, solange Sie es nicht einschalten; Sie können dies hier jederzeit widerrufen.",
 			"telemetryNever": "Nie gesendet: Bilder, Datei-, Ordner- und Seriennamen, Ergebnisse, Suchtexte, Ihr Zugangsschlüssel.",
 			"offNote": "Solange dies ausgeschaltet ist, wird nichts aufgezeichnet oder gesendet.",
 			"idsTitle": "Ihre Kennungen",

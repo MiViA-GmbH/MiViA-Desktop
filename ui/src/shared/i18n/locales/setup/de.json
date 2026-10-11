@@ -134,7 +134,7 @@
 				"title": "Windows und Datenschutz",
 				"autostart": "MiViA Desktop bei der Windows-Anmeldung starten (empfohlen, damit kein neues Bild verpasst wird)",
 				"explorer": "MiViA zum Rechtsklick-Menü des Explorers hinzufügen, um Einzelbilder auszuwerten („Mit MiViA auswerten“)",
-				"telemetry": "Technische Daten und Nutzungsdaten an die MiViA GmbH senden (App-Ereignisse, Fehler, Zeiten, Geräteangaben, mit einer Geräte-ID), um Fehler zu finden und die App zu verbessern. Sie können dies jederzeit in den Einstellungen abschalten.",
+				"telemetry": "Optional: Technische Daten und Nutzungsdaten an die MiViA GmbH senden (App-Ereignisse, Fehler, Zeiten, Geräteangaben, mit einer Geräte-ID), um Fehler zu finden und die App zu verbessern. Sie können dies jederzeit unter Einstellungen > Datenschutz widerrufen.",
 				"telemetryNever": "Nie gesendet: Bilder, Datei-, Ordner- und Seriennamen, Ergebnisse, Suchtexte, Ihr Zugangsschlüssel.",
 				"later": "Sie können alles später in den Einstellungen ändern.",
 				"button": "Einrichtung abschließen"

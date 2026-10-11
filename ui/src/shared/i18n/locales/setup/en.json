@@ -134,7 +134,7 @@
 				"title": "Windows and privacy",
 				"autostart": "Start MiViA Desktop when I sign in to Windows (recommended, so no new image is missed)",
 				"explorer": "Add MiViA to the Explorer right-click menu, to analyze single images (“Analyze with MiViA”)",
-				"telemetry": "Send technical and usage data to MiViA GmbH (app events, errors, timings, device facts, with a device ID) to find faults and improve the app. You can turn this off at any time in Settings.",
+				"telemetry": "Optional: send technical and usage data to MiViA GmbH (app events, errors, timings, device facts, with a device ID) to find faults and improve the app. You can withdraw this at any time in Settings > Privacy.",
 				"telemetryNever": "Never sent: images, file, folder and series names, results, search text, your access key.",
 				"later": "You can change all of this later in Settings.",
 				"button": "Finish setup"

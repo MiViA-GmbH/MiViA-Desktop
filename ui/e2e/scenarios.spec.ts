@@ -140,6 +140,9 @@ test.describe
 			await next(page);
 			await expect(page.getByRole('checkbox', { name: 'Grain size' })).toBeChecked({ timeout: 20_000 });
 			await next(page);
+			const consent = page.getByRole('checkbox', { name: /send technical and usage data/ });
+			await consent.click();
+			await expect(consent).toBeChecked();
 			await next(page, 'Finish setup');
 			await expect(page.getByRole('heading', { name: 'MiViA Desktop is ready' })).toBeVisible({ timeout: 30_000 });
 			await next(page, 'Go to overview');
@@ -161,8 +164,9 @@ test.describe
 					timeout: 60_000,
 					intervals: [1000],
 				})
-				.toEqual(expect.arrayContaining(['wizard.finished', 'account.connected', 'folder.added', 'session.start']));
+				.toEqual(expect.arrayContaining(['wizard.finished', 'account.connected', 'folder.added']));
 			const text = JSON.stringify(await received());
+			expect(text).not.toContain('session.start');
 			for (const secret of [FRESH_WATCHED, 'Labor', STUB_KEY, 'probe_001']) {
 				expect(text).not.toContain(secret);
 			}
