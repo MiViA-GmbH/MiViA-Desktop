@@ -8,7 +8,7 @@ use regress as _;
 use uuid as _;
 
 use progenitor_client::{ClientHooks, OperationInfo};
-use reqwest::header::{AUTHORIZATION, HeaderName, HeaderValue};
+use reqwest::header::{AUTHORIZATION, HeaderValue};
 
 pub use generated::api::{Client, types};
 pub use hand::{
@@ -19,12 +19,10 @@ pub use hand::{
 pub use progenitor_client::{Error, ResponseValue};
 
 pub const JSON_LIMIT: usize = 8 * 1024 * 1024;
-const IDEMPOTENCY_KEY: HeaderName = HeaderName::from_static("idempotency-key");
 
 #[derive(Clone, Debug, Default)]
 pub struct Call {
     pub authorization: Option<HeaderValue>,
-    pub idempotency_key: Option<HeaderValue>,
     pub body_limit: usize,
 }
 
@@ -91,9 +89,6 @@ impl ClientHooks<Call> for Client {
         let headers = request.headers_mut();
         if let Some(value) = &self.inner.authorization {
             headers.insert(AUTHORIZATION, value.clone());
-        }
-        if let Some(value) = &self.inner.idempotency_key {
-            headers.insert(IDEMPOTENCY_KEY, value.clone());
         }
         let response = self.client.execute(request).await?;
         let limit = match self.inner.body_limit {

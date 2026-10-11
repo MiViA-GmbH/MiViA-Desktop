@@ -104,14 +104,9 @@ impl HttpServerApi {
         }
     }
 
-    pub(crate) fn client(
-        &self,
-        authorization: HeaderValue,
-        idempotency: Option<HeaderValue>,
-    ) -> Client {
+    pub(crate) fn client(&self, authorization: HeaderValue) -> Client {
         let call = ApiCall {
             authorization: Some(authorization),
-            idempotency_key: idempotency,
             body_limit: 0,
         };
         Client::with_call(self.base(), self.clients().api.clone(), call)

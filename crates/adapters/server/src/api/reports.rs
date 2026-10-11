@@ -156,7 +156,7 @@ impl HttpServerApi {
         let id = uuid(id)?;
         let dto = self
             .authorized(|auth| async move {
-                let client = self.client(auth, None);
+                let client = self.client(auth);
                 let result = client.reporting_controller_get_report(&id).await;
                 self.generated("getReport", result, Call::Other).await
             })
@@ -172,7 +172,7 @@ impl HttpServerApi {
         let id = uuid(id)?;
         let dto = self
             .authorized(|auth| async move {
-                let client = self.client(auth, None);
+                let client = self.client(auth);
                 let result = client.reporting_controller_download_report(&id).await;
                 self.generated("downloadReport", result, Call::Other).await
             })

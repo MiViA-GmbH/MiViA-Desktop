@@ -5,11 +5,12 @@ use serde_json::{Map, Value, json};
 type Schema = Map<String, Value>;
 
 const MULTIPART: &str = "/requestBody/content/multipart~1form-data";
+const TELEMETRY: &str = "/paths/~1api~1client-diagnostics~1telemetry/post";
 
 pub(crate) fn apply(spec: &mut Value) {
     drop_multipart_operations(spec);
-    walk(spec, &mut type_untyped_format);
-    walk(spec, &mut type_primitive_refs);
+    drop_telemetry_body(spec);
+    drop_error_responses(spec);
     walk(spec, &mut allow_unknown_fields);
     mark_discriminators(spec);
     walk(spec, &mut open_string_enum);
@@ -42,20 +43,21 @@ fn drop_multipart_operations(spec: &mut Value) {
     }
 }
 
-fn type_untyped_format(schema: &mut Map<String, Value>) {
-    let has_format = schema.get("format").is_some_and(Value::is_string);
-    if has_format && !schema.contains_key("type") {
-        schema.insert("type".to_owned(), json!("string"));
+fn drop_error_responses(spec: &mut Value) {
+    for item in operations(spec) {
+        let responses = item
+            .values_mut()
+            .filter_map(|operation| operation.get_mut("responses"))
+            .filter_map(Value::as_object_mut);
+        for responses in responses {
+            responses.retain(|status, _| !status.starts_with(['4', '5']));
+        }
     }
 }
 
-fn type_primitive_refs(schema: &mut Schema) {
-    let target = schema.get("$ref").and_then(Value::as_str);
-    let primitive = target.and_then(|target| target.strip_prefix("#/components/schemas/"));
-    if let Some(name @ ("boolean" | "string" | "number" | "integer")) = primitive {
-        let name = name.to_owned();
-        schema.remove("$ref");
-        schema.insert("type".to_owned(), Value::String(name));
+fn drop_telemetry_body(spec: &mut Value) {
+    if let Some(operation) = spec.pointer_mut(TELEMETRY).and_then(Value::as_object_mut) {
+        operation.remove("requestBody");
     }
 }
 

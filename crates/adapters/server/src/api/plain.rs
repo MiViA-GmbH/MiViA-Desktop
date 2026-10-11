@@ -104,18 +104,18 @@ impl HttpServerApi {
     pub(super) async fn fetch_license(&self) -> Result<License, ServerError> {
         let dto = self
             .authorized(|auth| async move {
-                let client = self.client(auth, None);
+                let client = self.client(auth);
                 let result = client.user_controller_get_my_license().await;
                 self.generated("license", result, Call::Other).await
             })
             .await?;
-        Ok(license(&dto))
+        dto.as_ref().map(license).ok_or(ServerError::LicenseInvalid)
     }
 
     pub(super) async fn fetch_catalogue(&self) -> Result<Vec<CatalogueModel>, ServerError> {
         let dtos = self
             .authorized(|auth| async move {
-                let client = self.client(auth, None);
+                let client = self.client(auth);
                 let result = client
                     .settings_controller_get_public_and_private_models()
                     .await;
@@ -137,7 +137,7 @@ impl HttpServerApi {
     ) -> Result<Vec<CatalogueCustomization>, ServerError> {
         let dtos = self
             .authorized(|auth| async move {
-                let client = self.client(auth, None);
+                let client = self.client(auth);
                 let result = client
                     .models_controller_get_model_customizations(&model)
                     .await;

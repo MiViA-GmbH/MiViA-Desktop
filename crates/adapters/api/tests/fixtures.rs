@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use mivia_api::types::{
-    ImageDto, JobsV2ControllerGetJobsLightResponse, JobsV2ControllerGetJobsStatusResponseItem,
-    JobsV2ControllerGetJobsStatusResponseItemStatus, LicenseDto, LicenseDtoType,
-    ModelCustomizationDto, ModelDto, UploadRejectedBody, UploadRejectedBodyErrorsItem, UserJobDto,
+    ImageDto, JobV2ListResponse, JobV2StatusListItem, JobV2StatusListItemStatus, LicenseDto,
+    LicenseDtoType, ModelCustomizationDto, ModelDto, UploadRejectedBody,
+    UploadRejectedBodyErrorsItem, UserJobDto,
 };
 use mivia_api::{AccessKeyCurrent, ApiErrorBody, Version};
 use serde::de::DeserializeOwned;
@@ -18,11 +18,9 @@ fn parses<T: DeserializeOwned>(bytes: &[u8]) -> Result<(), String> {
 
 fn decoder(operation: &str, status: &str) -> Option<Decode> {
     let decode: Decode = match (operation, status) {
-        ("JobsV2Controller_getJobsStatus", "200") => {
-            parses::<Vec<JobsV2ControllerGetJobsStatusResponseItem>>
-        }
+        ("JobsV2Controller_getJobsStatus", "200") => parses::<Vec<JobV2StatusListItem>>,
         ("JobsController_createJobs", "201") => parses::<Vec<UserJobDto>>,
-        ("JobsV2Controller_getJobsLight", "200") => parses::<JobsV2ControllerGetJobsLightResponse>,
+        ("JobsV2Controller_getJobsLight", "200") => parses::<JobV2ListResponse>,
         ("UserController_getMyLicense", "200") => parses::<LicenseDto>,
         ("SettingsController_getPublicAndPrivateModels", "200") => parses::<Vec<ModelDto>>,
         ("ModelsController_getModelCustomizations", "200") => parses::<Vec<ModelCustomizationDto>>,
@@ -75,13 +73,13 @@ fn every_fixture_parses_into_the_type_of_its_operation_and_status() {
 
 #[test]
 fn unknown_job_status_is_kept_as_text() {
-    let items: Vec<JobsV2ControllerGetJobsStatusResponseItem> = serde_json::from_slice(&fixture(
+    let items: Vec<JobV2StatusListItem> = serde_json::from_slice(&fixture(
         "JobsV2Controller_getJobsStatus/200-unknown-status.json",
     ))
     .unwrap();
     assert!(matches!(
         &items[0].status,
-        JobsV2ControllerGetJobsStatusResponseItemStatus::Variant1(raw) if raw == "RENDERING"
+        JobV2StatusListItemStatus::Variant1(raw) if raw == "RENDERING"
     ));
 }
 

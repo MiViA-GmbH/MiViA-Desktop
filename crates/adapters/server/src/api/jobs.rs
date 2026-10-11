@@ -1,19 +1,19 @@
 use mivia_api::Error as ApiError;
 use mivia_api::types::{
-    CreateJobsDto, CreateJobsDtoSource, CreateJobsDtoSourceVariant0,
-    JobsV2ControllerGetJobsLightResponseDataItem,
-    JobsV2ControllerGetJobsLightResponseDataItemStatus, JobsV2ControllerGetJobsLightSortBy,
-    JobsV2ControllerGetJobsLightSortByVariant0, JobsV2ControllerGetJobsLightSortOrder,
-    JobsV2ControllerGetJobsLightSortOrderVariant0, JobsV2ControllerGetJobsLightSource,
-    JobsV2ControllerGetJobsLightSourceVariant0, JobsV2ControllerGetJobsStatusResponseItem,
-    JobsV2ControllerGetJobsStatusResponseItemStatus, UserJobDto, UserJobDtoStatus,
+    CreateJobsDto, CreateJobsDtoSource, CreateJobsDtoSourceVariant0, JobV2ListResponseDataItem,
+    JobV2ListResponseDataItemStatus, JobV2StatusListItem, JobV2StatusListItemStatus,
+    JobsV2ControllerGetJobsLightSortBy, JobsV2ControllerGetJobsLightSortByVariant0,
+    JobsV2ControllerGetJobsLightSortOrder, JobsV2ControllerGetJobsLightSortOrderVariant0,
+    JobsV2ControllerGetJobsLightSource, JobsV2ControllerGetJobsLightSourceVariant0, UserJobDto,
+    UserJobDtoStatus,
 };
 use mivia_domain::ids::Timestamp;
 use mivia_ports::server::{
     FIND_PAGE_SIZE, FindJobs, ServerError, ServerJob, ServerJobStatus, SubmitRequest,
 };
+use std::num::NonZeroU64;
+
 use reqwest::StatusCode;
-use reqwest::header::HeaderValue;
 use uuid::Uuid;
 
 use super::{Failure, HttpServerApi};
@@ -54,10 +54,10 @@ fn created(dto: &UserJobDto) -> ServerJob {
     }
 }
 
-fn polled(dto: &JobsV2ControllerGetJobsStatusResponseItem) -> ServerJob {
+fn polled(dto: &JobV2StatusListItem) -> ServerJob {
     let raw = match &dto.status {
-        JobsV2ControllerGetJobsStatusResponseItemStatus::Variant0(known) => known.to_string(),
-        JobsV2ControllerGetJobsStatusResponseItemStatus::Variant1(other) => other.clone(),
+        JobV2StatusListItemStatus::Variant0(known) => known.to_string(),
+        JobV2StatusListItemStatus::Variant1(other) => other.clone(),
     };
     ServerJob {
         job_id: dto.id.to_string(),
@@ -70,10 +70,10 @@ fn polled(dto: &JobsV2ControllerGetJobsStatusResponseItem) -> ServerJob {
     }
 }
 
-fn listed(dto: &JobsV2ControllerGetJobsLightResponseDataItem) -> ServerJob {
+fn listed(dto: &JobV2ListResponseDataItem) -> ServerJob {
     let raw = match &dto.status {
-        JobsV2ControllerGetJobsLightResponseDataItemStatus::Variant0(known) => known.to_string(),
-        JobsV2ControllerGetJobsLightResponseDataItemStatus::Variant1(other) => other.clone(),
+        JobV2ListResponseDataItemStatus::Variant0(known) => known.to_string(),
+        JobV2ListResponseDataItemStatus::Variant1(other) => other.clone(),
     };
     ServerJob {
         job_id: dto.id.to_string(),
@@ -135,14 +135,12 @@ impl HttpServerApi {
         request: SubmitRequest,
     ) -> Result<Vec<ServerJob>, ServerError> {
         let dto = body(&request)?;
-        let key =
-            HeaderValue::from_str(&request.key.to_string()).map_err(|_| ServerError::Contract)?;
         let result = self
             .authorized(|auth| {
-                let (dto, key, requested) = (&dto, key.clone(), &request.image_ids);
+                let (dto, key, requested) = (&dto, &request.key, &request.image_ids);
                 async move {
-                    let client = self.client(auth, Some(key));
-                    let result = client.jobs_controller_create_jobs(dto).await;
+                    let client = self.client(auth);
+                    let result = client.jobs_controller_create_jobs(Some(key), dto).await;
                     self.submit_result(result, requested).await
                 }
             })
@@ -180,7 +178,7 @@ impl HttpServerApi {
             .authorized(|auth| {
                 let ids = &ids;
                 async move {
-                    let client = self.client(auth, None);
+                    let client = self.client(auth);
                     let result = client.jobs_v2_controller_get_jobs_status(ids).await;
                     self.generated("jobsStatus", result, Call::Other).await
                 }
@@ -198,13 +196,13 @@ impl HttpServerApi {
             .map(uuid)
             .transpose()?;
         let (sort, order, source) = newest_api_jobs();
-        let page = f64::from(query.page);
-        let size = f64::from(FIND_PAGE_SIZE);
+        let page = i64::from(query.page);
+        let size = NonZeroU64::new(u64::from(FIND_PAGE_SIZE)).ok_or(ServerError::Contract)?;
         let listed_page = self
             .authorized(|auth| {
                 let (sort, order, source) = (&sort, &order, &source);
                 async move {
-                    let client = self.client(auth, None);
+                    let client = self.client(auth);
                     let result = client
                         .jobs_v2_controller_get_jobs_light(
                             customization.as_ref(),
@@ -227,7 +225,7 @@ impl HttpServerApi {
         let id = uuid(job_id)?;
         let found = self
             .authorized(|auth| async move {
-                let client = self.client(auth, None);
+                let client = self.client(auth);
                 let result = client.jobs_v2_controller_get_job_results(&id).await;
                 match self.generated("jobDetail", result, Call::Other).await {
                     Ok(_) | Err(Failure::Error(ServerError::Contract)) => Ok(true),

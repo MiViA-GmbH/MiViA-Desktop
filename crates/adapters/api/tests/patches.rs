@@ -22,14 +22,6 @@ fn multipart_operations_are_dropped() {
 }
 
 #[test]
-fn format_without_type_becomes_a_string() {
-    let spec = patched(json!({"components": {"schemas": {"Id": {"format": "uuid"},
-        "Props": {"properties": {"format": {"type": "string"}}}}}}));
-    assert_eq!(spec["components"]["schemas"]["Id"]["type"], "string");
-    assert!(spec["components"]["schemas"]["Props"].get("type").is_none());
-}
-
-#[test]
 fn closed_objects_accept_unknown_fields() {
     let spec = patched(json!({"components": {"schemas": {"Job": {"type": "object",
         "additionalProperties": false, "properties": {}}}}}));
@@ -96,9 +88,23 @@ fn deprecated_elements_are_dropped() {
 }
 
 #[test]
-fn references_to_primitive_named_components_become_primitives() {
-    let spec = patched(json!({"components": {"schemas": {"Job": {"properties": {
-        "archived": {"allOf": [{"$ref": "#/components/schemas/boolean"}]}}}}}}));
-    let archived = &spec["components"]["schemas"]["Job"]["properties"]["archived"];
-    assert_eq!(archived["allOf"][0], json!({"type": "boolean"}));
+fn telemetry_request_body_is_dropped() {
+    let spec = patched(
+        json!({"paths": {"/api/client-diagnostics/telemetry": {"post": {
+        "requestBody": {"content": {"application/json": {}}}, "responses": {}}}}}),
+    );
+    assert_eq!(
+        spec["paths"]["/api/client-diagnostics/telemetry"]["post"],
+        json!({"responses": {}})
+    );
+}
+
+#[test]
+fn error_responses_are_dropped() {
+    let spec = patched(json!({"paths": {"/api/jobs": {"post": {"responses": {
+        "201": {}, "302": {}, "400": {}, "500": {}, "default": {}}}}}}));
+    assert_eq!(
+        spec["paths"]["/api/jobs"]["post"]["responses"],
+        json!({"201": {}, "302": {}, "default": {}})
+    );
 }

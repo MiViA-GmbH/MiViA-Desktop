@@ -114,6 +114,17 @@ async fn submits_carry_the_idempotency_key_and_jobs_map_by_image() {
 }
 
 #[tokio::test]
+async fn a_null_licence_means_no_licence() {
+    let (mock, api, _) = server().await;
+    Mock::given(method("GET"))
+        .and(path("/api/users/license"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw("null", "application/json"))
+        .mount(&mock)
+        .await;
+    assert_eq!(api.license().await, Err(ServerError::LicenseInvalid));
+}
+
+#[tokio::test]
 async fn json_bodies_above_eight_mebibytes_are_contract_errors() {
     let (mock, api, _) = server().await;
     let huge = format!("[{}]", " ".repeat(9 * 1024 * 1024));

@@ -81,7 +81,7 @@ async fn statuses_map_to_the_outcome_table() {
             ResponseTemplate::new(400)
                 .set_body_json(error_body("IDEMPOTENCY_KEY_REUSED", "reused")),
             ServerError::BadRequest {
-                code: String::new(),
+                code: "IDEMPOTENCY_KEY_REUSED".to_owned(),
             },
         ),
         (
