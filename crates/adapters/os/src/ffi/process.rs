@@ -12,7 +12,9 @@ use windows_sys::Win32::System::SystemInformation::{
 };
 use windows_sys::Win32::System::SystemServices::PROCESS_MITIGATION_IMAGE_LOAD_POLICY;
 use windows_sys::Win32::System::Threading::{
-    GetCurrentProcess, GetProcessTimes, ProcessImageLoadPolicy, SetProcessMitigationPolicy,
+    GetCurrentProcess, GetCurrentThread, GetProcessTimes, ProcessImageLoadPolicy,
+    SetProcessMitigationPolicy, SetThreadPriority, THREAD_MODE_BACKGROUND_BEGIN,
+    THREAD_MODE_BACKGROUND_END,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::AllowSetForegroundWindow;
 
@@ -95,4 +97,21 @@ pub fn process_age_ms() -> u64 {
 
 fn ticks(time: FILETIME) -> u64 {
     (u64::from(time.dwHighDateTime) << 32) | u64::from(time.dwLowDateTime)
+}
+
+pub struct BackgroundMode(bool);
+
+impl Drop for BackgroundMode {
+    fn drop(&mut self) {
+        if self.0 {
+            // SAFETY: the pseudo handle of the current thread and a plain mode flag.
+            unsafe { SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_END) };
+        }
+    }
+}
+
+pub fn background_mode() -> BackgroundMode {
+    // SAFETY: the pseudo handle of the current thread and a plain mode flag.
+    let begun = unsafe { SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_BEGIN) };
+    BackgroundMode(begun != 0)
 }

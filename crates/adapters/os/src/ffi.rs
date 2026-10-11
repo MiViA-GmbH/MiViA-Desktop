@@ -23,7 +23,8 @@ pub use probe::{
 };
 pub(crate) use process::process_session;
 pub use process::{
-    allow_foreground, boot_time_unix_ms, current_session_id, harden_process, process_age_ms,
+    BackgroundMode, allow_foreground, background_mode, boot_time_unix_ms, current_session_id,
+    harden_process, process_age_ms,
 };
 pub use proxy::{certificate_issuer, proxy_for_url};
 pub(crate) use proxy::{machine_proxy_config, user_proxy_config};
