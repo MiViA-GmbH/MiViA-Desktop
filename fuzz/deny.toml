@@ -10,8 +10,8 @@ ignore = []
 [licenses]
 confidence-threshold = 0.93
 unused-allowed-license = "deny"
-allow = ["MIT", "Apache-2.0", "IJG", "Unicode-3.0", "Zlib"]
-exceptions = [{ crate = "libfuzzer-sys", allow = ["NCSA"] }]
+allow = ["MIT", "Apache-2.0", "Unicode-3.0", "Zlib"]
+exceptions = [{ crate = "libfuzzer-sys", allow = ["NCSA"] }, { crate = "jpeg-encoder", allow = ["IJG"] }]
 private = { ignore = true }
 
 [bans]
