@@ -1,0 +1,29 @@
+.viewer {
+	position: relative;
+	overflow: hidden;
+	height: 62vh;
+	min-height: 280px;
+	touch-action: none;
+	background: var(--mantine-color-dark-9);
+	border-radius: var(--mantine-radius-sm);
+}
+
+.viewer[data-zoomed="true"] {
+	cursor: grab;
+}
+
+.picture {
+	position: absolute;
+	top: 0;
+	left: 0;
+	transform-origin: 0 0;
+	user-select: none;
+}
+
+.controls {
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+	display: flex;
+	gap: 4px;
+}

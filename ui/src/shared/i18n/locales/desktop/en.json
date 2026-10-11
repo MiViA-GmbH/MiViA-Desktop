@@ -492,6 +492,31 @@
 			"notSet": "Not set",
 			"machine": "This computer",
 			"user": "This Windows user"
+		},
+		"preview": {
+			"open": "Preview {{name}}",
+			"back": "Back to series",
+			"source": "Show original image",
+			"loading": "Preparing preview…",
+			"unavailable": "Preview not available",
+			"openOriginal": "Open original",
+			"zoomIn": "Zoom in",
+			"zoomOut": "Zoom out",
+			"zoomFit": "Fit to window",
+			"resultsOffline": "The results could not be loaded.",
+			"retry": "Try again",
+			"reason": {
+				"missing": "The image file was moved or deleted.",
+				"tooLarge": "The image is too large to preview.",
+				"unsupported": "This image format cannot be previewed.",
+				"corrupt": "The image could not be read.",
+				"offline": "The server could not be reached.",
+				"notPublished": "This server does not provide result images yet.",
+				"cancelled": "The preview was cancelled."
+			}
+		},
+		"viz": {
+			"resultUnavailable": "This result cannot be shown"
 		}
 	}
 }

@@ -1,5 +1,6 @@
 import type { AppError } from './bindings';
 
+export { convertFileSrc as assetUrl } from '@tauri-apps/api/core';
 export { commands, events } from './bindings';
 
 export function isAppError(error: unknown): error is AppError {

@@ -492,6 +492,31 @@
 			"notSet": "Nicht festgelegt",
 			"machine": "Diesen Computer",
 			"user": "Diesen Windows-Benutzer"
+		},
+		"preview": {
+			"open": "{{name}} als Vorschau ansehen",
+			"back": "Zurück zur Serie",
+			"source": "Originalbild anzeigen",
+			"loading": "Vorschau wird vorbereitet…",
+			"unavailable": "Vorschau nicht verfügbar",
+			"openOriginal": "Original öffnen",
+			"zoomIn": "Vergrößern",
+			"zoomOut": "Verkleinern",
+			"zoomFit": "An Fenster anpassen",
+			"resultsOffline": "Die Ergebnisse konnten nicht geladen werden.",
+			"retry": "Erneut versuchen",
+			"reason": {
+				"missing": "Die Bilddatei wurde verschoben oder gelöscht.",
+				"tooLarge": "Das Bild ist zu groß für die Vorschau.",
+				"unsupported": "Dieses Bildformat kann nicht in der Vorschau angezeigt werden.",
+				"corrupt": "Das Bild konnte nicht gelesen werden.",
+				"offline": "Der Server war nicht erreichbar.",
+				"notPublished": "Dieser Server stellt noch keine Ergebnisbilder bereit.",
+				"cancelled": "Die Vorschau wurde abgebrochen."
+			}
+		},
+		"viz": {
+			"resultUnavailable": "Dieses Ergebnis kann nicht angezeigt werden"
 		}
 	}
 }

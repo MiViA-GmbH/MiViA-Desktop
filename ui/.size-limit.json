@@ -54,5 +54,12 @@
 		"limit": "400 KB",
 		"gzip": false,
 		"brotli": false
+	},
+	{
+		"name": "lazy preview",
+		"path": ["dist/assets/lazy-preview.lazy-*.js"],
+		"limit": "400 KB",
+		"gzip": false,
+		"brotli": false
 	}
 ]
