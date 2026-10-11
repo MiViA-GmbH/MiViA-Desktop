@@ -142,6 +142,7 @@ pub trait PipelineRepo {
     fn job_known(&mut self, job_id: &str) -> Result<bool, TxError>;
     fn preview_source(&mut self, id: SourceFileId) -> Result<Option<WinPath>, TxError>;
     fn preview_job(&mut self, id: ComputationId) -> Result<Option<String>, TxError>;
+    fn preview_model(&mut self, id: ComputationId) -> Result<Option<String>, TxError>;
     fn poll_due(
         &mut self,
         now: Timestamp,

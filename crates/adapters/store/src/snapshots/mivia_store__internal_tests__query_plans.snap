@@ -169,6 +169,9 @@ get preview source path:
   SEARCH source_file USING INTEGER PRIMARY KEY (rowid=?)
 get preview job:
   SEARCH computation USING INTEGER PRIMARY KEY (rowid=?)
+get preview model:
+  SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+  SEARCH m USING PRIMARY KEY (batch_id=? AND model_choice_key=?)
 list waiting reports:
   SEARCH r USING INDEX report_waiting (account_id=?)
   SEARCH b USING INTEGER PRIMARY KEY (rowid=?)

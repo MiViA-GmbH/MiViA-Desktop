@@ -1,5 +1,5 @@
 use mivia_ports::ipc::error::AppError;
-use mivia_ports::ipc::preview::{PreviewResultsView, PreviewTarget, PreviewView};
+use mivia_ports::ipc::preview::{PreviewNote, PreviewResultsView, PreviewTarget, PreviewView};
 use tauri::State;
 
 use crate::shell::cx::Cx;
@@ -27,4 +27,10 @@ pub(crate) async fn get_preview_results(
 #[specta::specta]
 pub(crate) async fn close_preview(cx: State<'_, Cx>) -> Result<(), AppError> {
     preview::close(&*cx.ready().await)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn note_preview(cx: State<'_, Cx>, note: PreviewNote) -> Result<(), AppError> {
+    preview::note(&*cx.ready().await, note).await
 }

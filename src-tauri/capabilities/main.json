@@ -32,6 +32,7 @@
 		"allow-get-preview",
 		"allow-get-preview-results",
 		"allow-close-preview",
+		"allow-note-preview",
 		"allow-get-setup",
 		"allow-get-catalogue",
 		"allow-get-integration",

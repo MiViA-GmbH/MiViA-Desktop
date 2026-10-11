@@ -1413,6 +1413,15 @@
 			"category": "usage",
 			"fields": [
 				{
+					"name": "model_id",
+					"type": "id"
+				},
+				{
+					"name": "source_edge",
+					"type": "choice",
+					"values": ["<=2048", "2049-4096", "4097-8192", "8193+"]
+				},
+				{
 					"name": "tier",
 					"type": "number"
 				}

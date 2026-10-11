@@ -173,3 +173,20 @@ async fn closing_cancels_the_queue_and_the_original_is_kept_for_opening() {
     assert_eq!(tmp_names(&line).await.len(), 1);
     assert!(path.to_string().ends_with(IMAGE));
 }
+
+#[test]
+fn source_edges_fall_into_the_documented_buckets() {
+    use mivia_application::pipeline::edge_bucket;
+    use mivia_ports::telemetry::EdgeBucket;
+    for (edge, bucket) in [
+        (1, EdgeBucket::Small),
+        (2048, EdgeBucket::Small),
+        (2049, EdgeBucket::Medium),
+        (4096, EdgeBucket::Medium),
+        (4097, EdgeBucket::Large),
+        (8192, EdgeBucket::Large),
+        (8193, EdgeBucket::Huge),
+    ] {
+        assert_eq!(edge_bucket(edge), bucket, "{edge}");
+    }
+}

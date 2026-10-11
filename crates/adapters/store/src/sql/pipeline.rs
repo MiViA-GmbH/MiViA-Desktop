@@ -95,6 +95,8 @@ pub(crate) const PREVIEW_SOURCE: &str =
 
 pub(crate) const PREVIEW_JOB: &str = "SELECT server_job_id FROM computation      WHERE id = ?1 AND account_id = ?2 AND server_job_id IS NOT NULL";
 
+pub(crate) const PREVIEW_MODEL: &str = "SELECT m.model_id FROM computation c      JOIN batch_model_choice m ON m.batch_id = c.batch_id      AND m.model_choice_key = c.model_choice_key      WHERE c.id = ?1 AND c.account_id = ?2";
+
 #[cfg(test)]
 pub(crate) fn planned() -> Vec<(&'static str, String)> {
     vec![
@@ -114,5 +116,6 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("list queued choices", QUEUED_CHOICES.to_owned()),
         ("get preview source path", PREVIEW_SOURCE.to_owned()),
         ("get preview job", PREVIEW_JOB.to_owned()),
+        ("get preview model", PREVIEW_MODEL.to_owned()),
     ]
 }

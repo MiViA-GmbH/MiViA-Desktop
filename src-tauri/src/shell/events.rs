@@ -112,6 +112,7 @@ macro_rules! app_commands {
             preview::get_preview,
             preview::get_preview_results,
             preview::close_preview,
+            preview::note_preview,
         ]
     };
 }

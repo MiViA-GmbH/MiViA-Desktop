@@ -104,6 +104,7 @@ tags! {
     NotificationKind { ReportSaved "report_saved", ReportProblem "report_problem", UploadProblem "upload_problem", Update "update", Other "other" }
     NotificationChannel { Os "os", InApp "in_app" }
     CountBucket { Zero "0", Few "1-9", Tens "10-99", Hundreds "100-999", Thousands "1000+" }
+    EdgeBucket { Small "<=2048", Medium "2049-4096", Large "4097-8192", Huge "8193+" }
     ExportFormat { Csv "csv", Xlsx "xlsx" }
     RequestOrigin { Sendto "sendto", Verb "verb", FolderVerb "folder_verb", Drop "drop", AddImages "add_images" }
     DialogState { Analyze "analyze", Cancel "cancel", NoUsableFiles "no_usable_files" }
@@ -172,7 +173,7 @@ events! {
     SendtoRequest "sendto.request" { origin: RequestOrigin, count: u64, not_included: u64, joined_pending: bool }
     OneoffDialog "oneoff.dialog" { state: DialogState, duration_ms: u64, model_choices: u64, preselection_kept: bool, remembered: bool, hold_shown: bool }
     PreviewOpened "preview.opened" { model_id: Uuid, duration_ms: u64 }
-    PreviewZoomMaxTier "preview.zoom_max_tier" { tier: u64 }
+    PreviewZoomMaxTier "preview.zoom_max_tier" { tier: u64, source_edge: EdgeBucket, model_id: Uuid }
     ProblemReportOffered "problem_report.offered" { trigger: ReportTrigger }
     ProblemReportSent "problem_report.sent" { state: ReportOutcome, names_included: bool }
     InstanceHandoff "instance.handoff" { kind: HandoffKind }

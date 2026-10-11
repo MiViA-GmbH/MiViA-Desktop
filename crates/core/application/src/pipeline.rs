@@ -36,7 +36,7 @@ use tokio::sync::Notify;
 use crate::network::Network;
 
 pub use crate::worker::{Tick, run};
-pub use preview::{Original, PreviewSubject};
+pub use preview::{Original, PreviewSubject, edge_bucket};
 pub use report_save::SavedCheck;
 
 const MAX_POLL_GAP_MS: i64 = 5 * MINUTE_MS;

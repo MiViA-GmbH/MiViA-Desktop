@@ -242,6 +242,7 @@ async fn preview_reads_stay_inside_the_account() {
             (
                 tx.pipeline(scope).preview_source(file).unwrap(),
                 tx.pipeline(scope).preview_job(computation).unwrap(),
+                tx.pipeline(scope).preview_model(computation).unwrap(),
             )
         };
         (read(mine), read(other))
@@ -250,8 +251,12 @@ async fn preview_reads_stay_inside_the_account() {
     assert_eq!(
         found,
         (
-            (Some(WinPath::parse(r"D:\Lab\a.tif").unwrap()), None),
-            (None, None)
+            (
+                Some(WinPath::parse(r"D:\Lab\a.tif").unwrap()),
+                None,
+                Some("grain".to_owned())
+            ),
+            (None, None, None)
         )
     );
 }

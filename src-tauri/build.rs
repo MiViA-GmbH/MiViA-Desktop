@@ -55,6 +55,7 @@ const COMMANDS: &[&str] = &[
     "get_preview",
     "get_preview_results",
     "close_preview",
+    "note_preview",
     "get_support",
     "claim_report_offer",
     "prepare_problem_report",

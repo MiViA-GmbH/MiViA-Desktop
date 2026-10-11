@@ -226,6 +226,11 @@ impl PipelineRepo for SqlTx<'_> {
         Ok(found.into_iter().next())
     }
 
+    fn preview_model(&mut self, id: ComputationId) -> Result<Option<String>, TxError> {
+        let found: Vec<String> = self.column(sql::PREVIEW_MODEL, params![id.0, self.account()])?;
+        Ok(found.into_iter().next())
+    }
+
     fn poll_due(
         &mut self,
         now: Timestamp,

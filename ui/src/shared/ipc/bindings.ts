@@ -120,6 +120,7 @@ export const commands = {
 	getPreview: (target: PreviewTarget) => __TAURI_INVOKE<PreviewView>("get_preview", { target }),
 	getPreviewResults: (computationId: string) => __TAURI_INVOKE<PreviewResultsView>("get_preview_results", { computationId }),
 	closePreview: () => __TAURI_INVOKE<null>("close_preview"),
+	notePreview: (note: PreviewNote) => __TAURI_INVOKE<null>("note_preview", { note }),
 };
 
 /** Events */
@@ -584,6 +585,8 @@ export type PolicyRow = {
 };
 
 export type PolicySource = "machine" | "user";
+
+export type PreviewNote = { kind: "opened"; computationId: string; durationMs: number } | { kind: "zoomMaxTier"; computationId: string; tier: number; longEdge: number };
 
 export type PreviewReason = "missing" | "tooLarge" | "unsupported" | "corrupt" | "offline" | "notPublished" | "cancelled";
 

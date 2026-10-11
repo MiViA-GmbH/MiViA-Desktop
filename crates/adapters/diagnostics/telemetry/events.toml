@@ -479,7 +479,7 @@ category = "usage"
 priority = "interaction"
 purpose_en = "Shows the highest zoom level reached in a result preview."
 purpose_de = "Zeigt die höchste Zoomstufe, die in einer Ergebnisvorschau erreicht wurde."
-fields = { tier = "num" }
+fields = { tier = "num", source_edge = { enum = ["<=2048", "2049-4096", "4097-8192", "8193+"] }, model_id = "uuid" }
 
 [[event]]
 name = "problem_report.offered"

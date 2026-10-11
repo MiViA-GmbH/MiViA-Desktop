@@ -1,11 +1,12 @@
 use std::io;
 
 use mivia_application::errors::{not_found, pipeline_error};
-use mivia_application::pipeline::{Original, PreviewSubject};
+use mivia_application::pipeline::{Original, PreviewSubject, edge_bucket};
 use mivia_domain::ids::{ComputationId, SourceFileId};
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
-use mivia_ports::ipc::preview::{PreviewResultsView, PreviewTarget, PreviewView};
+use mivia_ports::ipc::preview::{PreviewNote, PreviewResultsView, PreviewTarget, PreviewView};
 use mivia_ports::ipc::screens::OpenTarget;
+use mivia_ports::telemetry::{PreviewOpened, PreviewZoomMaxTier};
 
 use super::cx::{Ready, parse_id};
 use super::window;
@@ -45,6 +46,38 @@ pub(crate) async fn results(
     let found = ready.pipeline()?.preview_results(computation).await;
     window::preview_shown();
     found.map_err(|error| pipeline_error(&error, SITE))
+}
+
+pub(crate) async fn note(ready: &Ready, note: PreviewNote) -> Result<(), AppError> {
+    let id = match &note {
+        PreviewNote::Opened { computation_id, .. }
+        | PreviewNote::ZoomMaxTier { computation_id, .. } => {
+            ComputationId(parse_id(computation_id, SITE)?)
+        }
+    };
+    let model = ready.pipeline()?.preview_model(id).await;
+    let model = model.map_err(|error| pipeline_error(&error, SITE))?;
+    let telemetry = &ready.services.telemetry;
+    match note {
+        PreviewNote::Opened { duration_ms, .. } => telemetry.record(
+            PreviewOpened {
+                model_id: model,
+                duration_ms: Some(u64::from(duration_ms)),
+            }
+            .into(),
+        ),
+        PreviewNote::ZoomMaxTier {
+            tier, long_edge, ..
+        } => telemetry.record(
+            PreviewZoomMaxTier {
+                tier: Some(u64::from(tier)),
+                source_edge: Some(edge_bucket(long_edge)),
+                model_id: model,
+            }
+            .into(),
+        ),
+    }
+    Ok(())
 }
 
 pub(crate) fn close(ready: &Ready) -> Result<(), AppError> {

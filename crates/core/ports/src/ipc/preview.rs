@@ -56,3 +56,22 @@ pub struct PreviewResultsView {
     pub results_json: Option<String>,
     pub offline: bool,
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(
+    tag = "kind",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
+pub enum PreviewNote {
+    Opened {
+        computation_id: String,
+        duration_ms: u32,
+    },
+    ZoomMaxTier {
+        computation_id: String,
+        tier: u32,
+        long_edge: u32,
+    },
+}

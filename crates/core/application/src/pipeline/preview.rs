@@ -3,6 +3,8 @@ use mivia_domain::path::WinPath;
 use mivia_ports::ipc::preview::{PreviewReason, PreviewResultsView, PreviewView};
 use mivia_ports::preview::{PreviewError, Rendered, Unavailable};
 use mivia_ports::server::{Download, plain_result_name};
+use mivia_ports::telemetry::EdgeBucket;
+use uuid::Uuid;
 
 use super::{Pipeline, PipelineError};
 
@@ -62,6 +64,16 @@ impl Pipeline {
 
     pub async fn original(&self, subject: PreviewSubject) -> Result<Original, PipelineError> {
         self.input(&subject).await
+    }
+
+    pub async fn preview_model(
+        &self,
+        computation: ComputationId,
+    ) -> Result<Option<Uuid>, PipelineError> {
+        let model = self
+            .write(move |tx, scope| tx.pipeline(scope).preview_model(computation))
+            .await?;
+        Ok(model.and_then(|text| Uuid::parse_str(&text).ok()))
     }
 
     pub fn close_preview(&self) {
@@ -150,5 +162,14 @@ impl Pipeline {
                 Original::Unavailable(PreviewReason::Offline)
             }
         })
+    }
+}
+
+pub const fn edge_bucket(long_edge: u32) -> EdgeBucket {
+    match long_edge {
+        0..=2048 => EdgeBucket::Small,
+        2049..=4096 => EdgeBucket::Medium,
+        4097..=8192 => EdgeBucket::Large,
+        8193.. => EdgeBucket::Huge,
     }
 }
