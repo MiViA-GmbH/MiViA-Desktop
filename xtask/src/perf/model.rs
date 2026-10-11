@@ -4,6 +4,7 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 
+use crate::quality_diff::custom::days_from_date;
 use crate::repo;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -72,10 +73,10 @@ impl Budgets {
         })
     }
 
-    fn waived(&self, id: &str, today: &str) -> bool {
-        self.waived
-            .iter()
-            .any(|(waived, expires)| waived == id && expires.as_str() >= today)
+    fn waived(&self, id: &str, today: i64) -> bool {
+        self.waived.iter().any(|(waived, expires)| {
+            waived == id && days_from_date(expires).is_some_and(|day| day >= today)
+        })
     }
 }
 
@@ -157,7 +158,7 @@ pub(crate) fn judge(
     budgets: &Budgets,
     run: &Run,
     previous: Option<&Run>,
-    today: &str,
+    today: i64,
 ) -> Vec<Verdict> {
     run.metrics
         .iter()

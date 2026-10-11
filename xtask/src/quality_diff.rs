@@ -1,5 +1,5 @@
 mod checks;
-mod custom;
+pub(crate) mod custom;
 mod flatten;
 
 use std::collections::BTreeSet;

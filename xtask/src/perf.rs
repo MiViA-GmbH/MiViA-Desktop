@@ -10,11 +10,11 @@ mod tests;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result, anyhow, bail};
 use model::{Budgets, Run, Status, Verdict, judge};
 
+use crate::quality_diff::custom::today;
 use crate::{flag_value, repo};
 
 const USAGE: &str = "usage: cargo xtask perf <start-idle-window | io | preview | startup | idle | window | \
@@ -140,7 +140,7 @@ fn report(
         .filter(|path| path.is_file())
         .map(|path| read_run(&path))
         .transpose()?;
-    let verdicts = judge(budgets, run, before.as_ref(), &today());
+    let verdicts = judge(budgets, run, before.as_ref(), today());
     println!("{} ({})", run.scenario, run.validity);
     for note in &run.notes {
         println!("  note: {note}");
@@ -192,7 +192,7 @@ fn compare(options: &Options, dir: &str) -> Result<bool> {
             .filter(|path| path.is_file())
             .map(|path| read_run(&path))
             .transpose()?;
-        let verdicts = judge(&budgets, &run, before.as_ref(), &today());
+        let verdicts = judge(&budgets, &run, before.as_ref(), today());
         println!("{}", run.scenario);
         for verdict in &verdicts {
             println!("  {}", line(verdict));
@@ -200,27 +200,6 @@ fn compare(options: &Options, dir: &str) -> Result<bool> {
         green &= !verdicts.iter().any(|verdict| verdict.status == Status::Red);
     }
     Ok(green)
-}
-
-pub(crate) fn today() -> String {
-    let days = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |since| since.as_secs() / 86_400);
-    let shifted = i64::try_from(days).unwrap_or(0) + 719_468;
-    let era = shifted.div_euclid(146_097);
-    let day_of_era = shifted.rem_euclid(146_097);
-    let year_of_era =
-        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
-    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
-    let shifted_month = (5 * day_of_year + 2) / 153;
-    let day = day_of_year - (153 * shifted_month + 2) / 5 + 1;
-    let month = if shifted_month < 10 {
-        shifted_month + 3
-    } else {
-        shifted_month - 9
-    };
-    let year = year_of_era + era * 400 + i64::from(month <= 2);
-    format!("{year:04}-{month:02}-{day:02}")
 }
 
 pub(crate) fn calibrate() -> f64 {

@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use super::model::{Budget, Budgets, Metric, Run, Status, judge, statistic};
+use crate::quality_diff::custom::days_from_date;
 
 fn row(direction: &str, mode: &str, basis: &str, budget: f64) -> Budget {
     Budget {
@@ -37,9 +38,14 @@ fn status(row: Budget, waived: &[(&str, &str)], value: f64, before: Option<f64>)
             .collect(),
     );
     let previous = before.map(run);
-    judge(&budgets, &run(value), previous.as_ref(), "2026-10-10")
-        .remove(0)
-        .status
+    judge(
+        &budgets,
+        &run(value),
+        previous.as_ref(),
+        days_from_date("2026-10-10").unwrap_or_default(),
+    )
+    .remove(0)
+    .status
 }
 
 #[test]
