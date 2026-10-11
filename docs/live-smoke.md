@@ -2,7 +2,7 @@
 
 The smoke drives the real server adapter against the MiViA test server and, on request, records the golden fixtures in `crates/adapters/api/tests/fixtures`. It runs from a developer workstation on the VPN, never in CI, and never against production (it refuses `app.mivia.ai`).
 
-Needs a CI account key on the test server and a folder of sample micrographs named `pearlite.png`, `grain.png`, `ferrite.png` and `carbides.png`. Put the key and the test server origin into `.env` in the repository root (the file is never committed):
+Needs a CI account key on the test server and a folder of sample micrographs named `pearlite.png`, `ferrite.png` and `grain.png`. Put the key and the test server origin into `.env` in the repository root (the file is never committed):
 
 ```
 MIVIA_CI_ORIGIN=https://<test server>

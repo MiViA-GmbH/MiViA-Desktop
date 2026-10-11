@@ -26,11 +26,10 @@ use uuid::Uuid;
 type Outcome<T> = Result<T, Box<dyn Error>>;
 
 const USER_AGENT: &str = "MiViA-Desktop/2.0.0 (Windows 10.0.26200; stable)";
-const PAIRS: [(&str, &str); 4] = [
+const PAIRS: [(&str, &str); 3] = [
     ("pearlite", "PEARLITE"),
-    ("grain", "GRAIN"),
     ("ferrite", "FERRITE"),
-    ("carbides", "CARBIDES"),
+    ("grain", "GRAIN"),
 ];
 const POLL: Duration = Duration::from_secs(5);
 const DEADLINE: Duration = Duration::from_mins(15);
