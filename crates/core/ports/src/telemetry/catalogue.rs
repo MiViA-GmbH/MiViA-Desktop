@@ -104,7 +104,7 @@ tags! {
     NotificationKind { ReportSaved "report_saved", ReportProblem "report_problem", UploadProblem "upload_problem", Update "update", Other "other" }
     NotificationChannel { Os "os", InApp "in_app" }
     CountBucket { Zero "0", Few "1-9", Tens "10-99", Hundreds "100-999", Thousands "1000+" }
-    EdgeBucket { Small "<=2048", Medium "2049-4096", Large "4097-8192", Huge "8193+" }
+    EdgeBucket { Small "up_to_2048", Medium "2049-4096", Large "4097-8192", Huge "8193+" }
     ExportFormat { Csv "csv", Xlsx "xlsx" }
     RequestOrigin { Sendto "sendto", Verb "verb", FolderVerb "folder_verb", Drop "drop", AddImages "add_images" }
     DialogState { Analyze "analyze", Cancel "cancel", NoUsableFiles "no_usable_files" }
