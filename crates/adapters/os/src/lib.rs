@@ -12,6 +12,7 @@ mod pipe;
 mod policy;
 mod proxy;
 mod reports;
+mod taskbar;
 mod trust;
 mod upload;
 mod watch;
@@ -26,7 +27,7 @@ pub use ffi::{
     is_elevated, known_folder, memory_is_low, open_file, own_thread_count, physical_memory_bytes,
     pick_files, pick_folder, pipe_client, pipe_server_pid, process_age_ms, process_identity,
     process_table, proxy_for_url, read_link, reveal_file, save_link, set_webview_visible,
-    show_error, spawn_session_watcher, suspend_webview, thread_name, user_idle_ms,
+    show_error, small_icon_size, spawn_session_watcher, suspend_webview, thread_name, user_idle_ms,
     user_locale_name, windows_user,
 };
 pub use fs::OsFileSystem;
@@ -42,5 +43,6 @@ pub use locale::{SystemLocale, system_locale};
 pub use pipe::open_pipe_client;
 pub use policy::{machine_guid, read_policies};
 pub use proxy::{WinHttpProxyResolver, static_entries};
+pub use taskbar::taskbar_is_light;
 pub use trust::{AuthenticodeError, SignerFacts, SignerPin, verify_authenticode};
 pub use watch::NotifyWatcher;

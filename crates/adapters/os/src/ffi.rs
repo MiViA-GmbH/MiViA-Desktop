@@ -36,7 +36,7 @@ pub use shell::{
 };
 pub use system::{
     KnownFolder, accepts_notifications, clear_clipboard, clipboard_text, confirm, known_folder,
-    user_idle_ms,
+    small_icon_size, user_idle_ms,
 };
 pub(crate) use system::{
     drive_is_remote, expand_environment, notify_associations_changed, processes_named, terminate,

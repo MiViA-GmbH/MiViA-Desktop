@@ -11,7 +11,8 @@ use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, MB_ICONERROR, MB_OK,
     MB_SETFOREGROUND, MSG, MessageBoxW, PBT_APMRESUMEAUTOMATIC, RegisterClassW, WM_ENDSESSION,
-    WM_POWERBROADCAST, WM_QUERYENDSESSION, WNDCLASSW, WS_EX_TOOLWINDOW, WS_OVERLAPPED,
+    WM_POWERBROADCAST, WM_QUERYENDSESSION, WM_SETTINGCHANGE, WNDCLASSW, WS_EX_TOOLWINDOW,
+    WS_OVERLAPPED,
 };
 
 use super::wide;
@@ -23,6 +24,7 @@ pub enum SystemSignal {
     SessionEnding,
     Resumed,
     NetworkChanged,
+    ThemeChanged,
 }
 
 type Callback = Box<dyn Fn(SystemSignal) + Send + Sync>;
@@ -30,6 +32,17 @@ static ON_SIGNAL: OnceLock<Callback> = OnceLock::new();
 
 fn emit(signal: SystemSignal) -> bool {
     ON_SIGNAL.get().map(|callback| callback(signal)).is_some()
+}
+
+fn names_theme(lparam: LPARAM) -> bool {
+    let name = wide("ImmersiveColorSet");
+    let text = lparam as *const u16;
+    // SAFETY: the system passes null or a NUL-terminated string, and the scan stops at the first difference.
+    !text.is_null()
+        && name
+            .iter()
+            .enumerate()
+            .all(|(at, unit)| unsafe { *text.add(at) } == *unit)
 }
 
 unsafe extern "system" fn session_proc(
@@ -44,6 +57,9 @@ unsafe extern "system" fn session_proc(
     }
     if msg == WM_POWERBROADCAST && wparam == PBT_APMRESUMEAUTOMATIC as usize {
         emit(SystemSignal::Resumed);
+    }
+    if msg == WM_SETTINGCHANGE && names_theme(lparam) {
+        emit(SystemSignal::ThemeChanged);
     }
     // SAFETY: forwards the arguments the system passed to this window procedure.
     unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) }

@@ -29,7 +29,7 @@ use windows_sys::Win32::UI::Shell::{
     SHGetKnownFolderPath, SHQueryUserNotificationState,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    IDYES, MB_DEFBUTTON2, MB_ICONWARNING, MB_YESNO, MessageBoxW,
+    GetSystemMetrics, IDYES, MB_DEFBUTTON2, MB_ICONWARNING, MB_YESNO, MessageBoxW, SM_CXSMICON,
 };
 use windows_sys::core::GUID;
 
@@ -275,6 +275,12 @@ pub fn user_idle_ms() -> Option<u64> {
     // SAFETY: takes no arguments.
     let now = unsafe { GetTickCount() };
     Some(u64::from(now.wrapping_sub(info.dwTime)))
+}
+
+pub fn small_icon_size() -> u32 {
+    // SAFETY: takes one plain index.
+    let size = unsafe { GetSystemMetrics(SM_CXSMICON) };
+    u32::try_from(size).unwrap_or(16).max(16)
 }
 
 pub fn accepts_notifications() -> bool {
