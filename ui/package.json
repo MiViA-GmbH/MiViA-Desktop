@@ -12,6 +12,7 @@
 		"fallow": "fallow",
 		"size": "vite build && node scripts/startup-bundle.mjs && size-limit",
 		"i18n:check": "node scripts/i18n-check.mjs",
+		"perf:preview": "node scripts/perf-preview.mjs",
 		"playwright": "playwright test --project smoke",
 		"e2e": "playwright test --project e2e"
 	},
