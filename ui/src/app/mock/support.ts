@@ -74,5 +74,6 @@ export function supportResponses(scenario: string): Record<string, unknown> {
 		prepare_problem_report: PREVIEW,
 		read_problem_report_file: FILE,
 		claim_report_offer: false,
+		delete_local_logs: 3,
 	};
 }

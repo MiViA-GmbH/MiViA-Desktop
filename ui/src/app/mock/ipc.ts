@@ -1,6 +1,6 @@
 import { mockIPC } from '@tauri-apps/api/mocks';
 
-import type { FolderView } from '../../shared/ipc/bindings';
+import type { AppError, FolderView, HoldKind } from '../../shared/ipc/bindings';
 import {
 	ATTENTION,
 	BATCH,
@@ -42,7 +42,24 @@ function folders(): FolderView[] {
 
 const calm = scenario !== 'hold';
 
+const HOLD_KINDS: HoldKind[] = ['serviceUnavailable', 'accessKey', 'accountBlocked', 'adminScope', 'license'];
+const held = HOLD_KINDS.find((kind) => scenario === `hold-${kind}`);
+
+const FAILURE: AppError = {
+	kind: 'notFound',
+	code: 'reportMissing',
+	message: 'report missing',
+	signature: 'open-report-missing',
+	reportable: true,
+	traceId: null,
+	computationId: null,
+	fields: null,
+};
+
 function holds() {
+	if (held) {
+		return { revision: '9', holds: [{ kind: held, since: '2026-10-12T08:42:00.000Z' }] };
+	}
 	if (scenario === 'network') {
 		return NETWORK_HOLDS;
 	}
@@ -59,25 +76,28 @@ function attention() {
 	return calm ? { revision: '9', total: 0, items: [] } : ATTENTION;
 }
 
+const ACCOUNT = {
+	displayName: 'Dr. Katrin Möller',
+	serverUrl: 'https://app.mivia.ai',
+	serverAccountId: 'a1',
+	email: 'k.moeller@kessler-werkstoff.de',
+};
+
 const responses: Record<string, unknown> = {
 	get_locale: { language, setting: 'auto', formatLocale: `${language}-DE` },
-	get_account: {
-		displayName: 'Dr. Katrin Möller',
-		serverUrl: 'https://app.mivia.ai',
-		serverAccountId: 'a1',
-		email: 'k.moeller@kessler-werkstoff.de',
-	},
+	get_account: scenario === 'no-account' ? null : ACCOUNT,
 	list_folders: { revision: '9', folders: folders() },
 	list_holds: holds(),
 	list_needs_attention: attention(),
 	get_network: NETWORK,
 	get_network_details: 'Host: app.mivia.ai',
-	get_batch: BATCH,
+	get_batch: scenario === 'renamable' ? { ...BATCH, renamable: true } : BATCH,
 	list_batch_items: ITEMS,
 	list_series_reports: REPORTS,
 	get_one_off: scenario === 'one-off' ? ONE_OFF : null,
 	get_remaining_uploads: 1176,
 	...supportResponses(scenario),
+	claim_report_offer: scenario === 'failure',
 };
 
 const setup = {
@@ -88,8 +108,16 @@ const setup = {
 	...updateResponses(scenario),
 };
 
-mockIPC((command, args) => setup[command]?.((args ?? {}) as Record<string, unknown>) ?? responses[command] ?? null, {
-	shouldMockEvents: true,
-});
+mockIPC(
+	(command, args) => {
+		if (scenario === 'failure' && command === 'open_target') {
+			throw FAILURE;
+		}
+		return setup[command]?.((args ?? {}) as Record<string, unknown>) ?? responses[command] ?? null;
+	},
+	{
+		shouldMockEvents: true,
+	},
+);
 
 Object.assign(Reflect.get(window, '__TAURI_INTERNALS__'), { convertFileSrc: (path: string) => path });
