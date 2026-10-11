@@ -1,0 +1,370 @@
+[
+	{
+		"type": "data-table",
+		"data": [
+			{
+				"label": "GRAIN_MULTI_G_AREA_SHOW_MEAN",
+				"unit": "/",
+				"value": 1.5217126607894897,
+				"labelTooltip": "GRAIN_MULTI_G_AREA_SHOW_MEAN_TOOLTIP"
+			},
+			{
+				"label": "GRAIN_MULTI_DIAM_AREA_SHOW_MAX",
+				"unit": "um",
+				"value": 1214.2427978515625,
+				"labelTooltip": "GRAIN_MULTI_DIAM_AREA_SHOW_MAX_TOOLTIP"
+			},
+			{
+				"label": "GRAIN_MULTI_DIAM_AREA_SHOW_MEAN",
+				"unit": "um",
+				"value": 528.8694458007812,
+				"labelTooltip": "GRAIN_MULTI_DIAM_AREA_SHOW_MEAN_TOOLTIP"
+			},
+			{
+				"label": "GRAIN_MULTI_INTERC_AREA_SHOW_MEAN",
+				"unit": "um",
+				"value": 505.7673645019531,
+				"labelTooltip": "GRAIN_MULTI_INTERC_AREA_SHOW_MEAN_TOOLTIP"
+			},
+			{
+				"label": "GRAIN_MULTI_ROUND_AREA_SHOW_MEAN",
+				"unit": "/",
+				"value": 0.4580010771751404,
+				"labelTooltip": "GRAIN_MULTI_ROUND_AREA_SHOW_MEAN_TOOLTIP"
+			}
+		]
+	},
+	{
+		"type": "image",
+		"label": "GRAIN_",
+		"filename": "placeholder.png"
+	},
+	{
+		"type": "histogram",
+		"label": "GRAIN_MULTI_G_AREA_SHOW_HISTOGRAM",
+		"xLabel": "GRAIN_MULTI_G_AREA_SHOW_HISTOGRAM_X",
+		"yLabel": "AREA_FRACTION_IN_PROC",
+		"unit": "/",
+		"data": [
+			{
+				"x": "<1",
+				"y": 62.30323910713196,
+				"color": "#000000"
+			},
+			{
+				"x": "1",
+				"y": 11.339245736598969,
+				"color": "#000000"
+			},
+			{
+				"x": "2",
+				"y": 7.770171016454697,
+				"color": "#000000"
+			},
+			{
+				"x": "3",
+				"y": 7.127416133880615,
+				"color": "#000000"
+			},
+			{
+				"x": "4",
+				"y": 6.052303686738014,
+				"color": "#000000"
+			},
+			{
+				"x": "5",
+				"y": 3.3984437584877014,
+				"color": "#000000"
+			},
+			{
+				"x": "6",
+				"y": 1.5056796371936798,
+				"color": "#000000"
+			},
+			{
+				"x": "7",
+				"y": 0.3841946367174387,
+				"color": "#000000"
+			},
+			{
+				"x": "8",
+				"y": 0.09357176022604108,
+				"color": "#000000"
+			},
+			{
+				"x": "9",
+				"y": 0.0213288571103476,
+				"color": "#000000"
+			},
+			{
+				"x": "10",
+				"y": 0.0044033768062945455,
+				"color": "#000000"
+			},
+			{
+				"x": "11",
+				"y": 0,
+				"color": "#000000"
+			},
+			{
+				"x": "12",
+				"y": 0,
+				"color": "#000000"
+			},
+			{
+				"x": "13",
+				"y": 0,
+				"color": "#000000"
+			},
+			{
+				"x": "14",
+				"y": 0,
+				"color": "#000000"
+			},
+			{
+				"x": "15<",
+				"y": 0,
+				"color": "#000000"
+			}
+		]
+	},
+	{
+		"type": "histogram",
+		"label": "GRAIN_MULTI_INTERC_AREA_SHOW_HISTOGRAM",
+		"xLabel": "GRAIN_MULTI_INTERC_AREA_SHOW_HISTOGRAM_X",
+		"yLabel": "AREA_FRACTION_IN_PROC",
+		"unit": "um",
+		"data": [
+			{
+				"x": "<77",
+				"y": 7.790812104940414,
+				"color": "#000000"
+			},
+			{
+				"x": "77",
+				"y": 12.615811824798584,
+				"color": "#000000"
+			},
+			{
+				"x": "143",
+				"y": 9.966768324375153,
+				"color": "#000000"
+			},
+			{
+				"x": "209",
+				"y": 8.383066207170486,
+				"color": "#000000"
+			},
+			{
+				"x": "276",
+				"y": 6.227337941527367,
+				"color": "#000000"
+			},
+			{
+				"x": "342",
+				"y": 3.931252285838127,
+				"color": "#000000"
+			},
+			{
+				"x": "408",
+				"y": 4.199858382344246,
+				"color": "#000000"
+			},
+			{
+				"x": "474",
+				"y": 3.6450326442718506,
+				"color": "#000000"
+			},
+			{
+				"x": "540",
+				"y": 3.847450390458107,
+				"color": "#000000"
+			},
+			{
+				"x": "607",
+				"y": 4.038447141647339,
+				"color": "#000000"
+			},
+			{
+				"x": "673",
+				"y": 4.071884974837303,
+				"color": "#000000"
+			},
+			{
+				"x": "739",
+				"y": 4.660836607217789,
+				"color": "#000000"
+			},
+			{
+				"x": "805",
+				"y": 4.915819689631462,
+				"color": "#000000"
+			},
+			{
+				"x": "871",
+				"y": 5.098697543144226,
+				"color": "#000000"
+			},
+			{
+				"x": "938",
+				"y": 4.918847233057022,
+				"color": "#000000"
+			},
+			{
+				"x": "1004",
+				"y": 4.030603542923927,
+				"color": "#000000"
+			},
+			{
+				"x": "1070",
+				"y": 3.0000757426023483,
+				"color": "#000000"
+			},
+			{
+				"x": "1136",
+				"y": 2.057202532887459,
+				"color": "#000000"
+			},
+			{
+				"x": "1202",
+				"y": 1.3836235739290714,
+				"color": "#000000"
+			},
+			{
+				"x": "1269<",
+				"y": 1.2165704742074013,
+				"color": "#000000"
+			}
+		]
+	},
+	{
+		"type": "raw-feature",
+		"label": "MULTI_DIAM_RAW",
+		"columns": [],
+		"data": []
+	},
+	{
+		"type": "message",
+		"label": ""
+	},
+	{
+		"type": "histogram",
+		"label": "DECARB_THICKNESS_HIST",
+		"xLabel": "Thickness",
+		"yLabel": "Frequency",
+		"unit": "um",
+		"data": [
+			{
+				"x": "16",
+				"y": 4.793109744787216,
+				"color": "#000000"
+			},
+			{
+				"x": "17",
+				"y": 9.69855859875679,
+				"color": "#000000"
+			},
+			{
+				"x": "17",
+				"y": 0,
+				"color": "#000000"
+			},
+			{
+				"x": "18",
+				"y": 20.027460157871246,
+				"color": "#000000"
+			},
+			{
+				"x": "19",
+				"y": 0,
+				"color": "#000000"
+			},
+			{
+				"x": "19",
+				"y": 32.04143941402435,
+				"color": "#000000"
+			},
+			{
+				"x": "20",
+				"y": 22.960743308067322,
+				"color": "#000000"
+			},
+			{
+				"x": "21",
+				"y": 0,
+				"color": "#000000"
+			},
+			{
+				"x": "21",
+				"y": 7.302003353834152,
+				"color": "#000000"
+			},
+			{
+				"x": "22",
+				"y": 3.176683560013771,
+				"color": "#000000"
+			}
+		]
+	},
+	{
+		"type": "data-table",
+		"data": [
+			{
+				"label": "DECARB_THICKNESS_MAX",
+				"unit": "um",
+				"value": 22.792022705078125
+			},
+			{
+				"label": "DECARB_THICKNESS_MEAN",
+				"unit": "um",
+				"value": 19.405757904052734
+			},
+			{
+				"label": "DECARB_THICKNESS_MIN",
+				"unit": "um",
+				"value": 15.954416275024414
+			}
+		]
+	},
+	{
+		"type": "raw-feature",
+		"label": "DECARB_LAYER_RAW",
+		"columns": [],
+		"data": []
+	},
+	{
+		"type": "bar-chart",
+		"keys": ["fraction", "total"],
+		"xLabel": "PHASE",
+		"yLabels": ["PHASE_FRACTION", "PHASE_TOTAL"],
+		"data": [
+			{
+				"label": "ferrite",
+				"color": "#4c9a7a",
+				"fraction": 0.6667,
+				"total": 12
+			},
+			{
+				"label": "pearlite",
+				"color": "#2f5f8a",
+				"fraction": 0.3333,
+				"total": 6
+			}
+		]
+	},
+	{
+		"type": "multi-column-table",
+		"label": "phases",
+		"headers": ["phase", "share"],
+		"units": [null, "percent"],
+		"data": [["ferrite", 66.67], ["pearlite", null]]
+	},
+	{
+		"type": "bar-chart"
+	},
+	{
+		"type": "image",
+		"label": "GRAIN_MASK",
+		"filename": "overlay-b.png"
+	}
+]

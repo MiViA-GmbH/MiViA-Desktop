@@ -14,6 +14,7 @@ import {
 	REPORTS,
 } from './fixtures';
 import { historyResponses } from './history';
+import { previewResponses } from './preview';
 import { privacyResponses } from './privacy';
 import { setupResponses, setupView } from './setup';
 import { supportResponses } from './support';
@@ -82,6 +83,7 @@ const responses: Record<string, unknown> = {
 const setup = {
 	...setupResponses(setupView(scenario)),
 	...historyResponses(scenario),
+	...previewResponses(scenario),
 	...privacyResponses(scenario),
 	...updateResponses(scenario),
 };
@@ -89,3 +91,5 @@ const setup = {
 mockIPC((command, args) => setup[command]?.((args ?? {}) as Record<string, unknown>) ?? responses[command] ?? null, {
 	shouldMockEvents: true,
 });
+
+Object.assign(Reflect.get(window, '__TAURI_INTERNALS__'), { convertFileSrc: (path: string) => path });

@@ -16,7 +16,7 @@ export default defineConfig({
 	projects: [
 		{
 			name: 'smoke',
-			testMatch: ['smoke.spec.ts', 'wizard.spec.ts', 'history.spec.ts'],
+			testMatch: ['smoke.spec.ts', 'wizard.spec.ts', 'history.spec.ts', 'preview.spec.ts'],
 			use: { baseURL: 'http://localhost:4319' },
 		},
 		{ name: 'e2e', testMatch: 'scenarios.spec.ts', timeout: 240_000 },
