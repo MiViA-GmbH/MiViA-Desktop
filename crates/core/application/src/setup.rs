@@ -68,7 +68,6 @@ impl Default for SetupDraft {
             options: [
                 SetupOption::Autostart,
                 SetupOption::Explorer,
-                SetupOption::Telemetry,
                 SetupOption::LegacyStop,
             ]
             .into(),

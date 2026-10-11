@@ -186,7 +186,7 @@ mod draft {
     fn a_new_draft_has_the_recommended_choices_and_round_trips() {
         let mut draft = SetupDraft::default();
         assert!(draft.has(SetupOption::Autostart) && draft.has(SetupOption::Explorer));
-        assert!(draft.has(SetupOption::Telemetry) && draft.has(SetupOption::LegacyStop));
+        assert!(!draft.has(SetupOption::Telemetry) && draft.has(SetupOption::LegacyStop));
         assert!(!draft.has(SetupOption::IncludeExisting));
         draft.models = vec!["m1:".to_owned(), "m2:c7".to_owned()];
         let json = serde_json::to_string(&draft).unwrap();

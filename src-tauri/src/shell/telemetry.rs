@@ -160,7 +160,7 @@ pub(crate) async fn user_choice(services: &Services) -> bool {
 
 pub(crate) async fn refresh_gate(services: &Services) {
     let user = user_choice(services).await;
-    let on = effective(services.policies.telemetry, Some(user), None);
+    let on = effective(services.policies.telemetry, Some(user));
     if let Err(error) = services
         .telemetry
         .sink

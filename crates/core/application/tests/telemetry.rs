@@ -1,22 +1,33 @@
+use mivia_application::settings::GlobalSettings;
+use mivia_application::setup::SetupDraft;
 use mivia_application::telemetry::{TELEMETRY_DEFAULT_ON, effective};
+use mivia_ports::ipc::setup::SetupOption;
 
 #[test]
-fn policy_beats_the_user_who_beats_the_server_default_which_beats_the_compiled_default() {
-    const { assert!(TELEMETRY_DEFAULT_ON) };
+fn policy_beats_the_user_who_beats_the_compiled_default_which_is_off() {
+    const { assert!(!TELEMETRY_DEFAULT_ON) };
     let table = [
-        ((Some(false), Some(true), Some(true)), false),
-        ((Some(true), Some(false), Some(false)), true),
-        ((None, Some(false), Some(true)), false),
-        ((None, Some(true), Some(false)), true),
-        ((None, None, Some(false)), false),
-        ((None, None, Some(true)), true),
-        ((None, None, None), true),
+        ((Some(false), Some(true)), false),
+        ((Some(true), Some(false)), true),
+        ((Some(true), None), true),
+        ((None, Some(false)), false),
+        ((None, Some(true)), true),
+        ((None, None), false),
     ];
-    for ((policy, user, server), expected) in table {
-        assert_eq!(
-            effective(policy, user, server),
-            expected,
-            "{policy:?} {user:?} {server:?}"
-        );
+    for ((policy, user), expected) in table {
+        assert_eq!(effective(policy, user), expected, "{policy:?} {user:?}");
     }
+}
+
+#[test]
+fn a_fresh_wizard_draft_starts_with_telemetry_unticked() {
+    assert!(!SetupDraft::default().has(SetupOption::Telemetry));
+}
+
+#[test]
+fn a_stored_choice_from_before_the_opt_in_is_not_a_consent() {
+    let old = r#"{"setupCompleted":true,"telemetry":true}"#;
+    assert!(!GlobalSettings::parse(Some(old)).telemetry);
+    let new = r#"{"setupCompleted":true,"telemetryOptIn":true}"#;
+    assert!(GlobalSettings::parse(Some(new)).telemetry);
 }
