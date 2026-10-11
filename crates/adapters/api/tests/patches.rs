@@ -108,3 +108,13 @@ fn error_responses_are_dropped() {
         json!({"201": {}, "302": {}, "default": {}})
     );
 }
+
+#[test]
+fn job_fields_the_server_leaves_out_are_optional() {
+    let spec = patched(json!({"components": {"schemas": {"UserJobDto": {
+        "required": ["id", "finishedAt", "startedAt", "result", "status"]}}}}));
+    assert_eq!(
+        spec["components"]["schemas"]["UserJobDto"]["required"],
+        json!(["id", "status"])
+    );
+}

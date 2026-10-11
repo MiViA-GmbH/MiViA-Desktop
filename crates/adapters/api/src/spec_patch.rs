@@ -6,11 +6,13 @@ type Schema = Map<String, Value>;
 
 const MULTIPART: &str = "/requestBody/content/multipart~1form-data";
 const TELEMETRY: &str = "/paths/~1api~1client-diagnostics~1telemetry/post";
+const NOT_SENT: &[(&str, &[&str])] = &[("UserJobDto", &["finishedAt", "startedAt", "result"])];
 
 pub(crate) fn apply(spec: &mut Value) {
     drop_multipart_operations(spec);
     drop_telemetry_body(spec);
     drop_error_responses(spec);
+    relax_required(spec);
     walk(spec, &mut allow_unknown_fields);
     mark_discriminators(spec);
     walk(spec, &mut open_string_enum);
@@ -51,6 +53,15 @@ fn drop_error_responses(spec: &mut Value) {
             .filter_map(Value::as_object_mut);
         for responses in responses {
             responses.retain(|status, _| !status.starts_with(['4', '5']));
+        }
+    }
+}
+
+fn relax_required(spec: &mut Value) {
+    for (schema, fields) in NOT_SENT {
+        let pointer = format!("/components/schemas/{schema}/required");
+        if let Some(required) = spec.pointer_mut(&pointer).and_then(Value::as_array_mut) {
+            required.retain(|name| !name.as_str().is_some_and(|name| fields.contains(&name)));
         }
     }
 }
