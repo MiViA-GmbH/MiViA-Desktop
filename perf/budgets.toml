@@ -94,7 +94,7 @@ machine = "windows-2025"
 owner = "desktop-maintainers"
 
 ["idle.floor.threads"]
-metric = "tray-only, 0 folders, empty DB, e2e build, 20 s settle: threads"
+metric = "tray-only, 0 folders, empty DB, e2e build, 20 s settle: threads started by the app image"
 unit = "count"
 direction = "max"
 statistic = "value"

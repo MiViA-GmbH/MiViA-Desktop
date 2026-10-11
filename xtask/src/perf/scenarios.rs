@@ -129,8 +129,10 @@ fn floor(options: &Options, budgets: &Budgets, run: &mut Run) -> Result<()> {
     require_quiet(options, run);
     sleep(SETTLE);
     let first = usage(bare.pid())?;
+    let own = mivia_os::own_thread_count(bare.pid(), &first.threads);
     run.notes.push(format!(
-        "threads at settle, 0 folders: {}",
+        "threads at settle, 0 folders: {own} own of {} total; {}",
+        first.threads_root,
         thread_names(&first)
     ));
     bare.stop();
@@ -141,12 +143,7 @@ fn floor(options: &Options, budgets: &Budgets, run: &mut Run) -> Result<()> {
         "idle.floor.commit",
         vec![mb(first.commit_root)],
     )?;
-    put(
-        run,
-        budgets,
-        "idle.floor.threads",
-        vec![count(first.threads_root)],
-    )?;
+    put(run, budgets, "idle.floor.threads", vec![count(own)])?;
     put(run, budgets, "idle.webview", vec![count(first.webview)])?;
     put(
         run,
