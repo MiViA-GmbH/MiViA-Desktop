@@ -5,6 +5,7 @@ use crate::source_file::Classification;
 
 pub const MANUAL_QUIET: i64 = 0;
 pub const UPLOAD_CAP_BYTES: u64 = 300 * 1024 * 1024;
+const MIB: u64 = 1024 * 1024;
 const CATCH_UP_SUFFIX: &str = "#catch-up";
 const IGNORED_PREFIXES: [&str; 2] = ["~$", "~syncthing~"];
 
@@ -81,4 +82,10 @@ pub const fn classify(seen: Seen) -> Classification {
         Seen::OtherPath { still_there: true } => Classification::KnownContent,
         Seen::SamePath | Seen::OtherPath { still_there: false } => Classification::KnownFile,
     }
+}
+
+pub fn upload_cap_bytes(max_upload_size_mb: Option<u32>) -> u64 {
+    max_upload_size_mb
+        .filter(|mb| *mb > 0)
+        .map_or(UPLOAD_CAP_BYTES, |mb| u64::from(mb) * MIB)
 }

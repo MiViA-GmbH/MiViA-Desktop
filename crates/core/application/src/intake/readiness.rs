@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use mivia_domain::image_format::FormatCheck;
-use mivia_domain::intake::{Seen, UPLOAD_CAP_BYTES, classify};
+use mivia_domain::intake::{Seen, classify};
 use mivia_domain::readiness::{Failure, Step, after_failure, still_copying};
 use mivia_domain::source_file::{Classification, SourceFileEvent};
 use mivia_ports::fs::{FsError, ImageRead};
@@ -84,7 +84,7 @@ fn record(
     tx: &mut dyn WriteTx,
     scope: AccountScope,
     result: (&ProbeRow, Result<ImageRead, Failure>),
-    now: mivia_domain::ids::Timestamp,
+    (now, cap): (mivia_domain::ids::Timestamp, u64),
 ) -> Result<Option<ContentLookup>, TxError> {
     let (row, result) = result;
     let read = match result {
@@ -106,7 +106,7 @@ fn record(
             return Ok(None);
         }
     };
-    if read.stat.size > UPLOAD_CAP_BYTES {
+    if read.stat.size > cap {
         tx.intake(scope).ready(row.id, &read, now)?;
         tx.source_files(scope)
             .apply(row.id, SourceFileEvent::TooLarge, now)?;
@@ -167,11 +167,12 @@ impl Intake {
             results.push((row, assessed));
         }
         let now = self.now();
+        let cap = self.upload_cap.load(std::sync::atomic::Ordering::Relaxed);
         let deferred: Deferred = self
             .write(move |tx, scope| {
                 let mut deferred = Vec::new();
                 for (row, assessed) in results {
-                    if let Some(lookup) = record(tx, scope, (&row, assessed), now)? {
+                    if let Some(lookup) = record(tx, scope, (&row, assessed), (now, cap))? {
                         deferred.push((row.id, lookup));
                     }
                 }

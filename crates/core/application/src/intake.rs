@@ -11,8 +11,10 @@ mod sink;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use mivia_domain::ids::{FolderId, MINUTE_MS, SourceFileId, Timestamp};
+use mivia_domain::intake::{UPLOAD_CAP_BYTES, upload_cap_bytes};
 use mivia_ports::clock::Clock;
 use mivia_ports::fs::{FileSystem, FsError};
 use mivia_ports::store::{AccountScope, Store, StoreError, StoreExt, TxError, WriteTx};
@@ -88,6 +90,7 @@ pub struct Intake {
     in_flight: Arc<Mutex<BTreeSet<SourceFileId>>>,
     serial: tokio::sync::Mutex<()>,
     marker: Option<MarkerSelf>,
+    upload_cap: AtomicU64,
     pub wakers: Arc<Wakers>,
 }
 
@@ -109,6 +112,7 @@ impl Intake {
             in_flight: Arc::new(Mutex::new(BTreeSet::new())),
             serial: tokio::sync::Mutex::new(()),
             marker: None,
+            upload_cap: AtomicU64::new(UPLOAD_CAP_BYTES),
             wakers,
         }
     }
@@ -117,6 +121,11 @@ impl Intake {
     pub fn with_marker(mut self, marker: Option<MarkerSelf>) -> Self {
         self.marker = marker;
         self
+    }
+
+    pub fn set_upload_cap(&self, max_upload_size_mb: Option<u32>) {
+        let cap = upload_cap_bytes(max_upload_size_mb);
+        self.upload_cap.store(cap, Ordering::Relaxed);
     }
 
     pub fn high_water(&self) -> usize {

@@ -179,3 +179,25 @@ async fn files_reached_through_links_are_refused() {
     assert_eq!(world.items(&series).await[0].state, "unreadable");
     world.finish().await;
 }
+
+#[tokio::test]
+async fn files_above_the_server_upload_cap_are_rejected() {
+    let world = World::new().await;
+    world.intake.set_upload_cap(Some(1));
+    world.add(MINUTE_MS, false).await;
+    let mut big = jpeg(1);
+    big.splice(5..5, vec![0; 1024 * 1024]);
+    world.drop_file(r"D:\Lab\big.jpg", &big);
+    world.drop_file(r"D:\Lab\small.jpg", &jpeg(2));
+    world.pass(2 * SECOND_MS).await;
+    let series = world.series().await.remove(0);
+    let mut states: Vec<String> = world
+        .items(&series)
+        .await
+        .into_iter()
+        .map(|item| item.state)
+        .collect();
+    states.sort();
+    assert_eq!(states, ["ready", "rejected"]);
+    world.finish().await;
+}

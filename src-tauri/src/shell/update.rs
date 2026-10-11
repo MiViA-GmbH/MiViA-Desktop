@@ -55,10 +55,15 @@ impl UpdateEnv for ShellEnv {
         let ready = self.app.state::<Cx>().get()?;
         let authorizer = ready.authorizer.as_ref()?;
         let api = server_api(&ready.services, ready.scope.0, authorizer);
-        api.version()
+        let version = api
+            .version()
             .await
             .inspect_err(|error| tracing::warn!(?error, "update.serverVersionFailed"))
-            .ok()
+            .ok()?;
+        if let Some(intake) = &ready.intake {
+            intake.set_upload_cap(version.max_upload_size_mb);
+        }
+        Some(version)
     }
 
     async fn activity(&self) -> Activity {
