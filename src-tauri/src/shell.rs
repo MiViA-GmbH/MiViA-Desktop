@@ -217,13 +217,7 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
     shutdown.attach_store(Arc::clone(&store));
     mark("db_ready");
     #[cfg(feature = "e2e")]
-    e2e::allow_previews(&app, &launch.data_dir);
-    #[cfg(feature = "e2e")]
-    if let Some(seed) = e2e::seed_from_env()
-        && let Err(error) = e2e::seed(&store, &seed, &launch.version).await
-    {
-        tracing::error!(%error, "e2e.seedFailed");
-    }
+    e2e::prepare(&app, &store, &launch).await;
     let Some(services) = services(store, &launch) else {
         return;
     };

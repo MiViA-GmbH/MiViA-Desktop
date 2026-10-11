@@ -17,6 +17,7 @@ use mivia_store::SqliteStore;
 use secrecy::SecretString;
 use tauri::{AppHandle, Manager};
 
+use super::Launch;
 use super::setup::SessionCredentials;
 
 const SECOND_MS: i64 = 1000;
@@ -43,7 +44,7 @@ pub(crate) fn seed_from_env() -> Option<Seed> {
     })
 }
 
-pub(crate) fn allow_previews(app: &AppHandle, data_dir: &Path) {
+fn allow_previews(app: &AppHandle, data_dir: &Path) {
     let cache = data_dir.join("previews").join("v1");
     if let Err(error) = app.asset_protocol_scope().allow_directory(cache, true) {
         tracing::error!(%error, "e2e.assetScopeFailed");
@@ -108,11 +109,16 @@ async fn account(store: &SqliteStore, seed: &Seed) -> Result<AccountScope, Strin
         .map_err(|error| format!("{error:?}"))
 }
 
-pub(crate) async fn seed(
-    store: &Arc<SqliteStore>,
-    seed: &Seed,
-    version: &str,
-) -> Result<(), String> {
+pub(crate) async fn prepare(app: &AppHandle, store: &Arc<SqliteStore>, launch: &Launch) {
+    allow_previews(app, &launch.data_dir);
+    if let Some(seed) = seed_from_env()
+        && let Err(error) = seed_account(store, &seed, &launch.version).await
+    {
+        tracing::error!(%error, "e2e.seedFailed");
+    }
+}
+
+async fn seed_account(store: &Arc<SqliteStore>, seed: &Seed, version: &str) -> Result<(), String> {
     let scope = account(store, seed).await?;
     let Some(path) = &seed.folder else {
         return Ok(());
