@@ -105,6 +105,30 @@ pub fn upload_image(
         .multipart(Form::new().part("files", part))
 }
 
+pub fn job_detail(
+    client: &Client,
+    base_url: &str,
+    authorization: HeaderValue,
+    id: &str,
+) -> RequestBuilder {
+    client
+        .get(format!("{base_url}/api/v2/jobs/{id}"))
+        .header(ACCEPT, JSON)
+        .header(AUTHORIZATION, authorization)
+}
+
+pub fn result_image(
+    client: &Client,
+    base_url: &str,
+    authorization: HeaderValue,
+    image: (&str, &str),
+) -> RequestBuilder {
+    let (id, filename) = image;
+    client
+        .get(format!("{base_url}/api/jobs/results/{id}/{filename}"))
+        .header(AUTHORIZATION, authorization)
+}
+
 pub fn create_report(
     client: &Client,
     base_url: &str,

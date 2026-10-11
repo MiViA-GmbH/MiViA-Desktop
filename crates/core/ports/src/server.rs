@@ -12,6 +12,7 @@ use crate::ipc::support::ReportTrigger;
 
 pub const MAX_STATUS_IDS: usize = 100;
 pub const MAX_REPORT_BYTES: u64 = 2 * 1024 * 1024 * 1024;
+pub const MAX_RESULT_IMAGE_BYTES: u64 = 512 * 1024 * 1024;
 pub const MAX_SUBMIT_IMAGES: usize = 50;
 pub const FIND_PAGE_SIZE: u32 = 100;
 
@@ -198,6 +199,13 @@ pub trait ServerApi: Send + Sync {
     async fn download_report(
         &self,
         report_id: &str,
+        sink: Box<dyn ByteSink>,
+    ) -> Result<Download, ServerError>;
+    async fn job_results(&self, job_id: &str) -> Result<Option<String>, ServerError>;
+    async fn download_result_image(
+        &self,
+        job_id: &str,
+        filename: &str,
         sink: Box<dyn ByteSink>,
     ) -> Result<Download, ServerError>;
     async fn send_problem_report(

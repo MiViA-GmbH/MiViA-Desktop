@@ -3,12 +3,13 @@ use std::time::SystemTime;
 
 use mivia_domain::ids::ModelChoice;
 use mivia_ports::server::{
-    CatalogueModel, FindJobs, ServerApi, ServerJob, ServerJobStatus, SubmitRequest, UploadRequest,
+    CatalogueModel, Download, FindJobs, ServerApi, ServerJob, ServerJobStatus, SubmitRequest,
+    UploadRequest,
 };
 use reqwest::header::AUTHORIZATION;
 use serde_json::{Value, json};
 
-use super::{Bytes, DEADLINE, Outcome, PAIRS, POLL, Smoke, check, fresh_uuid, say};
+use super::{Bytes, Collect, DEADLINE, Outcome, PAIRS, POLL, Smoke, check, fresh_uuid, say};
 
 async fn upload(smoke: &Smoke, samples: &Path, n: usize, stem: &str) -> Outcome<String> {
     let bytes = std::fs::read(samples.join(format!("{stem}.png")))?;
@@ -140,6 +141,7 @@ async fn poll(smoke: &Smoke, mut jobs: Vec<ServerJob>) -> Outcome<Vec<ServerJob>
         serde_json::from_slice::<mivia_api::types::JobV2Detail>(&detail).is_ok(),
         "job results parse",
     )?;
+    result_image(smoke, &first.job_id).await?;
     smoke
         .get(
             "JobsV2Controller_getJobsLight",
@@ -147,4 +149,31 @@ async fn poll(smoke: &Smoke, mut jobs: Vec<ServerJob>) -> Outcome<Vec<ServerJob>
         )
         .await?;
     Ok(jobs)
+}
+
+async fn result_image(smoke: &Smoke, job_id: &str) -> Outcome<()> {
+    let results = smoke
+        .api
+        .job_results(job_id)
+        .await
+        .map_err(|e| format!("results: {e:?}"))?
+        .ok_or("no results")?;
+    let items: Vec<Value> = serde_json::from_str(&results)?;
+    check(!items.is_empty(), "job results array")?;
+    let name = items
+        .iter()
+        .find(|item| item["type"] == "image")
+        .and_then(|item| item["filename"].as_str());
+    if let Some(name) = name {
+        let download = smoke
+            .api
+            .download_result_image(job_id, name, Box::new(Collect(Vec::new())))
+            .await
+            .map_err(|e| format!("result image: {e:?}"))?;
+        check(
+            matches!(download, Download::Staged(staged) if staged.size > 0),
+            "result image download",
+        )?;
+    }
+    Ok(())
 }

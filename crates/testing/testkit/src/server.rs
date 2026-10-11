@@ -1,5 +1,6 @@
 mod reports;
 mod sim;
+mod stream;
 
 use std::collections::{BTreeMap, VecDeque};
 use std::sync::Arc;
@@ -15,11 +16,10 @@ use mivia_ports::server::{
     TelemetryAck, UploadRequest,
 };
 use parking_lot::Mutex;
+use stream::feed;
 
 pub use reports::{ReportFaults, SimDownload, SimReport};
 pub use sim::{Licence, ServerSim, SimJob, sim_id};
-
-const DOWNLOAD_CHUNK: usize = 16;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Op {
@@ -35,6 +35,8 @@ pub enum Op {
     ReportRequest,
     ReportStatus,
     ReportDownload,
+    JobResults,
+    ResultImage,
     ProblemReport,
     Telemetry,
 }
@@ -270,20 +272,35 @@ impl ServerApi for FakeServerApi {
     async fn download_report(
         &self,
         report_id: &str,
-        mut sink: Box<dyn ByteSink>,
+        sink: Box<dyn ByteSink>,
     ) -> Result<Download, ServerError> {
         let fault = self.enter(Op::ReportDownload)?;
         let download = self.sim.lock().download(report_id)?;
         let SimDownload::Bytes(bytes) = download else {
             return Self::after(fault, Download::Expired).await;
         };
-        for chunk in bytes.chunks(DOWNLOAD_CHUNK) {
-            sink.write(chunk.to_vec())
-                .await
-                .map_err(ServerError::Source)?;
-        }
-        let staged = sink.finish().await.map_err(ServerError::Source)?;
-        Self::after(fault, Download::Staged(staged)).await
+        Self::after(fault, feed(&bytes, sink).await?).await
+    }
+
+    async fn job_results(&self, job_id: &str) -> Result<Option<String>, ServerError> {
+        let fault = self.enter(Op::JobResults)?;
+        let results = self.sim.lock().results.get(job_id).cloned();
+        Self::after(fault, results).await
+    }
+
+    async fn download_result_image(
+        &self,
+        job_id: &str,
+        filename: &str,
+        sink: Box<dyn ByteSink>,
+    ) -> Result<Download, ServerError> {
+        let fault = self.enter(Op::ResultImage)?;
+        let key = (job_id.to_owned(), filename.to_owned());
+        let bytes = self.sim.lock().result_images.get(&key).cloned();
+        let Some(bytes) = bytes else {
+            return Self::after(fault, Download::Expired).await;
+        };
+        Self::after(fault, feed(&bytes, sink).await?).await
     }
 
     async fn send_problem_report(

@@ -2,6 +2,7 @@ mod diagnostics;
 mod jobs;
 mod plain;
 mod reports;
+mod results;
 mod upload;
 
 use std::collections::BTreeSet;
@@ -250,6 +251,19 @@ impl ServerApi for HttpServerApi {
         sink: Box<dyn ByteSink>,
     ) -> Result<Download, ServerError> {
         self.fetch_report(report_id, sink).await
+    }
+
+    async fn job_results(&self, job_id: &str) -> Result<Option<String>, ServerError> {
+        self.fetch_results(job_id).await
+    }
+
+    async fn download_result_image(
+        &self,
+        job_id: &str,
+        filename: &str,
+        sink: Box<dyn ByteSink>,
+    ) -> Result<Download, ServerError> {
+        self.fetch_result_image(job_id, filename, sink).await
     }
 
     async fn send_problem_report(

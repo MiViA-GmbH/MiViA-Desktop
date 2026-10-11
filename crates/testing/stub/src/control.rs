@@ -1,4 +1,5 @@
-use axum::extract::State;
+use axum::body::Bytes;
+use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
@@ -17,6 +18,8 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/__stub/down", post(down))
         .route("/__stub/finish", post(finish))
         .route("/__stub/licence", post(licence))
+        .route("/__stub/result", post(result))
+        .route("/__stub/result-image", post(result_image))
         .route("/__stub/journal", get(journal))
 }
 
@@ -81,6 +84,37 @@ async fn fault(State(stub): State<Stub>, Json(body): Json<FaultBody>) -> Respons
 struct DownBody {
     ops: Vec<String>,
     status: Option<u16>,
+}
+
+#[derive(Deserialize)]
+struct ResultBody {
+    job_id: String,
+    results: serde_json::Value,
+}
+
+async fn result(State(stub): State<Stub>, Json(body): Json<ResultBody>) -> Response {
+    let text = body.results.to_string();
+    stub.engine
+        .with_sim(|sim| sim.results.insert(body.job_id, text));
+    StatusCode::NO_CONTENT.into_response()
+}
+
+#[derive(Deserialize)]
+struct ImageQuery {
+    job_id: String,
+    name: String,
+}
+
+async fn result_image(
+    State(stub): State<Stub>,
+    Query(query): Query<ImageQuery>,
+    bytes: Bytes,
+) -> Response {
+    stub.engine.with_sim(|sim| {
+        sim.result_images
+            .insert((query.job_id, query.name), bytes.to_vec())
+    });
+    StatusCode::NO_CONTENT.into_response()
 }
 
 async fn down(State(stub): State<Stub>, Json(body): Json<DownBody>) -> Response {

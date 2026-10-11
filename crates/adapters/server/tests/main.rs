@@ -3,6 +3,7 @@ mod classification;
 mod labels;
 mod proxy;
 mod reports;
+mod results;
 mod support;
 mod tls;
 mod transport;

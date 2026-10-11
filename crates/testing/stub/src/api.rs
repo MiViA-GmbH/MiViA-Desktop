@@ -31,7 +31,6 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/api/jobs", post(submit))
         .route("/api/v2/jobs/status", get(statuses))
         .route("/api/v2/jobs", get(list))
-        .route("/api/v2/jobs/{id}", get(detail))
 }
 
 pub(crate) fn denied(stub: &Stub, headers: &HeaderMap) -> Option<Response> {
@@ -298,21 +297,6 @@ async fn list(
                 json!({ "page": page, "pageSize": 100, "total": data.len(), "totalPages": 1 });
             Json(json!({ "data": data, "pagination": pagination })).into_response()
         }
-        Err(error) => response(&error),
-    }
-}
-
-async fn detail(State(stub): State<Stub>, headers: HeaderMap, Path(id): Path<String>) -> Response {
-    if let Some(denied) = denied(&stub, &headers) {
-        return denied;
-    }
-    match stub.engine.job_exists(&id).await {
-        Ok(true) => Json(json!({ "id": id })).into_response(),
-        Ok(false) => (
-            StatusCode::NOT_FOUND,
-            Json(json!({ "statusCode": 404, "message": "Not found" })),
-        )
-            .into_response(),
         Err(error) => response(&error),
     }
 }

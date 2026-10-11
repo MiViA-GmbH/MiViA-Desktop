@@ -124,7 +124,7 @@ async fn status(State(stub): State<Stub>, headers: HeaderMap, Path(id): Path<Str
 }
 
 #[derive(Default)]
-struct Collect(Arc<Mutex<Vec<u8>>>);
+pub(crate) struct Collect(pub(crate) Arc<Mutex<Vec<u8>>>);
 
 #[async_trait]
 impl ByteSink for Collect {

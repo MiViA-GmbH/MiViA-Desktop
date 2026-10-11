@@ -91,13 +91,14 @@ fn link(dto: Link) -> Option<String> {
     }
 }
 
-async fn stream(
+pub(super) async fn stream(
     mut response: Response,
     mut sink: Box<dyn ByteSink>,
+    cap: u64,
 ) -> Result<Download, ServerError> {
     let declared = response.content_length();
-    let limit = declared.unwrap_or(MAX_REPORT_BYTES).min(MAX_REPORT_BYTES);
-    if declared.is_some_and(|len| len > MAX_REPORT_BYTES) {
+    let limit = declared.unwrap_or(cap).min(cap);
+    if declared.is_some_and(|len| len > cap) {
         return Err(ServerError::Contract);
     }
     let mut total: u64 = 0;
@@ -188,7 +189,7 @@ impl HttpServerApi {
             .await
             .map_err(|e| self.transport(&e))?;
         match response.status() {
-            status if status.is_success() => stream(response, sink).await,
+            status if status.is_success() => stream(response, sink, MAX_REPORT_BYTES).await,
             StatusCode::FORBIDDEN | StatusCode::NOT_FOUND => Ok(Download::Expired),
             status => Err(classify::status(
                 status,
@@ -199,7 +200,7 @@ impl HttpServerApi {
         }
     }
 
-    fn allowed_link(&self, url: &str) -> bool {
+    pub(super) fn allowed_link(&self, url: &str) -> bool {
         url.starts_with("https://")
             || (self.base().starts_with("http://") && url.starts_with("http://"))
     }
