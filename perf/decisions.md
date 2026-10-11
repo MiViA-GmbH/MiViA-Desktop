@@ -27,7 +27,9 @@ One entry per budget breach, waiver or scenario that is not built yet. Each entr
 
 - What changed: the two store reader connections (one thread each) used to open at startup for background reads and stay open for the whole session. Readers are now kept only after the window reported `ui_ready` and are dropped after each read otherwise, as spec 4 describes ("closed when the window is destroyed"). The floor scenario now runs with 0 folders as the budget row defines (the notify thread is gone). Together: 21 to 18 at 20 s, 13 to 10 at steady state.
 - Why the rest stays: 10 of the 18 threads are created and retired by Windows. Pool workers retire after 30 s to 2 minutes without work, the count at 20 s depends on that timer, not on the app. Our own threads are 8, inside the budget with margin.
-- Next: waiver in `quality/perf-waivers.toml` until the owner picks one of: count only threads created by the app image (by start address, as the ticket review suggested), or keep the total and measure after the pool settles (for example at 150 s). Repeat on the VM either way.
+- Decision (owner, 2026-10-11): the budget counts only threads started by the app image. A thread counts when its Win32 start address lies inside the main module of the process; Windows pool workers and the Winsock helper start in system DLLs and do not count. Statically linked crates (tokio, tao, tokio_rusqlite) start inside the exe and count. A thread whose start address cannot be read counts, so the check errs strict. This matches spec D47 (9 expected, including the instance gate accept thread). The budget stays at 12 and the waiver is removed; the run notes keep the total.
+- Measured with own-thread counting (workstation, not CPU-quiet): 8 own of 18 total at the 20 s settle. Green.
+- Next: repeat on the VM.
 
 ## idle.cpu and idle.switches
 
