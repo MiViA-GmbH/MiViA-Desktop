@@ -121,6 +121,7 @@ impl Updater for FakeUpdater {
 #[derive(Default)]
 pub struct FakeUpdateEnv {
     pub server: Mutex<ServerVersion>,
+    pub offline: Mutex<bool>,
     pub activity: Mutex<Activity>,
     pub held: Mutex<Vec<bool>>,
 }
@@ -128,7 +129,7 @@ pub struct FakeUpdateEnv {
 #[async_trait]
 impl UpdateEnv for FakeUpdateEnv {
     async fn server_version(&self) -> Option<ServerVersion> {
-        Some(self.server.lock().clone())
+        (!*self.offline.lock()).then(|| self.server.lock().clone())
     }
 
     async fn activity(&self) -> Activity {

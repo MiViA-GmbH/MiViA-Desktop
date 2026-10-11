@@ -2,17 +2,16 @@ use std::sync::Arc;
 
 use mivia_domain::ids::Timestamp;
 use mivia_domain::update::{
-    FIRST_CHECK_MS, MANUAL_GAP_MS, Offer, Rules, after_check, next_check, satisfies, too_old, vet,
+    FIRST_CHECK_MS, MANUAL_GAP_MS, Offer, Rules, after_check, next_check, vet,
 };
 use mivia_ports::clock::Clock;
 use mivia_ports::id_gen::IdGen;
 use mivia_ports::ipc::update::{
     RequiredUpdate, UpdatePolicy, UpdateSettingsInput, UpdateState, UpdateView,
 };
+use mivia_ports::server::ServerVersion;
 use mivia_ports::store::{Store, StoreError};
-use mivia_ports::telemetry::{
-    CheckState, MinVersionState, TelemetrySink, UpdateDownloaded, UpdateMinVersion,
-};
+use mivia_ports::telemetry::{CheckState, TelemetrySink, UpdateDownloaded};
 use mivia_ports::time::iso_utc;
 use mivia_ports::update::{UpdateEnv, UpdateError, Updater};
 use parking_lot::Mutex;
@@ -22,6 +21,7 @@ use crate::settings::update_global;
 
 mod install;
 mod report;
+mod server;
 mod settings;
 
 pub use report::telemetry_version;
@@ -56,6 +56,7 @@ struct Inner {
     offer: Option<Offer>,
     ready: Option<String>,
     required: Option<RequiredUpdate>,
+    server: Option<ServerVersion>,
     next_check: Timestamp,
     last_manual: Option<Timestamp>,
 }
@@ -88,6 +89,7 @@ impl Updates {
                 offer: None,
                 ready: None,
                 required: None,
+                server: None,
                 last_manual: None,
             }),
             ports,
@@ -124,9 +126,8 @@ impl Updates {
         }
     }
 
-    pub fn next_check_at(&self) -> Option<Timestamp> {
-        self.automatic_checks()
-            .then(|| self.inner.lock().next_check)
+    pub fn next_check_at(&self) -> Timestamp {
+        self.inner.lock().next_check
     }
 
     pub fn view(&self) -> UpdateView {
@@ -178,6 +179,9 @@ impl Updates {
                 return Ok(self.view());
             }
         } else if !self.automatic_checks() {
+            self.connected().await;
+            let random = self.ports.ids.uuid().as_u64_pair().1;
+            self.inner.lock().next_check = after_check(now, random);
             return Ok(self.view());
         }
         let work = self.work.lock().await;
@@ -189,9 +193,11 @@ impl Updates {
 
     async fn run_check(&self, trigger: Trigger, now: Timestamp) -> Result<(), StoreError> {
         let previous = std::mem::replace(&mut self.inner.lock().state, UpdateState::Checking);
-        let server = self.ports.env.server_version().await.unwrap_or_default();
-        let min = server.min_desktop_version;
-        let blocked = server.blocked_versions;
+        let server = self.read_server().await;
+        let blocked = server
+            .as_ref()
+            .map(|server| server.blocked_versions.clone())
+            .unwrap_or_default();
         let channel = self.inner.lock().settings.channel.into();
         let rules = Rules {
             channel,
@@ -200,12 +206,10 @@ impl Updates {
         };
         let (check_state, offer) = self.fetch(&rules).await;
         self.record_check(check_state, offer.as_ref(), trigger);
-        let old = too_old(&self.config.current, min.as_deref(), &blocked);
-        let signed = offer
-            .as_ref()
-            .is_some_and(|offer| satisfies(&offer.version, min.as_deref()));
-        self.required(old.then_some(RequiredUpdate { min, signed }))
-            .await;
+        let old = match &server {
+            Some(server) => self.apply_server(server, offer.as_ref()).await,
+            None => self.inner.lock().required.is_some(),
+        };
         let settled = (check_state == CheckState::Error).then_some(if offer.is_some() {
             previous
         } else {
@@ -271,27 +275,6 @@ impl Updates {
             inner.offer = offer;
         }
         Ok(())
-    }
-
-    async fn required(&self, required: Option<RequiredUpdate>) {
-        let held = required.as_ref().is_some_and(|required| required.signed);
-        if let Some(RequiredUpdate { min, signed }) = &required {
-            let state = if *signed {
-                MinVersionState::Blocked
-            } else {
-                MinVersionState::Warned
-            };
-            tracing::warn!(min = ?min, signed, "update.required");
-            self.ports.telemetry.record(
-                UpdateMinVersion {
-                    min: min.as_deref().and_then(telemetry_version),
-                    state: Some(state),
-                }
-                .into(),
-            );
-        }
-        self.inner.lock().required = required;
-        self.ports.env.hold_too_old(held).await;
     }
 
     async fn download(&self, offer: &Offer) {

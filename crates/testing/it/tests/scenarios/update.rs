@@ -141,16 +141,16 @@ impl Bench {
 async fn checks_wait_a_minute_after_start_then_follow_the_jittered_interval() {
     let bench = Bench::new().await;
     let updates = bench.start("2.0.0", None).await;
-    assert_eq!(updates.next_check_at(), Some(START.plus_ms(60 * SECOND_MS)));
+    assert_eq!(updates.next_check_at(), START.plus_ms(60 * SECOND_MS));
     bench.pass(60 * SECOND_MS);
     updates.check(Trigger::Schedule).await.unwrap();
-    let next = updates.next_check_at().unwrap().ms_since(bench.clock.now());
+    let next = updates.next_check_at().ms_since(bench.clock.now());
     assert!((5 * HOUR_MS + 30 * MINUTE_MS..=6 * HOUR_MS + 30 * MINUTE_MS).contains(&next));
     assert_eq!(updates.view().state, UpdateState::UpToDate);
     drop(updates);
     bench.pass(10 * MINUTE_MS);
     let restarted = bench.start("2.0.0", None).await;
-    let first = restarted.next_check_at().unwrap();
+    let first = restarted.next_check_at();
     assert_eq!(first, START.plus_ms(60 * SECOND_MS + HOUR_MS));
 }
 
@@ -172,7 +172,6 @@ async fn the_policy_decides_checks_downloads_and_idle_installs() {
     let off = Bench::new().await;
     off.updater.offer("2.1.0", &url("2.1.0"));
     let updates = off.start("2.0.0", Some(AutoUpdate::Off)).await;
-    assert_eq!(updates.next_check_at(), None);
     updates.check(Trigger::Schedule).await.unwrap();
     assert_eq!(off.updater.checks.lock().len(), 0);
     updates.check(Trigger::Manual).await.unwrap();
@@ -367,5 +366,74 @@ async fn a_blocked_running_version_is_too_old_and_a_current_one_lifts_the_hold()
     bench.updater.offer.lock().take();
     fresh.check(Trigger::Start).await.unwrap();
     assert_eq!(fresh.view().required, None);
+    assert_eq!(bench.env.held.lock().last(), Some(&false));
+}
+
+#[tokio::test]
+async fn with_updates_off_the_server_version_is_still_read_on_schedule_and_holds() {
+    let bench = Bench::new().await;
+    *bench.env.server.lock() = ServerVersion {
+        min_desktop_version: Some("2.1.0".to_owned()),
+        ..ServerVersion::default()
+    };
+    let updates = bench.start("2.0.0", Some(AutoUpdate::Off)).await;
+    bench.pass(60 * SECOND_MS);
+    updates.check(Trigger::Start).await.unwrap();
+    assert_eq!(bench.updater.checks.lock().len(), 0);
+    assert!(!updates.view().required.unwrap().signed);
+    assert_eq!(bench.env.held.lock().clone(), [false]);
+    let next = updates.next_check_at().ms_since(bench.clock.now());
+    assert!((5 * HOUR_MS + 30 * MINUTE_MS..=6 * HOUR_MS + 30 * MINUTE_MS).contains(&next));
+
+    bench.updater.offer("2.1.0", &url("2.1.0"));
+    updates.check(Trigger::Manual).await.unwrap();
+    assert!(updates.view().required.unwrap().signed);
+    bench.pass(next);
+    updates.check(Trigger::Schedule).await.unwrap();
+    assert_eq!(bench.updater.checks.lock().len(), 1);
+    assert_eq!(bench.env.held.lock().last(), Some(&true));
+}
+
+#[tokio::test]
+async fn a_failed_server_read_keeps_the_hold() {
+    let bench = Bench::new().await;
+    *bench.env.server.lock() = ServerVersion {
+        blocked_versions: vec!["2.0.1".to_owned()],
+        ..ServerVersion::default()
+    };
+    bench.updater.offer("2.0.2", &url("2.0.2"));
+    let updates = bench.start("2.0.1", None).await;
+    updates.check(Trigger::Start).await.unwrap();
+    assert_eq!(bench.env.held.lock().last(), Some(&true));
+    *bench.env.offline.lock() = true;
+    bench.pass(7 * HOUR_MS);
+    updates.check(Trigger::Schedule).await.unwrap();
+    updates.connected().await;
+    assert!(updates.view().required.unwrap().signed);
+    assert_eq!(bench.env.held.lock().last(), Some(&true));
+
+    let restarted = bench.start("2.0.1", Some(AutoUpdate::Off)).await;
+    let before = bench.env.held.lock().len();
+    restarted.connected().await;
+    restarted.check(Trigger::Schedule).await.unwrap();
+    assert_eq!(bench.env.held.lock().len(), before);
+}
+
+#[tokio::test]
+async fn connecting_reads_the_server_version() {
+    let bench = Bench::new().await;
+    *bench.env.server.lock() = ServerVersion {
+        min_desktop_version: Some("2.1.0".to_owned()),
+        ..ServerVersion::default()
+    };
+    let updates = bench.start("2.0.0", Some(AutoUpdate::Off)).await;
+    updates.connected().await;
+    assert!(updates.view().required.is_some());
+    assert_eq!(bench.env.held.lock().clone(), [false]);
+    assert_eq!(bench.updater.checks.lock().len(), 0);
+
+    *bench.env.server.lock() = ServerVersion::default();
+    updates.connected().await;
+    assert_eq!(updates.view().required, None);
     assert_eq!(bench.env.held.lock().last(), Some(&false));
 }

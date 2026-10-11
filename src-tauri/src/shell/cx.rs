@@ -137,9 +137,13 @@ impl Cx {
     }
 
     pub(crate) fn set(&self, ready: Ready) {
+        let connected = ready.authorizer.is_some();
         let previous = self.ready.write().replace(Arc::new(ready));
         drop(previous);
         self.set.notify_waiters();
+        if connected && let Some(updates) = self.updates.get().cloned() {
+            tauri::async_runtime::spawn(async move { updates.connected().await });
+        }
     }
 
     pub(crate) async fn ready(&self) -> Arc<Ready> {

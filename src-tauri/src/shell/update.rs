@@ -167,8 +167,8 @@ pub(super) async fn start(app: &AppHandle, services: &Arc<Services>, shutdown: A
 
 async fn schedule(updates: Arc<Updates>) {
     let mut trigger = Trigger::Start;
-    while let Some(at) = updates.next_check_at() {
-        SystemClock.sleep_until(at).await;
+    loop {
+        SystemClock.sleep_until(updates.next_check_at()).await;
         if let Err(error) = updates.check(trigger).await {
             tracing::warn!(?error, "update.checkFailed");
         }
