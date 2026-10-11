@@ -10,12 +10,14 @@
 		"check:full": "node scripts/check.mjs full",
 		"fix": "node scripts/check.mjs fix",
 		"floors:lower": "cargo xtask floors-lower",
+		"icons:tray": "node scripts/tray-icons.mjs",
 		"gen:telemetry-fields": "cargo xtask telemetry-fields",
 		"tauri": "tauri",
 		"why": "cargo xtask why"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.15",
+		"@resvg/resvg-js": "2.6.2",
 		"@tauri-apps/cli": "2.12.1",
 		"jscpd": "5.4.0",
 		"lefthook": "2.1.16"
