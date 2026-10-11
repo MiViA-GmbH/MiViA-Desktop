@@ -1,4 +1,5 @@
 mod io;
+mod preview;
 mod window;
 
 use std::time::{Duration, Instant};
@@ -44,9 +45,7 @@ pub(super) fn run(options: &Options, budgets: &Budgets, scenario: &str) -> Resul
                 "the upload scenarios need the large-file stub, not built yet",
             ));
         }
-        "preview" => {
-            return Ok(pending(scenario, "the preview pipeline arrives with M19"));
-        }
+        "preview" => preview::run(options, budgets, &mut run)?,
         other => bail!("unknown scenario {other}"),
     }
     Ok(run)

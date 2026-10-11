@@ -98,10 +98,18 @@ Each row below has no measurement. They stay report-only (`tbc`) or pending unti
 | hist.page_cold | needs a cold page cache for the DB file | VM run with a standby purge |
 | hist.ipc | needs an IPC round-trip probe through the webview | with the IPC counters |
 | io.catchup | needs the catch-up scenario (files added while the app is closed) | with the multi-folder seeding |
-| prev.* | the preview pipeline arrives with M19; `preview_decoded` marker waits for it | M19 |
+| prev.gpu | the preview row "shared GPU memory of the tree" needs GPU counters on an iGPU laptop | release checklist |
 | gpu.mem, frame.60hz | release tier, manual on the reference laptop | release checklist |
 | bench.instr | gungraun runs on Linux under valgrind; not run on this Windows machine | the `perf-instr` CI job |
 | size.installer, size.install | no local NSIS bundle (no Tauri CLI in the proto toolchain); the nightly workflow's `pnpm tauri build` step has no matching script either | nightly or release build job |
+
+## prev.render, prev.cached, prev.mem, prev.soak
+
+- Measured (workstation, `cargo xtask perf preview`, 60 distinct 8192 x 8192 PNGs, 20 of them also reopened): prev.render p90 595 ms (budget 1500), prev.cached p90 160 ms (budget 500), prev.mem max 6.4 MB (budget 250), prev.soak.plateau 130.6 MB (budget 700). Green.
+- prev.soak.slope 1.70 MB per open against a budget of 1 (report-only): the last 30 of 60 opens still climb. The private bytes of the tree keep growing while Chromium fills its decoded image cache; the plateau budget has a wide margin at 60 opens.
+- How it is measured: a Node helper (`ui/scripts/perf-preview.mjs`) connects to the running app over CDP, clicks the eye icon of an image row and waits for a decoded `asset.localhost` image; the clock is the click to that moment, so it includes the CDP round trip. Memory is the private bytes of the app process tree (`xtask` samples it on request of the helper, before and after each measured open and after every open for the soak).
+- Limits: the generated pictures are smooth gradients, so the PNG files are small and the PNG decode is cheaper than for noisy microscope images. The Criterion bench of the renderer alone (release, same machine) gives 848 ms uncached and 35 ms cached for an 8192 x 8192 PNG; the reference laptop is expected to be 3 to 6 times slower, so prev.render is likely red there.
+- Next: repeat on the VM and on a 4-core / 8 GB iGPU laptop with a noisy 8k image; if the slope stays above 1 MB per open there, try `createImageBitmap` with `close()` on unmount before raising the budget.
 
 ## SetDefaultDllDirectories
 

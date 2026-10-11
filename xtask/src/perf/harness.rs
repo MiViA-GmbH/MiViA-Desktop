@@ -74,6 +74,10 @@ impl Session {
         command
     }
 
+    pub(super) fn watched(&self) -> &Path {
+        &self.watched
+    }
+
     pub(super) fn data(&self) -> PathBuf {
         self.profile.join("ai.mivia.desktop")
     }
@@ -174,7 +178,12 @@ fn markers(log: &Path, name: &str) -> Vec<f64> {
         .filter(|line| line.contains("\"target\":\"perf\""))
         .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
         .filter(|event| event.get("message").and_then(|m| m.as_str()) == Some(name))
-        .filter_map(|event| event.get("ms_since_process_create")?.as_f64())
+        .map(|event| {
+            event
+                .get("ms_since_process_create")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or_default()
+        })
         .collect()
 }
 
