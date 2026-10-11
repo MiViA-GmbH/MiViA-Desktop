@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use criterion::{Criterion, criterion_group, criterion_main};
 use image::{Rgb, RgbImage};
 use mivia_preview::decode::{decode, encode, header, resize};
+use mivia_preview::render_file;
 
 fn picture(width: u32, height: u32) -> RgbImage {
     RgbImage::from_fn(width, height, |x, y| {
@@ -68,5 +69,26 @@ fn stages(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, stages);
+fn whole(criterion: &mut Criterion) {
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("eight_k.png");
+    picture(8192, 8192).save(&input).unwrap();
+    let mut group = criterion.benchmark_group("prev");
+    group.sample_size(10);
+    group.bench_function("render_8k_png_uncached", |b| {
+        b.iter_batched(
+            || tempfile::tempdir().unwrap(),
+            |root| render_file(black_box(root.path()), &input).unwrap(),
+            criterion::BatchSize::PerIteration,
+        );
+    });
+    let root = dir.path().join("kept");
+    render_file(&root, &input).unwrap();
+    group.bench_function("render_8k_png_cached", |b| {
+        b.iter(|| render_file(black_box(&root), &input).unwrap());
+    });
+    group.finish();
+}
+
+criterion_group!(benches, stages, whole);
 criterion_main!(benches);
