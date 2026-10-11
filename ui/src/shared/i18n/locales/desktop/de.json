@@ -65,7 +65,7 @@
 			},
 			"adminScope": {
 				"title": "Dieser Schlüssel hat Administratorrechte.",
-				"text": "Verwenden Sie einen Zugangsschlüssel eines normalen Kontos."
+				"text": "Erstellen Sie in MiViA einen Schlüssel ohne Administratorrechte und verwenden Sie diesen."
 			},
 			"license": {
 				"title": "Ihre MiViA-Lizenz ist nicht gültig.",

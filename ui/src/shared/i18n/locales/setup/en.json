@@ -56,7 +56,7 @@
 				"malformed": "This does not look like an access key. Copy the whole key again.",
 				"rejected": "This access key was not accepted. Check that you copied the whole key, or ask for a new one.",
 				"blocked": "Your MiViA account is blocked. Contact MiViA support.",
-				"adminScope": "This key has administrator rights. Use an access key of a normal account.",
+				"adminScope": "This key has administrator rights. Create a key without administrator rights in MiViA and use that one.",
 				"offline": "MiViA cannot be reached. Check the internet connection. If it works in the browser, ask your IT to allow {{host}}.",
 				"autoRetry": "MiViA tries again every 30 seconds. You can also close MiViA Desktop and continue later.",
 				"copyForIt": "Copy details for IT",

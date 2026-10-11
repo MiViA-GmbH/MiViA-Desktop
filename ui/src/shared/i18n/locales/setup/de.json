@@ -56,7 +56,7 @@
 				"malformed": "Das sieht nicht wie ein Zugangsschlüssel aus. Kopieren Sie den ganzen Schlüssel erneut.",
 				"rejected": "Dieser Zugangsschlüssel wurde nicht akzeptiert. Prüfen Sie, ob Sie den ganzen Schlüssel kopiert haben, oder fragen Sie nach einem neuen.",
 				"blocked": "Ihr MiViA-Konto ist gesperrt. Wenden Sie sich an den MiViA-Support.",
-				"adminScope": "Dieser Schlüssel hat Administratorrechte. Verwenden Sie einen Zugangsschlüssel eines normalen Kontos.",
+				"adminScope": "Dieser Schlüssel hat Administratorrechte. Erstellen Sie in MiViA einen Schlüssel ohne Administratorrechte und verwenden Sie diesen.",
 				"offline": "MiViA ist nicht erreichbar. Prüfen Sie die Internetverbindung. Funktioniert sie im Browser, bitten Sie Ihre IT, {{host}} freizugeben.",
 				"autoRetry": "MiViA versucht es alle 30 Sekunden erneut. Sie können MiViA Desktop auch schließen und später weitermachen.",
 				"copyForIt": "Details für die IT kopieren",

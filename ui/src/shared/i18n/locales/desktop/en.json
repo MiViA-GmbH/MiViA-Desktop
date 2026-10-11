@@ -65,7 +65,7 @@
 			},
 			"adminScope": {
 				"title": "This key has administrator rights.",
-				"text": "Use an access key of a normal account."
+				"text": "Create a key without administrator rights in MiViA and use that one."
 			},
 			"license": {
 				"title": "Your MiViA license is not valid.",
