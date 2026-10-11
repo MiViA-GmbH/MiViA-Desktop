@@ -99,8 +99,9 @@ async fn parts(multipart: &mut Multipart) -> Option<(BTreeMap<String, String>, O
     let mut bundle = None;
     while let Ok(Some(field)) = multipart.next_field().await {
         let name = field.name().unwrap_or_default().to_owned();
+        let zip = field.content_type() == Some("application/zip");
         let bytes = field.bytes().await.ok()?;
-        if name == "bundle" {
+        if name == "bundle" && zip {
             bundle = Some(bytes.to_vec());
         } else {
             fields.insert(name, String::from_utf8_lossy(&bytes).into_owned());

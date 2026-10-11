@@ -1,5 +1,5 @@
 use reqwest::header::{
-    ACCEPT, ACCEPT_LANGUAGE, AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE, HeaderValue,
+    ACCEPT, ACCEPT_LANGUAGE, AUTHORIZATION, CONTENT_ENCODING, CONTENT_TYPE, HeaderMap, HeaderValue,
     IF_NONE_MATCH,
 };
 use reqwest::multipart::{Form, Part};
@@ -133,7 +133,10 @@ pub fn issue_report(
     authorization: HeaderValue,
     report: IssueReport,
 ) -> RequestBuilder {
-    let part = Part::bytes(report.bundle).file_name(report.file_name);
+    let zip = HeaderMap::from_iter([(CONTENT_TYPE, HeaderValue::from_static("application/zip"))]);
+    let part = Part::bytes(report.bundle)
+        .file_name(report.file_name)
+        .headers(zip);
     let form = report
         .fields
         .into_iter()
