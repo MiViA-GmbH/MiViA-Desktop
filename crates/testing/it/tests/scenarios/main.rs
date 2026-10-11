@@ -5,6 +5,7 @@ mod line;
 mod network;
 mod one_off;
 mod outages;
+mod preview;
 mod recovery;
 mod reports;
 mod setup;

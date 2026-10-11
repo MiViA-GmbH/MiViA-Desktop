@@ -50,3 +50,17 @@ fn no_updater_permission_reaches_the_webview() {
         !text.starts_with("updater") && !text.contains("update:")
     }));
 }
+
+#[test]
+fn the_asset_protocol_serves_only_the_preview_cache() {
+    let config = json("tauri.conf.json");
+    let asset = &config["app"]["security"]["assetProtocol"];
+    assert_eq!(asset["enable"], Value::Bool(true));
+    assert_eq!(
+        asset["scope"],
+        serde_json::json!(["$APPLOCALDATA/previews/v1/**"])
+    );
+    let csp = config["app"]["security"]["csp"].as_str().unwrap();
+    assert!(csp.contains("img-src 'self' asset: http://asset.localhost data: blob:;"));
+    assert!(!csp.contains("img-src *"));
+}

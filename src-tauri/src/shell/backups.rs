@@ -79,11 +79,16 @@ async fn daily(ready: &Ready) {
 
 pub(crate) async fn run(app: AppHandle) {
     tokio::time::sleep(FIRST_CHECK).await;
+    let mut cleaned = false;
     loop {
         let cx = app.state::<Cx>();
         if cx.completed() {
             let ready = cx.ready().await;
             daily(ready.as_ref()).await;
+            if !cleaned {
+                ready.services.renderer.maintain().await;
+                cleaned = true;
+            }
         }
         tokio::time::sleep(CHECK_EVERY).await;
     }

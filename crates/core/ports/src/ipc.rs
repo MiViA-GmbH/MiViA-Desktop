@@ -4,6 +4,7 @@ pub mod folders;
 pub mod history;
 pub mod network;
 pub mod one_off;
+pub mod preview;
 pub mod privacy;
 pub mod screens;
 pub mod setup;

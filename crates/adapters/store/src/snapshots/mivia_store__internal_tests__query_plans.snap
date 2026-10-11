@@ -165,6 +165,10 @@ list uploading files:
   SEARCH source_file USING COVERING INDEX source_file_due (account_id=? AND state=?)
 list queued choices:
   SEARCH computation USING INDEX computation_claim (state=?)
+get preview source path:
+  SEARCH source_file USING INTEGER PRIMARY KEY (rowid=?)
+get preview job:
+  SEARCH computation USING INTEGER PRIMARY KEY (rowid=?)
 list waiting reports:
   SEARCH r USING INDEX report_waiting (account_id=?)
   SEARCH b USING INTEGER PRIMARY KEY (rowid=?)

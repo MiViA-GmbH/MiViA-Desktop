@@ -6,6 +6,7 @@
 pub(crate) mod actions;
 pub(crate) mod history;
 pub(crate) mod network;
+pub(crate) mod preview;
 pub(crate) mod privacy;
 pub(crate) mod queries;
 pub(crate) mod setup;

@@ -10,11 +10,7 @@ use super::reports::stream;
 use super::{HttpServerApi, status_failure};
 use crate::classify::Call;
 
-fn safe_name(name: &str) -> bool {
-    let plain = |byte: u8| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b'_');
-    let sized = !name.is_empty() && name.len() <= 200;
-    sized && !name.starts_with('.') && name.bytes().all(plain)
-}
+use mivia_ports::server::plain_result_name as safe_name;
 
 fn results_of(body: &[u8]) -> Result<Option<String>, ServerError> {
     let detail: Value = serde_json::from_slice(body).map_err(|_| ServerError::Contract)?;

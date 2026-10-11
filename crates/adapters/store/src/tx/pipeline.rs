@@ -10,7 +10,9 @@ use rusqlite::params;
 
 use super::claims::{poll_row, raw_upload, serde_like_list, submit_row, upload_row};
 use super::{SqlTx, id_list};
+use crate::codec::parse_path;
 use crate::sql::{CLAIM_LIMIT, pipeline as sql};
+use mivia_domain::path::WinPath;
 
 impl PipelineRepo for SqlTx<'_> {
     fn upload_due(
@@ -212,6 +214,16 @@ impl PipelineRepo for SqlTx<'_> {
     fn job_known(&mut self, job_id: &str) -> Result<bool, TxError> {
         let found: Vec<i64> = self.column(sql::JOB_KNOWN, [job_id])?;
         Ok(!found.is_empty())
+    }
+
+    fn preview_source(&mut self, id: SourceFileId) -> Result<Option<WinPath>, TxError> {
+        let found: Vec<String> = self.column(sql::PREVIEW_SOURCE, params![id.0, self.account()])?;
+        found.first().map(|path| parse_path(path)).transpose()
+    }
+
+    fn preview_job(&mut self, id: ComputationId) -> Result<Option<String>, TxError> {
+        let found: Vec<String> = self.column(sql::PREVIEW_JOB, params![id.0, self.account()])?;
+        Ok(found.into_iter().next())
     }
 
     fn poll_due(

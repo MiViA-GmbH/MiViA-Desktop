@@ -176,6 +176,7 @@ pub(super) async fn start(
         telemetry: Arc::clone(&services.telemetry.sink) as _,
         network: Arc::clone(&services.network),
         staging: staging(&services.data_dir)?,
+        renderer: Arc::clone(&services.renderer),
     };
     let pipeline = Arc::new(Pipeline::new(ports, scope, UPLOAD_PERMITS));
     if let Err(error) = pipeline.start().await {

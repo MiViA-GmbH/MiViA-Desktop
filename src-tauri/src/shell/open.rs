@@ -8,6 +8,7 @@ use mivia_ports::ipc::screens::OpenTarget;
 use mivia_ports::ipc::support::KnownLink;
 
 use super::cx::{Ready, parse_id};
+use super::preview;
 
 const SITE: &str = "open_target";
 const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-API/releases";
@@ -42,6 +43,9 @@ pub(crate) async fn target(ready: &Ready, target: OpenTarget) -> Result<(), AppE
     let part_id = match &target {
         OpenTarget::Report { part_id } | OpenTarget::RevealReport { part_id } => part_id,
         OpenTarget::Link { link: known } => return link(ready, *known).await,
+        OpenTarget::Original { .. } | OpenTarget::ResultImage { .. } => {
+            return preview::open_target(ready, &target).await;
+        }
     };
     let part = ReportPartId(parse_id(part_id, SITE)?);
     let check = ready

@@ -5,6 +5,7 @@ pub mod fs;
 pub mod id_gen;
 pub mod network;
 pub mod observer;
+pub mod preview;
 pub mod server;
 pub mod telemetry;
 pub mod tls;

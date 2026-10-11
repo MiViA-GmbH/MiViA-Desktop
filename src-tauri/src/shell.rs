@@ -16,6 +16,7 @@ pub(crate) mod network;
 pub(crate) mod one_off;
 pub(crate) mod open;
 mod pipeline;
+pub(crate) mod preview;
 pub(crate) mod privacy;
 pub(crate) mod series_actions;
 pub(crate) mod setup;

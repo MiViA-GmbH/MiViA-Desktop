@@ -4,6 +4,7 @@ mod fair;
 mod holds;
 mod outcome;
 mod poll;
+mod preview;
 mod probe;
 mod recovery;
 mod report;
@@ -24,6 +25,7 @@ use mivia_ports::auth::Authorizer;
 use mivia_ports::clock::Clock;
 use mivia_ports::fs::FileSystem;
 use mivia_ports::id_gen::IdGen;
+use mivia_ports::preview::PreviewRenderer;
 use mivia_ports::server::ServerApi;
 use mivia_ports::store::pipeline::Clamp;
 use mivia_ports::store::{AccountScope, Store, StoreError, StoreExt, TxError, WriteTx};
@@ -34,6 +36,7 @@ use tokio::sync::Notify;
 use crate::network::Network;
 
 pub use crate::worker::{Tick, run};
+pub use preview::{Original, PreviewSubject};
 pub use report_save::SavedCheck;
 
 const MAX_POLL_GAP_MS: i64 = 5 * MINUTE_MS;
@@ -61,6 +64,7 @@ pub struct PipelinePorts {
     pub telemetry: Arc<dyn TelemetrySink>,
     pub network: Arc<Network>,
     pub staging: WinPath,
+    pub renderer: Arc<dyn PreviewRenderer>,
 }
 
 #[derive(Default)]

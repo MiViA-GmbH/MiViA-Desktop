@@ -16,6 +16,7 @@ use mivia_ports::auth::{CredentialStore, ServerOrigin};
 use mivia_ports::clock::Clock;
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
 use mivia_ports::ipc::support::PolicyRow;
+use mivia_ports::preview::PreviewRenderer;
 use mivia_ports::store::AccountScope;
 use mivia_server::{ConnectionAuthorizer, HttpClients};
 use mivia_store::SqliteStore;
@@ -27,6 +28,7 @@ use super::setup::Session;
 use super::telemetry::Telemetry;
 
 pub(crate) struct Services {
+    pub(crate) renderer: Arc<dyn PreviewRenderer>,
     pub(crate) store: Arc<SqliteStore>,
     pub(crate) credentials: Arc<dyn CredentialStore>,
     pub(crate) clients: Arc<ArcSwap<HttpClients>>,

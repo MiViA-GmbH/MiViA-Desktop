@@ -215,3 +215,43 @@ async fn claims_follow_state_and_skip_in_flight_ids() {
     .await;
     assert_eq!(claims, (true, true, true, true, true, true));
 }
+
+#[tokio::test]
+async fn preview_reads_stay_inside_the_account() {
+    let fx = fixture(StoreConfig::for_tests()).await;
+    let found = seed(&fx.store, |tx| {
+        let (mine, other) = (account(tx, "a"), account(tx, "b"));
+        let batch = tx.batches(mine).open(&new_batch("S")).unwrap();
+        let file = tx
+            .source_files(mine)
+            .add(&new_file(batch, "a.tif"))
+            .unwrap();
+        let computation = tx
+            .computations(mine)
+            .add(&NewComputation {
+                batch_id: batch,
+                source_file_id: file,
+                model_choice_key: "grain:".to_owned(),
+                model_version: None,
+                app_version: "2.0.0".to_owned(),
+                next_attempt_at: Timestamp(1_000),
+                reused_from: None,
+            })
+            .unwrap();
+        let mut read = |scope| {
+            (
+                tx.pipeline(scope).preview_source(file).unwrap(),
+                tx.pipeline(scope).preview_job(computation).unwrap(),
+            )
+        };
+        (read(mine), read(other))
+    })
+    .await;
+    assert_eq!(
+        found,
+        (
+            (Some(WinPath::parse(r"D:\Lab\a.tif").unwrap()), None),
+            (None, None)
+        )
+    );
+}

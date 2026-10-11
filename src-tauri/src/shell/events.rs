@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::{Builder, Commands, ErrorHandlingMode, Event, collect_commands, collect_events};
 
-use crate::commands::{actions, history, network, privacy, queries, setup, support, update};
+use crate::commands::{
+    actions, history, network, preview, privacy, queries, setup, support, update,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct StoreChangedEvent(pub(crate) StoreChanged);
@@ -107,6 +109,9 @@ macro_rules! app_commands {
             update::check_for_updates,
             update::install_update,
             update::set_update_settings,
+            preview::get_preview,
+            preview::get_preview_results,
+            preview::close_preview,
         ]
     };
 }

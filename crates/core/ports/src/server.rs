@@ -13,6 +13,12 @@ use crate::ipc::support::ReportTrigger;
 pub const MAX_STATUS_IDS: usize = 100;
 pub const MAX_REPORT_BYTES: u64 = 2 * 1024 * 1024 * 1024;
 pub const MAX_RESULT_IMAGE_BYTES: u64 = 512 * 1024 * 1024;
+
+pub fn plain_result_name(name: &str) -> bool {
+    let plain = |byte: u8| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b'_');
+    let sized = !name.is_empty() && name.len() <= 200;
+    sized && !name.starts_with('.') && name.bytes().all(plain)
+}
 pub const MAX_SUBMIT_IMAGES: usize = 50;
 pub const FIND_PAGE_SIZE: u32 = 100;
 

@@ -201,7 +201,20 @@ pub struct AccountView {
     rename_all_fields = "camelCase"
 )]
 pub enum OpenTarget {
-    Report { part_id: String },
-    RevealReport { part_id: String },
-    Link { link: super::support::KnownLink },
+    Report {
+        part_id: String,
+    },
+    RevealReport {
+        part_id: String,
+    },
+    Link {
+        link: super::support::KnownLink,
+    },
+    Original {
+        source_file_id: String,
+    },
+    ResultImage {
+        computation_id: String,
+        filename: String,
+    },
 }

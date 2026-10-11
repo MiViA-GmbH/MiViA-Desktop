@@ -16,6 +16,7 @@ use super::one_off;
 
 pub(crate) const LABEL: &str = "main";
 const HIDDEN_CHECKS: u32 = 10;
+const HIDDEN_CHECKS_AFTER_PREVIEW: u32 = 2;
 const HIDDEN_CHECK_EVERY: Duration = Duration::from_secs(60);
 const STONE_1: Color = Color(0xf0, 0xf0, 0xf0, 0xff);
 const NO_PEER_CONNECTIONS: &str = "delete window.RTCPeerConnection;\
@@ -27,6 +28,11 @@ const WRY_DEFAULT_ARGS: &str = "--disable-features=msWebOOUI,msPdfOOUI,msSmartSc
 static GENERATION: AtomicU64 = AtomicU64::new(0);
 static REPORT_PENDING: AtomicBool = AtomicBool::new(false);
 static PAINTED: AtomicBool = AtomicBool::new(false);
+static PREVIEW_SHOWN: AtomicBool = AtomicBool::new(false);
+
+pub(crate) fn preview_shown() {
+    PREVIEW_SHOWN.store(true, Ordering::SeqCst);
+}
 
 fn app_origin(url: &Url) -> bool {
     let local = matches!(url.host_str(), Some("tauri.localhost"));
@@ -199,12 +205,17 @@ fn hide(app: &AppHandle) {
     }
     set_visible(&window, false);
     let generation = GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
-    tauri::async_runtime::spawn(destroy_later(app.clone(), generation));
+    let checks = if PREVIEW_SHOWN.swap(false, Ordering::SeqCst) {
+        HIDDEN_CHECKS_AFTER_PREVIEW
+    } else {
+        HIDDEN_CHECKS
+    };
+    tauri::async_runtime::spawn(destroy_later(app.clone(), generation, checks));
 }
 
-async fn destroy_later(app: AppHandle, generation: u64) {
+async fn destroy_later(app: AppHandle, generation: u64, checks: u32) {
     let current = || GENERATION.load(Ordering::SeqCst) == generation;
-    for _ in 0..HIDDEN_CHECKS {
+    for _ in 0..checks {
         tokio::time::sleep(HIDDEN_CHECK_EVERY).await;
         if !current() {
             return;

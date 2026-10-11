@@ -117,6 +117,9 @@ export const commands = {
 	checkForUpdates: () => __TAURI_INVOKE<UpdateView>("check_for_updates"),
 	installUpdate: () => __TAURI_INVOKE<UpdateView>("install_update"),
 	setUpdateSettings: (input: UpdateSettingsInput) => __TAURI_INVOKE<UpdateView>("set_update_settings", { input }),
+	getPreview: (target: PreviewTarget) => __TAURI_INVOKE<PreviewView>("get_preview", { target }),
+	getPreviewResults: (computationId: string) => __TAURI_INVOKE<PreviewResultsView>("get_preview_results", { computationId }),
+	closePreview: () => __TAURI_INVOKE<null>("close_preview"),
 };
 
 /** Events */
@@ -558,7 +561,7 @@ export type OneOffView = {
 	language: Language,
 };
 
-export type OpenTarget = { kind: "report"; partId: string } | { kind: "revealReport"; partId: string } | { kind: "link"; link: KnownLink };
+export type OpenTarget = { kind: "report"; partId: string } | { kind: "revealReport"; partId: string } | { kind: "link"; link: KnownLink } | { kind: "original"; sourceFileId: string } | { kind: "resultImage"; computationId: string; filename: string };
 
 export type OriginView = { kind: "folder"; folderId: string } | { kind: "oneOff" };
 
@@ -581,6 +584,17 @@ export type PolicyRow = {
 };
 
 export type PolicySource = "machine" | "user";
+
+export type PreviewReason = "missing" | "tooLarge" | "unsupported" | "corrupt" | "offline" | "notPublished" | "cancelled";
+
+export type PreviewResultsView = {
+	resultsJson: string | null,
+	offline: boolean,
+};
+
+export type PreviewTarget = { kind: "source"; sourceFileId: string } | { kind: "result"; computationId: string; filename: string };
+
+export type PreviewView = { kind: "ready"; width: number; height: number; display: string; view: string | null } | { kind: "unavailable"; reason: PreviewReason };
 
 export type PrivacyPanel = "whatIsSent" | "viewSentData";
 

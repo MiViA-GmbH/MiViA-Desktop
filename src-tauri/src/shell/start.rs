@@ -8,11 +8,14 @@ use mivia_application::network::Network;
 use mivia_application::policy::{self, Policies};
 use mivia_application::settings::global_settings;
 use mivia_application::setup::SetupDraft;
+use mivia_domain::path::WinPath;
 use mivia_os::WinHttpProxyResolver;
 use mivia_ports::auth::ServerOrigin;
 use mivia_ports::ipc::setup::SetupStep;
+use mivia_ports::preview::PreviewRenderer;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::SettingsScope;
+use mivia_preview::Renderer;
 use mivia_server::{ClientRoute, build_clients, user_agent};
 use mivia_store::SqliteStore;
 use tauri::{AppHandle, Manager};
@@ -97,6 +100,12 @@ pub(super) fn agent(version: &str) -> String {
     user_agent(version, "10.0", "stable")
 }
 
+fn renderer(data_dir: &Path) -> Option<Arc<dyn PreviewRenderer>> {
+    let root = WinPath::parse(data_dir.join("previews").to_str()?).ok()?;
+    let renderer = Renderer::new(&root, Arc::new(|| Box::new(mivia_os::background_mode()))).ok()?;
+    Some(Arc::new(renderer))
+}
+
 pub(super) fn services(store: Arc<SqliteStore>, launch: &Launch) -> Option<Arc<Services>> {
     let values = mivia_os::read_policies(policy::KEY);
     let (policies, ignored) = policy::parse(&values);
@@ -115,7 +124,9 @@ pub(super) fn services(store: Arc<SqliteStore>, launch: &Launch) -> Option<Arc<S
         origin.0.clone(),
         super::network::inputs(&policies),
     );
+    let renderer = renderer(&launch.data_dir)?;
     Some(Arc::new(Services {
+        renderer,
         store,
         credentials: pipeline::credentials(),
         clients,
