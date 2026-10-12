@@ -40,6 +40,7 @@ function WizardStepper({ view, step }: { view: SetupView; step: SetupStep }) {
 			iconSize={28}
 			orientation="vertical"
 			size="sm"
+			styles={{ stepBody: { minHeight: 28, justifyContent: 'center', alignSelf: 'flex-start' } }}
 		>
 			{steps.map((key) => (
 				<Stepper.Step
