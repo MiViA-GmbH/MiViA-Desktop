@@ -190,6 +190,7 @@
 			"matchedImage": "gefunden im Bild {{name}}",
 			"matchedReport": "gefunden im Bericht {{name}}",
 			"selectRow": "{{label}} auswählen",
+			"selectAll": "Alle angezeigten Bildserien auswählen",
 			"menu": "Weitere Aktionen",
 			"more": "Mehr anzeigen",
 			"nothingTitle": "Nichts gefunden",

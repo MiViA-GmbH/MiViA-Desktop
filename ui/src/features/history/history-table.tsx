@@ -20,6 +20,7 @@ type TableProps = {
 	rows: HistoryRow[];
 	selected: ReadonlySet<string>;
 	onToggle: (id: string) => void;
+	onToggleAll: () => void;
 	sort: Sort;
 	onSort: (by: SortBy) => void;
 	origin: (series: BatchSummary) => string;
@@ -93,6 +94,21 @@ function finished(summary: BatchSummary, since: (date: string) => string): strin
 	return summary.closedAt ? formatDateTime(summary.closedAt) : since(formatDateTime(summary.openedAt));
 }
 
+function SelectAll(props: TableProps) {
+	const { t } = useTranslation();
+	const count = props.rows.filter((row) => props.selected.has(row.summary.id)).length;
+	const all = count > 0 && count === props.rows.length;
+	return (
+		<Checkbox
+			aria-label={t('desktop.history.selectAll')}
+			checked={all}
+			indeterminate={count > 0 && !all}
+			onChange={props.onToggleAll}
+			size="xs"
+		/>
+	);
+}
+
 function Row({ row, props }: { row: HistoryRow; props: TableProps }) {
 	const { t } = useTranslation();
 	const { summary } = row;
@@ -134,7 +150,9 @@ export function HistoryTable(props: TableProps) {
 		<Table highlightOnHover layout="fixed" verticalSpacing="sm">
 			<Table.Thead>
 				<Table.Tr>
-					<Table.Th w={40} />
+					<Table.Th w={40}>
+						<SelectAll {...props} />
+					</Table.Th>
 					<Table.Th>
 						<SortHeader by="name" onSort={props.onSort} sort={props.sort}>
 							{t('desktop.history.columns.series')}

@@ -79,7 +79,20 @@ function useSelection() {
 			}
 			return next;
 		});
-	return { selected, toggle, clear: () => setSelected(new Set()) };
+	const toggleAll = (ids: string[]) =>
+		setSelected((current) => {
+			const all = ids.every((id) => current.has(id));
+			const next = new Set(current);
+			for (const id of ids) {
+				if (all) {
+					next.delete(id);
+				} else {
+					next.add(id);
+				}
+			}
+			return next;
+		});
+	return { selected, toggle, toggleAll, clear: () => setSelected(new Set()) };
 }
 
 export function SeriesList({ search, onSearch, empty }: ListProps) {
@@ -115,6 +128,7 @@ export function SeriesList({ search, onSearch, empty }: ListProps) {
 					language={language}
 					onSort={onSort}
 					onToggle={selection.toggle}
+					onToggleAll={() => selection.toggleAll(rows.map((row) => row.summary.id))}
 					origin={origin}
 					rows={rows}
 					selected={selection.selected}

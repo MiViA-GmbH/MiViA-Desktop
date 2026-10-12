@@ -190,6 +190,7 @@
 			"matchedImage": "matched image {{name}}",
 			"matchedReport": "matched report {{name}}",
 			"selectRow": "Select {{label}}",
+			"selectAll": "Select all shown series",
 			"menu": "More actions",
 			"more": "Show more",
 			"nothingTitle": "Nothing found",

@@ -68,6 +68,18 @@ test('selected series open the custom report dialog', async ({ page }) => {
 	await page.screenshot({ path: `${SHOTS}/c1-custom-report-en.png` });
 });
 
+test('the header checkbox selects and clears all shown series', async ({ page }) => {
+	await open(page, '/history?scenario=calm');
+	const all = page.getByRole('checkbox', { name: 'Select all shown series' });
+	await page.getByRole('checkbox', { name: /Charge 88-214/ }).check();
+	await expect(all).toHaveAttribute('data-indeterminate', 'true');
+	await all.click();
+	const rows = await page.getByRole('checkbox', { name: /^Select (?!all)/ }).count();
+	await expect(page.getByText(`${rows} image series selected`)).toBeVisible();
+	await all.click();
+	await expect(page.getByText(/image series selected/)).toHaveCount(0);
+});
+
 test('custom reports view', async ({ page }) => {
 	await open(page, '/history?scenario=calm&view=custom');
 	await expect(page.getByText('Kunde Müller Oktober')).toBeVisible();
