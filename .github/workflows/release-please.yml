@@ -47,6 +47,8 @@ jobs:
     if: needs.release-please.outputs.created == 'true'
     permissions:
       contents: write  # upload release assets
+      actions: read  # read nightly perf results
+      issues: read  # read perf-red issues
       id-token: write  # OIDC for signing and attestations
       attestations: write  # write build provenance
       artifact-metadata: write  # attach attestation metadata
