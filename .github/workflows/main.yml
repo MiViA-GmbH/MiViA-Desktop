@@ -28,7 +28,7 @@ jobs:
           profile: ubuntu-ci
           rust: "true"
       - name: Build
-        run: cargo build --profile ci --workspace --all-targets --locked
+        run: cargo build --profile ci --workspace --exclude mivia-desktop --exclude mivia-os --all-targets --locked
 
   warm-windows-ci:
     name: Warm cache (windows ci)
@@ -66,7 +66,11 @@ jobs:
           profile: windows-e2e
           rust: "true"
       - name: Build
-        run: cargo build --profile e2e -p mivia-desktop --locked
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @mivia-desktop/ui build
+          cargo build -p mivia-desktop --profile e2e --features custom-protocol,e2e --locked
+          cargo build -p mivia-stub --profile e2e --locked
 
   perf-baseline:
     name: Performance baseline
