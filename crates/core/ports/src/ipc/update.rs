@@ -62,6 +62,7 @@ pub struct UpdateView {
     pub last_check_at: Option<String>,
     pub failed_install: Option<String>,
     pub required: Option<RequiredUpdate>,
+    pub progress: Option<u8>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

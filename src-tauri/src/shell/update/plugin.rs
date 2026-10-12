@@ -63,6 +63,8 @@ pub(crate) struct PluginUpdater<R: Runtime> {
     parts: Parts,
     checked: Mutex<Option<Checked>>,
     verified: Mutex<Option<Verified>>,
+    received: AtomicU64,
+    length: AtomicU64,
 }
 
 fn plugin_error(error: &PluginError) -> UpdateError {
@@ -95,7 +97,17 @@ impl<R: Runtime> PluginUpdater<R> {
             parts,
             checked: Mutex::new(None),
             verified: Mutex::new(None),
+            received: AtomicU64::new(0),
+            length: AtomicU64::new(0),
         }
+    }
+
+    fn track(&self, chunk: usize, length: Option<u64>) -> u64 {
+        let chunk = u64::try_from(chunk).unwrap_or(u64::MAX);
+        self.length.store(length.unwrap_or(0), Ordering::Relaxed);
+        self.received
+            .fetch_add(chunk, Ordering::Relaxed)
+            .saturating_add(chunk)
     }
 
     async fn proxy(&self, url: &str) -> Option<Url> {
@@ -134,15 +146,12 @@ impl<R: Runtime> PluginUpdater<R> {
             None => update.no_proxy = true,
         }
         let max = self.parts.limits.max_bytes;
-        let received = AtomicU64::new(0);
+        self.received.store(0, Ordering::Relaxed);
+        self.length.store(0, Ordering::Relaxed);
         let over = AtomicBool::new(false);
         let stop = Notify::new();
         let on_chunk = |chunk: usize, length: Option<u64>| {
-            let chunk = u64::try_from(chunk).unwrap_or(u64::MAX);
-            let total = received
-                .fetch_add(chunk, Ordering::Relaxed)
-                .saturating_add(chunk);
-            if total > max || length.is_some_and(|length| length > max) {
+            if self.track(chunk, length) > max || length.is_some_and(|length| length > max) {
                 over.store(true, Ordering::Relaxed);
                 stop.notify_one();
             }
@@ -251,5 +260,12 @@ impl<R: Runtime> Updater for PluginUpdater<R> {
             }
             Err(_) => Err(UpdateError::Install),
         }
+    }
+
+    fn progress(&self) -> Option<u8> {
+        let length = self.length.load(Ordering::Relaxed);
+        let received = self.received.load(Ordering::Relaxed);
+        let percent = received.saturating_mul(100).checked_div(length)?;
+        Some(u8::try_from(percent.min(100)).unwrap_or(100))
     }
 }

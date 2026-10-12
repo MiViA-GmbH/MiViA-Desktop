@@ -57,3 +57,7 @@ export function formatSize(bytes: number): string {
 	sizes.set(key, known);
 	return known.format(value);
 }
+
+export function formatPercent(percent: number): string {
+	return new Intl.NumberFormat(locale, { style: 'percent' }).format(percent / 100);
+}

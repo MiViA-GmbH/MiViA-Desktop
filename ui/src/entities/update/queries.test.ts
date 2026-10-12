@@ -13,6 +13,7 @@ const VIEW: UpdateView = {
 	lastCheckAt: null,
 	failedInstall: null,
 	required: null,
+	progress: null,
 };
 
 describe('pollInterval', () => {

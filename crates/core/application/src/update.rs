@@ -149,6 +149,9 @@ impl Updates {
                 .map(|at| iso_utc(Timestamp(at))),
             failed_install: inner.settings.failed.clone(),
             required: inner.required.clone(),
+            progress: (inner.state == UpdateState::Downloading)
+                .then(|| self.ports.updater.progress())
+                .flatten(),
         }
     }
 

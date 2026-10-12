@@ -17,6 +17,7 @@ pub trait Updater: Send + Sync {
     async fn check(&self, channel: Channel) -> Result<Option<Offer>, UpdateError>;
     async fn download(&self, offer: &Offer) -> Result<u64, UpdateError>;
     async fn install(&self, version: &str) -> Result<(), UpdateError>;
+    fn progress(&self) -> Option<u8>;
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

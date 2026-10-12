@@ -7,9 +7,11 @@ use mivia_application::network::{Network, ProxyInputs};
 use mivia_application::policy::AutoUpdate;
 use mivia_application::update::{Trigger, UpdateConfig, UpdatePorts, Updates};
 use mivia_domain::ids::Timestamp;
+use mivia_domain::update::Channel;
 use mivia_ports::ipc::update::UpdateState;
 use mivia_ports::server::ServerVersion;
 use mivia_ports::telemetry::{ProductEvent, UpdateFailed, UpdateFailure, UpdateStage};
+use mivia_ports::update::Updater as _;
 use mivia_store::{SqliteStore, StoreConfig};
 use mivia_testkit::clock::ManualClock;
 use mivia_testkit::id_gen::SeqIdGen;
@@ -151,7 +153,12 @@ impl Lab {
         self.publish(version, &url, signature, body);
     }
 
-    async fn updates(&self, app: &App<MockRuntime>, signer: Box<SignerCheck>, max: u64) -> Updates {
+    fn updater(
+        &self,
+        app: &App<MockRuntime>,
+        signer: Box<SignerCheck>,
+        max: u64,
+    ) -> PluginUpdater<MockRuntime> {
         let network = Network::new(
             Arc::new(FakeResolver::default()),
             Arc::new(FakeRoute::default()),
@@ -176,12 +183,16 @@ impl Lab {
             signer,
             before_exit: Arc::new(|| {}),
         };
+        PluginUpdater::new(app.handle().clone(), pieces)
+    }
+
+    async fn updates(&self, app: &App<MockRuntime>, signer: Box<SignerCheck>, max: u64) -> Updates {
         let ports = UpdatePorts {
             store: Arc::clone(&self.store) as _,
             clock: Arc::new(ManualClock::new(Timestamp(1_800_000_000_000))),
             ids: Arc::new(SeqIdGen::default()),
             telemetry: Arc::clone(&self.telemetry) as _,
-            updater: Arc::new(PluginUpdater::new(app.handle().clone(), pieces)),
+            updater: Arc::new(self.updater(app, signer, max)),
             env: Arc::clone(&self.env) as _,
         };
         let config = UpdateConfig {
@@ -248,6 +259,24 @@ fn signatures_from_key_a_or_key_b_are_accepted_and_written_once() {
             INSTALLER,
         );
         assert_eq!(outcome(&lab, &updates).await, (UpdateState::Ready, None));
+    });
+}
+
+#[test]
+fn download_progress_reaches_one_hundred_percent() {
+    let app = app();
+    run(async {
+        let lab = Lab::new().await;
+        let updater = lab.updater(&app, trusting(), 1 << 20);
+        lab.release(
+            "2.1.0",
+            &sign(&TEST_UPDATE_KEY_A, INSTALLER, Some("2.1.0")),
+            INSTALLER,
+        );
+        assert_eq!(updater.progress(), None);
+        let offer = updater.check(Channel::Stable).await.unwrap().unwrap();
+        updater.download(&offer).await.unwrap();
+        assert_eq!(updater.progress(), Some(100));
     });
 }
 

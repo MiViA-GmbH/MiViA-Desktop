@@ -777,6 +777,7 @@ export type UpdateView = {
 	lastCheckAt: string | null,
 	failedInstall: string | null,
 	required: RequiredUpdate | null,
+	progress: number | null,
 };
 
 export type WaitingReason = "noModels" | "license" | "offline";

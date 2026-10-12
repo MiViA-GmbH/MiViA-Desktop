@@ -10,6 +10,7 @@ const CURRENT: UpdateView = {
 	lastCheckAt: '2026-10-12T08:30:00.000Z',
 	failedInstall: null,
 	required: null,
+	progress: null,
 };
 
 const SCENARIOS: Record<string, Partial<UpdateView>> = {
@@ -17,7 +18,7 @@ const SCENARIOS: Record<string, Partial<UpdateView>> = {
 	'update-unsigned': { required: { min: '2.1.0', signed: false } },
 	'update-locked': { automatic: false, policy: 'off' },
 	'update-available': { state: 'available', version: '2.1.0' },
-	'update-downloading': { state: 'downloading', version: '2.1.0' },
+	'update-downloading': { state: 'downloading', version: '2.1.0', progress: 40 },
 	'update-checking': { state: 'checking' },
 	'update-failed': { state: 'failed' },
 };

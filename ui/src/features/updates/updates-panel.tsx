@@ -1,4 +1,6 @@
-import { Alert, Button, Group, Select, Stack, Switch, Text } from '@mantine/core';
+import '../../shared/ui/forms.css';
+
+import { Accordion, Alert, Button, Group, Progress, Select, Stack, Switch, Text } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
@@ -6,7 +8,7 @@ import { ReportButton } from '../../entities/support/report-button';
 import { UPDATE, updateQuery } from '../../entities/update/queries';
 import { commands } from '../../shared/ipc';
 import type { UpdateChannel, UpdateSettingsInput, UpdateView } from '../../shared/ipc/bindings';
-import { formatDateTime } from '../../shared/lib/format';
+import { formatDateTime, formatPercent } from '../../shared/lib/format';
 
 const STATUS = {
 	idle: null,
@@ -53,6 +55,14 @@ function Status({ view }: { view: UpdateView }) {
 				<Text role="status" size="sm">
 					{t(key, { version: view.version })}
 				</Text>
+			)}
+			{view.state === 'downloading' && view.progress !== null && (
+				<Group gap="sm" maw={360} wrap="nowrap">
+					<Progress aria-hidden flex={1} size="md" value={view.progress} />
+					<Text c="stone.7" size="sm">
+						{formatPercent(view.progress)}
+					</Text>
+				</Group>
 			)}
 			{(view.state === 'ready' || view.state === 'available') && (
 				<Text size="sm">{t('desktop.update.keepsAnalyses')}</Text>
@@ -128,16 +138,6 @@ export function UpdatesPanel() {
 				<FailedInstall version={view.failedInstall} />
 			)}
 			<Text size="sm">{t('desktop.update.current', { version: view.current })}</Text>
-			<Select
-				allowDeselect={false}
-				data={channels}
-				description={t('desktop.update.channelNote')}
-				disabled={save.isPending}
-				label={t('desktop.update.channel')}
-				maw={320}
-				onChange={(value) => isChannel(value) && save.mutate({ channel: value, automatic: view.automatic })}
-				value={view.channel}
-			/>
 			<Switch
 				checked={automatic}
 				description={locked ? t('desktop.wizard.common.policy') : undefined}
@@ -147,6 +147,23 @@ export function UpdatesPanel() {
 			/>
 			<Status view={view} />
 			<Actions view={view} />
+			<Accordion>
+				<Accordion.Item value="advanced">
+					<Accordion.Control>{t('desktop.update.advanced')}</Accordion.Control>
+					<Accordion.Panel>
+						<Select
+							allowDeselect={false}
+							data={channels}
+							description={t('desktop.update.channelNote')}
+							disabled={save.isPending}
+							label={t('desktop.update.channel')}
+							maw={320}
+							onChange={(value) => isChannel(value) && save.mutate({ channel: value, automatic: view.automatic })}
+							value={view.channel}
+						/>
+					</Accordion.Panel>
+				</Accordion.Item>
+			</Accordion>
 		</Stack>
 	);
 }

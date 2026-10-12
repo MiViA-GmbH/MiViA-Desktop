@@ -89,6 +89,7 @@ pub struct FakeUpdater {
     pub checks: Mutex<Vec<Channel>>,
     pub downloads: Mutex<Vec<String>>,
     pub installs: Mutex<Vec<String>>,
+    pub progress: Mutex<Option<u8>>,
 }
 
 impl FakeUpdater {
@@ -115,6 +116,10 @@ impl Updater for FakeUpdater {
     async fn install(&self, version: &str) -> Result<(), UpdateError> {
         self.installs.lock().push(version.to_owned());
         Ok(())
+    }
+
+    fn progress(&self) -> Option<u8> {
+        *self.progress.lock()
     }
 }
 

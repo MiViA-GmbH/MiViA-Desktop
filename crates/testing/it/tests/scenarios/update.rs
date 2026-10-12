@@ -285,6 +285,17 @@ async fn a_failed_install_is_noticed_at_the_next_start_and_not_retried_automatic
 }
 
 #[tokio::test]
+async fn download_progress_is_shown_only_while_downloading() {
+    let bench = Bench::new().await;
+    let updates = bench.start("2.0.0", Some(AutoUpdate::On)).await;
+    *bench.updater.progress.lock() = Some(40);
+    assert_eq!(updates.view().progress, None);
+    bench.updater.offer("2.1.0", &url("2.1.0"));
+    let view = updates.check(Trigger::Manual).await.unwrap();
+    assert_eq!((view.state, view.progress), (UpdateState::Ready, None));
+}
+
+#[tokio::test]
 async fn untrusted_offers_are_refused_before_any_download() {
     let bench = Bench::new().await;
     let updates = bench.start("2.0.0", Some(AutoUpdate::On)).await;

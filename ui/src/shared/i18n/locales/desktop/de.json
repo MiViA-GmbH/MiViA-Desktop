@@ -226,6 +226,7 @@
 		"update": {
 			"current": "Installierte Version: {{version}}",
 			"channel": "Update-Kanal",
+			"advanced": "Erweitert",
 			"stable": "Stabil",
 			"beta": "Beta",
 			"channelNote": "Beim Wechsel von Beta zu Stabil bleibt die Beta-Version installiert, bis eine neuere stabile Version erscheint.",
