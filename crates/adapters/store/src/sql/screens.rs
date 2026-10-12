@@ -19,6 +19,8 @@ pub(crate) const PROBLEM_PART: &str = "SELECT p.id, max(p.state) FROM report r \
      INDEXED BY report_by_batch JOIN report_part p ON p.report_id = r.id \
      WHERE r.batch_id = ?1 AND r.replaced_by IS NULL AND p.state IN ('not_saved', 'failed')";
 
+pub(crate) const FIRST_PROBLEM_IMAGE: &str = "SELECT f.id, f.label,      CASE WHEN f.state IN ('rejected', 'unreadable') THEN f.state ELSE      (SELECT c.state FROM computation c INDEXED BY computation_by_source      WHERE c.source_file_id = f.id AND c.state IN ('failed', 'unavailable', 'lost') LIMIT 1) END      FROM source_file f INDEXED BY source_file_by_batch WHERE f.batch_id = ?1      AND (f.state IN ('rejected', 'unreadable') OR f.id IN (SELECT c.source_file_id      FROM computation c INDEXED BY computation_by_batch WHERE c.batch_id = ?1      AND c.state IN ('failed', 'unavailable', 'lost'))) ORDER BY f.arrival_seq LIMIT 1";
+
 pub(crate) const LATEST_SAVED_PART: &str = "SELECT p.id, max(p.format) FROM report r \
      INDEXED BY report_by_batch JOIN report_part p ON p.report_id = r.id \
      WHERE r.batch_id = ?1 AND r.replaced_by IS NULL AND p.state = 'saved'";
@@ -50,6 +52,10 @@ pub(crate) fn planned() -> Vec<(&'static str, String)> {
         ("last closed series of folder", last_closed_of_folder()),
         ("list holds", HOLDS.to_owned()),
         ("find problem part of series", PROBLEM_PART.to_owned()),
+        (
+            "first problem image of series",
+            FIRST_PROBLEM_IMAGE.to_owned(),
+        ),
         ("latest saved part of series", LATEST_SAVED_PART.to_owned()),
         ("list series reports", SERIES_REPORTS.to_owned()),
         ("list report parts", REPORT_PARTS.to_owned()),

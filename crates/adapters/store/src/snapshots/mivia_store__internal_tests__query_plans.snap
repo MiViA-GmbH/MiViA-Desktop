@@ -1,5 +1,6 @@
 ---
 source: crates/adapters/store/src/internal_tests.rs
+assertion_line: 55
 expression: report
 ---
 claim source probe:
@@ -242,6 +243,13 @@ list holds:
 find problem part of series:
   SEARCH p USING INDEX report_part_problem (state=?)
   SEARCH r USING INDEX report_by_batch (batch_id=? AND rowid=?)
+first problem image of series:
+  SEARCH f USING INDEX source_file_by_batch (batch_id=?)
+  LIST SUBQUERY 2
+  SEARCH c USING INDEX computation_by_batch (batch_id=?)
+  CREATE BLOOM FILTER
+  CORRELATED SCALAR SUBQUERY 1
+  SEARCH c USING INDEX computation_by_source (source_file_id=?)
 latest saved part of series:
   SEARCH r USING INDEX report_by_batch (batch_id=?)
   SEARCH p USING INDEX sqlite_autoindex_report_part_1 (report_id=?)

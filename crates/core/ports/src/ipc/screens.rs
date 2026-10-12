@@ -58,6 +58,15 @@ pub struct AttentionSeries {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct ProblemImage {
+    pub item_id: String,
+    pub name: String,
+    pub state: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(
     tag = "kind",
     rename_all = "camelCase",
@@ -90,6 +99,7 @@ pub enum NeedsAttention {
     SeriesProblems {
         series: AttentionSeries,
         problems: u32,
+        first: Option<ProblemImage>,
     },
 }
 

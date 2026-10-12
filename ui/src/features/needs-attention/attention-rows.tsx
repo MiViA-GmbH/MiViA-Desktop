@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { RelocateButton } from '../../entities/folder/relocate-button';
 import { commands } from '../../shared/ipc';
-import type { AttentionSeries, NeedsAttention } from '../../shared/ipc/bindings';
+import type { AttentionSeries, NeedsAttention, ProblemImage } from '../../shared/ipc/bindings';
 import {
 	FolderNotFoundIcon,
 	ImageProblemIcon,
@@ -118,6 +118,29 @@ function missingRow(item: Missing, t: TFunction): Row {
 	};
 }
 
+function problemReason(state: string, t: TFunction): string | null {
+	switch (state) {
+		case 'rejected':
+		case 'unreadable':
+			return t('desktop.status.sourceFile.rejected');
+		case 'unavailable':
+			return t('desktop.status.computation.unavailable');
+		default:
+			return null;
+	}
+}
+
+function problemsText(problems: number, first: ProblemImage | null, t: TFunction): string {
+	if (!first) {
+		return t('desktop.attention.seriesProblems', { count: problems });
+	}
+	const reason = problemReason(first.state, t);
+	if (!reason) {
+		return t('desktop.attention.problemName', { count: problems, name: first.name });
+	}
+	return t('desktop.attention.problemImage', { count: problems, name: first.name, reason });
+}
+
 function markerRow(item: Marker, t: TFunction): Row {
 	return {
 		key: `marker-${item.folderId}`,
@@ -165,7 +188,7 @@ function useRow(): (item: NeedsAttention) => Row {
 					key: `series-${item.series.id}`,
 					status: { tone: 'waiting', icon: ImageProblemIcon, label: t('desktop.status.batch.imageProblems') },
 					subject: item.series.label,
-					text: t('desktop.attention.seriesProblems', { count: item.problems }),
+					text: problemsText(item.problems, item.first, t),
 					actions: <SeriesActions series={item.series} />,
 				};
 			default:

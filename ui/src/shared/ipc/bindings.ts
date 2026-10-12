@@ -504,7 +504,7 @@ export type Navigate = {
 	route: Route,
 };
 
-export type NeedsAttention = { kind: "folderNotFound"; folderId: string; folderName: string; path: string; unreachableSince: string | null } | { kind: "watchedElsewhere"; folderId: string; folderName: string; machine: string; user: string } | { kind: "reportNotSaved"; series: AttentionSeries; partId: string } | { kind: "reportFailed"; series: AttentionSeries; partId: string } | { kind: "reportStale"; series: AttentionSeries } | { kind: "seriesProblems"; series: AttentionSeries; problems: number };
+export type NeedsAttention = { kind: "folderNotFound"; folderId: string; folderName: string; path: string; unreachableSince: string | null } | { kind: "watchedElsewhere"; folderId: string; folderName: string; machine: string; user: string } | { kind: "reportNotSaved"; series: AttentionSeries; partId: string } | { kind: "reportFailed"; series: AttentionSeries; partId: string } | { kind: "reportStale"; series: AttentionSeries } | { kind: "seriesProblems"; series: AttentionSeries; problems: number; first: ProblemImage | null };
 
 export type NeedsAttentionView = {
 	revision: string,
@@ -609,6 +609,12 @@ export type PrivacyView = {
 	locked: boolean,
 	installId: string,
 	machineId: string | null,
+};
+
+export type ProblemImage = {
+	itemId: string,
+	name: string,
+	state: string,
 };
 
 export type ProblemReportInput = {

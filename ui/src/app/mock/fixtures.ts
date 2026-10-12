@@ -128,7 +128,12 @@ export const ATTENTION: NeedsAttentionView = {
 			unreachableSince: null,
 		},
 		{ kind: 'reportNotSaved', series: { id: '88229', label: 'Charge 88-229' }, partId: '77' },
-		{ kind: 'seriesProblems', series: { id: '4710', label: 'Probe 4710' }, problems: 1 },
+		{
+			kind: 'seriesProblems',
+			series: { id: '4710', label: 'Probe 4710' },
+			problems: 1,
+			first: { itemId: '3', name: '8214_003.tif', state: 'failed' },
+		},
 	],
 };
 

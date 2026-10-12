@@ -2,13 +2,14 @@ use mivia_domain::ids::Timestamp;
 use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
 use mivia_ports::ipc::screens::{
-    AnalysisView, AttentionSeries, HoldKind, HoldView, NeedsAttention, ReportPartView, ReportView,
+    AnalysisView, AttentionSeries, HoldKind, HoldView, NeedsAttention, ProblemImage,
+    ReportPartView, ReportView,
 };
 use mivia_ports::ipc::views::{BatchSummary, FolderView, OriginView};
 use mivia_ports::store::AccountScope;
 use mivia_ports::store::intake::MarkerPeer;
 use mivia_ports::time::iso_utc;
-use rusqlite::{Row, Transaction, params};
+use rusqlite::{OptionalExtension as _, Row, Transaction, params};
 
 use crate::codec::{parse_hold_reason, report_folder};
 use crate::queries::summaries;
@@ -166,10 +167,23 @@ fn series_item(tx: &Transaction<'_>, summary: &BatchSummary) -> rusqlite::Result
         },
         (None, _) if summary.counts.reports_stale > 0 => NeedsAttention::ReportStale { series },
         (None, _) => NeedsAttention::SeriesProblems {
+            first: first_problem(tx, &series.id)?,
             series,
             problems: summary.counts.problems,
         },
     })
+}
+
+fn first_problem(tx: &Transaction<'_>, series: &str) -> rusqlite::Result<Option<ProblemImage>> {
+    tx.prepare_cached(screens::FIRST_PROBLEM_IMAGE)?
+        .query_row([series.parse::<i64>().unwrap_or(0)], |row| {
+            Ok(ProblemImage {
+                item_id: row.get::<_, i64>(0)?.to_string(),
+                name: row.get(1)?,
+                state: row.get(2)?,
+            })
+        })
+        .optional()
 }
 
 fn folder_attention(row: FolderRow) -> Option<NeedsAttention> {

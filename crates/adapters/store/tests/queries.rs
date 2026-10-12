@@ -75,7 +75,7 @@ async fn problems_raise_attention_and_items_list_in_arrival_order() {
     assert_eq!(attention.total, 1);
     assert!(matches!(
         &attention.items[..],
-        [NeedsAttention::SeriesProblems { problems: 1, .. }]
+        [NeedsAttention::SeriesProblems { problems: 1, first: Some(first), .. }] if first.name == "b.tif"
     ));
     let view = fx.store.get_batch(scope, batch).await.unwrap().unwrap();
     assert_eq!(view.summary.counts.files, 2);

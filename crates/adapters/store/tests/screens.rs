@@ -1,6 +1,7 @@
 use std::sync::atomic::Ordering;
 
 use mivia_domain::batch::ClosureReason;
+use mivia_domain::computation::{ComputationEvent, FailReason, JobOutcome};
 use mivia_domain::hold::{HoldReason, KeyProblem};
 use mivia_domain::ids::{FolderId, Timestamp};
 use mivia_domain::label::LabelRule;
@@ -10,7 +11,9 @@ use mivia_domain::source_file::SourceFileEvent;
 use mivia_ports::ipc::screens::{AccountView, HoldKind, NeedsAttention};
 use mivia_ports::queries::Queries;
 use mivia_ports::store::intake::FolderChange;
-use mivia_ports::store::{AttentionCleared, NewBatch, NewFolder, Origin, SettingsScope, StoreExt};
+use mivia_ports::store::{
+    AttentionCleared, NewBatch, NewComputation, NewFolder, Origin, SettingsScope, StoreExt,
+};
 use mivia_store::StoreConfig;
 
 use crate::common::{account, fixture, new_batch, new_file, seed};
@@ -66,6 +69,61 @@ async fn folder_views_carry_open_and_last_series() {
 }
 
 #[tokio::test]
+async fn a_failed_analysis_names_its_image_in_attention() {
+    let fx = fixture(StoreConfig::for_tests()).await;
+    let (scope, file) = seed(&fx.store, |tx| {
+        let scope = account(tx, "a");
+        let batch = tx.batches(scope).open(&new_batch("S")).unwrap();
+        tx.source_files(scope)
+            .add(&new_file(batch, "ok.tif"))
+            .unwrap();
+        let file = tx
+            .source_files(scope)
+            .add(&new_file(batch, "bad.tif"))
+            .unwrap();
+        let computation = tx
+            .computations(scope)
+            .add(&NewComputation {
+                batch_id: batch,
+                source_file_id: file,
+                model_choice_key: "grain:".to_owned(),
+                model_version: None,
+                app_version: "2.0.0".to_owned(),
+                next_attempt_at: Timestamp(3),
+                reused_from: None,
+            })
+            .unwrap();
+        for event in [
+            ComputationEvent::SubmitClaimed,
+            ComputationEvent::Job(JobOutcome::Failed(FailReason::ServerFailed)),
+        ] {
+            tx.computations(scope)
+                .apply(computation, event, Timestamp(3))
+                .unwrap();
+        }
+        (scope, file)
+    })
+    .await;
+    let view = fx.store.list_needs_attention(scope).await.unwrap();
+    let [
+        NeedsAttention::SeriesProblems {
+            first: Some(first), ..
+        },
+    ] = &view.items[..]
+    else {
+        panic!("{:?}", view.items);
+    };
+    assert_eq!(
+        (
+            first.item_id.as_str(),
+            first.name.as_str(),
+            first.state.as_str()
+        ),
+        (file.0.to_string().as_str(), "bad.tif", "failed")
+    );
+}
+
+#[tokio::test]
 async fn attention_lists_missing_folders_first_and_clears_once() {
     let fx = fixture(StoreConfig::for_tests()).await;
     let (scope, batch) = seed(&fx.store, |tx| {
@@ -93,8 +151,8 @@ async fn attention_lists_missing_folders_first_and_clears_once() {
         &view.items[..],
         [
             NeedsAttention::FolderNotFound { folder_name, .. },
-            NeedsAttention::SeriesProblems { problems: 1, .. }
-        ] if folder_name == "Gone"
+            NeedsAttention::SeriesProblems { problems: 1, first: Some(first), .. }
+        ] if folder_name == "Gone" && first.name == "a.tif" && first.state == "rejected"
     ));
     let before = fx.recorder.revision.load(Ordering::SeqCst);
     fx.store
