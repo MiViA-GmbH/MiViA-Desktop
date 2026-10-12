@@ -429,10 +429,10 @@ for (const state of STATES) {
 					),
 				);
 				await page.waitForFunction(() =>
-					[...document.querySelectorAll('.mantine-ScrollArea-viewport')].every(
+					[...document.querySelectorAll('form .mantine-ScrollArea-viewport')].every(
 						(viewport) =>
 							viewport.scrollHeight <= viewport.clientHeight ||
-							viewport.parentElement?.querySelector('.mantine-ScrollArea-scrollbar'),
+							viewport.parentElement?.querySelector('[data-orientation="vertical"][data-state="visible"]'),
 					),
 				);
 				await page.mouse.move(size.width - 2, size.height - 2);
