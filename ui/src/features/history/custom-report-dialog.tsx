@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { customDraftQuery } from '../../entities/series/queries';
+import { notifyStatus } from '../../entities/support/toasts';
 import { commands } from '../../shared/ipc';
 import type { CustomReportDraft, FolderPick, Language, ReportOrder } from '../../shared/ipc/bindings';
 import { FormatChoice } from '../../shared/ui/format-choice';
@@ -51,7 +52,7 @@ function useCreate(series: string[], form: Form, onClose: () => void) {
 			}),
 		onSuccess: () => {
 			const message = t('desktop.custom.created');
-			import('@mantine/notifications').then(({ notifications }) => notifications.show({ message, role: 'status' }));
+			notifyStatus('desktop.toast.reportCreated', message);
 			onClose();
 		},
 	});

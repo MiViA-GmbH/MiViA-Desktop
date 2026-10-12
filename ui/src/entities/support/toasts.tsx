@@ -1,7 +1,7 @@
 import { Button, Stack, Text } from '@mantine/core';
 import type { NotificationData } from '@mantine/notifications';
 import type { QueryClient } from '@tanstack/react-query';
-import i18n from 'i18next';
+import i18n, { type ParseKeys } from 'i18next';
 
 import { commands, isAppError } from '../../shared/ipc';
 import type { SendOutcome } from '../../shared/ipc/bindings';
@@ -35,6 +35,12 @@ const OUTCOMES = {
 	saveAndEmail: 'desktop.support.notSent',
 } as const;
 
+const TITLES = {
+	sent: 'desktop.toast.reportSent',
+	queued: 'desktop.toast.reportQueued',
+	saveAndEmail: 'desktop.toast.notSent',
+} as const;
+
 function isKnown(code: string | null | undefined): code is keyof typeof MESSAGES {
 	return code !== null && code !== undefined && code in MESSAGES;
 }
@@ -63,7 +69,11 @@ function notify(data: NotificationData): void {
 const alert = () => ({ color: 'red', role: 'alert', title: i18n.t('desktop.errors.title') }) as const;
 const STATUS = { role: 'status' } as const;
 
-function notifyAction(message: string, action: string, run: () => void, failed = false): void {
+export function notifyStatus(title: ParseKeys, message: string, extra: Partial<NotificationData> = {}): void {
+	notify({ title: i18n.t(title), message, ...STATUS, ...extra });
+}
+
+function notifyAction(message: string, action: string, run: () => void, style: Partial<NotificationData>): void {
 	toastCount += 1;
 	const id = `support-action-${toastCount}`;
 	const click = () => {
@@ -78,7 +88,7 @@ function notifyAction(message: string, action: string, run: () => void, failed =
 			</Button>
 		</Stack>
 	);
-	notify({ id, message: body, autoClose: false, ...(failed ? alert() : STATUS) });
+	notify({ id, message: body, autoClose: false, ...style });
 }
 
 function reportableSignature(error: unknown): string | null {
@@ -101,7 +111,7 @@ export function showFailure(error: unknown, client: QueryClient): void {
 	claimOffer(signature).then((offered) => {
 		if (offered) {
 			const open = () => requestReport(client, { trigger: 'error', signature });
-			notifyAction(message, i18n.t('desktop.support.reportProblem'), open, true);
+			notifyAction(message, i18n.t('desktop.support.reportProblem'), open, alert());
 		} else {
 			notify({ message, ...alert() });
 		}
@@ -109,7 +119,7 @@ export function showFailure(error: unknown, client: QueryClient): void {
 }
 
 export function showSaved(client: QueryClient): void {
-	notify({ message: i18n.t('desktop.support.saved'), role: 'status' });
+	notifyStatus('desktop.toast.reportSaved', i18n.t('desktop.support.saved'));
 	client.invalidateQueries({ queryKey: SUPPORT });
 }
 
@@ -124,8 +134,11 @@ export function showOutcome(reportId: string, outcome: SendOutcome, client: Quer
 	client.invalidateQueries({ queryKey: SUPPORT });
 	const message = outcomeMessage(outcome);
 	if (outcome.kind === 'saveAndEmail') {
-		notifyAction(message, i18n.t('desktop.support.saveAndEmail'), () => saveReport(reportId, client));
+		notifyAction(message, i18n.t('desktop.support.saveAndEmail'), () => saveReport(reportId, client), {
+			title: i18n.t(TITLES.saveAndEmail),
+			...STATUS,
+		});
 	} else {
-		notify({ message, ...STATUS });
+		notifyStatus(TITLES[outcome.kind], message);
 	}
 }

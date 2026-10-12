@@ -7,6 +7,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { holdsQuery, networkQuery } from '../../entities/hold/queries';
+import { notifyStatus } from '../../entities/support/toasts';
 import { UPDATE } from '../../entities/update/queries';
 import { commands } from '../../shared/ipc';
 import type { BlockKind, HoldKind, HoldView, KnownLink, NetworkView } from '../../shared/ipc/bindings';
@@ -106,8 +107,7 @@ function CopyDetails() {
 		mutationFn: async () => {
 			await navigator.clipboard.writeText(await commands.getNetworkDetails());
 			const message = t('desktop.hold.copied');
-			const { notifications } = await import('@mantine/notifications');
-			notifications.show({ message, role: 'status', withCloseButton: false });
+			notifyStatus('desktop.toast.copied', message, { withCloseButton: false });
 		},
 	});
 	return (

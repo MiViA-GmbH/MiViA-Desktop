@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { contactText, requestReport, SUPPORT, supportQuery } from '../../entities/support/queries';
+import { notifyStatus } from '../../entities/support/toasts';
 import { commands } from '../../shared/ipc';
 import type { SupportView } from '../../shared/ipc/bindings';
 import { PendingReports, PolicyTable } from './support-lists';
@@ -17,7 +18,7 @@ function DeleteLogsDialog({ onClose }: { onClose: () => void }) {
 		mutationFn: () => commands.deleteLocalLogs(),
 		onSuccess: (count) => {
 			const message = t('desktop.support.deleted', { count });
-			import('@mantine/notifications').then(({ notifications }) => notifications.show({ message, role: 'status' }));
+			notifyStatus('desktop.toast.logsDeleted', message);
 			client.invalidateQueries({ queryKey: SUPPORT });
 			onClose();
 		},

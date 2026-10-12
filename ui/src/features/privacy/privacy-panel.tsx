@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FieldListDialog } from '../../entities/privacy/field-list-dialog';
 import { PRIVACY, privacyQuery } from '../../entities/privacy/queries';
 import { SentDataDialog } from '../../entities/privacy/sent-data-dialog';
+import { notifyStatus } from '../../entities/support/toasts';
 import { commands } from '../../shared/ipc';
 import type { PrivacyView } from '../../shared/ipc/bindings';
 
@@ -13,7 +14,7 @@ function CopyId({ label, value }: { label: string; value: string | null }) {
 	const copy = (text: string) =>
 		navigator.clipboard.writeText(text).then(() => {
 			const message = t('desktop.privacy.copied');
-			import('@mantine/notifications').then(({ notifications }) => notifications.show({ message, role: 'status' }));
+			notifyStatus('desktop.toast.copied', message);
 		});
 	return (
 		<Group gap="sm" justify="space-between" wrap="nowrap">

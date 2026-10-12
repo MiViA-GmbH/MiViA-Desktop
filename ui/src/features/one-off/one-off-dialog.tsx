@@ -11,6 +11,7 @@ import { ModelChoices } from '../../entities/catalogue/model-choices';
 import { holdsQuery } from '../../entities/hold/queries';
 import { remainingUploadsQuery } from '../../entities/one-off/queries';
 import { catalogueQuery, setupQuery } from '../../entities/setup/queries';
+import { notifyStatus } from '../../entities/support/toasts';
 import { commands } from '../../shared/ipc';
 import type { CatalogueView, ModelChoiceView, OneOffView } from '../../shared/ipc/bindings';
 import { formatDateTime } from '../../shared/lib/format';
@@ -26,7 +27,7 @@ function useCancel() {
 		mutationFn: () => commands.discardOneOff(null),
 		onSuccess: () => {
 			const message = t('desktop.oneOff.cancelled');
-			import('@mantine/notifications').then(({ notifications }) => notifications.show({ message, role: 'status' }));
+			notifyStatus('desktop.toast.cancelled', message);
 		},
 	});
 }

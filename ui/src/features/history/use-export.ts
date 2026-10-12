@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-
+import { notifyStatus } from '../../entities/support/toasts';
 import { commands } from '../../shared/ipc';
 import type { HistoryFilter } from '../../shared/ipc/bindings';
 
@@ -18,9 +18,7 @@ export function useExport() {
 				return;
 			}
 			const message = t('desktop.history.exported', { count: view.files.length, folder: view.folder });
-			import('@mantine/notifications').then(({ notifications }) =>
-				notifications.show({ color: 'forest', message, role: 'status' }),
-			);
+			notifyStatus('desktop.toast.exported', message, { color: 'forest' });
 		},
 	});
 }

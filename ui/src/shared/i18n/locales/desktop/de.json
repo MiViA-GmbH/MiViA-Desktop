@@ -291,6 +291,17 @@
 				"cancelled": "Abgebrochen"
 			}
 		},
+		"toast": {
+			"cancelled": "Abgebrochen",
+			"copied": "Kopiert",
+			"exported": "Export fertig",
+			"logsDeleted": "Protokolle gelöscht",
+			"notSent": "Nicht gesendet",
+			"reportCreated": "Bericht erstellt",
+			"reportQueued": "Bericht vorgemerkt",
+			"reportSaved": "Bericht gespeichert",
+			"reportSent": "Bericht gesendet"
+		},
 		"errors": {
 			"actionFailed": "Das hat nicht funktioniert. Versuchen Sie es gleich noch einmal.",
 			"reportChanged": "Diese Datei wurde geändert, nachdem MiViA Desktop sie gespeichert hat.",

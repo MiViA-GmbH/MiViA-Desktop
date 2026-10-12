@@ -291,6 +291,17 @@
 				"cancelled": "Cancelled"
 			}
 		},
+		"toast": {
+			"cancelled": "Cancelled",
+			"copied": "Copied",
+			"exported": "Export finished",
+			"logsDeleted": "Logs deleted",
+			"notSent": "Not sent",
+			"reportCreated": "Report created",
+			"reportQueued": "Report queued",
+			"reportSaved": "Report saved",
+			"reportSent": "Report sent"
+		},
 		"errors": {
 			"actionFailed": "That did not work. Try again in a moment.",
 			"reportChanged": "This file was changed after MiViA Desktop saved it.",
