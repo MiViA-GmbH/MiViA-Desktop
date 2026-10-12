@@ -23,7 +23,7 @@ export function DataTable({ result }: { result: DataTableResult }) {
 	const label = useLabel();
 	const columns = result.data.some((item) => item.unit) ? 3 : 2;
 	return (
-		<Table striped withTableBorder>
+		<Table withTableBorder>
 			<Table.Tbody>
 				{groupItems(result.data).map(({ group, items }) => [
 					group && (
@@ -57,7 +57,7 @@ export function MultiColumnTable({ result }: { result: MultiColumnTableResult })
 	const label = useLabel();
 	const units = result.units ?? result.unit ?? [];
 	return (
-		<Table striped withTableBorder>
+		<Table withTableBorder>
 			<Table.Thead>
 				<Table.Tr>
 					{(result.headers ?? []).map((header, index) => (

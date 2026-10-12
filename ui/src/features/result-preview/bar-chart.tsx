@@ -27,7 +27,7 @@ export function BarChart({ title, bars, xLabel, yLabel }: BarChartProps) {
 	const every = Math.ceil(bars.length / MAX_LABELS);
 	const y = (value: number) => TOP + inner.height - (Math.max(value, 0) / top) * inner.height;
 	return (
-		<figure style={{ margin: 0, maxWidth: WIDTH }}>
+		<figure style={{ margin: 0, maxWidth: WIDTH, color: 'var(--mantine-color-stone-7)' }}>
 			<Text fw={600} size="sm">
 				{title}
 			</Text>

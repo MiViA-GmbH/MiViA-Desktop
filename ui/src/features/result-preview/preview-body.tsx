@@ -1,4 +1,4 @@
-import { Button, Group, Stack, Text, Title, UnstyledButton } from '@mantine/core';
+import { Button, Group, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { analysisName } from '../../entities/series/status';
 import { commands } from '../../shared/ipc';
 import type { AnalysisView, BatchItem, ComputationItem, Language, PreviewTarget } from '../../shared/ipc/bindings';
 import { Notice } from '../../shared/ui/notice';
+import { Panel } from '../../shared/ui/panel';
 import { PicturePane } from './picture-pane';
 import { ResultPreview } from './result-preview';
 import { type ImageResult, parseResults } from './results';
@@ -129,15 +130,15 @@ export function PreviewBody({ item, analyses, language }: BodyProps) {
 				target={active}
 			/>
 			{done.map((computation) => (
-				<Stack gap="xs" key={computation.id}>
-					<Title order={4}>
-						{analysisName(
-							analyses.find((analysis) => analysis.key === computation.modelChoiceKey),
-							language,
-						)}
-					</Title>
+				<Panel
+					key={computation.id}
+					title={analysisName(
+						analyses.find((analysis) => analysis.key === computation.modelChoiceKey),
+						language,
+					)}
+				>
 					<Results computation={computation} pick={{ active, onPick: setActive }} />
-				</Stack>
+				</Panel>
 			))}
 		</Stack>
 	);
