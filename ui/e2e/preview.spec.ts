@@ -27,8 +27,13 @@ for (const lang of ['en', 'de']) {
 		await page.getByRole('link', { name: /8214_001\.tif/ }).click();
 		await expect(page.getByRole('heading', { name: '8214_001.tif' })).toBeVisible();
 		await expect(viewer(page)).toBeVisible();
-		await expect(page.getByText('GRAIN_MULTI_G_AREA_SHOW_MEAN')).toBeVisible();
-		await expect(page.getByRole('img', { name: 'GRAIN_MULTI_G_AREA_SHOW_HISTOGRAM' })).toBeVisible();
+		await expect(
+			page.getByText(lang === 'en' ? 'Average grain size number G' : 'Mittlere Korngrößenzahl G', { exact: true }),
+		).toBeVisible();
+		await expect(
+			page.getByRole('img', { name: /^(Grain size number G according|Korngrößenzahl G nach)/ }),
+		).toBeVisible();
+		await expect(page.getByText('GRAIN_MULTI_G_AREA_SHOW_MEAN')).toHaveCount(0);
 		await expect(page.getByRole('img', { name: 'DECARB_THICKNESS_HIST' })).toBeVisible();
 		await expect(page.getByRole('cell', { name: 'ferrite' }).first()).toBeVisible();
 		await expect(
