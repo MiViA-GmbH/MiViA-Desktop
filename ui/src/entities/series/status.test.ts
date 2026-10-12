@@ -37,7 +37,7 @@ describe('series status', () => {
 		[summary({ active: 1 }), 'Analyzing'],
 		[summary({ reportsTotal: 0, reportsSaved: 0 }), 'Creating report'],
 		[summary({ reportsTotal: 2 }), 'Creating report'],
-		[summary({ reportsStale: 1 }), 'Newer results available'],
+		[summary({ reportsStale: 1 }), 'Newer results'],
 		[summary({ problems: 1, done: 0, reportsSaved: 0, reportsTotal: 0 }), 'Image not usable'],
 		[summary({}), 'Saved'],
 		[summary({ done: 0, reportsSaved: 0, reportsTotal: 0 }), 'Done'],

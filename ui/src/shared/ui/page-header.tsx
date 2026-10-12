@@ -17,7 +17,11 @@ export function PageHeader({ title, meta, actions, titleExtra }: PageHeaderProps
 					</Text>
 				)}
 			</Stack>
-			{actions}
+			{actions && (
+				<Group flex="none" gap="sm" wrap="nowrap">
+					{actions}
+				</Group>
+			)}
 		</Group>
 	);
 }

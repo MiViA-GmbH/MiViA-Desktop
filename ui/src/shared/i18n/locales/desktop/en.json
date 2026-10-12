@@ -241,7 +241,7 @@
 				"creatingReport": "Creating report",
 				"done": "Done",
 				"saved": "Saved",
-				"newerResults": "Newer results available",
+				"newerResults": "Newer results",
 				"imageProblems": "Image not usable",
 				"reportProblem": "Report not saved"
 			},
@@ -251,7 +251,7 @@
 				"waiting": "Waiting",
 				"notSaved": "Report not saved",
 				"failed": "Report could not be created",
-				"stale": "Newer results available",
+				"stale": "Newer results",
 				"nothing": "No report",
 				"replaced": "Replaced",
 				"updated": "Updated"
@@ -513,7 +513,8 @@
 				"offline": "The server could not be reached.",
 				"notPublished": "This server does not provide result images yet.",
 				"cancelled": "The preview was cancelled."
-			}
+			},
+			"viewer": "Image viewer"
 		},
 		"viz": {
 			"resultUnavailable": "This result cannot be shown"

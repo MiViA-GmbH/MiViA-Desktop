@@ -41,6 +41,7 @@ function Item({ link: renderLink, active, label, icon, rail, description, tone }
 			label={rail ? undefined : label}
 			leftSection={icon}
 			renderRoot={renderLink}
+			title={rail ? undefined : label}
 		/>
 	);
 	if (!rail) {

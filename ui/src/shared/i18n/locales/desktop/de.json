@@ -7,7 +7,7 @@
 			"inputFolders": "Eingangsordner",
 			"settings": "Einstellungen",
 			"account": "Konto",
-			"addFolder": "Eingangsordner hinzufügen"
+			"addFolder": "Ordner hinzufügen"
 		},
 		"overview": {
 			"title": "Übersicht",
@@ -81,7 +81,7 @@
 		},
 		"folder": {
 			"state": {
-				"collecting": "Bilder werden gesammelt",
+				"collecting": "Sammelt Bilder",
 				"notFound": "Ordner nicht gefunden",
 				"paused": "Pausiert",
 				"reportSaved": "Bericht gespeichert {{time}}",
@@ -236,22 +236,22 @@
 		},
 		"status": {
 			"batch": {
-				"collecting": "Bilder werden gesammelt",
+				"collecting": "Sammelt Bilder",
 				"analyzing": "Wird ausgewertet",
 				"creatingReport": "Bericht wird erstellt",
 				"done": "Fertig",
 				"saved": "Gespeichert",
-				"newerResults": "Neuere Ergebnisse vorhanden",
-				"imageProblems": "Bild nicht verwendbar",
-				"reportProblem": "Bericht nicht gespeichert"
+				"newerResults": "Neuere Ergebnisse",
+				"imageProblems": "Bild unbrauchbar",
+				"reportProblem": "Nicht gespeichert"
 			},
 			"report": {
 				"saved": "Gespeichert",
 				"creating": "Bericht wird erstellt",
 				"waiting": "Wartet",
-				"notSaved": "Bericht nicht gespeichert",
+				"notSaved": "Nicht gespeichert",
 				"failed": "Bericht konnte nicht erstellt werden",
-				"stale": "Neuere Ergebnisse vorhanden",
+				"stale": "Neuere Ergebnisse",
 				"nothing": "Kein Bericht",
 				"replaced": "Ersetzt",
 				"updated": "Aktualisiert"
@@ -260,7 +260,7 @@
 				"detected": "Wird kopiert",
 				"ready": "Wartet",
 				"uploading": "Wird hochgeladen",
-				"rejected": "Bild nicht verwendbar",
+				"rejected": "Bild unbrauchbar",
 				"vanished": "Entfernt"
 			},
 			"computation": {
@@ -268,7 +268,7 @@
 				"computing": "Wird ausgewertet",
 				"done": "Fertig",
 				"reused": "Fertig (Ergebnis übernommen)",
-				"failed": "Auswertung nicht möglich",
+				"failed": "Nicht auswertbar",
 				"unavailable": "Modell nicht mehr verfügbar",
 				"cancelled": "Abgebrochen"
 			}
@@ -513,7 +513,8 @@
 				"offline": "Der Server war nicht erreichbar.",
 				"notPublished": "Dieser Server stellt noch keine Ergebnisbilder bereit.",
 				"cancelled": "Die Vorschau wurde abgebrochen."
-			}
+			},
+			"viewer": "Bildbetrachter"
 		},
 		"viz": {
 			"resultUnavailable": "Dieses Ergebnis kann nicht angezeigt werden"
