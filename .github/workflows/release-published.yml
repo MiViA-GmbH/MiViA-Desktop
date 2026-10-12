@@ -38,7 +38,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
           REPO: ${{ github.repository }}
-        run: bash scripts/ci/verify-release.sh && cargo xtask update-sig verify-release "$TAG"
+        run: |
+          bash scripts/ci/verify-release.sh
+          for exe in release-assets/*-setup.exe; do cargo xtask update-sig verify "$exe" "$exe.sig" "$TAG"; done
 
   channel:
     name: Beta channel pull request
@@ -53,7 +55,7 @@ jobs:
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
-          allowed-endpoints: api.github.com:443 github.com:443
+          allowed-endpoints: api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -68,6 +70,8 @@ jobs:
           permission-pull-requests: write
       - name: Point beta at the release
         env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           TAG: ${{ github.event.release.tag_name }}
         run: node scripts/ci/channel.mjs beta
       - name: Pull request
