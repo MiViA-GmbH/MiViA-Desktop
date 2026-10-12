@@ -1,6 +1,6 @@
 import '../features/history/history.css';
 
-import { Button, Group, SegmentedControl, TextInput } from '@mantine/core';
+import { Button, Stack, Tabs, TextInput } from '@mantine/core';
 import { useDebouncedCallback } from '@mantine/hooks';
 import { ICON_STROKE } from '@mivia-ai/theme';
 import { IconDownload, IconSearch } from '@tabler/icons-react';
@@ -69,28 +69,36 @@ function History() {
 	const { search, onSearch } = useHistorySearch('/app/history');
 	const custom = search.view === 'custom';
 	const any = useAnySeries({});
-	const views = [
-		{ value: 'series', label: t('desktop.history.viewSeries') },
-		{ value: 'custom', label: t('desktop.history.viewCustom') },
-	];
 	const empty = { title: t('desktop.history.emptyTitle'), text: t('desktop.history.emptyText') };
-	const actions = (
-		<Group gap="sm" wrap="nowrap">
-			<SegmentedControl
-				data={views}
-				onChange={(value) => onSearch(value === 'custom' ? { view: 'custom' } : {})}
-				value={custom ? 'custom' : 'series'}
-			/>
-			<ExportList search={search} />
-		</Group>
-	);
 	return (
 		<>
-			<PageHeader actions={actions} meta={t('desktop.history.meta')} title={t('desktop.nav.history')} />
-			{custom && <CustomSearch onSearch={onSearch} search={search} />}
-			{custom && <CustomReportsList q={search.q ?? null} />}
-			{!custom && any && <HistoryToolbar onChange={onSearch} search={search} />}
-			{!custom && <SeriesList empty={empty} onSearch={onSearch} search={search} />}
+			<PageHeader
+				actions={<ExportList search={search} />}
+				meta={t('desktop.history.meta')}
+				title={t('desktop.nav.history')}
+			/>
+			<Tabs
+				keepMounted={false}
+				onChange={(value) => onSearch(value === 'custom' ? { view: 'custom' } : {})}
+				value={custom ? 'custom' : 'series'}
+			>
+				<Tabs.List mb="lg">
+					<Tabs.Tab value="series">{t('desktop.history.viewSeries')}</Tabs.Tab>
+					<Tabs.Tab value="custom">{t('desktop.history.viewCustom')}</Tabs.Tab>
+				</Tabs.List>
+				<Tabs.Panel value="series">
+					<Stack gap="lg">
+						{any && <HistoryToolbar onChange={onSearch} search={search} />}
+						<SeriesList empty={empty} onSearch={onSearch} search={search} />
+					</Stack>
+				</Tabs.Panel>
+				<Tabs.Panel value="custom">
+					<Stack gap="lg">
+						<CustomSearch onSearch={onSearch} search={search} />
+						<CustomReportsList q={search.q ?? null} />
+					</Stack>
+				</Tabs.Panel>
+			</Tabs>
 		</>
 	);
 }

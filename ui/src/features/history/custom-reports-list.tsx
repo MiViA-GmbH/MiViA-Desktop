@@ -49,18 +49,21 @@ function Actions({ row }: { row: CustomReportRow }) {
 		<Group gap={4} justify="flex-end" wrap="nowrap">
 			<ActionIcon
 				aria-label={t('desktop.series.showInFolder')}
+				color="stone"
 				onClick={() => open.mutate({ kind: 'revealReport', partId })}
+				title={t('desktop.series.showInFolder')}
 				variant="subtle"
 			>
 				<ShowInFolderIcon size={18} stroke={ICON_STROKE} />
 			</ActionIcon>
-			<ActionIcon
-				aria-label={t('desktop.series.open')}
+			<Button
+				leftSection={<OpenIcon size={14} stroke={ICON_STROKE} />}
 				onClick={() => open.mutate({ kind: 'report', partId })}
-				variant="subtle"
+				size="xs"
+				variant="default"
 			>
-				<OpenIcon size={18} stroke={ICON_STROKE} />
-			</ActionIcon>
+				{t('desktop.series.open')}
+			</Button>
 		</Group>
 	);
 }
@@ -86,7 +89,7 @@ function Row({ row, language }: { row: CustomReportRow; language: Language }) {
 			<Table.Td c="stone.7" fz="sm" w={130}>
 				{formatDateTime(row.createdAt)}
 			</Table.Td>
-			<Table.Td w={90}>
+			<Table.Td w={140}>
 				<Actions row={row} />
 			</Table.Td>
 		</Table.Tr>
@@ -110,7 +113,7 @@ export function CustomReportsList({ q }: { q: string | null }) {
 						<Table.Th w={80}>{t('desktop.history.columns.images')}</Table.Th>
 						<Table.Th w={200}>{t('desktop.history.columns.status')}</Table.Th>
 						<Table.Th w={130}>{t('desktop.history.columns.created')}</Table.Th>
-						<Table.Th w={90} />
+						<Table.Th w={140} />
 					</Table.Tr>
 				</Table.Thead>
 				<Table.Tbody>

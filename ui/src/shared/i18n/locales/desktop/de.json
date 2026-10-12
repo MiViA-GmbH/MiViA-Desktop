@@ -93,7 +93,8 @@
 				"waitingConnection": "Wartet auf Verbindung",
 				"waitingImages": "Wartet auf neue Bilder",
 				"waitingNetwork": "Wartet auf Netzwerkordner",
-				"watchedElsewhere": "Auf zwei PCs überwacht"
+				"watchedElsewhere": "Auf zwei PCs überwacht",
+				"waitingHold": "Wartet, siehe Hinweis oben"
 			},
 			"progress": "{{label}}: {{done}} von {{files}} fertig",
 			"doneOf": "{{done}} von {{files}} fertig",
@@ -201,7 +202,9 @@
 			"exported_other": "{{count}} Dateien nach {{folder}} exportiert",
 			"customEmptyTitle": "Noch keine eigenen Berichte",
 			"customEmptyText": "Wählen Sie im Verlauf Bildserien aus und dann Eigenen Bericht erstellen.",
-			"moreFilters": "Weitere Filter"
+			"moreFilters": "Weitere Filter",
+			"openReport": "Bericht öffnen",
+			"showSeries": "Bildserie anzeigen"
 		},
 		"singleImages": {
 			"meta": "Bilder, die Sie aus dem Explorer gesendet haben.",
@@ -334,12 +337,14 @@
 			"changeReport": "Berichtseinstellungen ändern",
 			"formatCsv": "Daten (CSV)",
 			"reportLanguage": "Berichtssprache",
+			"reportFolder": "Berichtsordner",
 			"chooseFolder": "Ordner wählen…",
 			"fallback": "Berichte können nicht neben diesen Bildern gespeichert werden. Sie werden in {{path}} gespeichert.",
 			"account": "Konto: {{name}}",
 			"cancelled": "Es wurde nichts ausgewertet. Ihre Bilder bleiben unverändert.",
 			"waitingForSetup": "Schließen Sie die Einrichtung ab, um die gesendeten Bilder auszuwerten.",
-			"dropHere": "Bilder hier ablegen, um sie auszuwerten"
+			"dropHere": "Bilder hier ablegen, um sie auszuwerten",
+			"changeModels": "Modelle ändern"
 		},
 		"custom": {
 			"title": "Eigenen Bericht erstellen",

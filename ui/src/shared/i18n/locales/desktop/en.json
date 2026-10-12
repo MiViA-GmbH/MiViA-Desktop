@@ -93,7 +93,8 @@
 				"waitingConnection": "Waiting for connection",
 				"waitingImages": "Waiting for new images",
 				"waitingNetwork": "Waiting for network folder",
-				"watchedElsewhere": "Watched on two PCs"
+				"watchedElsewhere": "Watched on two PCs",
+				"waitingHold": "Waiting, see the notice above"
 			},
 			"progress": "{{label}}: {{done}} of {{files}} done",
 			"doneOf": "{{done}} of {{files}} done",
@@ -201,7 +202,9 @@
 			"exported_other": "Exported {{count}} files to {{folder}}",
 			"customEmptyTitle": "No custom reports yet",
 			"customEmptyText": "Select image series in History and choose Create custom report.",
-			"moreFilters": "More filters"
+			"moreFilters": "More filters",
+			"openReport": "Open report",
+			"showSeries": "Show image series"
 		},
 		"singleImages": {
 			"meta": "Images you sent from Explorer.",
@@ -334,12 +337,14 @@
 			"changeReport": "Change report settings",
 			"formatCsv": "Data (CSV)",
 			"reportLanguage": "Report language",
+			"reportFolder": "Report folder",
 			"chooseFolder": "Choose folder…",
 			"fallback": "Reports cannot be saved next to these images. They are saved to {{path}}.",
 			"account": "Account: {{name}}",
 			"cancelled": "Nothing was analyzed. Your images are unchanged.",
 			"waitingForSetup": "Finish setup to analyze the images you sent.",
-			"dropHere": "Drop images here to analyze them"
+			"dropHere": "Drop images here to analyze them",
+			"changeModels": "Change models"
 		},
 		"custom": {
 			"title": "Create custom report",
