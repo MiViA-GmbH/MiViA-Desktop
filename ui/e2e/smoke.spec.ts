@@ -132,6 +132,7 @@ for (const lang of ['en', 'de']) {
 
 	test(`support settings and the problem report dialog (${lang})`, async ({ page }) => {
 		await open(page, `/settings/support?scenario=calm&lang=${lang}`);
+		await page.getByRole('button', { name: /^(Administrator policies|Richtlinien des Administrators)$/ }).click();
 		await expect(page.getByRole('row')).toHaveCount(15);
 		await expect(page.getByText('0192f1d0')).toBeVisible();
 		await structure(page);

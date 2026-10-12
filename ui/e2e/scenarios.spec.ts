@@ -384,6 +384,7 @@ test.describe
 				.first()
 				.click();
 			await page.getByRole('link', { name: 'Support' }).click();
+			await page.getByRole('button', { name: 'Administrator policies' }).click();
 			await expect(page.getByRole('row')).toHaveCount(15);
 			const report = async (description: string) => {
 				await page.getByRole('button', { name: 'Report a problem…' }).click();
