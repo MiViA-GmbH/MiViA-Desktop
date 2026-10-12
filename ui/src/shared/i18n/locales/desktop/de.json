@@ -34,8 +34,8 @@
 			"reportNotSaved": "Der Bericht ist fertig, aber nicht gespeichert. Er bleibt erhalten.",
 			"reportFailed": "Der Bericht konnte nicht erstellt werden. Die Ergebnisse bleiben erhalten.",
 			"reportStale": "Ein Bericht enthält nicht die neuesten Ergebnisse.",
-			"seriesProblems_one": "1 Bild konnte nicht ausgewertet werden.",
-			"seriesProblems_other": "{{count}} Bilder konnten nicht ausgewertet werden.",
+			"seriesProblems_one": "1 Bild konnte nicht ausgewertet werden. Welches, zeigt die Bildserie.",
+			"seriesProblems_other": "{{count}} Bilder konnten nicht ausgewertet werden. Welche, zeigt die Bildserie.",
 			"networkMissing_one": "{{path}} ist seit 1 Minute nicht erreichbar. Prüfen Sie Netzwerk oder VPN; Bilder und Einstellungen bleiben erhalten.",
 			"networkMissing_other": "{{path}} ist seit {{count}} Minuten nicht erreichbar. Prüfen Sie Netzwerk oder VPN; Bilder und Einstellungen bleiben erhalten.",
 			"checkAgain": "Erneut prüfen",
@@ -140,8 +140,8 @@
 				"complete": "Alle Berichte sind gespeichert und vollständig.",
 				"reportProblem": "Ein Bericht konnte nicht gespeichert oder erstellt werden.",
 				"stale": "Ein Bericht wurde vor neueren Ergebnissen erstellt. „Bericht aktualisieren“ speichert eine neue Datei daneben.",
-				"problems_one": "1 Bild konnte nicht ausgewertet werden und fehlt in den Berichten.",
-				"problems_other": "{{count}} Bilder konnten nicht ausgewertet werden und fehlen in den Berichten."
+				"problems_one": "1 Bild konnte nicht ausgewertet werden und fehlt in den Berichten. „Nur Probleme“ in der Bilderliste zeigt es.",
+				"problems_other": "{{count}} Bilder konnten nicht ausgewertet werden und fehlen in den Berichten. „Nur Probleme“ in der Bilderliste zeigt sie."
 			},
 			"rename": "Bildserie umbenennen",
 			"renameLocked": "Mit diesem Namen wurde bereits ein Bericht erstellt. Wählen Sie mit Bericht neu erstellen einen anderen Namen.",

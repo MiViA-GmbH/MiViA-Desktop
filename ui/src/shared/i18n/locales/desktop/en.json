@@ -34,8 +34,8 @@
 			"reportNotSaved": "The report is ready but not saved. It is kept.",
 			"reportFailed": "The report could not be created. The results are kept.",
 			"reportStale": "A report does not include the latest results.",
-			"seriesProblems_one": "1 image could not be analyzed.",
-			"seriesProblems_other": "{{count}} images could not be analyzed.",
+			"seriesProblems_one": "1 image could not be analyzed. The image series shows which one.",
+			"seriesProblems_other": "{{count}} images could not be analyzed. The image series shows which ones.",
 			"networkMissing_one": "{{path}} has not been reachable for 1 minute. Check the network or VPN; images and settings are kept.",
 			"networkMissing_other": "{{path}} has not been reachable for {{count}} minutes. Check the network or VPN; images and settings are kept.",
 			"checkAgain": "Check again",
@@ -140,8 +140,8 @@
 				"complete": "All reports saved and complete.",
 				"reportProblem": "A report could not be saved or created.",
 				"stale": "A report was created before newer results arrived. Update report saves a new file next to it.",
-				"problems_one": "1 image could not be analyzed and is not in the reports.",
-				"problems_other": "{{count}} images could not be analyzed and are not in the reports."
+				"problems_one": "1 image could not be analyzed and is not in the reports. “Problems only” in the image list shows it.",
+				"problems_other": "{{count}} images could not be analyzed and are not in the reports. “Problems only” in the image list shows them."
 			},
 			"rename": "Rename image series",
 			"renameLocked": "A report was already created with this name. Use Create report again to choose another name.",
