@@ -5,7 +5,7 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { folderStatus } from '../../entities/folder/status';
-import type { FolderView } from '../../shared/ipc/bindings';
+import type { FolderView, HoldKind } from '../../shared/ipc/bindings';
 import { TONE_COLOR } from '../../shared/ui/tone';
 import { FinishSeriesButton, LatestReportButton, ResumeButton } from './folder-actions';
 
@@ -30,10 +30,10 @@ function SeriesLine({ folder, words }: { folder: FolderView; words: string }) {
 	);
 }
 
-function FolderRow({ folder, offline }: { folder: FolderView; offline: boolean }) {
+function FolderRow({ folder, holds }: { folder: FolderView; holds: HoldKind[] }) {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const status = folderStatus(folder, offline, t);
+	const status = folderStatus(folder, holds, t);
 	const StateIcon = status.icon;
 	const color = status.tone === 'done' ? 'stone' : TONE_COLOR[status.tone];
 	return (
@@ -62,13 +62,13 @@ function FolderRow({ folder, offline }: { folder: FolderView; offline: boolean }
 	);
 }
 
-export function FolderList({ folders, offline }: { folders: FolderView[]; offline: boolean }) {
+export function FolderList({ folders, holds }: { folders: FolderView[]; holds: HoldKind[] }) {
 	return (
 		<Stack gap={0}>
 			{folders.map((folder, index) => (
 				<Fragment key={folder.id}>
 					{index > 0 && <Divider />}
-					<FolderRow folder={folder} offline={offline} />
+					<FolderRow folder={folder} holds={holds} />
 				</Fragment>
 			))}
 		</Stack>

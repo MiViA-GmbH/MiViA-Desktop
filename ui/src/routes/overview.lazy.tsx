@@ -80,11 +80,11 @@ function Overview() {
 	const { t } = useTranslation();
 	const folders = useQuery(foldersQuery).data?.folders;
 	const attention = useQuery(attentionQuery).data;
-	const offline = (useQuery(holdsQuery).data?.holds ?? []).length > 0;
+	const holds = (useQuery(holdsQuery).data?.holds ?? []).map((hold) => hold.kind);
 	const required = useQuery(updateQuery).data?.required;
 	const recent = (useQuery(historyQuery()).data?.rows ?? []).slice(0, RECENT).map((row) => row.summary);
 	const origin = useOrigin(folders ?? []);
-	const header = useMeta(folders ?? [], attention?.total ?? 0, offline || required?.signed === false);
+	const header = useMeta(folders ?? [], attention?.total ?? 0, holds.length > 0 || required?.signed === false);
 	if (!folders) {
 		return null;
 	}
@@ -110,7 +110,7 @@ function Overview() {
 			<PageHeader actions={header.actions} meta={header.meta} title={t('desktop.overview.title')} />
 			{attention && <NeedsAttentionPanel view={attention} />}
 			<Panel title={t('desktop.nav.inputFolders')}>
-				<FolderList folders={folders} offline={offline} />
+				<FolderList folders={folders} holds={holds} />
 			</Panel>
 			{recent.length > 0 && (
 				<Panel

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { t } from '../../shared/i18n/testing';
-import type { BatchSummary, FolderView } from '../../shared/ipc/bindings';
+import type { BatchSummary, FolderView, HoldKind } from '../../shared/ipc/bindings';
 import { folderStatus } from './status';
 
 const SERIES: BatchSummary = {
@@ -42,14 +42,15 @@ const FOLDER: FolderView = {
 
 describe('folder status', () => {
 	it.each([
-		[{ missing: true, paused: true }, false, 'Folder not found'],
-		[{ waitingSince: '2026-10-12T08:30:00.000Z', paused: true }, false, 'Waiting for network folder'],
-		[{ paused: true }, true, 'Paused'],
-		[{ openSeries: { ...SERIES, open: true } }, true, 'Waiting for connection'],
-		[{ openSeries: { ...SERIES, open: true } }, false, 'Collecting images'],
-		[{ lastSeries: SERIES }, false, 'Report saved 09:12'],
-		[{}, false, 'Waiting for new images'],
-	])('case %#', (extra, offline, label) => {
-		expect(folderStatus({ ...FOLDER, ...extra }, offline, t).label).toBe(label);
+		[{ missing: true, paused: true }, [], 'Folder not found'],
+		[{ waitingSince: '2026-10-12T08:30:00.000Z', paused: true }, [], 'Waiting for network folder'],
+		[{ paused: true }, ['offline'], 'Paused'],
+		[{ openSeries: { ...SERIES, open: true } }, ['offline'], 'Waiting for connection'],
+		[{ openSeries: { ...SERIES, open: true } }, ['offline', 'license'], 'Waiting, see the notice above'],
+		[{ openSeries: { ...SERIES, open: true } }, [], 'Collecting images'],
+		[{ lastSeries: SERIES }, [], 'Report saved 09:12'],
+		[{}, [], 'Waiting for new images'],
+	])('case %#', (extra, holds, label) => {
+		expect(folderStatus({ ...FOLDER, ...extra }, holds as HoldKind[], t).label).toBe(label);
 	});
 });
