@@ -19,20 +19,22 @@ const COMMANDS = {
 	restore: { label: 'desktop.series.restore', run: commands.restoreReport },
 } as const;
 
-function ReportCommands({ row }: { row: ReportRow }) {
+function ReportCommands({ row, subtle }: { row: ReportRow; subtle: boolean }) {
 	const { t } = useTranslation();
 	const run = useMutation({ mutationFn: (command: ReportCommand) => COMMANDS[command].run(row.report.id) });
-	return reportCommands(row).map((command) => (
-		<Button
-			key={command}
-			loading={run.isPending && run.variables === command}
-			onClick={() => run.mutate(command)}
-			size="xs"
-			variant={command === 'keep' ? 'subtle' : 'default'}
-		>
-			{t(COMMANDS[command].label)}
-		</Button>
-	));
+	return reportCommands(row)
+		.filter((command) => (command === 'keep') === subtle)
+		.map((command) => (
+			<Button
+				key={command}
+				loading={run.isPending && run.variables === command}
+				onClick={() => run.mutate(command)}
+				size="xs"
+				variant={command === 'keep' ? 'subtle' : 'default'}
+			>
+				{t(COMMANDS[command].label)}
+			</Button>
+		));
 }
 
 function RowActions({ row }: { row: ReportRow }) {
@@ -42,26 +44,27 @@ function RowActions({ row }: { row: ReportRow }) {
 	const partId = row.open;
 	return (
 		<Group gap="xs" justify="flex-end" maw={420} wrap="wrap">
-			<ReportCommands row={row} />
+			<ReportCommands row={row} subtle />
 			{partId && (
-				<>
-					<Button
-						leftSection={<ShowInFolderIcon size={14} stroke={ICON_STROKE} />}
-						onClick={() => open.mutate({ kind: 'revealReport', partId })}
-						size="xs"
-						variant="subtle"
-					>
-						{t('desktop.series.showInFolder')}
-					</Button>
-					<Button
-						leftSection={<OpenIcon size={14} stroke={ICON_STROKE} />}
-						onClick={() => open.mutate({ kind: 'report', partId })}
-						size="xs"
-						variant="default"
-					>
-						{t('desktop.series.open')}
-					</Button>
-				</>
+				<Button
+					leftSection={<ShowInFolderIcon size={14} stroke={ICON_STROKE} />}
+					onClick={() => open.mutate({ kind: 'revealReport', partId })}
+					size="xs"
+					variant="subtle"
+				>
+					{t('desktop.series.showInFolder')}
+				</Button>
+			)}
+			<ReportCommands row={row} subtle={false} />
+			{partId && (
+				<Button
+					leftSection={<OpenIcon size={14} stroke={ICON_STROKE} />}
+					onClick={() => open.mutate({ kind: 'report', partId })}
+					size="xs"
+					variant="default"
+				>
+					{t('desktop.series.open')}
+				</Button>
 			)}
 			{row.retry && !partId && (
 				<Button onClick={() => row.retry && retry.mutate(row.retry)} size="xs" variant="default">
@@ -76,10 +79,11 @@ function RowText({ row, name }: { row: ReportRow; name: string }) {
 	const { t } = useTranslation();
 	const title = row.partCount > 1 ? t('desktop.series.part', { name, part: row.partNo, parts: row.partCount }) : name;
 	return (
-		<Stack flex={1} gap={0} miw={0}>
-			<Text fw={500} size="sm" truncate>
+		<Stack align="flex-start" flex={1} gap={2} miw={150}>
+			<Text fw={500} maw="100%" size="sm" title={title} truncate>
 				{title}
 			</Text>
+			<StatusBadge status={reportStatus(row, t)} />
 			{row.to > 0 && (
 				<Text c="stone.7" size="xs">
 					{t('desktop.series.range', { from: row.from, to: row.to, formats: row.formats.join(' + ') })}
@@ -126,7 +130,6 @@ export function ReportsPanel({ reports, analyses, language }: ReportsPanelProps)
 								)}
 								row={row}
 							/>
-							<StatusBadge status={reportStatus(row, t)} />
 							<RowActions row={row} />
 						</Group>
 					</Fragment>
