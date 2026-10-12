@@ -235,6 +235,7 @@ jobs:
         with:
           profile: windows-ci
           rust: "true"
+          dev-drive: "true"
       - name: Install cargo-nextest
         uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
         with:
@@ -271,6 +272,7 @@ jobs:
         with:
           profile: windows-ci
           rust: "true"
+          dev-drive: "true"
           extra-endpoints: pypi.org:443 files.pythonhosted.org:443
       - name: Proxy tests
         run: node scripts/proxy-tests.mjs
@@ -293,6 +295,7 @@ jobs:
         with:
           profile: windows-e2e
           rust: "true"
+          dev-drive: "true"
       - name: Install node packages
         run: pnpm install --frozen-lockfile
       - name: Scenarios
