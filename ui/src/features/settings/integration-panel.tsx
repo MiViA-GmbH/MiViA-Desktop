@@ -1,6 +1,6 @@
 import '../../shared/ui/forms.css';
 
-import { Stack, Switch, Text } from '@mantine/core';
+import { Switch } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
@@ -48,18 +48,14 @@ export function ExplorerSwitch() {
 	if (!view) {
 		return null;
 	}
+	const help = view.available ? t('desktop.integration.explorer.help') : t('desktop.integration.explorer.unavailable');
 	return (
-		<Stack gap="xs">
-			<Switch
-				checked={view.explorer}
-				description={lockNote(view.locks.explorer, t)}
-				disabled={!view.available || view.locks.explorer !== null}
-				label={t('desktop.integration.explorer.label')}
-				onChange={(event) => set.mutate({ autostart: null, explorer: event.currentTarget.checked })}
-			/>
-			<Text c="stone.7" size="xs">
-				{view.available ? t('desktop.integration.explorer.help') : t('desktop.integration.explorer.unavailable')}
-			</Text>
-		</Stack>
+		<Switch
+			checked={view.explorer}
+			description={[lockNote(view.locks.explorer, t), help].filter(Boolean).join(' ')}
+			disabled={!view.available || view.locks.explorer !== null}
+			label={t('desktop.integration.explorer.label')}
+			onChange={(event) => set.mutate({ autostart: null, explorer: event.currentTarget.checked })}
+		/>
 	);
 }

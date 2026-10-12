@@ -14,15 +14,21 @@ type ChoiceProps = {
 	locked: boolean | null;
 	label: string;
 	description?: ReactNode;
+	extra?: ReactNode;
 };
 
-function Choice({ view, option, locked, label, description }: ChoiceProps) {
+function Choice({ view, option, locked, label, description, extra }: ChoiceProps) {
 	const { t } = useTranslation();
 	const { change } = useSave(view);
 	return (
 		<Checkbox
 			checked={locked ?? has(view, option)}
-			description={locked === null ? description : t('desktop.wizard.common.policy')}
+			description={
+				<Stack align="flex-start" gap={4} component="span">
+					{locked === null ? description : t('desktop.wizard.common.policy')}
+					{extra}
+				</Stack>
+			}
 			disabled={locked !== null}
 			label={label}
 			onChange={(event) => change({ options: withOption(view.options, option, event.currentTarget.checked) })}
@@ -39,13 +45,7 @@ function WhatIsSent() {
 	const [open, setOpen] = useState(false);
 	return (
 		<>
-			<Anchor
-				component="button"
-				onClick={() => setOpen(true)}
-				size="sm"
-				style={{ alignSelf: 'flex-start' }}
-				type="button"
-			>
+			<Anchor component="button" onClick={() => setOpen(true)} size="sm" type="button">
 				{t('desktop.privacy.whatIsSent')}
 			</Anchor>
 			{open && (
@@ -68,16 +68,14 @@ function FinishChoices({ view }: { view: SetupView }) {
 				view={view}
 			/>
 			<Choice label={t('desktop.wizard.finish.explorer')} locked={view.locks.explorer} option="explorer" view={view} />
-			<Stack gap={4}>
-				<Choice
-					description={t('desktop.wizard.finish.telemetryNever')}
-					label={t('desktop.wizard.finish.telemetry')}
-					locked={view.locks.telemetry}
-					option="telemetry"
-					view={view}
-				/>
-				<WhatIsSent />
-			</Stack>
+			<Choice
+				description={t('desktop.wizard.finish.telemetryNever')}
+				extra={<WhatIsSent />}
+				label={t('desktop.wizard.finish.telemetry')}
+				locked={view.locks.telemetry}
+				option="telemetry"
+				view={view}
+			/>
 			<Text c="stone.7" size="sm">
 				{t('desktop.wizard.finish.later')}
 			</Text>
