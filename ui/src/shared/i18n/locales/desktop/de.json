@@ -152,7 +152,7 @@
 			"meta": "Nur auf diesem PC gespeichert.",
 			"emptyTitle": "Noch keine Bildserie",
 			"emptyText": "Neue Bilder in Ihren Eingangsordnern erscheinen hier als Bildserien.",
-			"search": "Bildserien, Bilder oder Berichte suchen",
+			"search": "Serien, Bilder, Berichte suchen",
 			"searchCustom": "Eigene Berichte suchen",
 			"searchHint": "Geben Sie mindestens 3 Zeichen ein",
 			"clearSearch": "Suche leeren",
@@ -202,7 +202,7 @@
 		"singleImages": {
 			"meta": "Bilder, die Sie aus dem Explorer gesendet haben.",
 			"emptyTitle": "Noch keine Bilder gesendet",
-			"emptyText": "Bilder, die Sie aus dem Explorer senden, erscheinen hier. Klicken Sie mit der rechten Maustaste auf Bilder, wählen Sie Weitere Optionen anzeigen und dann Mit MiViA auswerten (Umschalt+F10 öffnet das ganze Menü). Sie können Bilder auch in dieses Fenster ziehen. Mehr als 100 Bilder? Senden oder ziehen Sie den Ordner.",
+			"emptyText": "Rechtsklick auf Bilder im Explorer, Weitere Optionen anzeigen, dann Mit MiViA auswerten. Oder ziehen Sie Bilder hierher. Mehr als 100? Senden Sie den Ordner.",
 			"add": "Bilder hinzufügen"
 		},
 		"settings": {

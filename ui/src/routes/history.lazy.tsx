@@ -4,10 +4,11 @@ import { Button, Group, SegmentedControl, TextInput } from '@mantine/core';
 import { useDebouncedCallback } from '@mantine/hooks';
 import { ICON_STROKE } from '@mivia-ai/theme';
 import { IconDownload, IconSearch } from '@tabler/icons-react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
+import { historyQuery } from '../entities/series/queries';
 import { type HistorySearch, historyFilter } from '../entities/series/search';
 import { CustomReportsList } from '../features/history/custom-reports-list';
 import { HistoryToolbar } from '../features/history/history-toolbar';
@@ -18,6 +19,11 @@ import { AddImagesIcon } from '../shared/ui/icons';
 import { PageHeader } from '../shared/ui/page-header';
 
 const SEARCH_DELAY = 250;
+
+function useAnySeries(search: HistorySearch): boolean {
+	const rows = useQuery(historyQuery(historyFilter(search))).data?.rows;
+	return rows === undefined || rows.length > 0;
+}
 
 function ExportList({ search }: { search: HistorySearch }) {
 	const { t } = useTranslation();
@@ -62,6 +68,7 @@ function History() {
 	const { t } = useTranslation();
 	const { search, onSearch } = useHistorySearch('/app/history');
 	const custom = search.view === 'custom';
+	const any = useAnySeries({});
 	const views = [
 		{ value: 'series', label: t('desktop.history.viewSeries') },
 		{ value: 'custom', label: t('desktop.history.viewCustom') },
@@ -82,7 +89,7 @@ function History() {
 			<PageHeader actions={actions} meta={t('desktop.history.meta')} title={t('desktop.nav.history')} />
 			{custom && <CustomSearch onSearch={onSearch} search={search} />}
 			{custom && <CustomReportsList q={search.q ?? null} />}
-			{!custom && <HistoryToolbar onChange={onSearch} search={search} />}
+			{!custom && any && <HistoryToolbar onChange={onSearch} search={search} />}
 			{!custom && <SeriesList empty={empty} onSearch={onSearch} search={search} />}
 		</>
 	);
@@ -106,11 +113,12 @@ function SingleImages() {
 	const { t } = useTranslation();
 	const { search, onSearch } = useHistorySearch('/app/single-images');
 	const manual: HistorySearch = { ...search, origin: 'manual' };
+	const any = useAnySeries({ origin: 'manual' });
 	const empty = { title: t('desktop.singleImages.emptyTitle'), text: t('desktop.singleImages.emptyText') };
 	return (
 		<>
 			<PageHeader actions={<AddImages />} meta={t('desktop.singleImages.meta')} title={t('desktop.nav.singleImages')} />
-			<HistoryToolbar manualOnly onChange={onSearch} search={manual} />
+			{any && <HistoryToolbar manualOnly onChange={onSearch} search={manual} />}
 			<SeriesList empty={empty} onSearch={onSearch} search={manual} />
 		</>
 	);

@@ -68,7 +68,7 @@ const RECENT: BatchSummary[] = [
 		counts: { ...saved(40, 0), reportsProblem: 1, reportsTotal: 1 },
 		needsAttention: true,
 	}),
-	series('3', '3 images', null, { closedAt: '2026-10-11T09:05:00.000Z', counts: saved(3, 1) }),
+	series('3', 'Probe 4712 +2', null, { closedAt: '2026-10-11T09:05:00.000Z', counts: saved(3, 1) }),
 	series('4710', 'Probe 4710', '1', {
 		closedAt: '2026-10-05T12:22:00.000Z',
 		counts: { ...saved(14, 2), done: 13, failed: 1, problems: 1 },

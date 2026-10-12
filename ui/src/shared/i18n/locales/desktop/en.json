@@ -202,7 +202,7 @@
 		"singleImages": {
 			"meta": "Images you sent from Explorer.",
 			"emptyTitle": "No images sent yet",
-			"emptyText": "Images you send from Explorer appear here. Right-click images, choose Show more options, then Analyze with MiViA (Shift+F10 opens the full menu). You can also drag images into this window. More than 100 images? Send or drag the folder.",
+			"emptyText": "Right-click images in Explorer, choose Show more options, then Analyze with MiViA, or drag images here. More than 100? Send the folder.",
 			"add": "Add images"
 		},
 		"settings": {
