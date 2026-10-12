@@ -63,7 +63,7 @@ function notifyAction(message: string, action: string, run: () => void, alert = 
 	const body = (
 		<Stack align="flex-start" gap="xs">
 			<Text size="sm">{message}</Text>
-			<Button onClick={click} size="compact-sm" variant="default">
+			<Button onClick={click} size="xs" variant="default">
 				{action}
 			</Button>
 		</Stack>

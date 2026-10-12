@@ -64,7 +64,7 @@ export function ImagesPanel({ seriesId, items, analyses, language }: ImagesPanel
 										renderRoot={(props) => (
 											<Link params={{ seriesId, itemId: item.id }} to="/preview/$seriesId/$itemId" {...props} />
 										)}
-										size="sm"
+										size="md"
 										variant="subtle"
 									>
 										<IconEye size={16} stroke={ICON_STROKE} />

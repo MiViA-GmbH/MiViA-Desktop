@@ -43,7 +43,7 @@ function OpenOriginal({ target }: { target: PreviewTarget }) {
 			leftSection={<OpenIcon size={16} />}
 			loading={open.isPending}
 			onClick={() => open.mutate()}
-			size="compact-sm"
+			size="xs"
 			variant="subtle"
 		>
 			{t('desktop.preview.openOriginal')}

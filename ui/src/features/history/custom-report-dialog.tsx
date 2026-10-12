@@ -115,7 +115,7 @@ function SettingsFields({ draft, form, update }: FieldsProps) {
 				</Text>
 				<Group gap="sm" wrap="nowrap">
 					<PathText size="sm">{form.folder?.folder.display ?? draft.folder}</PathText>
-					<Button loading={pick.isPending} onClick={() => pick.mutate()} size="compact-sm" variant="default">
+					<Button loading={pick.isPending} onClick={() => pick.mutate()} size="xs" variant="default">
 						{t('desktop.oneOff.chooseFolder')}
 					</Button>
 				</Group>

@@ -52,7 +52,7 @@ function Results({ computation, pick }: { computation: ComputationItem; pick: Pi
 	if (data?.offline) {
 		return (
 			<Notice title={t('desktop.preview.resultsOffline')} tone="warn">
-				<Button onClick={() => refetch()} size="compact-sm" variant="default">
+				<Button onClick={() => refetch()} size="xs" variant="default">
 					{t('desktop.preview.retry')}
 				</Button>
 			</Notice>
@@ -108,7 +108,7 @@ export function PreviewBody({ item, analyses, language }: BodyProps) {
 		<Stack gap="lg">
 			{!same(active, source) && (
 				<Group>
-					<Button onClick={() => setActive(source)} size="compact-sm" variant="default">
+					<Button onClick={() => setActive(source)} size="xs" variant="default">
 						{t('desktop.preview.source')}
 					</Button>
 				</Group>

@@ -31,7 +31,7 @@ function ImageGroup({ group, index, removable }: GroupProps) {
 				</Text>
 			))}
 			{hidden > 0 && !all && (
-				<Button onClick={() => setAll(true)} p={0} size="compact-sm" variant="transparent" w="fit-content">
+				<Button onClick={() => setAll(true)} p={0} size="xs" variant="transparent" w="fit-content">
 					{t('desktop.oneOff.more', { count: hidden })}
 				</Button>
 			)}
@@ -40,7 +40,7 @@ function ImageGroup({ group, index, removable }: GroupProps) {
 					{t('desktop.oneOff.from', { folder: group.folder })}
 				</PathText>
 				{removable && (
-					<Button loading={remove.isPending} onClick={() => remove.mutate()} size="compact-xs" variant="subtle">
+					<Button loading={remove.isPending} onClick={() => remove.mutate()} size="xs" variant="subtle">
 						{t('desktop.oneOff.remove')}
 					</Button>
 				)}

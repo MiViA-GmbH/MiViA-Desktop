@@ -68,7 +68,7 @@ function Models({ view, form, update }: { view: OneOffView; form: Form; update: 
 			</Title>
 			{!catalogue.data.loaded && (
 				<Notice tone="warn" title={t('desktop.wizard.models.loadFailed')}>
-					<Button onClick={() => catalogue.refetch()} size="compact-sm" variant="default">
+					<Button onClick={() => catalogue.refetch()} size="xs" variant="default">
 						{t('desktop.oneOff.tryAgain')}
 					</Button>
 				</Notice>

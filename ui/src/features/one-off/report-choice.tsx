@@ -44,7 +44,7 @@ function ReportSettingsFields({ view, form, update }: ReportProps) {
 			/>
 			<Group gap="sm" wrap="nowrap">
 				<PathText size="sm">{folderOf(view, form)}</PathText>
-				<Button loading={pick.isPending} onClick={() => pick.mutate()} size="compact-sm" variant="default">
+				<Button loading={pick.isPending} onClick={() => pick.mutate()} size="xs" variant="default">
 					{t('desktop.oneOff.chooseFolder')}
 				</Button>
 			</Group>
@@ -62,7 +62,7 @@ export function ReportChoice({ view, form, update }: ReportProps) {
 				{t('desktop.oneOff.report', { formats, language, folder: folderOf(view, form) })}
 			</PathText>
 			{!form.open && (
-				<Button onClick={() => update({ open: true })} px={0} size="compact-sm" variant="transparent" w="fit-content">
+				<Button onClick={() => update({ open: true })} px={0} size="xs" variant="transparent" w="fit-content">
 					{t('desktop.oneOff.changeReport')}
 				</Button>
 			)}
