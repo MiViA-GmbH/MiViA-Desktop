@@ -26,4 +26,7 @@
 	bottom: 8px;
 	display: flex;
 	gap: 4px;
+	padding: 4px;
+	background: var(--mantine-color-white);
+	border-radius: var(--mantine-radius-sm);
 }

@@ -61,7 +61,7 @@ function Body({ list }: { list: FieldList }) {
 				{t('desktop.privacy.retention', { days: list.retentionDays })}
 			</Text>
 			<ScrollArea.Autosize
-				mah="55vh"
+				mah="min(55vh, calc(100vh - 260px))"
 				type="auto"
 				viewportProps={{ tabIndex: 0, 'aria-label': t('desktop.privacy.whatIsSent') }}
 			>

@@ -160,7 +160,8 @@ function useDrag(panBy: (dx: number, dy: number) => void) {
 }
 
 export function TieredImageViewer({ display, view, width, height, caption, onMaxZoom }: ViewerProps) {
-	const ref = useRef<HTMLDivElement>(null);
+	const { t } = useTranslation();
+	const ref = useRef<HTMLElement>(null);
 	const box = useElementSize(ref);
 	const image: Size = { width, height };
 	const ratio = window.devicePixelRatio;
@@ -171,7 +172,13 @@ export function TieredImageViewer({ display, view, width, height, caption, onMax
 	useWheelZoom(ref, (factor, x, y) => zoomTo(placed.zoom * factor, x, y));
 	const drag = useDrag(panBy);
 	return (
-		<div className={classes.viewer} data-zoomed={placed.zoom > 1} ref={ref} {...drag}>
+		<section
+			aria-label={t('desktop.preview.viewer')}
+			className={classes.viewer}
+			data-zoomed={placed.zoom > 1}
+			ref={ref}
+			{...drag}
+		>
 			{fit.width > 0 && (
 				<img
 					alt={caption}
@@ -187,6 +194,6 @@ export function TieredImageViewer({ display, view, width, height, caption, onMax
 				/>
 			)}
 			<Controls max={max} zoom={placed.zoom} zoomTo={zoomTo} />
-		</div>
+		</section>
 	);
 }
