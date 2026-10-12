@@ -1,3 +1,4 @@
+use mivia_application::errors::report_file_error;
 use mivia_application::pipeline::SavedCheck;
 use mivia_application::report_settings::ReportSettings;
 use mivia_domain::ids::{HOUR_MS, MINUTE_MS, SECOND_MS, Timestamp};
@@ -360,9 +361,17 @@ async fn opening_a_saved_report_checks_its_hash() {
     ));
     line.world.fs.vanish(&path);
     line.world.fs.vanish(&win(REPORTS));
-    assert_eq!(
-        line.pipeline.check_saved_report(part).await.unwrap(),
-        SavedCheck::Missing
+    let SavedCheck::Missing(Some(gone)) = line.pipeline.check_saved_report(part).await.unwrap()
+    else {
+        panic!("saved report not reported missing");
+    };
+    let error = report_file_error("reportMissing", Some(&gone), "test");
+    let fields = error.fields.unwrap();
+    assert_eq!(fields.get("name").map(String::as_str), gone.file_name());
+    assert!(
+        saved
+            .iter()
+            .any(|name| Some(name.as_str()) == gone.file_name())
     );
     line.finish().await;
 }

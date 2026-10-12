@@ -1,3 +1,4 @@
+use mivia_domain::path::WinPath;
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
 use mivia_ports::store::{StoreError, TxError};
 
@@ -76,4 +77,12 @@ pub fn history_error(error: &HistoryError, site: &str) -> AppError {
 
 pub fn not_found(code: &str, site: &str) -> AppError {
     logged(AppErrorKind::NotFound, Some(code), code.to_owned(), site)
+}
+
+pub fn report_file_error(code: &str, path: Option<&WinPath>, site: &str) -> AppError {
+    let mut failure = not_found(code, site);
+    if let Some(name) = path.and_then(WinPath::file_name) {
+        failure.fields = Some(Box::new([("name".to_owned(), name.to_owned())].into()));
+    }
+    failure
 }

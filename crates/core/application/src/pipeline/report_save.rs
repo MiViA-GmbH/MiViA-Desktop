@@ -14,7 +14,7 @@ use super::{Pipeline, PipelineError, Tick};
 pub enum SavedCheck {
     Intact(WinPath),
     Changed(WinPath),
-    Missing,
+    Missing(Option<WinPath>),
 }
 
 struct Plan {
@@ -111,12 +111,12 @@ impl Pipeline {
             .write(move |tx, scope| tx.reports(scope).saved_file(id))
             .await?;
         let Some(saved) = saved else {
-            return Ok(SavedCheck::Missing);
+            return Ok(SavedCheck::Missing(None));
         };
         let check = match self.ports.fs.digest(&saved.path).await {
             Ok(found) if found == (saved.size, saved.sha256) => SavedCheck::Intact(saved.path),
             Ok(_) => SavedCheck::Changed(saved.path),
-            Err(_) => SavedCheck::Missing,
+            Err(_) => SavedCheck::Missing(Some(saved.path)),
         };
         if matches!(check, SavedCheck::Changed(_)) {
             tracing::warn!(part = id.0, "report.changedAfterSave");

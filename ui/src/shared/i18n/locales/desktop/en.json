@@ -290,6 +290,8 @@
 			"actionFailed": "That did not work. Try again in a moment.",
 			"reportChanged": "This file was changed after MiViA Desktop saved it.",
 			"reportMissing": "This report file was moved or deleted outside MiViA Desktop.",
+			"reportMissingName": "The report “{{name}}” was moved or deleted outside MiViA Desktop.",
+			"reportChangedName": "The report “{{name}}” was changed after MiViA Desktop saved it.",
 			"notFoundTitle": "Not found",
 			"notFoundText": "This page does not exist any more.",
 			"toOverview": "Back to Overview",

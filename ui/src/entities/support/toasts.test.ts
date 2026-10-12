@@ -5,7 +5,7 @@ import en from '../../shared/i18n/locales/desktop/en.json';
 import type { AppError } from '../../shared/ipc/bindings';
 import { failureMessage, outcomeMessage } from './toasts';
 
-function appError(code: string | null): AppError {
+function appError(code: string | null, fields: Record<string, string> | null = null): AppError {
 	return {
 		kind: 'validation',
 		code,
@@ -14,7 +14,7 @@ function appError(code: string | null): AppError {
 		reportable: false,
 		traceId: null,
 		computationId: null,
-		fields: null,
+		fields,
 	};
 }
 
@@ -34,5 +34,13 @@ describe('support toasts', () => {
 		expect(failureMessage(appError('reportExpired'))).toContain('no longer available');
 		expect(failureMessage(appError('somethingNew'))).toBe('That did not work. Try again in a moment.');
 		expect(failureMessage(new Error('boom'))).toBe('That did not work. Try again in a moment.');
+	});
+
+	it('names the report file that was moved, deleted or changed', () => {
+		expect(failureMessage(appError('reportMissing', { name: 'Charge 88-214.pdf' }))).toBe(
+			'The report “Charge 88-214.pdf” was moved or deleted outside MiViA Desktop.',
+		);
+		expect(failureMessage(appError('reportChanged', { name: 'a.csv' }))).toContain('“a.csv” was changed');
+		expect(failureMessage(appError('reportMissing'))).toContain('This report file was moved');
 	});
 });

@@ -1,6 +1,6 @@
 use std::io;
 
-use mivia_application::errors::{not_found, pipeline_error};
+use mivia_application::errors::{pipeline_error, report_file_error};
 use mivia_application::pipeline::SavedCheck;
 use mivia_domain::ids::ReportPartId;
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
@@ -61,8 +61,12 @@ pub(crate) async fn target(ready: &Ready, target: OpenTarget) -> Result<(), AppE
     let path = match check {
         SavedCheck::Intact(path) => path,
         SavedCheck::Changed(path) if reveal => path,
-        SavedCheck::Changed(_) => return Err(not_found("reportChanged", SITE)),
-        SavedCheck::Missing => return Err(not_found("reportMissing", SITE)),
+        SavedCheck::Changed(path) => {
+            return Err(report_file_error("reportChanged", Some(&path), SITE));
+        }
+        SavedCheck::Missing(path) => {
+            return Err(report_file_error("reportMissing", path.as_ref(), SITE));
+        }
     };
     let path = path.to_string();
     let action = if reveal {

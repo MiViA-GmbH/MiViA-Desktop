@@ -132,7 +132,7 @@ const STATES: State[] = [
 		path: '/?scenario=failure',
 		act: async (c) => {
 			await press(c, 'desktop.folder.latestReport');
-			await visible(c, 'desktop.errors.reportMissing');
+			await visible(c, 'desktop.errors.reportMissingName');
 		},
 	},
 	{

@@ -24,6 +24,11 @@ const MESSAGES = {
 	noDownloads: 'desktop.errors.noDownloads',
 } as const;
 
+const NAMED = {
+	reportChanged: 'desktop.errors.reportChangedName',
+	reportMissing: 'desktop.errors.reportMissingName',
+} as const;
+
 const OUTCOMES = {
 	sent: 'desktop.support.sent',
 	queued: 'desktop.support.queued',
@@ -36,7 +41,12 @@ function isKnown(code: string | null | undefined): code is keyof typeof MESSAGES
 
 export function failureMessage(error: unknown): string {
 	const code = isAppError(error) ? error.code : null;
-	const missing = isAppError(error) ? (error.fields?.missing ?? '') : '';
+	const fields = isAppError(error) ? error.fields : null;
+	const missing = fields?.missing ?? '';
+	const name = fields?.name;
+	if (name && (code === 'reportChanged' || code === 'reportMissing')) {
+		return i18n.t(NAMED[code], { name });
+	}
 	return i18n.t(isKnown(code) ? MESSAGES[code] : 'desktop.errors.actionFailed', { missing });
 }
 

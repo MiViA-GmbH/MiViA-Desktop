@@ -53,7 +53,7 @@ const FAILURE: AppError = {
 	reportable: true,
 	traceId: null,
 	computationId: null,
-	fields: null,
+	fields: { name: 'Probe 4709 42CrMo4 Längsschliff.pdf' },
 };
 
 function holds() {
