@@ -424,6 +424,7 @@
 			"title": "History backup",
 			"noFolder": "Daily backups are kept on this PC only.",
 			"lastCopy": "Last copy: {{date}}",
+			"newest": "{{date}} (newest)",
 			"choose": "Choose backup folder",
 			"remove": "Stop copying",
 			"restore": "Restore history from backup",

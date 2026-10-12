@@ -25,13 +25,14 @@ function useFolder() {
 	});
 }
 
-function BackupChoice({ backup }: { backup: BackupView }) {
+function BackupChoice({ backup, newest }: { backup: BackupView; newest: boolean }) {
 	const { t } = useTranslation();
 	const where = backup.inFolder ? t('desktop.backup.inFolder') : t('desktop.backup.onThisPc');
+	const day = formatDay(backup.date);
 	return (
 		<Radio
 			description={`${where} · ${t('desktop.backup.series', { count: backup.series })}`}
-			label={formatDay(backup.date)}
+			label={newest ? t('desktop.backup.newest', { date: day }) : day}
 			value={backup.id}
 		/>
 	);
@@ -40,6 +41,7 @@ function BackupChoice({ backup }: { backup: BackupView }) {
 function RestoreDialog({ backups, onClose }: { backups: BackupView[]; onClose: () => void }) {
 	const { t } = useTranslation();
 	const [chosen, setChosen] = useState<string | null>(null);
+	const latest = backups.reduce((max, backup) => (backup.date > max ? backup.date : max), '');
 	const restore = useMutation({
 		mutationFn: (id: string) => commands.restoreBackup(id),
 		onSuccess: () => window.location.reload(),
@@ -67,7 +69,7 @@ function RestoreDialog({ backups, onClose }: { backups: BackupView[]; onClose: (
 				<Radio.Group onChange={setChosen} value={chosen}>
 					<Stack gap="sm">
 						{backups.map((backup) => (
-							<BackupChoice backup={backup} key={backup.id} />
+							<BackupChoice backup={backup} key={backup.id} newest={backup.date === latest} />
 						))}
 					</Stack>
 				</Radio.Group>

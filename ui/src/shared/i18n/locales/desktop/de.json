@@ -424,6 +424,7 @@
 			"title": "Sicherung des Verlaufs",
 			"noFolder": "Tägliche Sicherungen liegen nur auf diesem PC.",
 			"lastCopy": "Letzte Kopie: {{date}}",
+			"newest": "{{date}} (neueste)",
 			"choose": "Sicherungsordner wählen",
 			"remove": "Nicht mehr kopieren",
 			"restore": "Verlauf aus Sicherung wiederherstellen",
