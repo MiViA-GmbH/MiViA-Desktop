@@ -55,6 +55,8 @@ jobs:
           persist-credentials: false
       - name: Install toolchains without cache
         uses: moonrepo/setup-toolchain@261c62cb5b0f580c7be7c8cd0f023a2e96756095 # v0.6.4
+        env:
+          RUSTUP_AUTO_INSTALL: "0"
         with:
           proto-version: "0.62.3"
           auto-install: true
@@ -62,7 +64,7 @@ jobs:
       - name: Install node packages
         run: pnpm install --frozen-lockfile
       - name: Build
-        run: pnpm tauri build --bundles nsis
+        run: pnpm tauri build --bundles nsis --config src-tauri/tauri.release.conf.json
       - name: Upload nightly-release
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -87,6 +89,10 @@ jobs:
         with:
           profile: windows-ci
           rust: "true"
+      - name: Install node packages
+        run: pnpm install --frozen-lockfile
+      - name: Build the measured app
+        run: node scripts/e2e.mjs --build-only
       - name: Download the nightly build
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -119,6 +125,10 @@ jobs:
         with:
           profile: windows-ci
           rust: "true"
+      - name: Install node packages
+        run: pnpm install --frozen-lockfile
+      - name: Build the measured app
+        run: node scripts/e2e.mjs --build-only
       - name: Download the nightly build
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -151,6 +161,10 @@ jobs:
         with:
           profile: windows-ci
           rust: "true"
+      - name: Install node packages
+        run: pnpm install --frozen-lockfile
+      - name: Build the measured app
+        run: node scripts/e2e.mjs --build-only
       - name: Download the nightly build
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -183,6 +197,10 @@ jobs:
         with:
           profile: windows-ci
           rust: "true"
+      - name: Install node packages
+        run: pnpm install --frozen-lockfile
+      - name: Build the measured app
+        run: node scripts/e2e.mjs --build-only
       - name: Download the nightly build
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -224,7 +242,7 @@ jobs:
         shell: bash
         env:
           SHARD: ${{ matrix.shard }}
-        run: cargo xtask e2e full --shard "$SHARD"
+        run: node scripts/e2e.mjs --shard "$SHARD/2"
 
   windows-os:
     name: Windows OS adapter
@@ -354,7 +372,7 @@ jobs:
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
-          allowed-endpoints: api.github.com:443 github.com:443 updates.mivia.ai:443
+          allowed-endpoints: api.github.com:443 github.com:443 updates.mivia.ai:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
