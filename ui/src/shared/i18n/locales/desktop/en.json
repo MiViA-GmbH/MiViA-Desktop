@@ -55,11 +55,11 @@
 			},
 			"networkBlocked": {
 				"title": "The network has blocked MiViA since {{time}}.",
-				"proxyAuth": "Your network requires a proxy sign-in that MiViA Desktop does not support. Your images are safe. Ask your IT to allow {{host}} without proxy sign-in.",
-				"tls": "The secure connection to {{host}} could not be verified (certificate issued by “{{issuer}}”). If your company inspects HTTPS traffic, IT must install its root certificate in Windows or exempt {{host}}. Your images are safe.",
-				"tlsNoIssuer": "The secure connection to {{host}} could not be verified. If your company inspects HTTPS traffic, IT must install its root certificate in Windows or exempt {{host}}. Your images are safe.",
-				"proxyRefused": "Your network’s proxy refuses connections to {{host}}. Your images are safe. Ask your IT to allow {{host}}.",
-				"redirect": "This network needs a sign-in first (for example guest Wi-Fi). Open a web page in your browser and sign in. Your images are safe."
+				"proxyAuth": "The proxy asks for a sign-in that MiViA Desktop does not support. Images are safe.",
+				"tls": "The secure connection to {{host}} could not be verified (certificate from “{{issuer}}”). Images are safe.",
+				"tlsNoIssuer": "The secure connection to {{host}} could not be verified. Images are safe.",
+				"proxyRefused": "The proxy refuses connections to {{host}}. Images are safe.",
+				"redirect": "This network needs a sign-in in the browser first, for example guest Wi-Fi. Images are safe."
 			},
 			"accessKey": {
 				"title": "The access key no longer works."

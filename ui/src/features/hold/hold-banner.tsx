@@ -179,8 +179,8 @@ function Banner({ hold }: { hold: HoldView }) {
 			radius={0}
 			role="status"
 		>
-			<Group gap="md" justify="space-between" wrap="nowrap">
-				<Text c="dark.7" size="sm">
+			<Group gap="md" justify="space-between">
+				<Text c="dark.7" flex="1 1 320px" size="sm">
 					<Text fw={600} inherit span>
 						{t(look.title, { time: formatTime(hold.since) })}
 					</Text>{' '}
