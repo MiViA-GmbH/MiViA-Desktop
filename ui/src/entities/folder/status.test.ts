@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { t } from '../../shared/i18n/testing';
 import type { BatchSummary, FolderView, HoldKind } from '../../shared/ipc/bindings';
-import { folderStatus } from './status';
+import { folderStatus, monogram } from './status';
 
 const SERIES: BatchSummary = {
 	id: '1',
@@ -52,5 +52,16 @@ describe('folder status', () => {
 		[{}, [], 'Waiting for new images'],
 	])('case %#', (extra, holds, label) => {
 		expect(folderStatus({ ...FOLDER, ...extra }, holds as HoldKind[], t).label).toBe(label);
+	});
+});
+
+describe('monogram', () => {
+	it.each([
+		['Schliffbilder Mikroskop 1', 'SM'],
+		['einschlüsse_labor', 'EL'],
+		['Archiv', 'AR'],
+		['', ''],
+	])('%s', (name, letters) => {
+		expect(monogram(name)).toBe(letters);
 	});
 });

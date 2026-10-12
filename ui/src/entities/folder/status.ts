@@ -35,3 +35,9 @@ export function folderStatus(folder: FolderView, holds: HoldKind[], t: TFunction
 export function quietMinutes(folder: FolderView): number {
 	return Math.max(1, Math.round(folder.quietSeconds / 60));
 }
+
+export function monogram(name: string): string {
+	const words = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+	const letters = words.length > 1 ? `${words[0]?.[0]}${words[1]?.[0]}` : (words[0] ?? '').slice(0, 2);
+	return letters.toUpperCase();
+}

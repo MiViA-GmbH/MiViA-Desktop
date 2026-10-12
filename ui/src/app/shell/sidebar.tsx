@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { accountQuery } from '../../entities/account/queries';
 import { foldersQuery } from '../../entities/folder/queries';
-import { folderStatus } from '../../entities/folder/status';
+import { folderStatus, monogram } from '../../entities/folder/status';
 import { holdsQuery } from '../../entities/hold/queries';
 import { AddFolderIcon } from '../../shared/ui/icons';
 import type { Tone } from '../../shared/ui/tone';
@@ -54,6 +54,20 @@ function Item({ link: renderLink, active, label, icon, rail, description, tone }
 	);
 }
 
+function Monogram({ name, tone }: { name: string; tone: Tone }) {
+	const marked = tone === 'waiting' || tone === 'problem';
+	return (
+		<Box pos="relative" w={18}>
+			<Text fw={700} fz={11} lh="18px" ta="center">
+				{monogram(name)}
+			</Text>
+			{marked && (
+				<Box bg="currentColor" h={6} pos="absolute" right={-4} style={{ borderRadius: '50%' }} top={-2} w={6} />
+			)}
+		</Box>
+	);
+}
+
 function Folders({ rail }: { rail: boolean }) {
 	const { t } = useTranslation();
 	const path = useLocation({ select: (location) => location.pathname });
@@ -76,7 +90,7 @@ function Folders({ rail }: { rail: boolean }) {
 						<Item
 							active={folder.id === active}
 							description={status.label}
-							icon={<FolderIcon {...ICON} />}
+							icon={rail ? <Monogram name={folder.name} tone={status.tone} /> : <FolderIcon {...ICON} />}
 							key={folder.id}
 							label={folder.name}
 							link={(props) => <Link params={{ folderId: folder.id }} to="/folders/$folderId" {...props} />}
