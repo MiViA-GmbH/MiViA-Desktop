@@ -11,7 +11,7 @@ use super::cx::{Ready, parse_id};
 use super::preview;
 
 const SITE: &str = "open_target";
-const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-API/releases";
+const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-Desktop/releases";
 const INFO_MAIL: &str = "mailto:info@mivia.ai";
 
 fn opened(result: Result<io::Result<()>, tokio::task::JoinError>) -> Result<(), AppError> {

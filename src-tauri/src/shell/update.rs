@@ -28,7 +28,7 @@ use plugin::{Endpoints, Keys, Limits, Parts, PluginUpdater};
 
 pub(crate) const STABLE: &str = "https://updates.mivia.ai/stable/latest.json";
 pub(crate) const BETA: &str = "https://updates.mivia.ai/beta/latest.json";
-pub(crate) const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-API/releases/download/";
+pub(crate) const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-Desktop/releases/download/";
 pub(crate) const SIGNER_EKU: &str = "1.3.6.1.4.1.311.97.0";
 pub(crate) const SIGNER_EKU_IS_PLACEHOLDER: bool = true;
 pub(crate) const SIGNER_ROOT: &str =
