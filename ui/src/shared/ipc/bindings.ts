@@ -68,6 +68,7 @@ export const commands = {
 	report: ReportFolderView | null,
 } | null>("pick_folder", { purpose }),
 	addFolder: (input: NewFolderInput) => __TAURI_INVOKE<string>("add_folder", { input }),
+	relocateFolder: (id: string, folderPick: string) => __TAURI_INVOKE<null>("relocate_folder", { id, folderPick }),
 	switchAccount: () => __TAURI_INVOKE<ConnectOutcome>("switch_account"),
 	signOut: () => __TAURI_INVOKE<null>("sign_out"),
 	setIntegration: (autostart: boolean | null, explorer: boolean | null) => __TAURI_INVOKE<IntegrationView>("set_integration", { autostart, explorer }),

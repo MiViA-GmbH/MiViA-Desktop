@@ -100,6 +100,16 @@ pub(crate) async fn add_folder(
 
 #[tauri::command]
 #[specta::specta]
+pub(crate) async fn relocate_folder(
+    cx: State<'_, Cx>,
+    id: String,
+    folder_pick: String,
+) -> Result<(), AppError> {
+    folders::relocate(&cx, &id, &folder_pick).await
+}
+
+#[tauri::command]
+#[specta::specta]
 pub(crate) async fn switch_account(
     app: AppHandle,
     cx: State<'_, Cx>,

@@ -33,6 +33,7 @@ const COMMANDS: &[&str] = &[
     "quit_app",
     "pick_folder",
     "add_folder",
+    "relocate_folder",
     "switch_account",
     "sign_out",
     "set_integration",

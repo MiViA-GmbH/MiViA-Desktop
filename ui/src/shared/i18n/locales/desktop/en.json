@@ -102,6 +102,8 @@
 			"earlierSeries": "Earlier image series",
 			"noSeriesTitle": "No image series yet",
 			"noSeriesText": "Waiting for new images. Images already in the folder are not analyzed.",
+			"noSeriesPaused": "Paused. New images wait in the folder until you resume.",
+			"relocate": "Choose new location",
 			"reportsPanel": "Reports",
 			"reportFolder": "Report folder",
 			"pathWithReports": "{{path}} → reports in {{reports}}",

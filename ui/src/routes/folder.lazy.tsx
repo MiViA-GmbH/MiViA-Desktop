@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { foldersQuery } from '../entities/folder/queries';
+import { RelocateButton } from '../entities/folder/relocate-button';
 import { useOrigin } from '../entities/series/origin';
 import { historyQuery } from '../entities/series/queries';
 import { NO_FILTER } from '../entities/series/search';
@@ -54,7 +55,7 @@ function FolderPage({ folder, tab, children }: FolderPageProps) {
 	return (
 		<>
 			<PageHeader
-				actions={<PauseButton folder={folder} />}
+				actions={folder.missing ? undefined : <PauseButton folder={folder} />}
 				meta={
 					<PathText inherit>
 						{folder.reportFolder
@@ -92,8 +93,13 @@ function EarlierSeries({ folder }: { folder: FolderView }) {
 	const origin = useOrigin([folder]);
 	const filter = { ...NO_FILTER, folder: folder.id };
 	const rows = (useQuery(historyQuery(filter)).data?.rows ?? []).slice(0, EARLIER).map((row) => row.summary);
-	if (!folder.openSeries && rows.length === 0) {
-		return <EmptyState text={t('desktop.folder.noSeriesText')} title={t('desktop.folder.noSeriesTitle')} />;
+	if (!(folder.openSeries || folder.missing) && rows.length === 0) {
+		return (
+			<EmptyState
+				text={folder.paused ? t('desktop.folder.noSeriesPaused') : t('desktop.folder.noSeriesText')}
+				title={t('desktop.folder.noSeriesTitle')}
+			/>
+		);
 	}
 	if (rows.length === 0) {
 		return null;
@@ -124,6 +130,11 @@ function FolderSeries() {
 	}
 	return (
 		<FolderPage folder={folder} tab="series">
+			{folder.missing && (
+				<Notice title={t('desktop.attention.folderNotFound')} tone="error">
+					<RelocateButton folderId={folder.id} size="xs" />
+				</Notice>
+			)}
 			{folder.waitingSince && <Notice tone="info">{t('desktop.folder.waitingDetail', { path: folder.path })}</Notice>}
 			<OpenSeriesCard folder={folder} />
 			<EarlierSeries folder={folder} />

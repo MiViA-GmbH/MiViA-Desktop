@@ -5,7 +5,7 @@ use mivia_application::errors::intake_error;
 use mivia_application::intake::AddFolder;
 use mivia_application::report_settings::ReportSettings;
 use mivia_application::setup::{KnownRoots, classify_folder, quiet_ms};
-use mivia_domain::ids::ModelChoice;
+use mivia_domain::ids::{FolderId, ModelChoice};
 use mivia_domain::label::LabelRule;
 use mivia_domain::naming::Language;
 use mivia_domain::output::{ProbeResult, ReportFolder};
@@ -21,7 +21,7 @@ use mivia_ports::ipc::setup::{ModelChoiceView, ReportMode};
 use mivia_ports::store::StoreExt;
 use tauri::AppHandle;
 
-use super::cx::{Cx, Ready};
+use super::cx::{Cx, Ready, parse_id};
 use super::setup::language;
 use super::telemetry::folder_added;
 
@@ -262,6 +262,23 @@ fn invalid(code: &'static str) -> AppError {
         code.to_owned(),
         "add_folder",
     )
+}
+
+pub(crate) async fn relocate(cx: &Cx, id: &str, folder_pick: &str) -> Result<(), AppError> {
+    const SITE: &str = "relocate_folder";
+    let ready = cx.ready().await;
+    let folder = FolderId(parse_id(id, SITE)?);
+    let path = cx
+        .setup
+        .pick(folder_pick)
+        .ok_or_else(|| invalid("pickExpired"))?;
+    ready
+        .intake()?
+        .relocate_folder(folder, &path)
+        .await
+        .map_err(|error| intake_error(&error, SITE))?;
+    cx.setup.used_pick(folder_pick);
+    Ok(())
 }
 
 pub(crate) async fn add(cx: &Cx, input: NewFolderInput) -> Result<String, AppError> {

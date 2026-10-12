@@ -70,6 +70,7 @@ macro_rules! app_commands {
             setup::quit_app,
             setup::pick_folder,
             setup::add_folder,
+            setup::relocate_folder,
             setup::switch_account,
             setup::sign_out,
             setup::set_integration,

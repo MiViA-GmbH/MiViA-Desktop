@@ -45,6 +45,7 @@
 		"allow-quit-app",
 		"allow-pick-folder",
 		"allow-add-folder",
+		"allow-relocate-folder",
 		"allow-switch-account",
 		"allow-sign-out",
 		"allow-set-integration",

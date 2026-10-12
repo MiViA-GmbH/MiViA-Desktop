@@ -5,6 +5,7 @@ import type { TFunction } from 'i18next';
 import { Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { RelocateButton } from '../../entities/folder/relocate-button';
 import { commands } from '../../shared/ipc';
 import type { AttentionSeries, NeedsAttention } from '../../shared/ipc/bindings';
 import { FolderNotFoundIcon, ImageProblemIcon, ReportFailureIcon } from '../../shared/ui/icons';
@@ -99,7 +100,11 @@ function missingRow(item: Missing, t: TFunction): Row {
 		actions: (
 			<>
 				{item.unreachableSince && <CheckAgain folderId={item.folderId} />}
-				<FolderAction folderId={item.folderId} />
+				{item.unreachableSince ? (
+					<FolderAction folderId={item.folderId} />
+				) : (
+					<RelocateButton folderId={item.folderId} size="xs" />
+				)}
 			</>
 		),
 	};

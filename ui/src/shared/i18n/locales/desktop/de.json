@@ -102,6 +102,8 @@
 			"earlierSeries": "Frühere Bildserien",
 			"noSeriesTitle": "Noch keine Bildserie",
 			"noSeriesText": "Wartet auf neue Bilder. Bilder, die bereits im Ordner liegen, werden nicht ausgewertet.",
+			"noSeriesPaused": "Pausiert. Neue Bilder warten im Ordner, bis Sie fortsetzen.",
+			"relocate": "Neuen Ort wählen",
 			"reportsPanel": "Berichte",
 			"reportFolder": "Berichtsordner",
 			"pathWithReports": "{{path}} → Berichte in {{reports}}",
