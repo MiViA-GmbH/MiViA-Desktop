@@ -60,4 +60,17 @@
 	[data-panel] :is(th, td):last-child {
 		padding-inline-end: 0;
 	}
+
+	.mantine-Group-root > .mantine-Button-root[data-variant="subtle"]:last-child:not(.mantine-Modal-content *) {
+		margin-inline-end: calc(var(--button-padding-x) * -1);
+	}
+
+	.mantine-Stack-root > .mantine-Button-root[data-variant="subtle"] {
+		margin-inline-start: calc(var(--button-padding-x) * -1);
+	}
+
+	.mantine-Accordion-control,
+	.mantine-Accordion-content {
+		padding-inline: 0;
+	}
 }
