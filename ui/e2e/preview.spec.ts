@@ -73,10 +73,10 @@ test('a result image opens in the viewer and the source comes back', async ({ pa
 	await expect(page.getByRole('button', { name: 'Show original image' })).toHaveCount(0);
 });
 
-test('an unreachable server leaves a note and Open original', async ({ page }) => {
+test('an unreachable server leaves a note and Open in Windows', async ({ page }) => {
 	await open(page, '/preview/214/1?scenario=preview-offline');
 	await expect(page.getByText('The server could not be reached.')).toBeVisible();
-	await expect(page.getByRole('button', { name: 'Open original' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Open in Windows' })).toBeVisible();
 	await structure(page);
 	await page.screenshot({ path: `${SHOTS}/p2-preview-offline-en.png` });
 });

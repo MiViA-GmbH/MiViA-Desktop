@@ -92,7 +92,7 @@
 				"alsoExisting_one": "Also analyze the existing image",
 				"alsoExisting_other": "Also analyze the {{count}} existing images",
 				"existingLater": "Images already in the folder are only analyzed if you choose that here.",
-				"uploadCost": "Uses up to {{count}} of your {{remaining}} remaining image uploads.",
+				"uploadCost": "You have {{remaining}} image uploads left. This uses up to {{count}} of them.",
 				"legacyMissing": "The input folder of the old MiViA Desktop ({{path}}) no longer exists. Choose a folder.",
 				"watchedElsewhere": "This folder is already watched by MiViA Desktop on “{{machine}}” (“{{user}}”). Images would be analyzed twice and reports saved twice. Pause or remove it on the other PC first."
 			},
@@ -171,7 +171,7 @@
 				"close": "Quit MiViA Desktop"
 			},
 			"resume": {
-				"note": "Setup is not finished yet. You are back where you left off."
+				"note": "Setup is not finished yet. Your entries are kept."
 			}
 		},
 		"addFolder": {

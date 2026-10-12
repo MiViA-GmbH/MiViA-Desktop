@@ -47,7 +47,7 @@
 				"title": "Keine Verbindung seit {{time}}."
 			},
 			"serviceUnavailable": {
-				"title": "MiViA-Dienst nicht verfügbar seit {{time}}."
+				"title": "Störung bei MiViA seit {{time}}, nicht an Ihrem PC oder Netzwerk."
 			},
 			"networkBlocked": {
 				"title": "Das Netzwerk blockiert MiViA seit {{time}}.",
@@ -66,7 +66,7 @@
 			},
 			"adminScope": {
 				"title": "Dieser Schlüssel hat Administratorrechte.",
-				"text": "Erstellen Sie in MiViA einen Schlüssel ohne Administratorrechte und verwenden Sie diesen."
+				"text": "Erstellen Sie in MiViA einen Schlüssel ohne Administratorrechte oder fragen Sie Ihre MiViA-Ansprechperson danach."
 			},
 			"license": {
 				"title": "Ihre MiViA-Lizenz ist nicht gültig.",
@@ -138,7 +138,7 @@
 			"summary": {
 				"complete": "Alle Berichte sind gespeichert und vollständig.",
 				"reportProblem": "Ein Bericht konnte nicht gespeichert oder erstellt werden.",
-				"stale": "Ein Bericht enthält nicht die neuesten Ergebnisse.",
+				"stale": "Ein Bericht wurde vor neueren Ergebnissen erstellt. „Bericht aktualisieren“ speichert eine neue Datei daneben.",
 				"problems_one": "1 Bild konnte nicht ausgewertet werden und fehlt in den Berichten.",
 				"problems_other": "{{count}} Bilder konnten nicht ausgewertet werden und fehlen in den Berichten."
 			},
@@ -175,7 +175,7 @@
 				"images": "Bilder",
 				"analyses": "Auswertungen",
 				"status": "Status",
-				"finished": "Abgeschlossen",
+				"finished": "Zeit",
 				"reports": "Berichte",
 				"name": "Name",
 				"created": "Erstellt"
@@ -195,8 +195,8 @@
 			"selected_other": "{{count}} Bildserien ausgewählt",
 			"clearSelection": "Auswahl aufheben",
 			"createReport": "Eigenen Bericht erstellen",
-			"export": "Liste exportieren",
-			"exportSeries": "Diese Bildserie exportieren",
+			"export": "Liste als CSV speichern",
+			"exportSeries": "Ergebnisse als CSV speichern",
 			"exported_one": "1 Datei nach {{folder}} exportiert",
 			"exported_other": "{{count}} Dateien nach {{folder}} exportiert",
 			"customEmptyTitle": "Noch keine eigenen Berichte",
@@ -328,7 +328,7 @@
 			"models": "Modelle",
 			"lastTime": "Wie beim letzten Mal ausgewählt ({{date}})",
 			"tryAgain": "Erneut versuchen",
-			"uploadCost": "Verbraucht bis zu {{count}} Ihrer {{remaining}} verbleibenden Bild-Uploads.",
+			"uploadCost": "Sie haben noch {{remaining}} Bild-Uploads. Das nutzt bis zu {{count}} davon.",
 			"tooMany": "MiViA wertet höchstens 1000 Bilder auf einmal aus. Verwenden Sie für größere Mengen einen Eingangsordner.",
 			"report": "Bericht: {{formats}}, {{language}} · {{folder}}",
 			"changeReport": "Berichtseinstellungen ändern",
@@ -507,7 +507,7 @@
 			"source": "Originalbild anzeigen",
 			"loading": "Vorschau wird vorbereitet…",
 			"unavailable": "Vorschau nicht verfügbar",
-			"openOriginal": "Original öffnen",
+			"openOriginal": "In Windows öffnen",
 			"zoomIn": "Vergrößern",
 			"zoomOut": "Verkleinern",
 			"zoomFit": "An Fenster anpassen",

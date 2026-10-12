@@ -47,7 +47,7 @@
 				"title": "No connection since {{time}}."
 			},
 			"serviceUnavailable": {
-				"title": "MiViA service unavailable since {{time}}."
+				"title": "MiViA has a service problem since {{time}}, not your PC or network."
 			},
 			"networkBlocked": {
 				"title": "The network has blocked MiViA since {{time}}.",
@@ -66,7 +66,7 @@
 			},
 			"adminScope": {
 				"title": "This key has administrator rights.",
-				"text": "Create a key without administrator rights in MiViA and use that one."
+				"text": "Create a key without administrator rights in MiViA, or ask your MiViA contact for one."
 			},
 			"license": {
 				"title": "Your MiViA license is not valid.",
@@ -138,7 +138,7 @@
 			"summary": {
 				"complete": "All reports saved and complete.",
 				"reportProblem": "A report could not be saved or created.",
-				"stale": "A report does not include the latest results.",
+				"stale": "A report was created before newer results arrived. Update report saves a new file next to it.",
 				"problems_one": "1 image could not be analyzed and is not in the reports.",
 				"problems_other": "{{count}} images could not be analyzed and are not in the reports."
 			},
@@ -175,7 +175,7 @@
 				"images": "Images",
 				"analyses": "Analyses",
 				"status": "Status",
-				"finished": "Finished",
+				"finished": "Time",
 				"reports": "Reports",
 				"name": "Name",
 				"created": "Created"
@@ -195,8 +195,8 @@
 			"selected_other": "{{count}} image series selected",
 			"clearSelection": "Clear selection",
 			"createReport": "Create custom report",
-			"export": "Export list",
-			"exportSeries": "Export this series",
+			"export": "Save list as CSV",
+			"exportSeries": "Save results as CSV",
 			"exported_one": "Exported 1 file to {{folder}}",
 			"exported_other": "Exported {{count}} files to {{folder}}",
 			"customEmptyTitle": "No custom reports yet",
@@ -328,7 +328,7 @@
 			"models": "Models",
 			"lastTime": "Selected as last time ({{date}})",
 			"tryAgain": "Try again",
-			"uploadCost": "Uses up to {{count}} of your {{remaining}} remaining image uploads.",
+			"uploadCost": "You have {{remaining}} image uploads left. This uses up to {{count}} of them.",
 			"tooMany": "MiViA analyzes at most 1000 images at once. Use an input folder for larger sets.",
 			"report": "Report: {{formats}}, {{language}} · {{folder}}",
 			"changeReport": "Change report settings",
@@ -507,7 +507,7 @@
 			"source": "Show original image",
 			"loading": "Preparing preview…",
 			"unavailable": "Preview not available",
-			"openOriginal": "Open original",
+			"openOriginal": "Open in Windows",
 			"zoomIn": "Zoom in",
 			"zoomOut": "Zoom out",
 			"zoomFit": "Fit to window",
