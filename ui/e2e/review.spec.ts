@@ -232,6 +232,14 @@ const STATES: State[] = [
 		path: '/single-images?scenario=one-off',
 		act: (c) => expect(c.page.getByRole('dialog')).toBeVisible(),
 	},
+	{
+		id: 'd2-one-off-reports',
+		path: '/single-images?scenario=one-off',
+		act: async (c) => {
+			await expect(c.page.getByRole('dialog')).toBeVisible();
+			await press(c, 'desktop.oneOff.changeReport');
+		},
+	},
 	{ id: 'g1-account', path: '/settings/account?scenario=calm' },
 	{ id: 'g2-account-missing', path: '/?scenario=no-account' },
 	{
@@ -297,6 +305,17 @@ const STATES: State[] = [
 			await dialog(c, 'desktop.support.reportAction');
 			await press(c, 'desktop.support.review');
 			await expect(c.page.getByRole('dialog').getByRole('combobox')).toBeVisible();
+		},
+	},
+	{
+		id: 'r6-report-file',
+		path: '/settings/support?scenario=calm',
+		act: async (c) => {
+			await dialog(c, 'desktop.support.reportAction');
+			await press(c, 'desktop.support.review');
+			await c.page.getByRole('dialog').getByRole('combobox').click();
+			await c.page.getByRole('option').first().click();
+			await expect(c.page.getByRole('dialog').locator('pre')).toBeVisible();
 		},
 	},
 	{
@@ -407,6 +426,13 @@ for (const state of STATES) {
 							.getAnimations()
 							.filter((animation) => animation.effect?.getTiming().iterations !== Number.POSITIVE_INFINITY)
 							.map((animation) => animation.finished.catch(() => animation)),
+					),
+				);
+				await page.waitForFunction(() =>
+					[...document.querySelectorAll('.mantine-ScrollArea-viewport')].every(
+						(viewport) =>
+							viewport.scrollHeight <= viewport.clientHeight ||
+							viewport.parentElement?.querySelector('.mantine-ScrollArea-scrollbar'),
 					),
 				);
 				await page.mouse.move(size.width - 2, size.height - 2);
