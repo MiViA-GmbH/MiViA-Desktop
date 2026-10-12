@@ -319,11 +319,13 @@ jobs:
         with:
           profile: fuzz
           rust: "true"
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --version =0.13.2 --locked
       - name: Fuzz
         shell: bash
         env:
           SHARD: ${{ matrix.shard }}
-        run: cargo xtask fuzz --shard "$SHARD" --seconds 600
+        run: cargo xtask fuzz --shard "$SHARD/3" --seconds 600
 
   mutants:
     name: Mutants
