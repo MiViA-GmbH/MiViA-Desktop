@@ -1,6 +1,6 @@
 import '../../shared/ui/forms.css';
 
-import { Anchor, Button, Divider, Group, Modal, Stack, Text } from '@mantine/core';
+import { Accordion, Anchor, Button, Group, Modal, Stack, Text } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -81,19 +81,32 @@ export function SupportPanel() {
 		<Stack gap="md">
 			<Contact view={view} />
 			{!reporting && <Text size="sm">{t('desktop.errors.reportingOff')}</Text>}
-			<Group gap="sm">
-				{reporting && (
-					<Button onClick={() => requestReport(client, { trigger: 'manual', signature: null })}>
-						{t('desktop.support.reportAction')}
-					</Button>
-				)}
-				<Button onClick={() => setDeleting(true)} variant="default">
-					{t('desktop.support.deleteLogs')}
+			{reporting && (
+				<Button
+					onClick={() => requestReport(client, { trigger: 'manual', signature: null })}
+					style={{ alignSelf: 'flex-start' }}
+				>
+					{t('desktop.support.reportAction')}
 				</Button>
-			</Group>
+			)}
 			<PendingReports />
-			<Divider />
-			<PolicyTable policies={view.policies} />
+			<Accordion>
+				<Accordion.Item value="policies">
+					<Accordion.Control>{t('desktop.support.policiesTitle')}</Accordion.Control>
+					<Accordion.Panel>
+						<PolicyTable policies={view.policies} />
+					</Accordion.Panel>
+				</Accordion.Item>
+			</Accordion>
+			<Button
+				color="red"
+				onClick={() => setDeleting(true)}
+				size="xs"
+				style={{ alignSelf: 'flex-start' }}
+				variant="subtle"
+			>
+				{t('desktop.support.deleteLogs')}
+			</Button>
 			{deleting && <DeleteLogsDialog onClose={() => setDeleting(false)} />}
 		</Stack>
 	);

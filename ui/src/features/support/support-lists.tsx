@@ -62,9 +62,6 @@ export function PolicyTable({ policies }: { policies: PolicyRow[] }) {
 	const { t } = useTranslation();
 	return (
 		<Stack gap="xs">
-			<Text fw={500} size="sm">
-				{t('desktop.support.policiesTitle')}
-			</Text>
 			<Text c="stone.7" size="xs">
 				{t('desktop.support.policiesHelp')}
 			</Text>
