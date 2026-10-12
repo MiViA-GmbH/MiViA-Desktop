@@ -94,16 +94,16 @@ function finished(summary: BatchSummary, since: (date: string) => string): strin
 	return summary.closedAt ? formatDateTime(summary.closedAt) : since(formatDateTime(summary.openedAt));
 }
 
-function SelectAll(props: TableProps) {
+function SelectAll({ rows, selected, onToggleAll }: Pick<TableProps, 'rows' | 'selected' | 'onToggleAll'>) {
 	const { t } = useTranslation();
-	const count = props.rows.filter((row) => props.selected.has(row.summary.id)).length;
-	const all = count > 0 && count === props.rows.length;
+	const count = rows.filter((row) => selected.has(row.summary.id)).length;
+	const all = count > 0 && count === rows.length;
 	return (
 		<Checkbox
 			aria-label={t('desktop.history.selectAll')}
 			checked={all}
 			indeterminate={count > 0 && !all}
-			onChange={props.onToggleAll}
+			onChange={onToggleAll}
 			size="xs"
 		/>
 	);
@@ -151,7 +151,7 @@ export function HistoryTable(props: TableProps) {
 			<Table.Thead>
 				<Table.Tr>
 					<Table.Th w={40}>
-						<SelectAll {...props} />
+						<SelectAll onToggleAll={props.onToggleAll} rows={props.rows} selected={props.selected} />
 					</Table.Th>
 					<Table.Th>
 						<SortHeader by="name" onSort={props.onSort} sort={props.sort}>
