@@ -29,11 +29,11 @@ function PendingRow({ report }: { report: PendingReportView }) {
 				</Text>
 			</Stack>
 			<Group gap="xs" wrap="nowrap">
+				<Button color="red" loading={cancel.isPending} onClick={() => cancel.mutate()} size="xs" variant="subtle">
+					{t('desktop.support.discard')}
+				</Button>
 				<Button onClick={() => saveReport(report.reportId, client)} size="xs" variant="default">
 					{t('desktop.support.saveAndEmail')}
-				</Button>
-				<Button loading={cancel.isPending} onClick={() => cancel.mutate()} size="xs" variant="subtle">
-					{t('desktop.support.discard')}
 				</Button>
 			</Group>
 		</Group>

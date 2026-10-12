@@ -29,6 +29,14 @@
 	&[data-tone="problem"] .section {
 		color: var(--mantine-color-red-3);
 	}
+
+	&[data-active][data-tone="waiting"] .section {
+		color: var(--mantine-color-orange-7);
+	}
+
+	&[data-active][data-tone="problem"] .section {
+		color: var(--mantine-color-red-7);
+	}
 }
 
 .label {

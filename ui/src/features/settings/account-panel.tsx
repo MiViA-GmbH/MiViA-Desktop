@@ -140,7 +140,7 @@ export function AccountPanel() {
 				</Stack>
 				<SignOut account={account} />
 			</Group>
-			<Text fw={600} size="sm">
+			<Text fw={600} mt="xs" size="md">
 				{t('desktop.account.key.replace')}
 			</Text>
 			<KeyForm host={host} />

@@ -49,6 +49,10 @@
 		background: var(--mantine-color-stone-1);
 	}
 
+	:is(.mantine-CheckboxCard-card, .mantine-RadioCard-card)[data-checked] {
+		border-color: var(--mantine-color-jade-6);
+	}
+
 	[data-panel] :is(th, td):first-child {
 		padding-inline-start: 0;
 	}

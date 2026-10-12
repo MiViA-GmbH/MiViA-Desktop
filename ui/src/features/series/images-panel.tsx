@@ -48,34 +48,35 @@ export function ImagesPanel({ seriesId, items, analyses, language }: ImagesPanel
 								{analysisName(analysis, language)}
 							</Table.Th>
 						))}
+						<Table.Th w={48} />
 					</Table.Tr>
 				</Table.Thead>
 				<Table.Tbody>
 					{shown.map((item) => (
 						<Table.Tr key={item.id}>
 							<Table.Td>
-								<Group gap="xs" wrap="nowrap">
-									<Text size="sm" truncate>
-										{item.label}
-									</Text>
-									<ActionIcon
-										aria-label={t('desktop.preview.open', { name: item.label })}
-										color="stone"
-										renderRoot={(props) => (
-											<Link params={{ seriesId, itemId: item.id }} to="/preview/$seriesId/$itemId" {...props} />
-										)}
-										size="md"
-										variant="subtle"
-									>
-										<IconEye size={16} stroke={ICON_STROKE} />
-									</ActionIcon>
-								</Group>
+								<Text size="sm" title={item.label} truncate>
+									{item.label}
+								</Text>
 							</Table.Td>
 							{analyses.map((analysis) => (
 								<Table.Td key={analysis.key}>
 									<StatusBadge status={itemStatus(item, analysis.key, t)} />
 								</Table.Td>
 							))}
+							<Table.Td>
+								<ActionIcon
+									aria-label={t('desktop.preview.open', { name: item.label })}
+									color="stone"
+									renderRoot={(props) => (
+										<Link params={{ seriesId, itemId: item.id }} to="/preview/$seriesId/$itemId" {...props} />
+									)}
+									size="md"
+									variant="subtle"
+								>
+									<IconEye size={16} stroke={ICON_STROKE} />
+								</ActionIcon>
+							</Table.Td>
 						</Table.Tr>
 					))}
 				</Table.Tbody>

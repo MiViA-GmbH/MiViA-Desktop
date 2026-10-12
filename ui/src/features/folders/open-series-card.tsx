@@ -33,7 +33,7 @@ export function OpenSeriesCard({ folder }: { folder: FolderView }) {
 						{t('desktop.folder.quietHint', { minutes: Math.max(1, Math.round(folder.quietSeconds / 60)) })}
 					</Text>
 				</Stack>
-				<FinishSeriesButton seriesId={series.id} variant="default" />
+				<FinishSeriesButton seriesId={series.id} />
 			</Group>
 		</Paper>
 	);

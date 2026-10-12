@@ -1,4 +1,4 @@
-import { Anchor, Button, Checkbox, Code, Group, List, Paper, Text, ThemeIcon } from '@mantine/core';
+import { Anchor, Button, Checkbox, Group, List, Paper, Text, ThemeIcon } from '@mantine/core';
 import { ICON_STROKE } from '@mivia-ai/theme';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans, useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { commands } from '../../shared/ipc';
 import type { LegacyTake, LegacyView, SetupView } from '../../shared/ipc/bindings';
 import { CheckIcon } from '../../shared/ui/icons';
 import { Notice } from '../../shared/ui/notice';
+import path from '../../shared/ui/path.module.css';
 import { has, nextStep, previousStep } from './steps';
 import { IMPORT_KEY } from './use-advance';
 import { useGo, useSave, useSetupView, withOption } from './use-setup';
@@ -26,7 +27,7 @@ function Found({ legacy }: { legacy: LegacyView }) {
 				{legacy.inputFolder && (
 					<List.Item>
 						<Trans
-							components={{ code: <Code /> }}
+							components={{ code: <span className={path.root} /> }}
 							i18nKey="desktop.wizard.legacy.hasFolder"
 							values={{ path: legacy.inputFolder }}
 						/>
@@ -95,7 +96,11 @@ export function LegacyStep({ view, legacy }: { view: SetupView; legacy: LegacyVi
 			view={view}
 		>
 			<Text c="stone.8" size="sm">
-				<Trans components={{ code: <Code /> }} i18nKey="desktop.wizard.legacy.found" values={{ path: legacy.folder }} />
+				<Trans
+					components={{ code: <span className={path.root} /> }}
+					i18nKey="desktop.wizard.legacy.found"
+					values={{ path: legacy.folder }}
+				/>
 			</Text>
 			{legacy.flags.includes('unreadable') ? (
 				<Notice tone="warn">{t('desktop.wizard.legacy.unreadable')}</Notice>

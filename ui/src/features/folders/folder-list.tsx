@@ -54,7 +54,7 @@ function FolderRow({ folder, holds }: { folder: FolderView; holds: HoldKind[] })
 				</Stack>
 			</UnstyledButton>
 			<Group gap="xs" justify="flex-end" wrap="nowrap">
-				{folder.openSeries && <FinishSeriesButton seriesId={folder.openSeries.id} variant="subtle" />}
+				{folder.openSeries && <FinishSeriesButton seriesId={folder.openSeries.id} />}
 				{folder.paused && <ResumeButton folderId={folder.id} />}
 				<LatestReportButton folder={folder} />
 			</Group>

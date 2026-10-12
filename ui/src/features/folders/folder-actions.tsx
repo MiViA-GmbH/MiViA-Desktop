@@ -7,11 +7,11 @@ import { commands } from '../../shared/ipc';
 import type { FolderView } from '../../shared/ipc/bindings';
 import { ReportIcon, ResumeIcon } from '../../shared/ui/icons';
 
-export function FinishSeriesButton({ seriesId, variant }: { seriesId: string; variant: 'subtle' | 'default' }) {
+export function FinishSeriesButton({ seriesId }: { seriesId: string }) {
 	const { t } = useTranslation();
 	const finish = useMutation({ mutationFn: () => commands.finishSeries(seriesId) });
 	return (
-		<Button loading={finish.isPending} onClick={() => finish.mutate()} size="xs" variant={variant}>
+		<Button loading={finish.isPending} onClick={() => finish.mutate()} size="xs" variant="subtle">
 			{t('desktop.folder.finishSeries')}
 		</Button>
 	);
