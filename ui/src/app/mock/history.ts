@@ -7,6 +7,7 @@ import type {
 	HistoryFilter,
 	HistoryPage,
 	HistoryRow,
+	Language,
 } from '../../shared/ipc/bindings';
 import { ANALYSES, HISTORY_SERIES } from './fixtures';
 
@@ -123,13 +124,13 @@ const BACKUPS: BackupsView = {
 	],
 };
 
-export function historyResponses(scenario: string): Record<string, (args: Args) => unknown> {
+export function historyResponses(scenario: string, language: Language): Record<string, (args: Args) => unknown> {
 	const empty = scenario === 'empty';
 	return {
 		list_history: (args) => (empty ? { revision: '9', head: [], rows: [], next: null } : page(args)),
 		list_custom_reports: () => CUSTOM,
 		list_batch_events: () => EVENTS,
-		get_custom_report_draft: () => DRAFT,
+		get_custom_report_draft: () => ({ ...DRAFT, language }),
 		list_backups: () => BACKUPS,
 	};
 }

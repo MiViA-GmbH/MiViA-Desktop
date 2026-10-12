@@ -28,7 +28,15 @@ function NotIncluded({ analysis }: { analysis: CustomAnalysisView }) {
 	}
 	return (
 		<>
-			<Anchor component="button" onClick={() => setOpen(!open)} size="xs" ta="left" type="button" w="fit-content">
+			<Anchor
+				c="orange.8"
+				component="button"
+				onClick={() => setOpen(!open)}
+				size="xs"
+				ta="left"
+				type="button"
+				w="fit-content"
+			>
 				{t('desktop.custom.notIncluded', { count: analysis.omitted.length })}
 			</Anchor>
 			{open && (
