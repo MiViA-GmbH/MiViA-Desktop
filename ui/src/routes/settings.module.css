@@ -1,0 +1,11 @@
+.root {
+	--nl-bg: var(--mantine-color-white);
+	--nl-hover: var(--mantine-color-white);
+	--nl-color: var(--mantine-color-dark-7);
+
+	border-radius: var(--mantine-radius-sm);
+
+	&[data-active] {
+		font-weight: 600;
+	}
+}

@@ -1,4 +1,5 @@
-import { Divider, Group, NavLink, Stack } from '@mantine/core';
+import { Divider, Flex, NavLink, Stack } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { createLazyRoute, Link, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +15,7 @@ import { UpdatesPanel } from '../features/updates/updates-panel';
 import { PageHeader } from '../shared/ui/page-header';
 import { Panel } from '../shared/ui/panel';
 import { NotFound } from './errors';
+import classes from './settings.module.css';
 
 const SECTIONS = {
 	account: 'desktop.settings.account',
@@ -64,27 +66,30 @@ function Section({ section }: { section: Section }) {
 function Settings() {
 	const { t } = useTranslation();
 	const { section } = useParams({ from: '/app/settings/$section' });
+	const narrow = useMediaQuery('(max-width: 959px)') ?? false;
 	if (!isSection(section)) {
 		return <NotFound />;
 	}
 	return (
 		<>
 			<PageHeader title={t('desktop.nav.settings')} />
-			<Group align="flex-start" gap="lg" wrap="nowrap">
-				<Stack gap={2} w={200}>
+			<Flex align={narrow ? 'stretch' : 'flex-start'} direction={narrow ? 'column' : 'row'} gap={narrow ? 'md' : 'lg'}>
+				<Flex direction={narrow ? 'row' : 'column'} gap={2} w={narrow ? undefined : 200} wrap="wrap">
 					{(Object.keys(SECTIONS) as Section[]).map((key) => (
 						<NavLink
 							active={key === section}
+							classNames={classes}
 							key={key}
 							label={t(SECTIONS[key])}
 							renderRoot={(props) => <Link params={{ section: key }} to="/settings/$section" {...props} />}
+							w={narrow ? 'auto' : undefined}
 						/>
 					))}
-				</Stack>
+				</Flex>
 				<Stack flex={1} miw={0}>
 					<Section section={section} />
 				</Stack>
-			</Group>
+			</Flex>
 		</>
 	);
 }
