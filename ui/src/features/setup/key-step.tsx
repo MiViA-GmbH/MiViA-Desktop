@@ -41,12 +41,14 @@ function Connected({ connection, outcome }: { connection: ConnectionView; outcom
 	);
 }
 
-function Offline({ details }: { details: string }) {
+function Offline({ details, host }: { details: string; host: string }) {
 	const { t } = useTranslation();
 	return (
 		<Notice tone="warn">
 			<Stack align="flex-start" gap="xs">
-				<Text inherit>{t('desktop.wizard.key.autoRetry')}</Text>
+				<Text inherit>
+					{t('desktop.wizard.key.offline', { host })} {t('desktop.wizard.key.autoRetry')}
+				</Text>
 				<Button onClick={() => navigator.clipboard.writeText(details)} size="xs" variant="default">
 					{t('desktop.wizard.key.copyForIt')}
 				</Button>
@@ -146,13 +148,13 @@ export function KeyStep({ view }: { view: SetupView }) {
 				<>
 					{imported?.kind === 'rejected' && <Notice tone="warn">{t('desktop.wizard.key.importedInvalid')}</Notice>}
 					<KeyField
-						error={outcomeError(outcome, view.host, t)}
+						error={outcome?.kind === 'offline' ? null : outcomeError(outcome, view.host, t)}
 						inputRef={input}
 						onChange={setKey}
 						onPaste={(text) => text.trim().length >= 32 && connect.mutate(text)}
 						value={key}
 					/>
-					{outcome?.kind === 'offline' && <Offline details={outcome.details} />}
+					{outcome?.kind === 'offline' && <Offline details={outcome.details} host={view.host} />}
 					<KeyHelp host={view.host} />
 					<Text c="stone.7" size="xs">
 						{t('desktop.wizard.common.help', { contact: view.supportContact })}
