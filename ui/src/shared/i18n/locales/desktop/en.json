@@ -228,11 +228,12 @@
 			"lastCheck": "Last checked: {{time}}",
 			"check": "Check for updates",
 			"restart": "Restart and update",
+			"keepsAnalyses": "Running analyses are not lost.",
 			"installFailed": "Installing version {{version}} failed. This version keeps running.",
 			"report": "Report a problem",
 			"requiredTitle": "A newer version is required.",
-			"requiredText": "No update is available yet. Uploads continue.",
-			"releases": "Releases page"
+			"requiredText": "It installs by itself as soon as it is available. Everything keeps working until then.",
+			"releases": "Download page"
 		},
 		"status": {
 			"batch": {

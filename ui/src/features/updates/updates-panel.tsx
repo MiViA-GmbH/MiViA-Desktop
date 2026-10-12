@@ -32,6 +32,20 @@ function useSaveSettings() {
 
 function Status({ view }: { view: UpdateView }) {
 	const { t } = useTranslation();
+	if (view.required && !view.required.signed) {
+		return (
+			<Alert color="orange" role="status" title={t('desktop.update.requiredTitle')} variant="light">
+				<Text size="sm">{t('desktop.update.requiredText')}</Text>
+			</Alert>
+		);
+	}
+	if (view.state === 'failed') {
+		return (
+			<Alert color="orange" role="status" variant="light">
+				<Text size="sm">{t('desktop.update.failed')}</Text>
+			</Alert>
+		);
+	}
 	const key = STATUS[view.state];
 	return (
 		<Stack gap={0}>
@@ -40,7 +54,10 @@ function Status({ view }: { view: UpdateView }) {
 					{t(key, { version: view.version })}
 				</Text>
 			)}
-			{view.lastCheckAt && (
+			{(view.state === 'ready' || view.state === 'available') && (
+				<Text size="sm">{t('desktop.update.keepsAnalyses')}</Text>
+			)}
+			{view.lastCheckAt && view.state !== 'checking' && (
 				<Text c="stone.7" size="xs">
 					{t('desktop.update.lastCheck', { time: formatDateTime(view.lastCheckAt) })}
 				</Text>
@@ -63,7 +80,12 @@ function Actions({ view }: { view: UpdateView }) {
 	const installable = view.state === 'ready' || view.state === 'available';
 	return (
 		<Group gap="sm">
-			<Button loading={check.isPending || view.state === 'checking'} onClick={() => check.mutate()} variant="default">
+			<Button
+				disabled={view.state === 'downloading'}
+				loading={check.isPending || view.state === 'checking'}
+				onClick={() => check.mutate()}
+				variant="default"
+			>
 				{t('desktop.update.check')}
 			</Button>
 			{installable && (
@@ -102,7 +124,9 @@ export function UpdatesPanel() {
 	];
 	return (
 		<Stack gap="md">
-			{view.failedInstall && <FailedInstall version={view.failedInstall} />}
+			{view.failedInstall && view.failedInstall === (view.version ?? view.failedInstall) && (
+				<FailedInstall version={view.failedInstall} />
+			)}
 			<Text size="sm">{t('desktop.update.current', { version: view.current })}</Text>
 			<Select
 				allowDeselect={false}

@@ -228,11 +228,12 @@
 			"lastCheck": "Zuletzt geprüft: {{time}}",
 			"check": "Nach Updates suchen",
 			"restart": "Neu starten und aktualisieren",
+			"keepsAnalyses": "Laufende Auswertungen gehen nicht verloren.",
 			"installFailed": "Die Installation von Version {{version}} ist fehlgeschlagen. Diese Version läuft weiter.",
 			"report": "Problem melden",
 			"requiredTitle": "Eine neuere Version ist erforderlich.",
-			"requiredText": "Noch ist kein Update verfügbar. Uploads laufen weiter.",
-			"releases": "Release-Seite"
+			"requiredText": "Sie wird automatisch installiert, sobald sie verfügbar ist. Bis dahin funktioniert alles weiter.",
+			"releases": "Downloadseite"
 		},
 		"status": {
 			"batch": {
