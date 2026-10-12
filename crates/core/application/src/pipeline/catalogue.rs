@@ -16,7 +16,7 @@ fn rows(models: &[CatalogueModel]) -> Vec<CatalogueRow> {
         rows.push(CatalogueRow {
             model_id: model.model_id.clone(),
             customization_id: None,
-            names_json: json!({ "en": model.display_name, "de": model.display_name }).to_string(),
+            names_json: json!({ "en": model.name_en, "de": model.name_de }).to_string(),
         });
         rows.extend(model.customizations.iter().map(|custom| CatalogueRow {
             model_id: model.model_id.clone(),

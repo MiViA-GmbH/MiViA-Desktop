@@ -75,7 +75,10 @@ pub struct CatalogueCustomization {
 pub struct CatalogueModel {
     pub model_id: String,
     pub internal_name: String,
-    pub display_name: String,
+    pub name_en: String,
+    pub name_de: String,
+    pub description_en: String,
+    pub description_de: String,
     pub customizations: Vec<CatalogueCustomization>,
 }
 

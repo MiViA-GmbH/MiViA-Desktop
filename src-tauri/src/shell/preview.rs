@@ -1,14 +1,19 @@
+use std::collections::BTreeMap;
 use std::io;
 
 use mivia_application::errors::{not_found, pipeline_error};
 use mivia_application::pipeline::{Original, PreviewSubject, edge_bucket};
 use mivia_domain::ids::{ComputationId, SourceFileId};
+use mivia_domain::naming::Language;
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
 use mivia_ports::ipc::preview::{PreviewNote, PreviewResultsView, PreviewTarget, PreviewView};
 use mivia_ports::ipc::screens::OpenTarget;
 use mivia_ports::telemetry::{PreviewOpened, PreviewZoomMaxTier};
+use mivia_server::ModelLabels;
+use serde_json::Value;
 
 use super::cx::{Ready, parse_id};
+use super::setup;
 use super::window;
 
 const SITE: &str = "preview";
@@ -45,7 +50,47 @@ pub(crate) async fn results(
     let computation = ComputationId(parse_id(computation_id, SITE)?);
     let found = ready.pipeline()?.preview_results(computation).await;
     window::preview_shown();
-    found.map_err(|error| pipeline_error(&error, SITE))
+    let mut found = found.map_err(|error| pipeline_error(&error, SITE))?;
+    found.labels = labels(ready, found.results_json.as_deref()).await;
+    Ok(found)
+}
+
+fn collect(value: &Value, labels: &Value, found: &mut BTreeMap<String, String>) {
+    match value {
+        Value::String(text) => {
+            if let Some(label) = labels.get(text).and_then(Value::as_str) {
+                found.insert(text.clone(), label.to_owned());
+            }
+            let message = labels
+                .get("message")
+                .and_then(|messages| messages.get(text));
+            if let Some(label) = message.and_then(Value::as_str) {
+                found.insert(format!("message.{text}"), label.to_owned());
+            }
+        }
+        Value::Array(items) => items.iter().for_each(|item| collect(item, labels, found)),
+        Value::Object(fields) => fields
+            .values()
+            .for_each(|item| collect(item, labels, found)),
+        Value::Null | Value::Bool(_) | Value::Number(_) => {}
+    }
+}
+
+async fn labels(ready: &Ready, results: Option<&str>) -> BTreeMap<String, String> {
+    let mut found = BTreeMap::new();
+    let Some(results) = results.and_then(|text| serde_json::from_str::<Value>(text).ok()) else {
+        return found;
+    };
+    let lang = match setup::language(ready).await {
+        Language::De => "de",
+        Language::En => "en",
+    };
+    let services = &ready.services;
+    let served = ModelLabels::new(&services.data_dir, services.network.host()).served(lang);
+    if let Some(model) = served.get("model") {
+        collect(&results, model, &mut found);
+    }
+    found
 }
 
 pub(crate) async fn note(ready: &Ready, note: PreviewNote) -> Result<(), AppError> {
@@ -134,4 +179,36 @@ fn failed(error: &io::Error) -> AppError {
         error.to_string(),
         SITE,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeMap;
+
+    use serde_json::json;
+
+    use super::collect;
+
+    #[test]
+    fn labels_are_kept_only_for_strings_the_results_use() {
+        let labels = json!({
+            "GRAIN": "Korngröße",
+            "um": "µm",
+            "unused": "nie",
+            "message": { "low": "Zu wenig Fläche" }
+        });
+        let results =
+            json!([{ "label": "GRAIN", "unit": "um", "data": { "title": "low", "x": 3 } }]);
+        let mut found = BTreeMap::new();
+        collect(&results, &labels, &mut found);
+        let expected: BTreeMap<String, String> = [
+            ("GRAIN", "Korngröße"),
+            ("message.low", "Zu wenig Fläche"),
+            ("um", "µm"),
+        ]
+        .into_iter()
+        .map(|(key, value)| (key.to_owned(), value.to_owned()))
+        .collect();
+        assert_eq!(found, expected);
+    }
 }

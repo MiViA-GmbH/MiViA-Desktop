@@ -1,4 +1,4 @@
-use mivia_ports::server::ServerError;
+use mivia_ports::server::{ServerApi as _, ServerError};
 use mivia_server::ModelLabels;
 use serde_json::json;
 use wiremock::matchers::{header, method, path};
@@ -65,4 +65,59 @@ async fn labels_without_models_are_refused() {
         missing,
         Err(mivia_server::LabelsError::Server(ServerError::Gone))
     ));
+}
+
+#[tokio::test]
+async fn catalogue_names_come_from_the_label_bundle_per_language() {
+    let (mock, api, _) = server().await;
+    let id = "00000000-0000-0000-0000-000000000007";
+    Mock::given(method("GET"))
+        .and(path("/api/settings/available-models"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([
+            { "id": id, "name": "GRAIN_X", "displayName": "Grain X", "accessType": "PUBLIC",
+              "isDefaultVisible": true, "description_en": "Grain size." },
+            { "id": "00000000-0000-0000-0000-000000000008", "name": "UNKNOWN", "displayName": "Unknown",
+              "accessType": "PUBLIC", "isDefaultVisible": true }
+        ])))
+        .mount(&mock)
+        .await;
+    Mock::given(method("GET"))
+        .and(path(format!("/api/models/{id}/customizations")))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&mock)
+        .await;
+    Mock::given(method("GET"))
+        .and(path(
+            "/api/models/00000000-0000-0000-0000-000000000008/customizations",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&mock)
+        .await;
+    for (lang, name) in [("en", "Grain size X"), ("de", "Korngröße X")] {
+        Mock::given(method("GET"))
+            .and(path(format!("/api/languages/{lang}")))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(json!({ "model": { "GRAIN_X": name } })),
+            )
+            .mount(&mock)
+            .await;
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let api = api.with_labels(ModelLabels::new(dir.path(), "app.example.invalid"));
+    let models = api.catalogue().await.unwrap();
+    assert_eq!(
+        (models[0].name_en.as_str(), models[0].name_de.as_str()),
+        ("Grain size X", "Korngröße X")
+    );
+    assert_eq!(
+        (
+            models[0].description_en.as_str(),
+            models[0].description_de.as_str()
+        ),
+        ("Grain size.", "Grain size.")
+    );
+    assert_eq!(
+        (models[1].name_en.as_str(), models[1].name_de.as_str()),
+        ("Unknown", "Unknown")
+    );
 }

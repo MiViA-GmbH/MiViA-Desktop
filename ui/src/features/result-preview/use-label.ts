@@ -1,6 +1,8 @@
-import { useTranslation } from 'react-i18next';
+import { createContext, useContext } from 'react';
+
+export const Labels = createContext<Record<string, string>>({});
 
 export function useLabel(): (key: string | undefined) => string {
-	const { t } = useTranslation();
-	return (key) => (key ? t(`model.${key}`, { defaultValue: key, nsSeparator: false, keySeparator: false }) : '');
+	const labels = useContext(Labels);
+	return (key) => (key ? (labels[key] ?? key) : '');
 }

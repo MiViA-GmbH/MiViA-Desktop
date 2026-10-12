@@ -79,7 +79,10 @@ impl Default for ServerSim {
             catalogue: vec![CatalogueModel {
                 model_id: sim_id(9, 1),
                 internal_name: "GRAIN".to_owned(),
-                display_name: "Grain size".to_owned(),
+                name_en: "Grain size".to_owned(),
+                name_de: "Korngröße".to_owned(),
+                description_en: String::new(),
+                description_de: String::new(),
                 customizations: Vec::new(),
             }],
             labels: BTreeMap::new(),

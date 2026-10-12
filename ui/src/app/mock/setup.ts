@@ -36,12 +36,24 @@ const LEGACY: LegacyView = {
 	take: null,
 };
 
+const german = new URLSearchParams(window.location.search).get('lang') === 'de';
+
 const CATALOGUE: CatalogueView = {
 	loaded: true,
 	models: [
-		{ modelId: 'grain', name: 'Grain size', customizations: [{ id: 'c1', name: 'ASTM E112 lab' }] },
-		{ modelId: 'phases', name: 'Phase fractions', customizations: [] },
-		{ modelId: 'inclusions', name: 'Inclusions', customizations: [] },
+		{
+			modelId: 'grain',
+			name: german ? 'Korngröße' : 'Grain size',
+			description: german ? 'Korngröße nach ASTM E112 und ISO 643.' : 'Grain size by ASTM E112 and ISO 643.',
+			customizations: [{ id: 'c1', name: 'ASTM E112 lab' }],
+		},
+		{
+			modelId: 'phases',
+			name: german ? 'Phasenanteile' : 'Phase fractions',
+			description: german ? 'Flächenanteil jeder Phase im Bild.' : 'Area share of each phase in the image.',
+			customizations: [],
+		},
+		{ modelId: 'inclusions', name: german ? 'Einschlüsse' : 'Inclusions', description: '', customizations: [] },
 	],
 	preselected: [],
 	legacyGone: [],

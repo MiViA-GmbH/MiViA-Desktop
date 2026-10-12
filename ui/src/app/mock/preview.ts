@@ -1,3 +1,5 @@
+import de from '../../../../crates/adapters/server/labels/core.de.json';
+import en from '../../../../crates/adapters/server/labels/core.en.json';
 import type { PreviewTarget, PreviewView } from '../../shared/ipc/bindings';
 import results from './preview-results.json';
 
@@ -20,12 +22,24 @@ function preview(target: PreviewTarget, scenario: string): PreviewView {
 	return READY;
 }
 
-export function previewResponses(scenario: string): Record<string, (args: Args) => unknown> {
+function labels(language: string): Record<string, string> {
+	const { message, ...model } = (language === 'de' ? de : en).model;
+	const flat: Record<string, unknown> = {
+		...model,
+		...Object.fromEntries(Object.entries(message).map(([key, text]) => [`message.${key}`, text])),
+	};
+	const used = (JSON.stringify(results).match(/"[^"]*"/g) ?? []).map((text) => JSON.parse(text) as string);
+	const keys = used.flatMap((key) => [key, `message.${key}`]);
+	return Object.fromEntries(keys.flatMap((key) => (typeof flat[key] === 'string' ? [[key, flat[key]]] : [])));
+}
+
+export function previewResponses(scenario: string, language: string): Record<string, (args: Args) => unknown> {
 	return {
 		get_preview: (args) => preview(args.target as PreviewTarget, scenario),
 		get_preview_results: (args) => ({
 			resultsJson: String(args.computationId).endsWith('a') ? JSON.stringify(results) : null,
 			offline: false,
+			labels: labels(language),
 		}),
 		close_preview: () => null,
 		note_preview: () => null,

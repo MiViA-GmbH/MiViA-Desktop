@@ -68,6 +68,7 @@ pub struct CustomizationView {
 pub struct CatalogueModelView {
     pub model_id: String,
     pub name: String,
+    pub description: String,
     pub customizations: Vec<CustomizationView>,
 }
 

@@ -103,7 +103,7 @@ const responses: Record<string, unknown> = {
 const setup = {
 	...setupResponses(setupView(scenario)),
 	...historyResponses(scenario),
-	...previewResponses(scenario),
+	...previewResponses(scenario, language),
 	...privacyResponses(scenario),
 	...updateResponses(scenario),
 };

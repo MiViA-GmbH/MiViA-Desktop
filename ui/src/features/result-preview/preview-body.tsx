@@ -11,7 +11,7 @@ import { Notice } from '../../shared/ui/notice';
 import { PicturePane } from './picture-pane';
 import { ResultPreview } from './result-preview';
 import { type ImageResult, parseResults } from './results';
-import { useLabel } from './use-label';
+import { Labels, useLabel } from './use-label';
 
 type BodyProps = { item: BatchItem; analyses: AnalysisView[]; language: Language };
 type Pick = { active: PreviewTarget; onPick: (target: PreviewTarget) => void };
@@ -59,12 +59,14 @@ function Results({ computation, pick }: { computation: ComputationItem; pick: Pi
 		);
 	}
 	return (
-		<ResultPreview
-			renderImage={(result) => (
-				<ImageChoice active={pick.active} computationId={computation.id} onPick={pick.onPick} result={result} />
-			)}
-			results={results}
-		/>
+		<Labels value={data?.labels ?? {}}>
+			<ResultPreview
+				renderImage={(result) => (
+					<ImageChoice active={pick.active} computationId={computation.id} onPick={pick.onPick} result={result} />
+				)}
+				results={results}
+			/>
+		</Labels>
 	);
 }
 

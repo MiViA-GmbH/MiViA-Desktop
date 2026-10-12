@@ -237,6 +237,7 @@ export type BundleEntryView = {
 export type CatalogueModelView = {
 	modelId: string,
 	name: string,
+	description: string,
 	customizations: CustomizationView[],
 };
 
@@ -593,6 +594,7 @@ export type PreviewReason = "missing" | "tooLarge" | "unsupported" | "corrupt" |
 export type PreviewResultsView = {
 	resultsJson: string | null,
 	offline: boolean,
+	labels: { [key in string]: string },
 };
 
 export type PreviewTarget = { kind: "source"; sourceFileId: string } | { kind: "result"; computationId: string; filename: string };

@@ -104,7 +104,7 @@ const wizard = {
 	},
 	picked: async (c: Ctx) => {
 		await wizard.models(c);
-		await c.page.getByRole('checkbox', { name: 'Grain size' }).click();
+		await c.page.getByRole('checkbox', { name: /^(Grain size|Korngröße)/ }).click();
 		await expect(c.page.getByRole('combobox', { name: c.t('desktop.wizard.models.customization') })).toBeVisible();
 	},
 	finish: async (c: Ctx) => {

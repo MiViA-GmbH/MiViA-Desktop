@@ -217,7 +217,10 @@ fn grain_only() -> Vec<CatalogueModel> {
     vec![CatalogueModel {
         model_id: "grain".to_owned(),
         internal_name: "GRAIN".to_owned(),
-        display_name: "Grain size".to_owned(),
+        name_en: "Grain size".to_owned(),
+        name_de: "Korngröße".to_owned(),
+        description_en: String::new(),
+        description_de: String::new(),
         customizations: Vec::new(),
     }]
 }

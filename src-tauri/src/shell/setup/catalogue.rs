@@ -17,7 +17,16 @@ use super::wizard::failed;
 fn model_view(model: &CatalogueModel, language: Language) -> CatalogueModelView {
     CatalogueModelView {
         model_id: model.model_id.clone(),
-        name: model.display_name.clone(),
+        name: if language == Language::De {
+            model.name_de.clone()
+        } else {
+            model.name_en.clone()
+        },
+        description: if language == Language::De {
+            model.description_de.clone()
+        } else {
+            model.description_en.clone()
+        },
         customizations: model
             .customizations
             .iter()

@@ -98,7 +98,7 @@ async fn models(State(stub): State<Stub>, headers: HeaderMap) -> Response {
         Ok(models) => {
             let list: Vec<Value> = models
                 .iter()
-                .map(|m| json!({ "id": m.model_id, "name": m.internal_name, "displayName": m.display_name, "accessType": "PUBLIC", "isDefaultVisible": true }))
+                .map(|m| json!({ "id": m.model_id, "name": m.internal_name, "displayName": m.name_en, "accessType": "PUBLIC", "isDefaultVisible": true }))
                 .collect();
             Json(list).into_response()
         }

@@ -26,6 +26,7 @@ use secrecy::ExposeSecret;
 
 use crate::classify::{self, Call};
 use crate::clients::{self, HttpClients};
+use crate::labels::ModelLabels;
 
 const ERROR_BODY_LIMIT: usize = 64 * 1024;
 
@@ -36,6 +37,7 @@ pub struct HttpServerApi {
     authorizer: Arc<dyn Authorizer>,
     offset_ms: Mutex<Option<i64>>,
     deprecated: Mutex<BTreeSet<&'static str>>,
+    labels: Option<ModelLabels>,
 }
 
 pub(crate) enum Failure {
@@ -79,7 +81,14 @@ impl HttpServerApi {
             authorizer,
             offset_ms: Mutex::new(None),
             deprecated: Mutex::new(BTreeSet::new()),
+            labels: None,
         }
+    }
+
+    #[must_use]
+    pub fn with_labels(mut self, labels: ModelLabels) -> Self {
+        self.labels = Some(labels);
+        self
     }
 
     pub(crate) fn base(&self) -> &str {

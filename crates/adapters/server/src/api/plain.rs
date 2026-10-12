@@ -6,6 +6,7 @@ use mivia_ports::server::{
 };
 use reqwest::StatusCode;
 use reqwest::header::ETAG;
+use serde_json::Value;
 use uuid::Uuid;
 
 use super::HttpServerApi;
@@ -28,11 +29,25 @@ fn license(dto: &LicenseDto) -> License {
     }
 }
 
-fn model(dto: &ModelDto) -> CatalogueModel {
+fn label(labels: Option<&Value>, name: &str, fallback: &str) -> String {
+    labels
+        .and_then(|labels| labels.get("model")?.get(name)?.as_str())
+        .unwrap_or(fallback)
+        .to_owned()
+}
+
+fn model(dto: &ModelDto, en: Option<&Value>, de: Option<&Value>) -> CatalogueModel {
     CatalogueModel {
         model_id: dto.id.to_string(),
         internal_name: dto.name.clone(),
-        display_name: dto.display_name.clone(),
+        name_en: label(en, &dto.name, &dto.display_name),
+        name_de: label(de, &dto.name, &dto.display_name),
+        description_en: dto.description_en.clone().unwrap_or_default(),
+        description_de: dto
+            .description_de
+            .clone()
+            .or_else(|| dto.description_en.clone())
+            .unwrap_or_default(),
         customizations: Vec::new(),
     }
 }
@@ -101,6 +116,18 @@ impl HttpServerApi {
         })
     }
 
+    async fn served_labels(&self) -> (Option<Value>, Option<Value>) {
+        let Some(labels) = &self.labels else {
+            return (None, None);
+        };
+        for lang in ["en", "de"] {
+            if let Err(error) = labels.refresh(self, lang).await {
+                tracing::warn!(?error, lang, "labels.refreshFailed");
+            }
+        }
+        (Some(labels.served("en")), Some(labels.served("de")))
+    }
+
     pub(super) async fn fetch_license(&self) -> Result<License, ServerError> {
         let dto = self
             .authorized(|auth| async move {
@@ -122,9 +149,10 @@ impl HttpServerApi {
                 self.generated("models", result, Call::Other).await
             })
             .await?;
+        let (en, de) = self.served_labels().await;
         let mut models = Vec::new();
         for dto in &dtos {
-            let mut entry = model(dto);
+            let mut entry = model(dto, en.as_ref(), de.as_ref());
             entry.customizations = self.customizations(dto.id).await?;
             models.push(entry);
         }

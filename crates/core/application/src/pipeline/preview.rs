@@ -4,6 +4,7 @@ use mivia_ports::ipc::preview::{PreviewReason, PreviewResultsView, PreviewView};
 use mivia_ports::preview::{PreviewError, Rendered, Unavailable};
 use mivia_ports::server::{Download, plain_result_name};
 use mivia_ports::telemetry::EdgeBucket;
+use std::collections::BTreeMap;
 use uuid::Uuid;
 
 use super::{Pipeline, PipelineError};
@@ -91,18 +92,21 @@ impl Pipeline {
             return Ok(PreviewResultsView {
                 results_json: None,
                 offline: false,
+                labels: BTreeMap::new(),
             });
         };
         Ok(match self.ports.server.job_results(&job).await {
             Ok(results_json) => PreviewResultsView {
                 results_json,
                 offline: false,
+                labels: BTreeMap::new(),
             },
             Err(error) => {
                 tracing::warn!(?error, "preview.resultsFailed");
                 PreviewResultsView {
                     results_json: None,
                     offline: true,
+                    labels: BTreeMap::new(),
                 }
             }
         })

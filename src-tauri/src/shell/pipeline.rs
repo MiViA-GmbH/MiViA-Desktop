@@ -9,7 +9,7 @@ use mivia_ports::auth::CredentialStore;
 use mivia_ports::id_gen::IdGen;
 use mivia_ports::ipc::screens::AccountView;
 use mivia_ports::store::AccountScope;
-use mivia_server::{Connection, ConnectionAuthorizer, HttpIdentityApi, HttpServerApi};
+use mivia_server::{Connection, ConnectionAuthorizer, HttpIdentityApi, HttpServerApi, ModelLabels};
 use secrecy::SecretString;
 use tauri::async_runtime::JoinHandle;
 use tokio::sync::Notify;
@@ -142,6 +142,10 @@ pub(crate) fn server_api(
         Arc::clone(&services.clients),
         Arc::clone(authorizer) as _,
     )
+    .with_labels(ModelLabels::new(
+        &services.data_dir,
+        services.network.host(),
+    ))
 }
 
 pub(super) struct Started {

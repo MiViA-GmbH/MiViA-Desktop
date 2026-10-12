@@ -37,9 +37,16 @@ function ModelRow({ model, choice, host, customError, onToggle, onCustomization 
 			<Checkbox.Card checked={choice !== undefined} onClick={() => onToggle(choice === undefined)} p="sm">
 				<Group align="flex-start" gap="sm" wrap="nowrap">
 					<Checkbox.Indicator mt={2} />
-					<Text fw={600} size="sm">
-						{model.name}
-					</Text>
+					<Stack gap={2}>
+						<Text fw={600} size="sm">
+							{model.name}
+						</Text>
+						{model.description && (
+							<Text c="stone.7" size="xs">
+								{model.description}
+							</Text>
+						)}
+					</Stack>
 				</Group>
 			</Checkbox.Card>
 			{choice && model.customizations.length > 0 && (
