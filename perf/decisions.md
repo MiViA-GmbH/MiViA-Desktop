@@ -72,7 +72,8 @@ The budget row measures tree CPU over 10 minutes starting 60 s after hide, but t
 - Measured (Playwright against the mock build, History with 9 rows): 533 DOM nodes in total, 31 to 36 nodes per row, JS heap 6.6 MB after a forced GC.
 - Estimate: about 250 nodes of page chrome plus about 34 per row. One history page holds 100 rows, so the first page alone reaches about 3,650 nodes and every "Show more" adds about 3,400. The 1,500-node budget allows about 36 rows. Heap stays far below 80 MB at these sizes.
 - Why not fixed now: both rows are `tbc` (report-only), and windowing the History table is a UI change with focus, keyboard and screen reader work, not a small one.
-- Next: virtualise the History rows (or cut the page to about 30 rows with "Show more") in the UI review (M20); measure with a mock scenario that pages through several hundred rows.
+- UI review (2026-10-12): a smaller page does not meet the budget, because the U2 scenario scrolls through 10,000 rows and every "Show more" keeps the earlier rows in the DOM. Only a windowed list meets it. The windowed History list is planned after release 1, so release 1 ships with "Show more" paging and the budget stays unmet.
+- Next: virtualise the History rows after release 1, then build the U2 scenario (mock History with 10,000 rows, scroll to the end, read node count and heap) and move the row out of `tbc`.
 
 ## size.exe
 
