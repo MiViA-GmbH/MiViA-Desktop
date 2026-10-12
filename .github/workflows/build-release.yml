@@ -145,16 +145,26 @@ jobs:
             target/release/bundle/nsis/*-setup.exe
             target/release/bundle/nsis/*-setup.exe.sig
             out/*.cdx.json
+      - name: SBOM names
+        id: sbom
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag_name }}
+        run: |
+          version="${TAG#beta-}"
+          version="${version#v}"
+          echo "cargo=out/mivia-desktop-$version-cargo.cdx.json" >> "$GITHUB_OUTPUT"
+          echo "npm=out/mivia-desktop-$version-npm.cdx.json" >> "$GITHUB_OUTPUT"
       - name: Cargo SBOM attestation
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: target/release/bundle/nsis/*-setup.exe
-          sbom-path: out/cargo.cdx.json
+          sbom-path: ${{ steps.sbom.outputs.cargo }}
       - name: npm SBOM attestation
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: target/release/bundle/nsis/*-setup.exe
-          sbom-path: out/npm.cdx.json
+          sbom-path: ${{ steps.sbom.outputs.npm }}
       - name: Upload release assets
         shell: bash
         env:
