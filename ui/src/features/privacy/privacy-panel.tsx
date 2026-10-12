@@ -16,7 +16,7 @@ function CopyId({ label, value }: { label: string; value: string | null }) {
 			import('@mantine/notifications').then(({ notifications }) => notifications.show({ message, role: 'status' }));
 		});
 	return (
-		<Group gap="sm" wrap="nowrap">
+		<Group gap="sm" justify="space-between" wrap="nowrap">
 			<Stack gap={0} miw={0}>
 				<Text c="stone.7" size="xs">
 					{label}
