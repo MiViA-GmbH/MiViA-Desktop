@@ -3,7 +3,7 @@ import { ICON_STROKE, MiviaLogo } from '@mivia-ai/theme';
 import favicon from '@mivia-ai/theme/favicon.svg';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from '@tanstack/react-router';
-import { lazy, type ReactNode, Suspense } from 'react';
+import { lazy, type ReactNode, Suspense, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { accountQuery } from '../../entities/account/queries';
@@ -58,16 +58,23 @@ function Folders({ rail }: { rail: boolean }) {
 	const { t } = useTranslation();
 	const path = useLocation({ select: (location) => location.pathname });
 	const folders = useQuery(foldersQuery).data?.folders ?? [];
-	const offline = (useQuery(holdsQuery).data?.holds ?? []).length > 0;
+	const holds = (useQuery(holdsQuery).data?.holds ?? []).map((hold) => hold.kind);
+	const viewport = useRef<HTMLDivElement>(null);
+	const active = folders.find((folder) => path.startsWith(`/folders/${folder.id}`))?.id;
+	useEffect(() => {
+		if (active) {
+			viewport.current?.querySelector('[data-active]')?.scrollIntoView?.({ block: 'nearest' });
+		}
+	}, [active]);
 	return (
-		<ScrollArea flex={1} pl="xs" type="never">
+		<ScrollArea flex={1} pl="xs" type="hover" viewportRef={viewport}>
 			<Stack gap={2}>
 				{folders.map((folder) => {
-					const status = folderStatus(folder, offline, t);
+					const status = folderStatus(folder, holds, t);
 					const FolderIcon = status.icon;
 					return (
 						<Item
-							active={path.startsWith(`/folders/${folder.id}`)}
+							active={folder.id === active}
 							description={status.label}
 							icon={<FolderIcon {...ICON} />}
 							key={folder.id}
