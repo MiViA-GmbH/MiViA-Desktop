@@ -105,7 +105,7 @@
 				"wholeFolderHint": "Der Bericht wird 1 Minute nach dem Kopieren des Ordners erstellt. Jeder Unterordner erhält einen eigenen Bericht.",
 				"byHand": "Ich kopiere Bilder von Hand",
 				"byHandHint": "Der Bericht wird 5 Minuten nach dem letzten neuen Bild erstellt.",
-				"later": "Sie können eine Bildserie jederzeit mit „Bildserie jetzt abschließen“ vorzeitig beenden und dies später in den Ordnereinstellungen ändern.",
+				"later": "Sie können den Bericht jederzeit mit „Bericht jetzt erstellen“ vorzeitig erstellen und die Wartezeit später in den Ordnereinstellungen ändern.",
 				"reportsIn": "Berichte werden gespeichert in:",
 				"reportsChange": "Ändern",
 				"modeSubfolder": "Im Unterordner „{{name}}“ des Eingangsordners (empfohlen)",

@@ -431,7 +431,7 @@ Model and Customization use the MiViA web app's words so both products speak ali
 | Report again | Create report again | Bericht neu erstellen |
 | Needs attention | Needs attention | Bitte prüfen |
 | Overview | Overview | Übersicht |
-| Close batch now | Finish series now | Bildserie jetzt abschließen |
+| Close batch now | Create report now (hint: otherwise the report follows automatically after the quiet period) | Bericht jetzt erstellen |
 | Empty Model set | No model available for this folder | Kein Modell für diesen Ordner verfügbar |
 | Dismiss | Dismiss | Ausblenden |
 | Explorer entry (Send to shortcut, context-menu verbs, one name everywhere) | Analyze with MiViA | Mit MiViA auswerten |

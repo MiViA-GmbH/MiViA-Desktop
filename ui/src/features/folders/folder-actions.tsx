@@ -3,15 +3,22 @@ import { ICON_STROKE } from '@mivia-ai/theme';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
+import { quietMinutes } from '../../entities/folder/status';
 import { commands } from '../../shared/ipc';
 import type { FolderView } from '../../shared/ipc/bindings';
 import { ReportIcon, ResumeIcon } from '../../shared/ui/icons';
 
-export function FinishSeriesButton({ seriesId }: { seriesId: string }) {
+export function FinishSeriesButton({ folder, seriesId }: { folder: FolderView; seriesId: string }) {
 	const { t } = useTranslation();
 	const finish = useMutation({ mutationFn: () => commands.finishSeries(seriesId) });
 	return (
-		<Button loading={finish.isPending} onClick={() => finish.mutate()} size="xs" variant="subtle">
+		<Button
+			loading={finish.isPending}
+			onClick={() => finish.mutate()}
+			size="xs"
+			title={t('desktop.folder.quietHint', { minutes: quietMinutes(folder) })}
+			variant="subtle"
+		>
 			{t('desktop.folder.finishSeries')}
 		</Button>
 	);

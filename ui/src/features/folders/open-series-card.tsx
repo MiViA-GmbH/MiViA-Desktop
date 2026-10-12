@@ -1,6 +1,7 @@
 import { Group, Paper, Progress, Stack, Text } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 
+import { quietMinutes } from '../../entities/folder/status';
 import { seriesStatus } from '../../entities/series/status';
 import type { FolderView } from '../../shared/ipc/bindings';
 import { StatusBadge } from '../../shared/ui/status-badge';
@@ -30,10 +31,10 @@ export function OpenSeriesCard({ folder }: { folder: FolderView }) {
 						</Text>
 					</Group>
 					<Text c="stone.7" size="xs">
-						{t('desktop.folder.quietHint', { minutes: Math.max(1, Math.round(folder.quietSeconds / 60)) })}
+						{t('desktop.folder.quietHint', { minutes: quietMinutes(folder) })}
 					</Text>
 				</Stack>
-				<FinishSeriesButton seriesId={series.id} />
+				<FinishSeriesButton folder={folder} seriesId={series.id} />
 			</Group>
 		</Paper>
 	);

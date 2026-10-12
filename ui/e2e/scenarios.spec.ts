@@ -197,7 +197,7 @@ test.describe
 			await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
 			writeFileSync(join(FRESH_WATCHED, 'probe_001.jpg'), jpeg(7));
 			await expect(page.getByText(/: 1 of 1 done/)).toBeVisible({ timeout: 60_000 });
-			await page.getByRole('button', { name: 'Finish series now' }).first().click();
+			await page.getByRole('button', { name: 'Create report now' }).first().click();
 			await expect.poll(freshReports, { timeout: 120_000, intervals: [1000] }).toHaveLength(1);
 		});
 
@@ -258,7 +258,7 @@ test.describe
 				writeFileSync(join(WATCHED, `probe_00${seed}.jpg`), jpeg(seed));
 			}
 			await expect(page.getByText(/: \d of 3 done/)).toBeVisible({ timeout: 60_000 });
-			await page.getByRole('button', { name: 'Finish series now' }).first().click();
+			await page.getByRole('button', { name: 'Create report now' }).first().click();
 			await expect.poll(reports, { timeout: 120_000, intervals: [1000] }).toHaveLength(1);
 			const [name] = reports();
 			expect(name).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}-\d{2} .+ - Grain size\.pdf$/);

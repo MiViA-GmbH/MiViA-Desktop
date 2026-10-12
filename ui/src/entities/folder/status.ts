@@ -31,3 +31,7 @@ export function folderStatus(folder: FolderView, holds: HoldKind[], t: TFunction
 	}
 	return { tone: 'off', icon: WaitingIcon, label: t('desktop.folder.state.waitingImages') };
 }
+
+export function quietMinutes(folder: FolderView): number {
+	return Math.max(1, Math.round(folder.quietSeconds / 60));
+}

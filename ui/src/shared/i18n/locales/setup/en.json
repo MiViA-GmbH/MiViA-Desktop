@@ -105,7 +105,7 @@
 				"wholeFolderHint": "The report is made 1 minute after the folder is copied. Each subfolder gets its own report.",
 				"byHand": "I copy images by hand",
 				"byHandHint": "The report is made 5 minutes after the last new image.",
-				"later": "You can always finish a series early with “Finish series now”, and change this later in the folder settings.",
+				"later": "You can always create the report early with “Create report now”, and change the wait later in the folder settings.",
 				"reportsIn": "Reports are saved in:",
 				"reportsChange": "Change",
 				"modeSubfolder": "In the subfolder “{{name}}” of the input folder (recommended)",

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { foldersQuery } from '../entities/folder/queries';
 import { RelocateButton } from '../entities/folder/relocate-button';
+import { quietMinutes } from '../entities/folder/status';
 import { useOrigin } from '../entities/series/origin';
 import { historyQuery } from '../entities/series/queries';
 import { NO_FILTER } from '../entities/series/search';
@@ -148,7 +149,7 @@ function FolderSettings() {
 	if (!folder) {
 		return loaded ? <NotFound /> : null;
 	}
-	const minutes = Math.max(1, Math.round(folder.quietSeconds / 60));
+	const minutes = quietMinutes(folder);
 	return (
 		<FolderPage folder={folder} tab="settings">
 			<Panel title={t('desktop.folder.reportsPanel')}>
