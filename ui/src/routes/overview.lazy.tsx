@@ -10,6 +10,7 @@ import { foldersQuery } from '../entities/folder/queries';
 import { holdsQuery } from '../entities/hold/queries';
 import { useOrigin } from '../entities/series/origin';
 import { historyQuery } from '../entities/series/queries';
+import { updateQuery } from '../entities/update/queries';
 import { FolderList } from '../features/folders/folder-list';
 import { NeedsAttentionPanel } from '../features/needs-attention/needs-attention-panel';
 import { SeriesTable } from '../features/series/series-table';
@@ -60,7 +61,7 @@ function Calm({ saved }: { saved: string | undefined }) {
 	);
 }
 
-function useMeta(folders: FolderView[], attention: number): { meta: ReactNode; actions?: ReactNode } {
+function useMeta(folders: FolderView[], attention: number, held: boolean): { meta: ReactNode; actions?: ReactNode } {
 	const { t } = useTranslation();
 	const paused = folders.length > 0 && folders.every((folder) => folder.paused);
 	if (paused) {
@@ -68,6 +69,9 @@ function useMeta(folders: FolderView[], attention: number): { meta: ReactNode; a
 	}
 	if (attention > 0) {
 		return { meta: t('desktop.overview.attentionMeta', { count: attention }) };
+	}
+	if (held) {
+		return { meta: null };
 	}
 	return { meta: <Calm saved={lastSaved(folders)} /> };
 }
@@ -77,9 +81,10 @@ function Overview() {
 	const folders = useQuery(foldersQuery).data?.folders;
 	const attention = useQuery(attentionQuery).data;
 	const offline = (useQuery(holdsQuery).data?.holds ?? []).length > 0;
+	const required = useQuery(updateQuery).data?.required;
 	const recent = (useQuery(historyQuery()).data?.rows ?? []).slice(0, RECENT).map((row) => row.summary);
 	const origin = useOrigin(folders ?? []);
-	const header = useMeta(folders ?? [], attention?.total ?? 0);
+	const header = useMeta(folders ?? [], attention?.total ?? 0, offline || required?.signed === false);
 	if (!folders) {
 		return null;
 	}
