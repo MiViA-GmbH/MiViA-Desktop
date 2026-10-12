@@ -293,6 +293,7 @@
 		"errors": {
 			"actionFailed": "That did not work. Try again in a moment.",
 			"reportChanged": "This file was changed after MiViA Desktop saved it.",
+			"title": "Not done",
 			"reportMissing": "This report file was moved or deleted outside MiViA Desktop.",
 			"reportMissingName": "The report “{{name}}” was moved or deleted outside MiViA Desktop.",
 			"reportChangedName": "The report “{{name}}” was changed after MiViA Desktop saved it.",

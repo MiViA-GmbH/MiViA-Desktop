@@ -293,6 +293,7 @@
 		"errors": {
 			"actionFailed": "Das hat nicht funktioniert. Versuchen Sie es gleich noch einmal.",
 			"reportChanged": "Diese Datei wurde geändert, nachdem MiViA Desktop sie gespeichert hat.",
+			"title": "Nicht ausgeführt",
 			"reportMissing": "Diese Berichtsdatei wurde außerhalb von MiViA Desktop verschoben oder gelöscht.",
 			"reportMissingName": "Der Bericht „{{name}}“ wurde außerhalb von MiViA Desktop verschoben oder gelöscht.",
 			"reportChangedName": "Der Bericht „{{name}}“ wurde geändert, nachdem MiViA Desktop ihn gespeichert hat.",

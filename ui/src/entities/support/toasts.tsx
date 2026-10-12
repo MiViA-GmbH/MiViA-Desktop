@@ -60,10 +60,10 @@ function notify(data: NotificationData): void {
 	import('@mantine/notifications').then(({ notifications }) => notifications.show(data));
 }
 
-const ALERT = { color: 'red', role: 'alert' } as const;
+const alert = () => ({ color: 'red', role: 'alert', title: i18n.t('desktop.errors.title') }) as const;
 const STATUS = { role: 'status' } as const;
 
-function notifyAction(message: string, action: string, run: () => void, alert = false): void {
+function notifyAction(message: string, action: string, run: () => void, failed = false): void {
 	toastCount += 1;
 	const id = `support-action-${toastCount}`;
 	const click = () => {
@@ -78,7 +78,7 @@ function notifyAction(message: string, action: string, run: () => void, alert = 
 			</Button>
 		</Stack>
 	);
-	notify({ id, message: body, autoClose: false, ...(alert ? ALERT : STATUS) });
+	notify({ id, message: body, autoClose: false, ...(failed ? alert() : STATUS) });
 }
 
 function reportableSignature(error: unknown): string | null {
@@ -103,7 +103,7 @@ export function showFailure(error: unknown, client: QueryClient): void {
 			const open = () => requestReport(client, { trigger: 'error', signature });
 			notifyAction(message, i18n.t('desktop.support.reportProblem'), open, true);
 		} else {
-			notify({ message, ...ALERT });
+			notify({ message, ...alert() });
 		}
 	});
 }
