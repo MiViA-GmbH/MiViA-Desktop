@@ -19,7 +19,6 @@
 @import "@mantine/core/styles/FloatingIndicator.layer.css";
 @import "@mantine/core/styles/ActionIcon.layer.css";
 @import "@mantine/core/styles/Alert.layer.css";
-@import "@mantine/core/styles/Anchor.layer.css";
 @import "@mantine/core/styles/AppShell.layer.css";
 @import "@mantine/core/styles/Avatar.layer.css";
 @import "@mantine/core/styles/Badge.layer.css";
@@ -37,6 +36,7 @@
 @import "@mantine/core/styles/Table.layer.css";
 @import "@mantine/core/styles/Tabs.layer.css";
 @import "@mantine/core/styles/Text.layer.css";
+@import "@mantine/core/styles/Anchor.layer.css";
 @import "@mantine/core/styles/ThemeIcon.layer.css";
 @import "@mantine/core/styles/Title.layer.css";
 @import "@mantine/core/styles/Tooltip.layer.css";

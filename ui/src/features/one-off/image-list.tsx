@@ -1,4 +1,4 @@
-import { Button, Group, Paper, Stack, Text } from '@mantine/core';
+import { Anchor, Button, Group, Paper, Stack, Text } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,9 +31,9 @@ function ImageGroup({ group, index, removable }: GroupProps) {
 				</Text>
 			))}
 			{hidden > 0 && !all && (
-				<Button onClick={() => setAll(true)} p={0} size="xs" variant="transparent" w="fit-content">
+				<Anchor component="button" onClick={() => setAll(true)} size="sm" ta="left" type="button" w="fit-content">
 					{t('desktop.oneOff.more', { count: hidden })}
-				</Button>
+				</Anchor>
 			)}
 			<Group gap="xs" justify="space-between" wrap="nowrap">
 				<PathText c="stone.7" size="xs">

@@ -15,7 +15,7 @@ export const desktopTheme = mergeThemeOverrides(
 	theme,
 	createTheme({
 		components: {
-			Anchor: Anchor.extend({ defaultProps: { c: 'forest.7' } }),
+			Anchor: Anchor.extend({ defaultProps: { c: 'forest.7', underline: 'always' } }),
 			Alert: Alert.extend({ defaultProps: { variant: 'light' } }),
 			Badge: Badge.extend({ defaultProps: { variant: 'light', tt: 'none', size: 'md' } }),
 			Divider: Divider.extend({ defaultProps: { color: 'stone.2' } }),
