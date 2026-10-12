@@ -395,16 +395,16 @@ jobs:
       issues: write  # open or update nightly-red and perf-red issues
       actions: read  # download nightly results
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          allowed-endpoints: api.github.com:443 github.com:443
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Set up toolchains
-        uses: ./.github/actions/setup
-        with:
-          profile: ubuntu-ci
-          rust: "true"
       - name: Report
         env:
           GH_TOKEN: ${{ github.token }}
-        run: cargo xtask nightly-report
+        run: node scripts/ci/nightly-report.mjs
