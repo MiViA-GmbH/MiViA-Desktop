@@ -75,6 +75,7 @@ fn workflow_messages(workflow: &Workflow, proto: &str) -> Vec<String> {
             .push("inputs.tag is used without validating it against the tag pattern".to_owned());
     }
     messages.extend(jobs::job_messages(workflow, proto));
+    messages.extend(jobs::signing_key(workflow));
     if workflow.name == "ci.yml" {
         messages.extend(jobs::ci_rules(&workflow.value));
     }

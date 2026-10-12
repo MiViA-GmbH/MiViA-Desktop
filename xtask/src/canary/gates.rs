@@ -93,23 +93,26 @@ fn quality_diff_probes(work: &Work) -> Result<Vec<Probe>> {
     Ok(probes)
 }
 
-fn ci_integrity_probes(work: &Work) -> Result<Vec<Probe>> {
-    let ci = ".github/workflows/ci.yml";
-    work.replace(
-        ci,
+const CI_BREAKS: &[(&str, &str)] = &[
+    (
         "    timeout-minutes: 15\n",
         "    timeout-minutes: 15\n    continue-on-error: true\n",
-    )?;
-    work.replace(
-        ci,
-        "persist-credentials: false",
-        "persist-credentials: true",
-    )?;
-    work.replace(
-        ci,
+    ),
+    ("persist-credentials: false", "persist-credentials: true"),
+    (
         "permissions: {}\n\nconcurrency",
         "permissions:\n  contents: write\n\nconcurrency",
-    )?;
+    ),
+    (
+        "  merge_group:\n",
+        "  merge_group:\n\nenv:\n  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}\n",
+    ),
+];
+
+fn ci_integrity_probes(work: &Work) -> Result<Vec<Probe>> {
+    for (from, to) in CI_BREAKS {
+        work.replace(".github/workflows/ci.yml", from, to)?;
+    }
     let messages: Vec<String> = ci_integrity::check(&work.root, None)?
         .into_iter()
         .map(|f| f.message)
@@ -131,5 +134,6 @@ fn ci_integrity_probes(work: &Work) -> Result<Vec<Probe>> {
             "top-level permissions",
             fired("top-level permissions"),
         ),
+        Probe::expect("ci-integrity", "signing key", fired("TAURI_SIGNING_")),
     ])
 }
