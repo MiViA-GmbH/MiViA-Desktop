@@ -48,4 +48,12 @@
 	body {
 		background: var(--mantine-color-stone-1);
 	}
+
+	[data-panel] :is(th, td):first-child {
+		padding-inline-start: 0;
+	}
+
+	[data-panel] :is(th, td):last-child {
+		padding-inline-end: 0;
+	}
 }

@@ -5,7 +5,7 @@ type PanelProps = { title?: ReactNode; extra?: ReactNode; children: ReactNode };
 
 export function Panel({ title, extra, children }: PanelProps) {
 	return (
-		<Paper p="md" withBorder>
+		<Paper data-panel={title ? true : undefined} p="md" withBorder>
 			{title && (
 				<>
 					<Group gap="sm" justify="space-between" pb="sm" wrap="nowrap">
