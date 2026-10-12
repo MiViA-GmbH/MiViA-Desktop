@@ -1,4 +1,4 @@
-import { ActionIcon, Chip, Group, Table, Text } from '@mantine/core';
+import { ActionIcon, SegmentedControl, Table, Text } from '@mantine/core';
 import { ICON_STROKE } from '@mivia-ai/theme';
 import { IconEye } from '@tabler/icons-react';
 import { Link } from '@tanstack/react-router';
@@ -15,18 +15,11 @@ type ImagesPanelProps = { seriesId: string; items: BatchItem[]; analyses: Analys
 
 function Filter({ problems, value, onChange }: { problems: number; value: string; onChange: (next: string) => void }) {
 	const { t } = useTranslation();
-	return (
-		<Chip.Group onChange={onChange} value={value}>
-			<Group gap="xs">
-				<Chip size="xs" value="all">
-					{t('desktop.series.filterAll')}
-				</Chip>
-				<Chip size="xs" value="problems">
-					{t('desktop.series.filterProblems', { count: problems })}
-				</Chip>
-			</Group>
-		</Chip.Group>
-	);
+	const data = [
+		{ value: 'all', label: t('desktop.series.filterAll') },
+		{ value: 'problems', label: t('desktop.series.filterProblems', { count: problems }) },
+	];
+	return <SegmentedControl data={data} onChange={onChange} size="xs" value={value} />;
 }
 
 export function ImagesPanel({ seriesId, items, analyses, language }: ImagesPanelProps) {
