@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { BACKUPS, backupsQuery } from '../../entities/backup/queries';
 import { commands } from '../../shared/ipc';
 import type { BackupsView, BackupView } from '../../shared/ipc/bindings';
-import { formatDateTime } from '../../shared/lib/format';
+import { formatDateTime, formatDay } from '../../shared/lib/format';
 import { PathText } from '../../shared/ui/path-text';
 
 function useFolder() {
@@ -31,7 +31,7 @@ function BackupChoice({ backup }: { backup: BackupView }) {
 	return (
 		<Radio
 			description={`${where} · ${t('desktop.backup.series', { count: backup.series })}`}
-			label={backup.date}
+			label={formatDay(backup.date)}
 			value={backup.id}
 		/>
 	);

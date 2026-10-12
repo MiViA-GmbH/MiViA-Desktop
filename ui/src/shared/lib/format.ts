@@ -38,6 +38,10 @@ export function formatFullDateTime(iso: string): string {
 	return formatter({ day: '2-digit', month: '2-digit', year: 'numeric', ...TIME }).format(new Date(iso));
 }
 
+export function formatDay(day: string): string {
+	return formatter({ day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(`${day}T12:00:00`));
+}
+
 export function sameDay(first: string, second: string): boolean {
 	return new Date(first).toDateString() === new Date(second).toDateString();
 }

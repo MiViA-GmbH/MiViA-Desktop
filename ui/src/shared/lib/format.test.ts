@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDateTime, formatFullDateTime, formatSize, formatTime, setFormatLocale } from './format';
+import { formatDateTime, formatDay, formatFullDateTime, formatSize, formatTime, setFormatLocale } from './format';
 
 describe('format', () => {
 	it('shows the local time on the same day and the date otherwise, across the DST change', () => {
@@ -28,5 +28,10 @@ describe('format', () => {
 	it('always shows the full date for a period', () => {
 		setFormatLocale('de-DE');
 		expect(formatFullDateTime('2026-10-12T08:30:00Z')).toBe('12.10.2026, 10:30');
+	});
+
+	it('shows a backup day in the app language', () => {
+		setFormatLocale('de-DE');
+		expect(formatDay('2026-10-12')).toBe('12.10.2026');
 	});
 });
