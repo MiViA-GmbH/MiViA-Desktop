@@ -263,6 +263,25 @@ fn signatures_from_key_a_or_key_b_are_accepted_and_written_once() {
 }
 
 #[test]
+fn an_unsigned_installer_is_accepted_while_authenticode_is_off() {
+    let app = app();
+    run(async {
+        let lab = Lab::new().await;
+        let updates = lab.updates(&app, super::signer(), 1 << 20).await;
+        lab.release(
+            "2.1.0",
+            &sign(&TEST_UPDATE_KEY_A, INSTALLER, Some("2.1.0")),
+            INSTALLER,
+        );
+        assert_eq!(outcome(&lab, &updates).await, (UpdateState::Ready, None));
+        assert_eq!(
+            std::fs::read(lab.data.join("2.1.0.exe")).unwrap(),
+            INSTALLER
+        );
+    });
+}
+
+#[test]
 fn download_progress_reaches_one_hundred_percent() {
     let app = app();
     run(async {

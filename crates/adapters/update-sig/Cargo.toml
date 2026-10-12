@@ -11,6 +11,9 @@ doctest = false
 [lints]
 workspace = true
 
+[features]
+test-keys = []
+
 [dependencies]
 base64 = "=0.22.1"
 minisign-verify = "=0.2.5"

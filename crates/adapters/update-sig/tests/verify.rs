@@ -1,8 +1,10 @@
 use std::path::PathBuf;
 
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 use mivia_domain::update::Refusal;
 use mivia_testkit::update::{TEST_UPDATE_KEY_A, TEST_UPDATE_KEY_B, trusted_comment};
-use mivia_update_sig::{KEY_A, KEY_B, Slot, TEST_KEYS, verify, verify_with};
+use mivia_update_sig::{KEY_A, KEY_B, Slot, TEST_KEYS, verify_pair, verify_with};
 
 const ASSET: &[u8] = b"MZ test installer 2.1.0";
 
@@ -11,6 +13,15 @@ fn fixture(name: &str) -> PathBuf {
         .join("tests")
         .join("fixtures")
         .join(name)
+}
+
+fn public(key: &mivia_testkit::update::TestUpdateKey) -> String {
+    key.public().unwrap()
+}
+
+fn verify(data: &[u8], signature: &str, version: &str) -> Result<Slot, Refusal> {
+    let keys = [public(&TEST_UPDATE_KEY_A), public(&TEST_UPDATE_KEY_B)];
+    verify_pair([&keys[0], &keys[1]], data, signature, version)
 }
 
 fn signed(
@@ -22,10 +33,19 @@ fn signed(
 }
 
 #[test]
-fn the_compiled_keys_are_the_test_keys_until_release() {
+fn the_compiled_keys_are_the_test_keys_only_with_the_test_keys_feature() {
     let test = [TEST_UPDATE_KEY_A.public(), TEST_UPDATE_KEY_B.public()];
     let compiled = [Some(KEY_A.to_owned()), Some(KEY_B.to_owned())];
     assert_eq!(test == compiled, TEST_KEYS);
+}
+
+#[test]
+fn without_the_feature_the_production_keys_are_compiled() {
+    let comment = |key: &str| String::from_utf8(STANDARD.decode(key).unwrap()).unwrap();
+    if !TEST_KEYS {
+        assert!(comment(KEY_A).contains("minisign public key: 72C6517AC1698215"));
+        assert!(comment(KEY_B).contains("minisign public key: 79A18F67768994C0"));
+    }
 }
 
 #[test]
@@ -35,11 +55,11 @@ fn key_a_and_then_key_b_are_accepted() {
     assert_eq!(verify(ASSET, &a, "2.1.0"), Ok(Slot::A));
     assert_eq!(verify(ASSET, &b, "2.1.0"), Ok(Slot::B));
     assert_eq!(
-        verify_with(KEY_A, ASSET, &b, "2.1.0"),
+        verify_with(&public(&TEST_UPDATE_KEY_A), ASSET, &b, "2.1.0"),
         Err(Refusal::Signature)
     );
     assert_eq!(
-        verify_with(KEY_B, ASSET, &a, "2.1.0"),
+        verify_with(&public(&TEST_UPDATE_KEY_B), ASSET, &a, "2.1.0"),
         Err(Refusal::Signature)
     );
 }

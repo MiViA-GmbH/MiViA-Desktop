@@ -5,8 +5,13 @@ compile_error!("release builds need the custom-protocol feature, build through t
 
 #[cfg(all(not(debug_assertions), not(feature = "e2e")))]
 const _: () = assert!(
-    !mivia_update_sig::TEST_KEYS && !shell::update::SIGNER_EKU_IS_PLACEHOLDER,
-    "release builds need the production updater keys and the signer EKU"
+    !mivia_update_sig::TEST_KEYS,
+    "release builds need the production updater keys"
+);
+
+const _: () = assert!(
+    !shell::update::AUTHENTICODE || !shell::update::SIGNER_EKU_IS_PLACEHOLDER,
+    "the Authenticode check needs the real signer EKU"
 );
 
 mod commands;

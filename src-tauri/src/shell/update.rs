@@ -24,15 +24,24 @@ use tauri::{AppHandle, Manager};
 use super::cx::{Cx, Services};
 use super::pipeline::{SystemIds, server_api};
 use super::shutdown::Shutdown;
-use plugin::{Endpoints, Keys, Limits, Parts, PluginUpdater};
+use plugin::{Endpoints, Keys, Limits, Parts, PluginUpdater, SignerCheck};
 
 pub(crate) const STABLE: &str = "https://updates.mivia.ai/stable/latest.json";
 pub(crate) const BETA: &str = "https://updates.mivia.ai/beta/latest.json";
 pub(crate) const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-Desktop/releases/download/";
 pub(crate) const SIGNER_EKU: &str = "1.3.6.1.4.1.311.97.0";
 pub(crate) const SIGNER_EKU_IS_PLACEHOLDER: bool = true;
+pub(crate) const AUTHENTICODE: bool = false;
 pub(crate) const SIGNER_ROOT: &str =
     "Microsoft Identity Verification Root Certificate Authority 2020";
+
+fn signer() -> Box<SignerCheck> {
+    if AUTHENTICODE {
+        Box::new(authenticode)
+    } else {
+        Box::new(|_, _| Ok(()))
+    }
+}
 
 fn authenticode(file: &File, path: &Path) -> Result<(), Refusal> {
     let pin = SignerPin {
@@ -123,7 +132,7 @@ fn parts(app: &AppHandle, services: &Services, shutdown: Arc<Shutdown>) -> Parts
             max_bytes: MAX_DOWNLOAD_BYTES,
             timeout: Duration::from_millis(u64::try_from(DOWNLOAD_TIMEOUT_MS).unwrap_or(0)),
         },
-        signer: Box::new(authenticode),
+        signer: signer(),
         before_exit: Arc::new(move || {
             exiting.cleanup_before_exit();
             shutdown.finish();
@@ -132,8 +141,11 @@ fn parts(app: &AppHandle, services: &Services, shutdown: Arc<Shutdown>) -> Parts
 }
 
 pub(super) async fn start(app: &AppHandle, services: &Arc<Services>, shutdown: Arc<Shutdown>) {
-    if mivia_update_sig::TEST_KEYS || SIGNER_EKU_IS_PLACEHOLDER {
+    if mivia_update_sig::TEST_KEYS {
         tracing::warn!("update.testTrust");
+    }
+    if !AUTHENTICODE {
+        tracing::info!("update.authenticodeOff");
     }
     let ports = UpdatePorts {
         store: Arc::clone(&services.store) as _,
