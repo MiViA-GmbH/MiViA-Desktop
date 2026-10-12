@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { checkInstaller, productionKeys } from './minisign.mjs';
 
 const PREFIX = 'https://github.com/MiViA-GmbH/MiViA-Desktop/releases/download/';
 const VERSION = /^\d+\.\d+\.\d+(-beta\.\d+)?$/;
@@ -27,6 +28,22 @@ for (const channel of ['stable', 'beta']) {
 	const located = version && url;
 	if (!(located && signed && dated)) {
 		fail(`${source} is not a valid channel entry`);
+	}
+	const installer = await fetch(entry.url);
+	if (!installer.ok) {
+		fail(`${entry.url}: HTTP ${installer.status}`);
+	}
+	try {
+		const slot = checkInstaller(
+			productionKeys(),
+			Buffer.from(await installer.arrayBuffer()),
+			entry.signature,
+			entry.version,
+		);
+		process.stdout.write(`render-channels: ${channel} signed with key ${slot}
+`);
+	} catch (error) {
+		fail(`${source}: ${error.message}`);
 	}
 	const target = { signature: entry.signature, url: entry.url };
 	const manifest = {

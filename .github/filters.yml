@@ -36,3 +36,7 @@ e2e:
   - "crates/adapters/server/**"
   - "crates/adapters/store/**"
   - "crates/testing/stub/**"
+channels:
+  - "channels/**"
+  - "scripts/ci/render-channels.mjs"
+  - "scripts/ci/minisign.mjs"
