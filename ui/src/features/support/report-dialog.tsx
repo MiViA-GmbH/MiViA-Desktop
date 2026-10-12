@@ -120,7 +120,7 @@ function Body({ request, support }: DialogProps) {
 	return (
 		<Stack gap="md">
 			{reviewing && fresh ? (
-				<ReportReview onBack={() => setReviewing(false)} preview={fresh} />
+				<ReportReview preview={fresh} />
 			) : (
 				<Fields
 					input={input}
@@ -139,6 +139,11 @@ function Body({ request, support }: DialogProps) {
 				<Text size="sm">{t('desktop.support.sendOff', { contact: contactText(support.contact) })}</Text>
 			)}
 			<Group gap="sm" justify="flex-end">
+				{reviewing && fresh && (
+					<Button mr="auto" onClick={() => setReviewing(false)} variant="default">
+						{t('desktop.wizard.common.back')}
+					</Button>
+				)}
 				<Button onClick={close} variant="default">
 					{t('desktop.custom.cancel')}
 				</Button>

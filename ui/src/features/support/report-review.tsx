@@ -1,4 +1,4 @@
-import { Button, Code, Paper, ScrollArea, Select, Stack, Text } from '@mantine/core';
+import { Code, Paper, ScrollArea, Select, Stack, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +23,11 @@ function FileViewer({ preview }: { preview: ProblemReportPreview }) {
 		<Stack gap="xs">
 			<Select data={files} label={t('desktop.support.showFile')} onChange={setName} size="xs" value={name} />
 			{name !== null && text !== undefined && (
-				<ScrollArea.Autosize mah={220} type="auto" viewportProps={{ tabIndex: 0, 'aria-label': name }}>
+				<ScrollArea.Autosize
+					mah="clamp(40px, calc(100dvh - 410px), 220px)"
+					type="auto"
+					viewportProps={{ tabIndex: 0, 'aria-label': name }}
+				>
 					<Code block style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
 						{text}
 					</Code>
@@ -53,21 +57,13 @@ function Summary({ preview }: { preview: ProblemReportPreview }) {
 	);
 }
 
-type ReviewProps = { preview: ProblemReportPreview; onBack: () => void };
-
-export function ReportReview({ preview, onBack }: ReviewProps) {
-	const { t } = useTranslation();
+export function ReportReview({ preview }: { preview: ProblemReportPreview }) {
 	return (
-		<Stack gap="sm">
-			<Paper bg="stone.0" p="sm" withBorder>
-				<Stack gap="sm">
-					<Summary preview={preview} />
-					<FileViewer preview={preview} />
-				</Stack>
-			</Paper>
-			<Button onClick={onBack} size="xs" style={{ alignSelf: 'flex-start' }} variant="default">
-				{t('desktop.wizard.common.back')}
-			</Button>
-		</Stack>
+		<Paper bg="stone.0" p="sm" withBorder>
+			<Stack gap="sm">
+				<Summary preview={preview} />
+				<FileViewer preview={preview} />
+			</Stack>
+		</Paper>
 	);
 }

@@ -61,11 +61,27 @@ function Models({ view, form, update }: { view: OneOffView; form: Form; update: 
 	if (!catalogue.data) {
 		return <Loader aria-label={t('desktop.wizard.models.loading')} size="sm" />;
 	}
+	const title = (
+		<Title c="stone.7" fw={600} order={4}>
+			{t('desktop.oneOff.models')}
+		</Title>
+	);
+	if (form.open) {
+		const chosen = new Set(form.models.map((model) => model.modelId));
+		const names = catalogue.data.models.filter((model) => chosen.has(model.modelId)).map((model) => model.name);
+		return (
+			<Stack align="flex-start" gap="xs">
+				{title}
+				<Text size="sm">{names.join(', ')}</Text>
+				<Button onClick={() => update({ open: false })} px={0} size="xs" variant="transparent">
+					{t('desktop.oneOff.changeModels')}
+				</Button>
+			</Stack>
+		);
+	}
 	return (
 		<Stack gap="xs">
-			<Title c="stone.7" fw={600} order={4}>
-				{t('desktop.oneOff.models')}
-			</Title>
+			{title}
 			{!catalogue.data.loaded && (
 				<Notice tone="warn" title={t('desktop.wizard.models.loadFailed')}>
 					<Button onClick={() => catalogue.refetch()} size="xs" variant="default">
