@@ -37,6 +37,8 @@ runs:
           TEMP,{{ DEV_DRIVE }}/tmp
     - name: Toolchains
       uses: moonrepo/setup-toolchain@261c62cb5b0f580c7be7c8cd0f023a2e96756095 # v0.6.4
+      env:
+        RUSTUP_AUTO_INSTALL: "0"
       with:
         proto-version: "0.62.3"
         auto-install: ${{ inputs.rust }}
