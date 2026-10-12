@@ -13,7 +13,8 @@ function Preview() {
 	const { t } = useTranslation();
 	const { seriesId, itemId } = useParams({ from: '/app/preview/$seriesId/$itemId' });
 	const language = useQuery(localeQuery).data?.language ?? 'en';
-	const analyses = useQuery(seriesQuery(seriesId)).data?.analyses;
+	const batch = useQuery(seriesQuery(seriesId)).data;
+	const analyses = batch?.analyses;
 	const items = useQuery(seriesItemsQuery(seriesId)).data;
 	if (!items || !analyses) {
 		return null;
@@ -33,6 +34,7 @@ function Preview() {
 						{t('desktop.preview.back')}
 					</Button>
 				}
+				meta={batch?.summary.label}
 				title={item.label}
 			/>
 			<PreviewBody analyses={analyses} item={item} language={language} />
