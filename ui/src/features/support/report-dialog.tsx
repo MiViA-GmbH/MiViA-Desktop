@@ -1,3 +1,5 @@
+import '../../shared/ui/forms.css';
+
 import { Button, Checkbox, Group, Modal, Radio, Stack, Text, Textarea } from '@mantine/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';

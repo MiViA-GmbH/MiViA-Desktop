@@ -1,3 +1,5 @@
+import '../../shared/ui/forms.css';
+
 import { Code, List, Modal, ScrollArea, Stack, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';

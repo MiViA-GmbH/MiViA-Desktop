@@ -19,6 +19,15 @@ export const desktopTheme = mergeThemeOverrides(
 			Alert: Alert.extend({ defaultProps: { variant: 'light' } }),
 			Badge: Badge.extend({ defaultProps: { variant: 'light', tt: 'none', size: 'md' } }),
 			Divider: Divider.extend({ defaultProps: { color: 'stone.2' } }),
+			Modal: {
+				styles: {
+					title: {
+						color: 'var(--mantine-color-jade-8)',
+						fontSize: 'var(--mantine-font-size-lg)',
+						fontWeight: 700,
+					},
+				},
+			},
 			Notification: Notification.extend({ defaultProps: { withBorder: true, color: 'jade' } }),
 			Table: Table.extend({ defaultProps: { verticalSpacing: 8 } }),
 			Title: Title.extend({ defaultProps: { c: 'jade.8' } }),

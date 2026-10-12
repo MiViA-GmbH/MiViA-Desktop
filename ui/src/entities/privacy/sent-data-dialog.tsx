@@ -1,3 +1,5 @@
+import '../../shared/ui/forms.css';
+
 import { Accordion, Code, Modal, ScrollArea, Stack, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
@@ -44,7 +46,7 @@ export function SentDataDialog({ onClose }: { onClose: () => void }) {
 						<Text fw={500} size="sm">
 							{t('desktop.privacy.sentTitle')}
 						</Text>
-						<Accordion variant="separated">
+						<Accordion>
 							{batches.map((batch) => (
 								<Batch batch={batch} key={batch.batchId} />
 							))}

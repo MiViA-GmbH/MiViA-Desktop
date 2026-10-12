@@ -1,3 +1,5 @@
+import '../../shared/ui/forms.css';
+
 import { Anchor, Button, Divider, Group, Modal, Stack, Text } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
