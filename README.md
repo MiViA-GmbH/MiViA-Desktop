@@ -54,3 +54,7 @@ The Rust core is in `crates/`, organised as a domain core, ports and adapters. T
 ## Reporting problems
 
 In the app, *Settings > Support > Report a problem* sends the diagnostic log to MiViA support. You see exactly what will be sent first. For security issues, see [SECURITY.md](SECURITY.md).
+
+## License
+
+Copyright MiViA GmbH. All rights reserved, see [LICENSE](LICENSE).
