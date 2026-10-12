@@ -147,7 +147,7 @@ function StatusFilter({ search, onChange }: ToolbarProps) {
 
 export function HistoryToolbar(props: ToolbarProps & { manualOnly?: boolean }) {
 	return (
-		<Group gap="sm" wrap="nowrap">
+		<Group gap="sm" wrap="wrap">
 			<SearchInput {...props} />
 			{!props.manualOnly && <FolderSelect {...props} />}
 			<StatusFilter {...props} />
