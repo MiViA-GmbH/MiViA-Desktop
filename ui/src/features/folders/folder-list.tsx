@@ -21,11 +21,11 @@ function SeriesLine({ folder, words }: { folder: FolderView; words: string }) {
 	}
 	const { files, done } = series.counts;
 	return (
-		<Group gap="sm" wrap="nowrap">
+		<Group gap="sm" style={{ rowGap: 4 }}>
 			<Text c="stone.7" size="xs" truncate>
 				{t('desktop.folder.progress', { label: series.label, done, files })}
 			</Text>
-			<Progress aria-hidden flex={1} maw={140} size="sm" value={(done / files) * 100} />
+			<Progress aria-hidden flex={1} maw={140} miw={80} size="sm" value={(done / files) * 100} />
 		</Group>
 	);
 }
