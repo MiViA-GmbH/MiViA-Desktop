@@ -1,7 +1,7 @@
 .viewer {
 	position: relative;
 	overflow: hidden;
-	height: 62vh;
+	height: 55vh;
 	min-height: 280px;
 	touch-action: none;
 	background: var(--mantine-color-dark-9);
