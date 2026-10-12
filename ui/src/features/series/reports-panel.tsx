@@ -43,7 +43,7 @@ function RowActions({ row }: { row: ReportRow }) {
 	const retry = useMutation({ mutationFn: (id: string) => commands.tryAgainReportPart(id) });
 	const partId = row.open;
 	return (
-		<Group gap="xs" justify="flex-end" maw={420} wrap="wrap">
+		<Group flex="none" gap="xs" justify="flex-end" ml="auto" wrap="nowrap">
 			<ReportCommands row={row} subtle />
 			{partId && (
 				<Button
@@ -79,7 +79,7 @@ function RowText({ row, name }: { row: ReportRow; name: string }) {
 	const { t } = useTranslation();
 	const title = row.partCount > 1 ? t('desktop.series.part', { name, part: row.partNo, parts: row.partCount }) : name;
 	return (
-		<Stack align="flex-start" flex={1} gap={2} miw={150}>
+		<Stack align="flex-start" flex={1} gap={2} miw={200}>
 			<Text fw={500} maw="100%" size="sm" title={title} truncate>
 				{title}
 			</Text>
@@ -119,7 +119,7 @@ export function ReportsPanel({ reports, analyses, language }: ReportsPanelProps)
 				{rows.map((row, index) => (
 					<Fragment key={row.key}>
 						{index > 0 && <Divider />}
-						<Group gap="md" py="xs" wrap="nowrap">
+						<Group gap="md" py="xs" wrap="wrap">
 							<ThemeIcon color="stone" size={36} variant="light">
 								<ReportIcon size={20} stroke={ICON_STROKE} />
 							</ThemeIcon>
