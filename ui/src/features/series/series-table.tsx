@@ -27,6 +27,7 @@ export function SeriesTable({ rows, origin }: SeriesTableProps) {
 						<Table.Td>
 							<Text
 								c="dark.7"
+								display="block"
 								fw={500}
 								renderRoot={(props) => <Link params={{ seriesId: series.id }} to="/series/$seriesId" {...props} />}
 								size="sm"
@@ -39,7 +40,7 @@ export function SeriesTable({ rows, origin }: SeriesTableProps) {
 								{origin(series)}
 							</Text>
 						</Table.Td>
-						<Table.Td c="stone.7" fz="sm" w={130}>
+						<Table.Td c="stone.7" fz="sm" visibleFrom="sm" w={130}>
 							{finished(series)}
 						</Table.Td>
 						<Table.Td w={190}>
@@ -50,7 +51,7 @@ export function SeriesTable({ rows, origin }: SeriesTableProps) {
 								<Button
 									leftSection={<ReportIcon size={14} stroke={ICON_STROKE} />}
 									onClick={() => open(series)}
-									size="compact-xs"
+									size="xs"
 									variant="subtle"
 								>
 									{t('desktop.series.reportsCount', { count: series.counts.reportsSaved })}

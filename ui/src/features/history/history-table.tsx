@@ -118,7 +118,7 @@ function Row({ row, props }: { row: HistoryRow; props: TableProps }) {
 			<Table.Td w={176}>
 				<StatusBadge status={seriesStatus(summary, t)} />
 			</Table.Td>
-			<Table.Td c="stone.7" fz="sm" w={112}>
+			<Table.Td c="stone.7" fz="sm" w={136}>
 				{finished(summary, (date) => t('desktop.history.since', { date }))}
 			</Table.Td>
 			<Table.Td w={76}>
@@ -145,7 +145,7 @@ export function HistoryTable(props: TableProps) {
 						{t('desktop.history.columns.analyses')}
 					</Table.Th>
 					<Table.Th w={176}>{t('desktop.history.columns.status')}</Table.Th>
-					<Table.Th w={112}>
+					<Table.Th w={136}>
 						<SortHeader by="finished" onSort={props.onSort} sort={props.sort}>
 							{t('desktop.history.columns.finished')}
 						</SortHeader>
