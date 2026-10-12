@@ -19,6 +19,7 @@ jobs:
       code: ${{ github.event_name == 'merge_group' || steps.docs.outputs.code == 'true' }}
       rust: ${{ github.event_name == 'merge_group' || steps.f.outputs.rust == 'true' || steps.f.outputs.global == 'true' }}
       e2e: ${{ github.event_name == 'merge_group' || steps.f.outputs.e2e == 'true' || steps.f.outputs.global == 'true' }}
+      channels: ${{ github.event_name == 'merge_group' || steps.f.outputs.channels == 'true' }}
     permissions:
       pull-requests: read  # list the changed files
     steps:
@@ -328,9 +329,30 @@ jobs:
       - name: Visual tests
         run: pnpm --filter @mivia-desktop/ui playwright
 
+  channels:
+    name: Channel signatures
+    needs: [changes]
+    if: needs.changes.outputs.channels == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          allowed-endpoints: github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify the installers the channels point at
+        run: node scripts/ci/render-channels.mjs target/site
+
   gate:
     name: gate
-    needs: [changes, repo-checks, ui, coverage, mutants-domain, perf-instr, test-core-windows, proxy, e2e, playwright-visual]
+    needs: [changes, repo-checks, ui, coverage, mutants-domain, perf-instr, test-core-windows, proxy, e2e, playwright-visual, channels]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -344,7 +366,7 @@ jobs:
       - name: All required jobs passed or were skipped by design
         env:
           NEEDS: ${{ toJSON(needs) }}
-          SKIPPABLE: '["repo-checks","ui","coverage","mutants-domain","perf-instr","test-core-windows","proxy","e2e","playwright-visual"]'
+          SKIPPABLE: '["repo-checks","ui","coverage","mutants-domain","perf-instr","test-core-windows","proxy","e2e","playwright-visual","channels"]'
         run: |
           echo "$NEEDS" | jq -e --argjson skippable "$SKIPPABLE" \
             '.changes.result == "success" and (to_entries | all(.value.result == "success" or
