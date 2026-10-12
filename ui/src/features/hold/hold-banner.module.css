@@ -1,3 +1,11 @@
 .root {
 	border-bottom: 1px solid color-mix(in srgb, var(--alert-color) 35%, transparent);
+	min-height: 64px;
+	display: flex;
+	align-items: center;
+}
+
+.wrapper {
+	flex: 1;
+	align-items: center;
 }
