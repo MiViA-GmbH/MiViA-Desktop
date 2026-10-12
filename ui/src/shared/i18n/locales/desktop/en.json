@@ -66,7 +66,7 @@
 			},
 			"adminScope": {
 				"title": "This key has administrator rights.",
-				"text": "Create a key without administrator rights in MiViA, or ask your MiViA contact for one."
+				"text": "Create a key without administrator rights in MiViA and enter it under Settings."
 			},
 			"license": {
 				"title": "Your MiViA license is not valid.",
@@ -287,7 +287,7 @@
 		"errors": {
 			"actionFailed": "That did not work. Try again in a moment.",
 			"reportChanged": "This file was changed after MiViA Desktop saved it.",
-			"reportMissing": "The report file is no longer in its folder.",
+			"reportMissing": "This report file was moved or deleted outside MiViA Desktop.",
 			"notFoundTitle": "Not found",
 			"notFoundText": "This page does not exist any more.",
 			"toOverview": "Back to Overview",

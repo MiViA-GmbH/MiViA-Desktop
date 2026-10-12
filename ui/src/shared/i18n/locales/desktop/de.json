@@ -66,7 +66,7 @@
 			},
 			"adminScope": {
 				"title": "Dieser Schlüssel hat Administratorrechte.",
-				"text": "Erstellen Sie in MiViA einen Schlüssel ohne Administratorrechte oder fragen Sie Ihre MiViA-Ansprechperson danach."
+				"text": "Erstellen Sie in MiViA einen Schlüssel ohne Administratorrechte und geben Sie ihn unter Einstellungen ein."
 			},
 			"license": {
 				"title": "Ihre MiViA-Lizenz ist nicht gültig.",
@@ -287,7 +287,7 @@
 		"errors": {
 			"actionFailed": "Das hat nicht funktioniert. Versuchen Sie es gleich noch einmal.",
 			"reportChanged": "Diese Datei wurde geändert, nachdem MiViA Desktop sie gespeichert hat.",
-			"reportMissing": "Die Berichtsdatei liegt nicht mehr in ihrem Ordner.",
+			"reportMissing": "Diese Berichtsdatei wurde außerhalb von MiViA Desktop verschoben oder gelöscht.",
 			"notFoundTitle": "Nicht gefunden",
 			"notFoundText": "Diese Seite gibt es nicht mehr.",
 			"toOverview": "Zurück zur Übersicht",

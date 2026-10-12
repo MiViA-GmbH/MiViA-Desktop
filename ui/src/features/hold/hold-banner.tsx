@@ -133,32 +133,23 @@ function HoldAction({ kind }: { kind: HoldKind }) {
 			</Button>
 		);
 	}
-	const enterKey = (
-		<Button
-			flex="none"
-			onClick={() => navigate({ to: '/settings/$section', params: { section: 'account' } })}
-			size="xs"
-		>
-			{t('desktop.hold.enterKey')}
-		</Button>
-	);
 	if (kind === 'accessKey') {
-		return enterKey;
+		return (
+			<Button
+				flex="none"
+				onClick={() => navigate({ to: '/settings/$section', params: { section: 'account' } })}
+				size="xs"
+			>
+				{t('desktop.hold.enterKey')}
+			</Button>
+		);
 	}
 	if (kind === 'license' || kind === 'adminScope') {
 		const link = WEB[kind];
 		return (
-			<>
-				<Button
-					flex="none"
-					onClick={() => open.mutate(link.link)}
-					size="xs"
-					variant={kind === 'license' ? 'filled' : 'default'}
-				>
-					{t(link.label)}
-				</Button>
-				{kind === 'adminScope' && enterKey}
-			</>
+			<Button flex="none" onClick={() => open.mutate(link.link)} size="xs" variant="default">
+				{t(link.label)}
+			</Button>
 		);
 	}
 	if (kind === 'clientTooOld') {
