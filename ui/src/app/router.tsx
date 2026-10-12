@@ -74,9 +74,22 @@ const settings = createRoute({ getParentRoute: () => app, path: '/settings/$sect
 	() => import('../routes/settings.lazy').then((module) => module.SettingsRoute),
 );
 
+const unknown = createRoute({ getParentRoute: () => app, path: '$', component: NotFound });
+
 const tree = root.addChildren([
 	welcome,
-	app.addChildren([overview, history, singleImages, newFolder, folder, folderSettings, series, preview, settings]),
+	app.addChildren([
+		overview,
+		history,
+		singleImages,
+		newFolder,
+		folder,
+		folderSettings,
+		series,
+		preview,
+		settings,
+		unknown,
+	]),
 ]);
 
 export const router = createRouter({ routeTree: tree, defaultPreload: false });
