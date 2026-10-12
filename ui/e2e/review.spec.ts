@@ -188,6 +188,11 @@ const STATES: State[] = [
 				.first()
 				.click();
 			await expect(button(c, 'desktop.preview.source')).toBeVisible();
+			await c.page.evaluate(() => {
+				for (const element of document.querySelectorAll('*')) {
+					element.scrollTop = 0;
+				}
+			});
 		},
 	},
 	{ id: 'y1-history', path: '/history?scenario=calm' },

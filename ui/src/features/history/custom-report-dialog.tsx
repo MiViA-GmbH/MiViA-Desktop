@@ -104,7 +104,7 @@ function SettingsFields({ draft, form, update }: FieldsProps) {
 				onChange={(value) => update({ order: value === 'date' ? 'date' : 'name' })}
 				value={form.order}
 			>
-				<Group gap="lg" mt={4}>
+				<Group gap="lg" mt={4} style={{ rowGap: 8 }}>
 					<Radio label={t('desktop.custom.byName')} value="name" />
 					<Radio label={t('desktop.custom.byDate')} value="date" />
 				</Group>
@@ -113,12 +113,16 @@ function SettingsFields({ draft, form, update }: FieldsProps) {
 				<Text fw={500} size="sm">
 					{t('desktop.custom.folder')}
 				</Text>
-				<Group gap="sm" wrap="nowrap">
-					<PathText size="sm">{form.folder?.folder.display ?? draft.folder}</PathText>
-					<Button loading={pick.isPending} onClick={() => pick.mutate()} size="xs" variant="default">
-						{t('desktop.oneOff.chooseFolder')}
-					</Button>
-				</Group>
+				<PathText size="sm">{form.folder?.folder.display ?? draft.folder}</PathText>
+				<Button
+					loading={pick.isPending}
+					onClick={() => pick.mutate()}
+					size="xs"
+					style={{ alignSelf: 'flex-start' }}
+					variant="default"
+				>
+					{t('desktop.oneOff.chooseFolder')}
+				</Button>
 			</Stack>
 		</Stack>
 	);
@@ -149,18 +153,22 @@ function Body({ draft, series, onClose }: DialogProps & { draft: CustomReportDra
 	const ready = (form.pdf || form.csv) && !draft.tooMany;
 	return (
 		<Stack gap="md">
-			<DraftSummary draft={draft} />
 			{draft.tooMany && <Notice tone="error">{t('desktop.custom.tooMany')}</Notice>}
-			<TextInput
-				data-autofocus
-				error={nameError && t('desktop.custom.nameRequired')}
-				label={t('desktop.custom.name')}
-				maxLength={200}
-				onChange={(event) => update({ name: event.currentTarget.value })}
-				required
-				value={form.name}
-			/>
-			<SettingsFields draft={draft} form={form} update={update} />
+			<Group align="flex-start" gap="lg" grow wrap="nowrap">
+				<Stack gap="md">
+					<DraftSummary draft={draft} />
+					<TextInput
+						data-autofocus
+						error={nameError && t('desktop.custom.nameRequired')}
+						label={t('desktop.custom.name')}
+						maxLength={200}
+						onChange={(event) => update({ name: event.currentTarget.value })}
+						required
+						value={form.name}
+					/>
+				</Stack>
+				<SettingsFields draft={draft} form={form} update={update} />
+			</Group>
 			<Group gap="sm" justify="flex-end">
 				<Button onClick={onClose} variant="default">
 					{t('desktop.custom.cancel')}
@@ -187,8 +195,9 @@ export function CustomReportDialog({ series, onClose }: DialogProps) {
 			closeButtonProps={{ 'aria-label': t('desktop.custom.cancel') }}
 			onClose={onClose}
 			opened
-			size="lg"
+			size="xl"
 			title={title}
+			yOffset="2dvh"
 		>
 			{draft ? <Body draft={draft} onClose={onClose} series={series} /> : <Loader size="sm" />}
 		</Modal>

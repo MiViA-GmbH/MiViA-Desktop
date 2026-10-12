@@ -15,6 +15,7 @@ type ModelChoicesProps = {
 	contact: string;
 	error: string | null;
 	onChange: (chosen: ModelChoiceView[]) => void;
+	compact?: boolean;
 };
 
 type RowProps = {
@@ -22,11 +23,12 @@ type RowProps = {
 	choice: ModelChoiceView | undefined;
 	host: string;
 	customError: string | null;
+	compact: boolean;
 	onToggle: (on: boolean) => void;
 	onCustomization: (id: string | null) => void;
 };
 
-function ModelRow({ model, choice, host, customError, onToggle, onCustomization }: RowProps) {
+function ModelRow({ model, choice, host, customError, compact, onToggle, onCustomization }: RowProps) {
 	const { t } = useTranslation();
 	const options = [
 		{ value: STANDARD, label: t('desktop.wizard.models.standard') },
@@ -34,30 +36,38 @@ function ModelRow({ model, choice, host, customError, onToggle, onCustomization 
 	];
 	return (
 		<Stack gap={0}>
-			<Checkbox.Card checked={choice !== undefined} onClick={() => onToggle(choice === undefined)} p="sm">
-				<Group align="flex-start" gap="sm" wrap="nowrap">
-					<Checkbox.Indicator mt={2} />
-					<Stack gap={2}>
-						<Text fw={600} size="sm">
-							{model.name}
-						</Text>
-						{model.description && (
-							<Text c="stone.7" size="xs">
-								{model.description}
+			{compact ? (
+				<Checkbox
+					checked={choice !== undefined}
+					label={model.name}
+					onChange={(event) => onToggle(event.currentTarget.checked)}
+				/>
+			) : (
+				<Checkbox.Card checked={choice !== undefined} onClick={() => onToggle(choice === undefined)} p="sm">
+					<Group align="flex-start" gap="sm" wrap="nowrap">
+						<Checkbox.Indicator mt={2} />
+						<Stack gap={2}>
+							<Text fw={600} size="sm">
+								{model.name}
 							</Text>
-						)}
-					</Stack>
-				</Group>
-			</Checkbox.Card>
+							{model.description && (
+								<Text c="stone.7" size="xs">
+									{model.description}
+								</Text>
+							)}
+						</Stack>
+					</Group>
+				</Checkbox.Card>
+			)}
 			{choice && model.customizations.length > 0 && (
 				<Select
 					allowDeselect={false}
 					data={options}
-					description={t('desktop.wizard.models.customizationHint', { host })}
+					description={compact ? undefined : t('desktop.wizard.models.customizationHint', { host })}
 					error={customError}
 					label={t('desktop.wizard.models.customization')}
 					maw={360}
-					ml={44}
+					ml={compact ? 32 : 44}
 					mt="xs"
 					onChange={(value) => onCustomization(value === STANDARD ? null : value)}
 					placeholder={t('desktop.wizard.models.choosePlaceholder')}
@@ -69,7 +79,15 @@ function ModelRow({ model, choice, host, customError, onToggle, onCustomization 
 	);
 }
 
-export function ModelChoices({ catalogue, chosen, host, contact, error, onChange }: ModelChoicesProps) {
+export function ModelChoices({
+	catalogue,
+	chosen,
+	host,
+	contact,
+	error,
+	onChange,
+	compact = false,
+}: ModelChoicesProps) {
 	const { t } = useTranslation();
 	const [search, setSearch] = useState('');
 	const [resolved, setResolved] = useState<string[]>([]);
@@ -101,6 +119,7 @@ export function ModelChoices({ catalogue, chosen, host, contact, error, onChange
 			{shown.map((model) => (
 				<ModelRow
 					choice={chosen.find((choice) => choice.modelId === model.modelId)}
+					compact={compact}
 					customError={gone(model) ? t('desktop.wizard.models.legacyCustomGone', { name: model.name }) : null}
 					host={host}
 					key={model.modelId}

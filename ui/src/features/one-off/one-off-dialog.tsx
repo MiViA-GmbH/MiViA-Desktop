@@ -75,6 +75,7 @@ function Models({ view, form, update }: { view: OneOffView; form: Form; update: 
 			)}
 			<ModelChoices
 				catalogue={catalogue.data}
+				compact
 				chosen={form.models}
 				contact={setup?.supportContact ?? ''}
 				error={null}
@@ -109,7 +110,7 @@ function Footer({ view, form, actions }: { view: OneOffView; form: Form; actions
 	const hasFormat = form.pdf || form.csv;
 	const ready = form.models.length > 0 && hasFormat && !view.tooMany;
 	return (
-		<Group justify="space-between" mt="xs" wrap="nowrap">
+		<Group justify="space-between" wrap="nowrap">
 			<Text c="stone.7" size="xs" truncate>
 				{account && t('desktop.oneOff.account', { name: account.displayName })}
 			</Text>
@@ -117,12 +118,7 @@ function Footer({ view, form, actions }: { view: OneOffView; form: Form; actions
 				<Button loading={actions.cancel.isPending} onClick={() => actions.cancel.mutate()} variant="default">
 					{t('desktop.oneOff.cancel')}
 				</Button>
-				<Button
-					data-autofocus={ready || undefined}
-					disabled={!ready}
-					loading={actions.analyze.isPending}
-					onClick={() => actions.analyze.mutate()}
-				>
+				<Button disabled={!ready} loading={actions.analyze.isPending} onClick={() => actions.analyze.mutate()}>
 					{t('desktop.oneOff.analyze', { count: view.count })}
 				</Button>
 			</Group>
@@ -146,18 +142,25 @@ function Body({ view, catalogue }: { view: OneOffView; catalogue: CatalogueView 
 	const actions = useActions(form);
 	return (
 		<Stack gap="md">
-			<ImageList view={view} />
 			{view.tooMany && <Notice tone="error">{t('desktop.oneOff.tooMany')}</Notice>}
 			{holds.length > 0 && <Notice tone="warn">{t('desktop.oneOff.holdNote')}</Notice>}
-			<TextInput
-				label={t('desktop.oneOff.name')}
-				maxLength={200}
-				onChange={(event) => update({ label: event.currentTarget.value })}
-				value={form.label}
-			/>
-			<Models form={form} update={update} view={view} />
-			<CostLine count={view.count} />
-			<ReportChoice form={form} update={update} view={view} />
+			<Group align="flex-start" gap="lg" grow wrap="nowrap">
+				<Stack gap="sm">
+					<ImageList view={view} />
+					<TextInput
+						data-autofocus
+						label={t('desktop.oneOff.name')}
+						maxLength={200}
+						onChange={(event) => update({ label: event.currentTarget.value })}
+						value={form.label}
+					/>
+					<CostLine count={view.count} />
+				</Stack>
+				<Stack gap="sm">
+					<Models form={form} update={update} view={view} />
+					<ReportChoice form={form} update={update} view={view} />
+				</Stack>
+			</Group>
 			<Footer actions={actions} form={form} view={view} />
 		</Stack>
 	);
@@ -196,13 +199,13 @@ export function OneOffDialog({ view }: { view: OneOffView }) {
 			centered
 			closeButtonProps={{ 'aria-label': t('desktop.oneOff.cancel') }}
 			onClose={() => cancel.mutate()}
-			opened
-			size="lg"
+			opened={empty || catalogue.isFetched}
+			size="xl"
 			title={title}
+			yOffset="2dvh"
 		>
 			{empty && <Nothing view={view} />}
 			{!empty && catalogue.isFetched && <Body catalogue={catalogue.data} view={view} />}
-			{!(empty || catalogue.isFetched) && <Loader size="sm" />}
 		</Modal>
 	);
 }

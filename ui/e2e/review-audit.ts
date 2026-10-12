@@ -15,14 +15,7 @@ const EXEMPT: Omit<Known, 'keys'>[] = [
 	},
 ];
 
-const KNOWN: Known[] = [
-	{
-		finding: 'F05',
-		check: 'scroll',
-		detail: /second vertical scroll/,
-		keys: 'c1-custom-report-de-760 c1-custom-report-en-760 d1-one-off-de-1100 d1-one-off-de-760 d1-one-off-en-1100 d1-one-off-en-760 r3-report-dialog-de-760 r3-report-dialog-en-760 r4-report-review-de-1100 r4-report-review-de-760 r4-report-review-en-1100 r4-report-review-en-760',
-	},
-];
+const KNOWN: Known[] = [];
 
 type AuditOptions = { wizardScrolls: boolean };
 

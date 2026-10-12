@@ -53,23 +53,21 @@ function Summary({ preview }: { preview: ProblemReportPreview }) {
 	);
 }
 
-type ReviewProps = { preview: ProblemReportPreview | null; loading: boolean; onReview: () => void };
+type ReviewProps = { preview: ProblemReportPreview; onBack: () => void };
 
-export function ReportReview({ preview, loading, onReview }: ReviewProps) {
+export function ReportReview({ preview, onBack }: ReviewProps) {
 	const { t } = useTranslation();
-	if (!preview) {
-		return (
-			<Button loading={loading} onClick={onReview} size="xs" style={{ alignSelf: 'flex-start' }} variant="default">
-				{t('desktop.support.review')}
-			</Button>
-		);
-	}
 	return (
-		<Paper bg="stone.0" p="sm" withBorder>
-			<Stack gap="sm">
-				<Summary preview={preview} />
-				<FileViewer preview={preview} />
-			</Stack>
-		</Paper>
+		<Stack gap="sm">
+			<Paper bg="stone.0" p="sm" withBorder>
+				<Stack gap="sm">
+					<Summary preview={preview} />
+					<FileViewer preview={preview} />
+				</Stack>
+			</Paper>
+			<Button onClick={onBack} size="xs" style={{ alignSelf: 'flex-start' }} variant="default">
+				{t('desktop.wizard.common.back')}
+			</Button>
+		</Stack>
 	);
 }

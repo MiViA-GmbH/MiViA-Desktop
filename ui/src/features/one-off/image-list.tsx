@@ -7,7 +7,7 @@ import { commands } from '../../shared/ipc';
 import type { ImageGroupView, NotIncludedReason, NotIncludedView, OneOffView } from '../../shared/ipc/bindings';
 import { PathText } from '../../shared/ui/path-text';
 
-const SHOWN = 3;
+const SHOWN = 1;
 
 const REASONS = {
 	missing: 'desktop.oneOff.reason.missing',
@@ -76,8 +76,8 @@ export function NotIncludedList({ view }: { view: OneOffView }) {
 
 export function ImageList({ view }: { view: OneOffView }) {
 	return (
-		<Paper p="sm" withBorder>
-			<Stack gap="sm">
+		<Paper p="xs" withBorder>
+			<Stack gap="xs">
 				{view.groups.map((group, index) => (
 					<ImageGroup group={group} index={index} key={group.folder} removable={view.groups.length > 1} />
 				))}

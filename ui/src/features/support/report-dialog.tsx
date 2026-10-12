@@ -52,12 +52,17 @@ function useReport(input: ProblemReportInput, close: () => void) {
 	return { fresh, prepare, send, save };
 }
 
-type FormProps = { input: ProblemReportInput; update: (changes: Partial<ProblemReportInput>) => void };
+type FormProps = {
+	input: ProblemReportInput;
+	update: (changes: Partial<ProblemReportInput>) => void;
+	reviewing: boolean;
+	onReview: () => void;
+};
 
-function Fields({ input, update }: FormProps) {
+function Fields({ input, update, reviewing, onReview }: FormProps) {
 	const { t } = useTranslation();
 	return (
-		<>
+		<Group align="flex-start" gap="lg" grow wrap="nowrap">
 			<Textarea
 				autosize
 				data-autofocus
@@ -69,24 +74,29 @@ function Fields({ input, update }: FormProps) {
 				onChange={(event) => update({ description: event.currentTarget.value })}
 				value={input.description}
 			/>
-			<Radio.Group
-				label={t('desktop.support.range')}
-				onChange={(value) => isRange(value) && update({ range: value })}
-				value={input.range}
-			>
-				<Group gap="lg" mt={4}>
-					{(Object.keys(RANGES) as ReportRange[]).map((range) => (
-						<Radio key={range} label={t(RANGES[range])} value={range} />
-					))}
-				</Group>
-			</Radio.Group>
-			<Checkbox
-				checked={input.includeNames}
-				description={t('desktop.support.namesHint')}
-				label={t('desktop.support.names')}
-				onChange={(event) => update({ includeNames: event.currentTarget.checked })}
-			/>
-		</>
+			<Stack gap="sm">
+				<Radio.Group
+					label={t('desktop.support.range')}
+					onChange={(value) => isRange(value) && update({ range: value })}
+					value={input.range}
+				>
+					<Stack gap="xs" mt={4}>
+						{(Object.keys(RANGES) as ReportRange[]).map((range) => (
+							<Radio key={range} label={t(RANGES[range])} value={range} />
+						))}
+					</Stack>
+				</Radio.Group>
+				<Checkbox
+					checked={input.includeNames}
+					description={t('desktop.support.namesHint')}
+					label={t('desktop.support.names')}
+					onChange={(event) => update({ includeNames: event.currentTarget.checked })}
+				/>
+				<Button loading={reviewing} onClick={onReview} size="xs" style={{ alignSelf: 'flex-start' }} variant="default">
+					{t('desktop.support.review')}
+				</Button>
+			</Stack>
+		</Group>
 	);
 }
 
@@ -104,10 +114,22 @@ function Body({ request, support }: DialogProps) {
 	}));
 	const update = (changes: Partial<ProblemReportInput>) => setInput((current) => ({ ...current, ...changes }));
 	const { fresh, prepare, send, save } = useReport(input, close);
+	const [reviewing, setReviewing] = useState(false);
 	return (
 		<Stack gap="md">
-			<Fields input={input} update={update} />
-			<ReportReview loading={prepare.isPending} onReview={() => prepare.mutate(input)} preview={fresh} />
+			{reviewing && fresh ? (
+				<ReportReview onBack={() => setReviewing(false)} preview={fresh} />
+			) : (
+				<Fields
+					input={input}
+					onReview={() => {
+						setReviewing(true);
+						prepare.mutate(input);
+					}}
+					reviewing={prepare.isPending}
+					update={update}
+				/>
+			)}
 			<Text c="stone.7" size="xs">
 				{t('desktop.support.disclosure')}
 			</Text>
@@ -150,8 +172,9 @@ export function ReportDialog({ request, support }: DialogProps) {
 			closeButtonProps={{ 'aria-label': t('desktop.custom.cancel') }}
 			onClose={() => requestReport(client, null)}
 			opened
-			size="lg"
+			size="xl"
 			title={title}
+			yOffset="2dvh"
 		>
 			<Body request={request} support={support} />
 		</Modal>
