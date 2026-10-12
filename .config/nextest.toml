@@ -1,0 +1,6 @@
+[profile.ci-windows]
+retries = 0
+fail-fast = false
+
+[profile.ci-windows.junit]
+path = "junit.xml"
