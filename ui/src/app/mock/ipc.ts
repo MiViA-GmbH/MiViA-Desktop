@@ -34,7 +34,7 @@ function folders(): FolderView[] {
 	if (scenario === 'network') {
 		return FOLDERS.slice(0, 4).map((folder) => ({
 			...folder,
-			waitingSince: folder.id === '3' ? '2026-10-12T08:30:00.000Z' : null,
+			waitingSince: folder.id === '2' ? '2026-10-12T08:30:00.000Z' : null,
 		}));
 	}
 	return scenario === 'calm' ? FOLDERS.slice(0, 4) : FOLDERS;

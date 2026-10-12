@@ -8,7 +8,13 @@ import { useTranslation } from 'react-i18next';
 import { RelocateButton } from '../../entities/folder/relocate-button';
 import { commands } from '../../shared/ipc';
 import type { AttentionSeries, NeedsAttention } from '../../shared/ipc/bindings';
-import { FolderNotFoundIcon, ImageProblemIcon, ReportFailureIcon } from '../../shared/ui/icons';
+import {
+	FolderNotFoundIcon,
+	ImageProblemIcon,
+	ReportFailureIcon,
+	WaitingIcon,
+	WarningIcon,
+} from '../../shared/ui/icons';
 import { StatusBadge } from '../../shared/ui/status-badge';
 import type { Status } from '../../shared/ui/tone';
 
@@ -88,13 +94,15 @@ function missingText(item: Missing, t: TFunction): string {
 	if (!item.unreachableSince) {
 		return t('desktop.attention.folderNotFound');
 	}
-	return t('desktop.attention.networkMissing', { path: item.path, minutes: minutesSince(item.unreachableSince) });
+	return t('desktop.attention.networkMissing', { path: item.path, count: minutesSince(item.unreachableSince) });
 }
 
 function missingRow(item: Missing, t: TFunction): Row {
 	return {
 		key: `folder-${item.folderId}`,
-		status: { tone: 'problem', icon: FolderNotFoundIcon, label: t('desktop.folder.state.notFound') },
+		status: item.unreachableSince
+			? { tone: 'waiting', icon: WaitingIcon, label: t('desktop.folder.state.waitingNetwork') }
+			: { tone: 'problem', icon: FolderNotFoundIcon, label: t('desktop.folder.state.notFound') },
 		subject: item.folderName,
 		text: missingText(item, t),
 		actions: (
@@ -113,7 +121,7 @@ function missingRow(item: Missing, t: TFunction): Row {
 function markerRow(item: Marker, t: TFunction): Row {
 	return {
 		key: `marker-${item.folderId}`,
-		status: { tone: 'problem', icon: FolderNotFoundIcon, label: t('desktop.folder.state.watchedElsewhere') },
+		status: { tone: 'waiting', icon: WarningIcon, label: t('desktop.folder.state.watchedElsewhere') },
 		subject: item.folderName,
 		text: t('desktop.attention.watchedElsewhere', { machine: item.machine, user: item.user }),
 		actions: <WatchedElsewhereActions folderId={item.folderId} />,
