@@ -72,6 +72,7 @@ const LOOK = {
 const WEB = {
 	license: { link: 'license', label: 'desktop.hold.open.license' },
 	adminScope: { link: 'accessKeys', label: 'desktop.hold.open.accessKeys' },
+	accountBlocked: { link: 'infoMail', label: 'desktop.hold.open.infoMail' },
 } as const satisfies Partial<Record<HoldKind, { link: KnownLink; label: string }>>;
 
 function strongest(holds: HoldView[]): HoldView | undefined {
@@ -144,7 +145,7 @@ function HoldAction({ kind }: { kind: HoldKind }) {
 			</Button>
 		);
 	}
-	if (kind === 'license' || kind === 'adminScope') {
+	if (kind === 'license' || kind === 'adminScope' || kind === 'accountBlocked') {
 		const link = WEB[kind];
 		return (
 			<Button flex="none" onClick={() => open.mutate(link.link)} size="xs" variant="default">

@@ -78,7 +78,8 @@
 			"checkNow": "Verbindung jetzt prüfen",
 			"open": {
 				"license": "Lizenz in MiViA anzeigen",
-				"accessKeys": "Zugangsschlüssel in MiViA öffnen"
+				"accessKeys": "Zugangsschlüssel in MiViA öffnen",
+				"infoMail": "E-Mail an info@mivia.ai"
 			},
 			"enterKey": "Neuen Zugangsschlüssel eingeben",
 			"copyDetails": "Details für die IT kopieren",

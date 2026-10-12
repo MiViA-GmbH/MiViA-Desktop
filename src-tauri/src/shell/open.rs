@@ -12,6 +12,7 @@ use super::preview;
 
 const SITE: &str = "open_target";
 const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-API/releases";
+const INFO_MAIL: &str = "mailto:info@mivia.ai";
 
 fn opened(result: Result<io::Result<()>, tokio::task::JoinError>) -> Result<(), AppError> {
     match result {
@@ -37,6 +38,7 @@ async fn link(ready: &Ready, link: KnownLink) -> Result<(), AppError> {
         KnownLink::Releases => RELEASES.to_owned(),
         KnownLink::License => format!("{}/dashboard", ready.services.origin.0),
         KnownLink::AccessKeys => format!("{}/access-keys", ready.services.origin.0),
+        KnownLink::InfoMail => INFO_MAIL.to_owned(),
     };
     opened(tokio::task::spawn_blocking(move || mivia_os::open_file(&target)).await)
 }

@@ -78,7 +78,8 @@
 			"checkNow": "Check connection now",
 			"open": {
 				"license": "Show license in MiViA",
-				"accessKeys": "Open access keys in MiViA"
+				"accessKeys": "Open access keys in MiViA",
+				"infoMail": "Email info@mivia.ai"
 			},
 			"enterKey": "Enter new access key",
 			"copyDetails": "Copy details for IT",
