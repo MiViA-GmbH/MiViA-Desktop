@@ -39,7 +39,7 @@ function DeleteLogsDialog({ onClose }: { onClose: () => void }) {
 					<Button data-autofocus onClick={onClose} variant="default">
 						{t('desktop.custom.cancel')}
 					</Button>
-					<Button color="red" loading={remove.isPending} onClick={() => remove.mutate()}>
+					<Button color="red" loading={remove.isPending} onClick={() => remove.mutate()} variant="subtle">
 						{t('desktop.support.deleteConfirm')}
 					</Button>
 				</Group>

@@ -36,7 +36,7 @@ function SelectionBar({
 }) {
 	const { t } = useTranslation();
 	return (
-		<Paper bg="jade.0" px="md" py="xs" withBorder>
+		<Paper px="md" py="xs" withBorder>
 			<Group justify="space-between" wrap="nowrap">
 				<Text fw={500} size="sm">
 					{t('desktop.history.selected', { count: selected })}

@@ -30,7 +30,7 @@ export function FolderChoice({ folder, error, busy, onChoose, chooseRef }: Folde
 					</Group>
 				</Paper>
 				{error && (
-					<Text c="red.7" id="folder-error" size="sm">
+					<Text c="red.7" id="folder-error" role="alert" size="sm">
 						{error}
 					</Text>
 				)}

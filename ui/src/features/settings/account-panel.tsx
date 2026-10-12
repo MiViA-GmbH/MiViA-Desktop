@@ -36,7 +36,7 @@ function SwitchModal({ outcome, onDone, onCancel }: SwitchProps) {
 				<Button data-autofocus onClick={onCancel} variant="default">
 					{t('desktop.account.switch.cancel')}
 				</Button>
-				<Button color="red" loading={confirm.isPending} onClick={() => confirm.mutate()}>
+				<Button color="red" loading={confirm.isPending} onClick={() => confirm.mutate()} variant="subtle">
 					{t('desktop.account.switch.confirm')}
 				</Button>
 			</Group>
@@ -67,7 +67,7 @@ function SignOut({ account }: { account: AccountView }) {
 					<Button data-autofocus onClick={close} variant="default">
 						{t('desktop.account.signOut.cancel')}
 					</Button>
-					<Button color="red" loading={leave.isPending} onClick={() => leave.mutate()}>
+					<Button color="red" loading={leave.isPending} onClick={() => leave.mutate()} variant="subtle">
 						{t('desktop.account.signOut.button')}
 					</Button>
 				</Group>
