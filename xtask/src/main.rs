@@ -14,6 +14,7 @@ mod floors;
 mod json_format;
 mod perf;
 mod quality_diff;
+mod quarantine;
 mod registry;
 mod repo;
 mod source_rules;
@@ -29,7 +30,7 @@ use anyhow::{Result, anyhow, bail};
 const USAGE: &str = "usage: cargo xtask <arch | command-size | source-rules [paths] | canary | why <id> | \
 quality-diff --base <rev> --head <rev> | ci-integrity [--base <rev>] [--head <rev>] | \
 commit-text (--file <path> | --title <text> [--body <text>]) | floors-lower | \
-telemetry-fields [--check] | update-sig verify <asset> <sig> <version> | perf <scenario>>";
+telemetry-fields [--check] | quarantine-filter | update-sig verify <asset> <sig> <version> | perf <scenario>>";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -59,6 +60,7 @@ fn run(args: &[String]) -> Result<bool> {
         "telemetry-fields" => telemetry_fields::run(&root, rest),
         "update-sig" => update_sig::run(rest),
         "perf" => perf::run(&root, rest),
+        "quarantine-filter" => quarantine::run(&root),
         other => bail!("unknown command {other}\n{USAGE}"),
     }
 }
