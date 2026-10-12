@@ -91,7 +91,7 @@
 				"onlyNew": "Only analyze new images (recommended)",
 				"alsoExisting_one": "Also analyze the existing image",
 				"alsoExisting_other": "Also analyze the {{count}} existing images",
-				"existingLater": "You can still analyze them later from the folder page.",
+				"existingLater": "Images already in the folder are only analyzed if you choose that here.",
 				"uploadCost": "Uses up to {{count}} of your {{remaining}} remaining image uploads.",
 				"legacyMissing": "The input folder of the old MiViA Desktop ({{path}}) no longer exists. Choose a folder.",
 				"watchedElsewhere": "This folder is already watched by MiViA Desktop on “{{machine}}” (“{{user}}”). Images would be analyzed twice and reports saved twice. Pause or remove it on the other PC first."
