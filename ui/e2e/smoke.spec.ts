@@ -181,7 +181,7 @@ test('reporting turned off by policy hides the report entry points', async ({ pa
 for (const lang of ['en', 'de']) {
 	test(`update settings with a ready update (${lang})`, async ({ page }) => {
 		await open(page, `/settings/updates?scenario=update-ready&lang=${lang}`);
-		await expect(page.getByText(/2\.1\.0/)).toBeVisible();
+		await expect(page.getByText(/2\.1\.0 is ready|2\.1\.0 ist bereit/)).toBeVisible();
 		await expect(
 			page.getByRole('button', { name: /^(Restart and update|Neu starten und aktualisieren)$/ }),
 		).toBeVisible();
@@ -216,7 +216,7 @@ test('a required update shows a red banner with one filled restart button', asyn
 test('a required version without a signed update shows a warning banner', async ({ page }) => {
 	await open(page, '/?scenario=update-unsigned');
 	const banner = page.getByRole('status').filter({ hasText: 'A newer version is required.' });
-	await expect(banner.getByRole('button', { name: 'Releases page' })).toBeVisible();
+	await expect(banner.getByRole('button', { name: 'Download page' })).toBeVisible();
 	await expect(banner.getByRole('button', { name: 'Report a problem' })).toBeVisible();
 	await structure(page);
 	await noHorizontalScroll(page);

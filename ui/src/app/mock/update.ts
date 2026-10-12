@@ -13,7 +13,7 @@ const CURRENT: UpdateView = {
 };
 
 const SCENARIOS: Record<string, Partial<UpdateView>> = {
-	'update-ready': { state: 'ready', version: '2.1.0', failedInstall: '2.0.1' },
+	'update-ready': { state: 'ready', version: '2.1.0', failedInstall: '2.1.0' },
 	'update-unsigned': { required: { min: '2.1.0', signed: false } },
 	'update-locked': { automatic: false, policy: 'off' },
 	'update-available': { state: 'available', version: '2.1.0' },
