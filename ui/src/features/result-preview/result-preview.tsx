@@ -15,22 +15,32 @@ import {
 import { DataTable, Message, MultiColumnTable } from './tables';
 import { useLabel } from './use-label';
 
-type ResultPreviewProps = { results: Result[]; renderImage: (result: ImageResult) => ReactNode };
+type ResultError = (type: Result['type'], error: Error) => void;
+
+type ResultPreviewProps = {
+	results: Result[];
+	renderImage: (result: ImageResult) => ReactNode;
+	onResultError: ResultError;
+};
 
 function Unavailable() {
 	const { t } = useTranslation();
 	return (
-		<Text c="dimmed" fs="italic" size="sm">
+		<Text c="stone.7" size="sm">
 			{t('desktop.viz.resultUnavailable')}
 		</Text>
 	);
 }
 
-class Isolated extends Component<{ children: ReactNode }, { failed: boolean }> {
+class Isolated extends Component<{ children: ReactNode; onError: (error: Error) => void }, { failed: boolean }> {
 	override state = { failed: false };
 
 	static getDerivedStateFromError() {
 		return { failed: true };
+	}
+
+	override componentDidCatch(error: Error) {
+		this.props.onError(error);
 	}
 
 	override render() {
@@ -64,28 +74,32 @@ function Histogram({ result }: { result: HistogramResult }) {
 	);
 }
 
-function isolated<T extends Result>(items: T[], render: (item: T) => ReactNode) {
-	return keyed(items).map(({ id, item }) => <Isolated key={id}>{render(item)}</Isolated>);
+function isolated<T extends Result>(onError: ResultError, items: T[], render: (item: T) => ReactNode) {
+	return keyed(items).map(({ id, item }) => (
+		<Isolated key={id} onError={(error) => onError(item.type, error)}>
+			{render(item)}
+		</Isolated>
+	));
 }
 
-export function ResultPreview({ results, renderImage }: ResultPreviewProps) {
+export function ResultPreview({ results, renderImage, onResultError }: ResultPreviewProps) {
 	return (
 		<Stack gap="sm">
-			{isolated(ofType(results, 'message'), (result) => (
+			{isolated(onResultError, ofType(results, 'message'), (result) => (
 				<Message result={result} />
 			))}
 			<Group align="flex-start" gap="md">
-				{isolated(ofType(results, 'image'), renderImage)}
-				{isolated(ofType(results, 'bar-chart'), (result) => (
+				{isolated(onResultError, ofType(results, 'image'), renderImage)}
+				{isolated(onResultError, ofType(results, 'bar-chart'), (result) => (
 					<Bars result={result} />
 				))}
-				{isolated(ofType(results, 'data-table'), (result) => (
+				{isolated(onResultError, ofType(results, 'data-table'), (result) => (
 					<DataTable result={result} />
 				))}
-				{isolated(ofType(results, 'multi-column-table'), (result) => (
+				{isolated(onResultError, ofType(results, 'multi-column-table'), (result) => (
 					<MultiColumnTable result={result} />
 				))}
-				{isolated(ofType(results, 'histogram'), (result) => (
+				{isolated(onResultError, ofType(results, 'histogram'), (result) => (
 					<Histogram result={result} />
 				))}
 			</Group>

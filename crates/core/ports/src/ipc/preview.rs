@@ -77,4 +77,9 @@ pub enum PreviewNote {
         tier: u32,
         long_edge: u32,
     },
+    ResultFailed {
+        computation_id: String,
+        result_type: String,
+        message: String,
+    },
 }

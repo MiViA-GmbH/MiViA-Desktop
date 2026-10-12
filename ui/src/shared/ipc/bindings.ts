@@ -587,7 +587,7 @@ export type PolicyRow = {
 
 export type PolicySource = "machine" | "user";
 
-export type PreviewNote = { kind: "opened"; computationId: string; durationMs: number } | { kind: "zoomMaxTier"; computationId: string; tier: number; longEdge: number };
+export type PreviewNote = { kind: "opened"; computationId: string; durationMs: number } | { kind: "zoomMaxTier"; computationId: string; tier: number; longEdge: number } | { kind: "resultFailed"; computationId: string; resultType: string; message: string };
 
 export type PreviewReason = "missing" | "tooLarge" | "unsupported" | "corrupt" | "offline" | "notPublished" | "cancelled";
 

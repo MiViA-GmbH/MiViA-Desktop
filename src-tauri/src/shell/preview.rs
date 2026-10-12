@@ -17,6 +17,7 @@ use super::setup;
 use super::window;
 
 const SITE: &str = "preview";
+const WEBVIEW_LINE_BYTES: usize = 2048;
 
 pub(crate) fn subject(target: &PreviewTarget) -> Result<PreviewSubject, AppError> {
     Ok(match target {
@@ -93,11 +94,35 @@ async fn labels(ready: &Ready, results: Option<&str>) -> BTreeMap<String, String
     found
 }
 
+fn capped(text: &str) -> &str {
+    text.get(..text.floor_char_boundary(WEBVIEW_LINE_BYTES))
+        .unwrap_or_default()
+}
+
+fn log_result_failure(computation_id: &str, result_type: &str, message: &str) {
+    tracing::warn!(
+        target: "webview",
+        source = "webview",
+        computation_id = capped(computation_id),
+        result_type = capped(result_type),
+        message = capped(message),
+        "preview.resultFailed"
+    );
+}
+
 pub(crate) async fn note(ready: &Ready, note: PreviewNote) -> Result<(), AppError> {
     let id = match &note {
         PreviewNote::Opened { computation_id, .. }
         | PreviewNote::ZoomMaxTier { computation_id, .. } => {
             ComputationId(parse_id(computation_id, SITE)?)
+        }
+        PreviewNote::ResultFailed {
+            computation_id,
+            result_type,
+            message,
+        } => {
+            log_result_failure(computation_id, result_type, message);
+            return Ok(());
         }
     };
     let model = ready.pipeline()?.preview_model(id).await;
@@ -111,6 +136,7 @@ pub(crate) async fn note(ready: &Ready, note: PreviewNote) -> Result<(), AppErro
             }
             .into(),
         ),
+        PreviewNote::ResultFailed { .. } => {}
         PreviewNote::ZoomMaxTier {
             tier, long_edge, ..
         } => telemetry.record(
@@ -187,7 +213,16 @@ mod tests {
 
     use serde_json::json;
 
-    use super::collect;
+    use super::{WEBVIEW_LINE_BYTES, capped, collect};
+
+    #[test]
+    fn webview_lines_are_cut_at_a_char_boundary() {
+        let long = "ä".repeat(WEBVIEW_LINE_BYTES);
+        let cut = capped(&long);
+        assert_eq!(cut.len(), WEBVIEW_LINE_BYTES);
+        assert_eq!(capped("short"), "short");
+        assert_eq!(capped(&format!("a{long}")).len(), WEBVIEW_LINE_BYTES - 1);
+    }
 
     #[test]
     fn labels_are_kept_only_for_strings_the_results_use() {

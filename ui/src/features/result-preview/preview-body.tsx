@@ -64,6 +64,14 @@ function Results({ computation, pick }: { computation: ComputationItem; pick: Pi
 				renderImage={(result) => (
 					<ImageChoice active={pick.active} computationId={computation.id} onPick={pick.onPick} result={result} />
 				)}
+				onResultError={(resultType, error) =>
+					commands.notePreview({
+						kind: 'resultFailed',
+						computationId: computation.id,
+						resultType,
+						message: error.stack ?? error.message,
+					})
+				}
 				results={results}
 			/>
 		</Labels>
