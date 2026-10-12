@@ -42,6 +42,24 @@ fn the_updater_is_configured_without_artifacts_downgrades_or_dangerous_options()
 }
 
 #[test]
+fn the_release_bundle_is_a_per_user_nsis_installer_signed_outside_the_bundler() {
+    let release = json("tauri.release.conf.json");
+    let bundle = &release["bundle"];
+    assert_eq!(bundle["targets"], serde_json::json!(["nsis"]));
+    assert_eq!(bundle["windows"]["nsis"]["installMode"], "currentUser");
+    assert_eq!(
+        bundle["windows"]["webviewInstallMode"]["type"],
+        "embedBootstrapper"
+    );
+    assert!(bundle.get("createUpdaterArtifacts").is_none());
+    assert!(release.get("plugins").is_none());
+    for config in [json("tauri.conf.json"), release] {
+        assert!(config.pointer("/build/beforeBundleCommand").is_none());
+        assert!(config.pointer("/build/beforeBuildCommand").is_none());
+    }
+}
+
+#[test]
 fn no_updater_permission_reaches_the_webview() {
     let capability = json("capabilities/main.json");
     let permissions = capability["permissions"].as_array().unwrap();
