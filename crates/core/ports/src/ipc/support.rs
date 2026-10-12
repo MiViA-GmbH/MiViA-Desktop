@@ -142,4 +142,6 @@ pub struct SupportView {
 pub enum KnownLink {
     Support,
     Releases,
+    License,
+    AccessKeys,
 }

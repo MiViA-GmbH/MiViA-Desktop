@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { holdsQuery, networkQuery } from '../../entities/hold/queries';
 import { UPDATE } from '../../entities/update/queries';
 import { commands } from '../../shared/ipc';
-import type { BlockKind, HoldKind, HoldView, NetworkView } from '../../shared/ipc/bindings';
+import type { BlockKind, HoldKind, HoldView, KnownLink, NetworkView } from '../../shared/ipc/bindings';
 import { formatTime } from '../../shared/lib/format';
 import { KeyIcon, LicenseIcon, OfflineIcon, TooOldIcon } from '../../shared/ui/icons';
 import classes from './hold-banner.module.css';
@@ -69,6 +69,11 @@ const LOOK = {
 	},
 } as const satisfies Record<HoldKind, Look>;
 
+const WEB = {
+	license: { link: 'license', label: 'desktop.hold.open.license' },
+	adminScope: { link: 'accessKeys', label: 'desktop.hold.open.accessKeys' },
+} as const satisfies Partial<Record<HoldKind, { link: KnownLink; label: string }>>;
+
 function strongest(holds: HoldView[]): HoldView | undefined {
 	return [...holds].sort((a, b) => LOOK[a.kind].rank - LOOK[b.kind].rank)[0];
 }
@@ -115,6 +120,7 @@ function HoldAction({ kind }: { kind: HoldKind }) {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const check = useMutation({ mutationFn: () => commands.checkConnectionNow() });
+	const open = useMutation({ mutationFn: (link: KnownLink) => commands.openTarget({ kind: 'link', link }) });
 	const client = useQueryClient();
 	const install = useMutation({
 		mutationFn: () => commands.installUpdate(),
@@ -127,15 +133,32 @@ function HoldAction({ kind }: { kind: HoldKind }) {
 			</Button>
 		);
 	}
+	const enterKey = (
+		<Button
+			flex="none"
+			onClick={() => navigate({ to: '/settings/$section', params: { section: 'account' } })}
+			size="xs"
+		>
+			{t('desktop.hold.enterKey')}
+		</Button>
+	);
 	if (kind === 'accessKey') {
+		return enterKey;
+	}
+	if (kind === 'license' || kind === 'adminScope') {
+		const link = WEB[kind];
 		return (
-			<Button
-				flex="none"
-				onClick={() => navigate({ to: '/settings/$section', params: { section: 'account' } })}
-				size="xs"
-			>
-				{t('desktop.hold.enterKey')}
-			</Button>
+			<>
+				<Button
+					flex="none"
+					onClick={() => open.mutate(link.link)}
+					size="xs"
+					variant={kind === 'license' ? 'filled' : 'default'}
+				>
+					{t(link.label)}
+				</Button>
+				{kind === 'adminScope' && enterKey}
+			</>
 		);
 	}
 	if (kind === 'clientTooOld') {

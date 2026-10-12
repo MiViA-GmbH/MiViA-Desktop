@@ -76,6 +76,10 @@
 			"continues": "Die Bilder sind sicher, es geht automatisch weiter.",
 			"safe": "Die Bilder sind sicher und warten hier.",
 			"checkNow": "Verbindung jetzt prüfen",
+			"open": {
+				"license": "Lizenz in MiViA anzeigen",
+				"accessKeys": "Zugangsschlüssel in MiViA öffnen"
+			},
 			"enterKey": "Neuen Zugangsschlüssel eingeben",
 			"copyDetails": "Details für die IT kopieren",
 			"copied": "Kopiert"

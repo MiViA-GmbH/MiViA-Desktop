@@ -76,6 +76,10 @@
 			"continues": "Images are safe and continue automatically.",
 			"safe": "Images are safe and wait here.",
 			"checkNow": "Check connection now",
+			"open": {
+				"license": "Show license in MiViA",
+				"accessKeys": "Open access keys in MiViA"
+			},
 			"enterKey": "Enter new access key",
 			"copyDetails": "Copy details for IT",
 			"copied": "Copied"

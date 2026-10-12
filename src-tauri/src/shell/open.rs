@@ -35,6 +35,8 @@ async fn link(ready: &Ready, link: KnownLink) -> Result<(), AppError> {
     let target = match link {
         KnownLink::Support => super::support::support_link(&ready.services),
         KnownLink::Releases => RELEASES.to_owned(),
+        KnownLink::License => format!("{}/dashboard", ready.services.origin.0),
+        KnownLink::AccessKeys => format!("{}/access-keys", ready.services.origin.0),
     };
     opened(tokio::task::spawn_blocking(move || mivia_os::open_file(&target)).await)
 }
