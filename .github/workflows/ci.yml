@@ -146,7 +146,7 @@ jobs:
       - name: Coverage
         env:
           TZ: Pacific/Chatham
-        run: cargo llvm-cov nextest --workspace --exclude mivia-desktop --exclude mivia-os --locked --json --summary-only --output-path target/coverage.json
+        run: cargo llvm-cov nextest --no-fail-fast --workspace --exclude mivia-desktop --exclude mivia-os --locked --json --summary-only --output-path target/coverage.json
 
   mutants-domain:
     name: Mutants (domain)
