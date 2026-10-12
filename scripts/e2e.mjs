@@ -10,4 +10,7 @@ const run = (program, args) => {
 run('pnpm', ['--filter', '@mivia-desktop/ui', 'build']);
 run('cargo', ['build', '-p', 'mivia-desktop', '--profile', 'e2e', '--features', 'custom-protocol,e2e', '--locked']);
 run('cargo', ['build', '-p', 'mivia-stub', '--profile', 'e2e', '--locked']);
-run('pnpm', ['--filter', '@mivia-desktop/ui', 'e2e']);
+const args = process.argv.slice(2);
+if (args[0] !== '--build-only') {
+	run('pnpm', ['--filter', '@mivia-desktop/ui', 'e2e', ...args]);
+}

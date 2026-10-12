@@ -85,6 +85,8 @@ jobs:
         with:
           profile: fuzz
           rust: "true"
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --version =0.13.2 --locked
       - name: Minimise
         run: cargo xtask fuzz --cmin
 
@@ -114,7 +116,7 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
       - name: Raise
-        run: cargo xtask floors-raise
+        run: cargo xtask floors-lower
       - name: Pull request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
