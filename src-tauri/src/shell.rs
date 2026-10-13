@@ -86,6 +86,10 @@ fn start(
     primary: Primary,
     hardening: Option<&io::Result<()>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let (handoffs, received) = channel(HANDOFF_QUEUE);
+    let data_dir = primary.data_dir.clone();
+    let launched = (primary.launch.minimized, primary.launch.ignored.len());
+    primary.serve(handoffs)?;
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(2)
         .max_blocking_threads(8)
@@ -95,24 +99,20 @@ fn start(
     tauri::async_runtime::set(runtime.handle().clone());
     let tauri_context = tauri::generate_context!();
     let version = tauri_context.package_info().version.to_string();
-    let logs = primary.data_dir.join("logs");
-    let context = DiagnosticsContext::load(&primary.data_dir, &version)?;
+    let logs = data_dir.join("logs");
+    let context = DiagnosticsContext::load(&data_dir, &version)?;
     let previous = previous_session(&logs, mivia_os::boot_time_unix_ms(), &version);
     let logging = Arc::new(start_logging(&logs)?);
     install_panic_hook(logs.clone(), context.clone(), Arc::clone(&logging));
     write_marker(&logs, &context)?;
     let previous_unclean = matches!(previous, PreviousSession::Unclean { .. });
-    log_start(&context, &primary, previous, hardening);
-    let (handoffs, received) = channel(HANDOFF_QUEUE);
-    let data_dir = primary.data_dir.clone();
-    let minimized = primary.launch.minimized;
-    primary.serve(handoffs)?;
+    log_start(&context, launched, previous, hardening);
     let shutdown = Arc::new(Shutdown::new(runtime, Arc::clone(&logging), logs));
     let signals = watch_session(&shutdown)?;
     let launch = Launch {
         data_dir,
         version,
-        minimized,
+        minimized: launched.0,
         diagnostics: context,
         logging,
         previous_unclean,
@@ -159,7 +159,7 @@ fn on_event(shutdown: &Shutdown, event: &RunEvent) {
 
 fn log_start(
     context: &DiagnosticsContext,
-    primary: &Primary,
+    (minimized, ignored_args): (bool, usize),
     previous: PreviousSession,
     hardening: Option<&io::Result<()>>,
 ) {
@@ -169,8 +169,8 @@ fn log_start(
         machine_id = %context.machine_id,
         version = %context.version,
         dev = tauri::is_dev(),
-        minimized = primary.launch.minimized,
-        ignored_args = primary.launch.ignored.len(),
+        minimized,
+        ignored_args,
         hardened = hardening.map(Result::is_ok),
         "session.start"
     );
