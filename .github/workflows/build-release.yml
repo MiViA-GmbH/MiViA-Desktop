@@ -12,6 +12,9 @@ on:
       perf_override_reason:
         type: string
         default: ""
+    secrets:
+      TAURI_SIGNING_PRIVATE_KEY:
+        required: true
 
 permissions: {}
 

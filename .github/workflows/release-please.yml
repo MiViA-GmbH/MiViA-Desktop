@@ -53,6 +53,8 @@ jobs:
       attestations: write  # write build provenance
       artifact-metadata: write  # attach attestation metadata
     uses: ./.github/workflows/build-release.yml
+    secrets:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
     with:
       tag_name: ${{ needs.release-please.outputs.tag }}
       sha: ${{ needs.release-please.outputs.sha }}
