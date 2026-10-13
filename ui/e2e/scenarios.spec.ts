@@ -44,12 +44,31 @@ function seeded(): Record<string, string> {
 async function launch(extra: Record<string, string>): Promise<Running> {
 	const { stub, origin } = await startStub();
 	const app = startApp(origin, extra);
-	const browser = await connect();
-	const page = browser.contexts()[0]?.pages()[0];
+	try {
+		const browser = await connect();
+		const page = await firstPage(browser);
+		return { stub, app, origin, browser, page };
+	} catch (error) {
+		await Promise.all([stop(app), stop(stub)]);
+		throw error;
+	}
+}
+
+async function firstPage(browser: Browser): Promise<Page> {
+	let page: Page | undefined;
+	await expect
+		.poll(
+			() => {
+				page = browser.contexts()[0]?.pages()[0];
+				return page !== undefined;
+			},
+			{ timeout: 30_000, intervals: [250] },
+		)
+		.toBe(true);
 	if (!page) {
 		throw new Error('no page in the app window');
 	}
-	return { stub, app, origin, browser, page };
+	return page;
 }
 
 async function shutdown(running: Running | undefined): Promise<void> {

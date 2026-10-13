@@ -86,6 +86,19 @@ async fn pace_and_flush_triggers() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn the_start_flush_waits_for_the_first_recorded_events() {
+    let world = world(None).await;
+    assert_eq!(world.now(Flush::Regular, NOW).await, Step::Idle);
+    world.record(2, 0).await;
+    assert_eq!(
+        world.now(Flush::Regular, NOW + 6_000).await,
+        Step::Sent { events: 2 }
+    );
+    world.record(1, 0).await;
+    assert_eq!(world.now(Flush::Regular, NOW + 12_000).await, Step::Idle);
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn one_request_is_in_flight_at_a_time() {
     let world = world(None).await;
     world.record(3, 0).await;
