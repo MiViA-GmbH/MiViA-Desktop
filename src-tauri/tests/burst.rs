@@ -49,6 +49,26 @@ fn primary_pid(local_app_data: &Path) -> Option<u32> {
     mivia_os::pipe_server_pid(pipe.as_handle()).ok()
 }
 
+fn describe(round: &mut Round) -> String {
+    let statuses: Vec<Option<Option<i32>>> = round
+        .children
+        .iter_mut()
+        .map(|child| child.try_wait().ok().flatten().map(|status| status.code()))
+        .collect();
+    let alive = statuses.iter().filter(|status| status.is_none()).count();
+    let exits: Vec<Option<i32>> = statuses.into_iter().flatten().collect();
+    let nonce = std::fs::read_to_string(data_dir(&round.local_app_data).join("instance.nonce"));
+    let pipe = nonce.as_ref().map(|nonce| {
+        let sid = mivia_os::current_user_sid().unwrap_or_default();
+        mivia_os::open_pipe_client(&format!(r"\\.\pipe\ai.mivia.desktop-{sid}-{nonce}"))
+            .map_or_else(|error| error.to_string(), |_| "open".to_owned())
+    });
+    format!(
+        "{alive} alive, exits {exits:?}, nonce {:?}, pipe {pipe:?}",
+        nonce.is_ok()
+    )
+}
+
 fn start(index: usize) -> Round {
     let local_app_data =
         std::env::temp_dir().join(format!("mivia-burst-{}-{index}", std::process::id()));
@@ -151,11 +171,13 @@ fn staged_paths(local_app_data: &Path) -> BTreeMap<String, usize> {
 
 fn check(mut round: Round, kill_after: Duration) {
     let killed = kill_primary(&mut round, kill_after);
-    assert!(
-        killed.is_some(),
-        "round {} found no primary to kill",
-        round.index
-    );
+    if killed.is_none() {
+        let index = round.index;
+        panic!(
+            "round {index} found no primary to kill: {}",
+            describe(&mut round)
+        );
+    }
     let alive = settle(&mut round, killed);
     let spooled = staged_paths(&round.local_app_data);
     for child in &mut round.children {
