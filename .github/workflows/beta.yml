@@ -2,6 +2,11 @@ name: beta
 
 on:
   workflow_dispatch:
+    inputs:
+      perf_override_reason:
+        description: Release despite a red performance gate, and why
+        type: string
+        default: ""
 
 permissions: {}
 
@@ -51,6 +56,8 @@ jobs:
     needs: [tag]
     permissions:
       contents: write  # upload release assets
+      actions: read  # read nightly perf results
+      issues: read  # read perf-red issues
       id-token: write  # OIDC for signing and attestations
       attestations: write  # write build provenance
       artifact-metadata: write  # attach attestation metadata
@@ -58,3 +65,4 @@ jobs:
     with:
       tag_name: ${{ needs.tag.outputs.tag }}
       sha: ${{ github.sha }}
+      perf_override_reason: ${{ inputs.perf_override_reason }}

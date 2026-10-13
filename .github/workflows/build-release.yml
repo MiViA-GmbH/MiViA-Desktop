@@ -66,6 +66,8 @@ jobs:
           persist-credentials: false
       - name: Install toolchains without cache
         uses: moonrepo/setup-toolchain@261c62cb5b0f580c7be7c8cd0f023a2e96756095 # v0.6.4
+        env:
+          RUSTUP_AUTO_INSTALL: "0"
         with:
           proto-version: "0.62.3"
           auto-install: true
@@ -143,16 +145,26 @@ jobs:
             target/release/bundle/nsis/*-setup.exe
             target/release/bundle/nsis/*-setup.exe.sig
             out/*.cdx.json
+      - name: SBOM names
+        id: sbom
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag_name }}
+        run: |
+          version="${TAG#beta-}"
+          version="${version#v}"
+          echo "cargo=out/mivia-desktop-$version-cargo.cdx.json" >> "$GITHUB_OUTPUT"
+          echo "npm=out/mivia-desktop-$version-npm.cdx.json" >> "$GITHUB_OUTPUT"
       - name: Cargo SBOM attestation
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: target/release/bundle/nsis/*-setup.exe
-          sbom-path: out/cargo.cdx.json
+          sbom-path: ${{ steps.sbom.outputs.cargo }}
       - name: npm SBOM attestation
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: target/release/bundle/nsis/*-setup.exe
-          sbom-path: out/npm.cdx.json
+          sbom-path: ${{ steps.sbom.outputs.npm }}
       - name: Upload release assets
         shell: bash
         env:
@@ -166,18 +178,23 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
-      contents: read  # check out the repository
+      contents: write  # read the assets of the draft release
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
-          allowed-endpoints: api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443
+          allowed-endpoints: api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443 tuf-repo-cdn.sigstore.dev:443
       - name: Validate the tag
         shell: bash
         env:
           TAG: ${{ inputs.tag_name }}
         run: printf '%s' "$TAG" | grep -Pq '^(beta-)?v\d+\.\d+\.\d+(-beta\.\d+)?$'
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false
       - name: Attestations
         env:
           GH_TOKEN: ${{ github.token }}

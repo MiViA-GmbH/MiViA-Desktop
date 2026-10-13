@@ -67,10 +67,12 @@ run(join(tools, 'bin', `cargo-cyclonedx${exe}`), [
 	'1.5',
 	'--target',
 	'x86_64-pc-windows-msvc',
+	'--features',
+	'custom-protocol',
 	'--override-filename',
 	'cargo.cdx',
 ]);
-renameSync(join('src-tauri', 'cargo.cdx.json'), join(out, 'cargo.cdx.json'));
+renameSync(join('src-tauri', 'cargo.cdx.json'), join(out, `mivia-desktop-${version}-cargo.cdx.json`));
 const strays = execFileSync('git', ['ls-files', '--others', '--exclude-standard', '--', '*cargo.cdx.json'], {
 	encoding: 'utf8',
 });
@@ -87,7 +89,7 @@ run('pnpm', [
 	'--sbom-type',
 	'application',
 	'--out',
-	resolve(out, 'npm.cdx.json'),
+	resolve(out, `mivia-desktop-${version}-npm.cdx.json`),
 ]);
 
 copyFileSync(join('target', 'release', `mivia-desktop${exe}`), join(out, `mivia-desktop${exe}`));
