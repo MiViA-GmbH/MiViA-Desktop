@@ -123,10 +123,27 @@ fn cleanup(work: &Work) -> Result<()> {
             remove_link(&path)?;
         }
     }
-    if work.root.exists() {
-        std::fs::remove_dir_all(&work.root).context("removing the canary work tree")?;
+    remove_tree(&work.root)
+}
+
+fn remove_tree(root: &Path) -> Result<()> {
+    for _ in 0..5 {
+        if !root.exists() || std::fs::remove_dir_all(root).is_ok() {
+            return Ok(());
+        }
+        std::thread::sleep(std::time::Duration::from_secs(1));
     }
-    Ok(())
+    let left: Vec<String> = std::fs::read_dir(root)
+        .into_iter()
+        .flatten()
+        .filter_map(Result::ok)
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .collect();
+    bail!(
+        "removing the canary work tree {}: still holds {}",
+        root.display(),
+        left.join(", ")
+    )
 }
 
 #[cfg(windows)]
