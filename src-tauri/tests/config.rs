@@ -47,6 +47,14 @@ fn the_release_bundle_is_a_per_user_nsis_installer_signed_outside_the_bundler() 
     let bundle = &release["bundle"];
     assert_eq!(bundle["targets"], serde_json::json!(["nsis"]));
     assert_eq!(bundle["windows"]["nsis"]["installMode"], "currentUser");
+    let hooks = bundle["windows"]["nsis"]["installerHooks"]
+        .as_str()
+        .unwrap_or_default();
+    assert!(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join(hooks)
+            .is_file()
+    );
     assert_eq!(
         bundle["windows"]["webviewInstallMode"]["type"],
         "embedBootstrapper"

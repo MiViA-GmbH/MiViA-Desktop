@@ -8,7 +8,9 @@
 				"type": "embedBootstrapper"
 			},
 			"nsis": {
-				"installMode": "currentUser"
+				"installMode": "currentUser",
+				"installerHooks": "../packaging/nsis/hooks.nsh",
+				"languages": ["English", "German"]
 			}
 		}
 	}
