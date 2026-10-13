@@ -5,6 +5,8 @@
 	"draft": true,
 	"force-tag-creation": true,
 	"pull-request-title-pattern": "chore(release): release ${version}",
+	"pull-request-header": "Release pull request.",
+	"pull-request-footer": "Merging this pull request creates the draft release.",
 	"packages": {
 		".": {
 			"release-as": "2.0.0"

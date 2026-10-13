@@ -14,12 +14,17 @@ const tryGh = (args) => {
 	}
 };
 
-const pending = tryGh([
+const releaseBranch = gh([
 	'api',
-	`repos/${repo}/contents/package.json?ref=release-please--branches--main`,
+	`repos/${repo}/git/matching-refs/heads/release-please--branches--main`,
 	'--jq',
-	'.content',
-]);
+	'.[].ref',
+])
+	.split('\n')
+	.find(Boolean)
+	?.replace('refs/heads/', '');
+const pending =
+	releaseBranch && tryGh(['api', `repos/${repo}/contents/package.json?ref=${releaseBranch}`, '--jq', '.content']);
 const stable = gh(['api', '--paginate', `repos/${repo}/git/matching-refs/tags/v`, '--jq', '.[].ref'])
 	.split('\n')
 	.map((ref) => /^refs\/tags\/v(\d+)\.(\d+)\.(\d+)$/.exec(ref))
@@ -29,7 +34,7 @@ const stable = gh(['api', '--paginate', `repos/${repo}/git/matching-refs/tags/v`
 	.at(-1);
 
 let core = FIRST;
-if (pending !== undefined) {
+if (pending) {
 	core = JSON.parse(Buffer.from(pending, 'base64').toString('utf8')).version;
 } else if (stable !== undefined) {
 	core = `${stable[0]}.${stable[1]}.${stable[2] + 1}`;
