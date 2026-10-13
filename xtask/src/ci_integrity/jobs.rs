@@ -32,6 +32,7 @@ const CACHE_ACTIONS: &[&str] = &[
 ];
 const UNTRUSTED: &[&str] = &["github.event.", "github.head_ref", "inputs."];
 const SIGNING_KEY: &str = "TAURI_SIGNING_";
+const BUILD_RELEASE: &str = "./.github/workflows/build-release.yml";
 
 fn jobs(value: &Value) -> Vec<(String, &Value)> {
     value
@@ -224,36 +225,52 @@ pub(crate) fn no_cache(workflow: &Workflow) -> Vec<String> {
     found
 }
 
-pub(crate) fn signing_key(workflow: &Workflow) -> Option<String> {
-    let mentions = workflow.text.matches(SIGNING_KEY).count();
-    if mentions == 0 {
-        return None;
+fn secret_refs(value: &Value, pointer: &str) -> usize {
+    keys(value, pointer)
+        .iter()
+        .filter(|key| key.starts_with(SIGNING_KEY))
+        .filter(|key| {
+            value
+                .pointer(&format!("{pointer}/{key}"))
+                .and_then(Value::as_str)
+                == Some(format!("${{{{ secrets.{key} }}}}").as_str())
+        })
+        .count()
+}
+
+fn signing_mentions_allowed(workflow: &Workflow) -> Option<usize> {
+    if workflow.name != "build-release.yml" {
+        let passed: usize = jobs(&workflow.value)
+            .into_iter()
+            .filter(|(_, job)| job.get("uses").and_then(Value::as_str) == Some(BUILD_RELEASE))
+            .map(|(_, job)| secret_refs(job, "/secrets"))
+            .sum();
+        return (passed > 0).then_some(2 * passed);
     }
     let release = Some(&Value::String("release".to_owned()));
     let signing_steps: Vec<usize> = jobs(&workflow.value)
         .into_iter()
-        .filter(|(name, job)| {
-            workflow.name == "build-release.yml"
-                && name == "package"
-                && job.get("environment") == release
-        })
+        .filter(|(name, job)| name == "package" && job.get("environment") == release)
         .flat_map(|(_, job)| steps(job))
-        .map(|step| {
-            keys(step, "/env")
-                .iter()
-                .filter(|key| key.starts_with(SIGNING_KEY))
-                .filter(|key| {
-                    step.pointer(&format!("/env/{key}")).and_then(Value::as_str)
-                        == Some(format!("${{{{ secrets.{key} }}}}").as_str())
-                })
-                .count()
-        })
+        .map(|step| secret_refs(step, "/env"))
         .filter(|secrets| *secrets > 0)
         .collect();
+    let declared = keys(&workflow.value, "/on/workflow_call/secrets")
+        .iter()
+        .filter(|key| key.starts_with(SIGNING_KEY))
+        .count();
     match signing_steps.as_slice() {
-        [secrets] if mentions == 2 * secrets => None,
-        _ => Some(
-            "TAURI_SIGNING_* may appear only as a secret in the env of one step of the package job under environment release".to_owned(),
-        ),
+        [secrets] => Some(2 * secrets + declared),
+        _ => None,
     }
+}
+
+pub(crate) fn signing_key(workflow: &Workflow) -> Option<String> {
+    let mentions = workflow.text.matches(SIGNING_KEY).count();
+    if mentions == 0 || signing_mentions_allowed(workflow) == Some(mentions) {
+        return None;
+    }
+    Some(
+        "TAURI_SIGNING_* may appear only as a secret in the env of one step of the package job under environment release, declared by build-release.yml and passed by its callers".to_owned(),
+    )
 }
