@@ -280,7 +280,7 @@ const STATES: State[] = [
 		path: '/settings/privacy?scenario=calm',
 		act: async (c) => {
 			await dialog(c, 'desktop.privacy.viewSent');
-			await expect(c.page.getByRole('dialog').getByText(/10:12/)).toBeVisible();
+			await expect(c.page.getByRole('dialog').getByRole('button', { name: /10:12, 2 / })).toBeVisible();
 		},
 	},
 	{
