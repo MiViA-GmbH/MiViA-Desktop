@@ -44,9 +44,14 @@ function seeded(): Record<string, string> {
 async function launch(extra: Record<string, string>): Promise<Running> {
 	const { stub, origin } = await startStub();
 	const app = startApp(origin, extra);
-	const browser = await connect();
-	const page = await firstPage(browser);
-	return { stub, app, origin, browser, page };
+	try {
+		const browser = await connect();
+		const page = await firstPage(browser);
+		return { stub, app, origin, browser, page };
+	} catch (error) {
+		await Promise.all([stop(app), stop(stub)]);
+		throw error;
+	}
 }
 
 async function firstPage(browser: Browser): Promise<Page> {
