@@ -187,7 +187,7 @@ jobs:
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
-          allowed-endpoints: api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443 tuf-repo-cdn.sigstore.dev:443
+          allowed-endpoints: api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443 tuf-repo-cdn.sigstore.dev:443 tuf-repo.github.com:443 tmaproduction.blob.core.windows.net:443
       - name: Validate the tag
         shell: bash
         env:
