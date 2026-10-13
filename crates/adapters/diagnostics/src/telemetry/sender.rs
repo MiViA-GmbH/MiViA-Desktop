@@ -103,11 +103,9 @@ impl State {
             self.lock = Lock::Free;
         }
         match result {
-            Outcome::Idle => {
-                self.backlog = false;
-                Step::Idle
-            }
+            Outcome::Idle => Step::Idle,
             Outcome::Sent { events, hint } => {
+                self.backlog = false;
                 self.failures = 0;
                 self.limit = MAX_BATCH_EVENTS;
                 self.hint_s = hint.unwrap_or(self.hint_s);
