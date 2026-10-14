@@ -13,6 +13,7 @@ pub(crate) fn apply(spec: &mut Value) {
     drop_telemetry_body(spec);
     drop_error_responses(spec);
     relax_required(spec);
+    declare_job_result_id(spec);
     walk(spec, &mut allow_unknown_fields);
     mark_discriminators(spec);
     walk(spec, &mut open_string_enum);
@@ -63,6 +64,16 @@ fn relax_required(spec: &mut Value) {
         if let Some(required) = spec.pointer_mut(&pointer).and_then(Value::as_array_mut) {
             required.retain(|name| !name.as_str().is_some_and(|name| fields.contains(&name)));
         }
+    }
+}
+
+fn declare_job_result_id(spec: &mut Value) {
+    let pointer = "/components/schemas/UserJobDto/properties";
+    if let Some(properties) = spec.pointer_mut(pointer).and_then(Value::as_object_mut) {
+        properties.insert(
+            "resultId".to_owned(),
+            json!({"type": "string", "format": "uuid"}),
+        );
     }
 }
 

@@ -48,8 +48,8 @@ fn created(dto: &UserJobDto) -> ServerJob {
         image_id: Some(dto.image_id.to_string()),
         customization_id: None,
         status: status(&raw),
-        result_id: None,
-        has_result: !dto.result.is_empty(),
+        result_id: dto.result_id.map(|id| id.to_string()),
+        has_result: dto.result_id.is_some() || !dto.result.is_empty(),
         created_at: Some(Timestamp(dto.created_at.timestamp_millis())),
     }
 }

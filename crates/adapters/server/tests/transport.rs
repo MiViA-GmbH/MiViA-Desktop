@@ -114,6 +114,32 @@ async fn submits_carry_the_idempotency_key_and_jobs_map_by_image() {
 }
 
 #[tokio::test]
+async fn a_cached_job_without_a_result_body_keeps_its_result_id() {
+    let (mock, api, _) = server().await;
+    let cached = json!([{ "id": "4e9a1f2c-0000-4000-8000-000000000002", "imageId": IMAGE,
+        "modelId": super::support::MODEL, "status": "CACHED", "createdAt": "2026-10-11T16:07:12.062Z",
+        "startedAt": null, "finishedAt": null, "archived": false, "outdated": false,
+        "resultId": "7c2ba8f9-7091-44bc-aaac-f4f62fb535b7" }]);
+    Mock::given(method("POST"))
+        .and(path("/api/jobs"))
+        .respond_with(ResponseTemplate::new(201).set_body_json(cached))
+        .mount(&mock)
+        .await;
+    let created = api.submit(submit(&[IMAGE])).await.unwrap();
+    let job = created
+        .first()
+        .map(|job| (job.status.clone(), job.has_result, job.result_id.clone()));
+    assert_eq!(
+        job,
+        Some((
+            ServerJobStatus::Cached,
+            true,
+            Some("7c2ba8f9-7091-44bc-aaac-f4f62fb535b7".to_owned())
+        ))
+    );
+}
+
+#[tokio::test]
 async fn a_null_licence_means_no_licence() {
     let (mock, api, _) = server().await;
     Mock::given(method("GET"))

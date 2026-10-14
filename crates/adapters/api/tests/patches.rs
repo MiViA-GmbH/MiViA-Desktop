@@ -110,6 +110,15 @@ fn error_responses_are_dropped() {
 }
 
 #[test]
+fn created_jobs_declare_the_result_id_the_server_sends() {
+    let spec = patched(json!({"components": {"schemas": {"UserJobDto": {"properties": {}}}}}));
+    assert_eq!(
+        spec["components"]["schemas"]["UserJobDto"]["properties"]["resultId"],
+        json!({"type": "string", "format": "uuid"})
+    );
+}
+
+#[test]
 fn job_fields_the_server_leaves_out_are_optional() {
     let spec = patched(json!({"components": {"schemas": {"UserJobDto": {
         "required": ["id", "finishedAt", "startedAt", "result", "status"]}}}}));
