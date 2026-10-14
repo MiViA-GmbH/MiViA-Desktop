@@ -54,7 +54,7 @@ impl Smoke {
         )?;
         let trace = decode(&std::fs::read(&xml)?);
         let setup = self.setup.file_name().unwrap_or_default().to_string_lossy();
-        let unseen = absent(&trace, &[&setup, "mivia-desktop.exe", "un_a.exe"]);
+        let unseen = absent(&trace, &[&setup, "mivia-desktop.exe", r"\un.exe"]);
         checks.check(
             "the image-load trace covers install, first start and uninstall",
             unseen.is_empty(),

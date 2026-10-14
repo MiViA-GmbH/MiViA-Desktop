@@ -46,5 +46,12 @@ while ((Get-Date) -lt $deadline) {
     }
     Start-Sleep -Milliseconds 500
 }
-Write-Output ("the uninstaller did not finish after $Seconds s, steps: " + ($steps -join ', '))
+$seen = foreach ($window in $element::RootElement.FindAll($scope::Children, [System.Windows.Automation.Condition]::TrueCondition)) {
+    $buttons = @()
+    if ($window.Current.ClassName -eq '#32770') {
+        $buttons = $window.FindAll($scope::Descendants, [System.Windows.Automation.Condition]::TrueCondition) | ForEach-Object { "$($_.Current.ControlType.ProgrammaticName) '$($_.Current.Name)'" }
+    }
+    "'$($window.Current.Name)' $($window.Current.ClassName) pid $($window.Current.ProcessId) [$($buttons -join '|')]"
+}
+Write-Output ("the uninstaller did not finish after $Seconds s, steps: " + ($steps -join ', ') + '; windows: ' + ($seen -join '; '))
 exit 1
