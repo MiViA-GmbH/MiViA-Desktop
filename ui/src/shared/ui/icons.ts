@@ -15,6 +15,7 @@ export {
 	IconFolderOff as FolderNotFoundIcon,
 	IconFolderOpen as ShowInFolderIcon,
 	IconFolderPlus as AddFolderIcon,
+	IconHelp as HelpIcon,
 	IconHistory as HistoryIcon,
 	IconInfoCircle as InfoIcon,
 	IconKey as KeyIcon,

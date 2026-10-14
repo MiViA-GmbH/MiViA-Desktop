@@ -3,6 +3,7 @@ import { lazy, type ReactNode, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { SetupOption, SetupView } from '../../shared/ipc/bindings';
+import { HelpLabel } from '../../shared/ui/help-label';
 import { has, previousStep } from './steps';
 import { useAdvance } from './use-advance';
 import { useGo, useSave, withOption } from './use-setup';
@@ -13,24 +14,25 @@ type ChoiceProps = {
 	option: SetupOption;
 	locked: boolean | null;
 	label: string;
-	description?: ReactNode;
+	help: string;
 	extra?: ReactNode;
 };
 
-function Choice({ view, option, locked, label, description, extra }: ChoiceProps) {
+function Choice({ view, option, locked, label, help, extra }: ChoiceProps) {
 	const { t } = useTranslation();
 	const { change } = useSave(view);
 	return (
 		<Checkbox
+			aria-label={label}
 			checked={locked ?? has(view, option)}
 			description={
 				<Stack align="flex-start" gap={4} component="span">
-					{locked === null ? description : t('desktop.wizard.common.policy')}
+					{locked !== null && t('desktop.wizard.common.policy')}
 					{extra}
 				</Stack>
 			}
 			disabled={locked !== null}
-			label={label}
+			label={<HelpLabel help={help} label={label} />}
 			onChange={(event) => change({ options: withOption(view.options, option, event.currentTarget.checked) })}
 		/>
 	);
@@ -62,16 +64,23 @@ function FinishChoices({ view }: { view: SetupView }) {
 	return (
 		<>
 			<Choice
-				label={t('desktop.wizard.finish.autostart')}
+				help={t('desktop.integration.autostart.help')}
+				label={t('desktop.integration.autostart.label')}
 				locked={view.locks.autostart}
 				option="autostart"
 				view={view}
 			/>
-			<Choice label={t('desktop.wizard.finish.explorer')} locked={view.locks.explorer} option="explorer" view={view} />
 			<Choice
-				description={t('desktop.wizard.finish.telemetryNever')}
+				help={t('desktop.integration.explorer.help')}
+				label={t('desktop.integration.explorer.label')}
+				locked={view.locks.explorer}
+				option="explorer"
+				view={view}
+			/>
+			<Choice
 				extra={<WhatIsSent />}
-				label={t('desktop.wizard.finish.telemetry')}
+				help={t('desktop.privacy.telemetryHelp')}
+				label={t('desktop.privacy.telemetry')}
 				locked={view.locks.telemetry}
 				option="telemetry"
 				view={view}

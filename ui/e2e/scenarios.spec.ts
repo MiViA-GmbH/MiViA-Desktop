@@ -207,7 +207,7 @@ test.describe
 			await next(page);
 			await expect(page.getByRole('checkbox', { name: 'Grain size' })).toBeChecked({ timeout: 20_000 });
 			await next(page);
-			const consent = page.getByRole('checkbox', { name: /send technical and usage data/ });
+			const consent = page.getByRole('checkbox', { name: /Help improve MiViA/ });
 			await consent.click();
 			await expect(consent).toBeChecked();
 			await next(page, 'Finish setup');

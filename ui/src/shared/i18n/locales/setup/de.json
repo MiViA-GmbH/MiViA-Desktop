@@ -132,10 +132,6 @@
 			},
 			"finish": {
 				"title": "Windows und Datenschutz",
-				"autostart": "MiViA Desktop bei der Windows-Anmeldung starten (empfohlen, damit kein neues Bild verpasst wird)",
-				"explorer": "MiViA zum Rechtsklick-Menü des Explorers hinzufügen, um Einzelbilder auszuwerten („Mit MiViA auswerten“)",
-				"telemetry": "Optional: Technische Daten und Nutzungsdaten an die MiViA GmbH senden (App-Ereignisse, Fehler, Zeiten, Geräteangaben, mit einer Geräte-ID), um Fehler zu finden und die App zu verbessern. Sie können dies jederzeit unter Einstellungen > Datenschutz widerrufen.",
-				"telemetryNever": "Nie gesendet: Bilder, Datei-, Ordner- und Seriennamen, Ergebnisse, Suchtexte, Ihr Zugangsschlüssel.",
 				"later": "Sie können alles später in den Einstellungen ändern.",
 				"button": "Einrichtung abschließen"
 			},
@@ -209,12 +205,13 @@
 		},
 		"integration": {
 			"autostart": {
-				"label": "MiViA Desktop bei der Windows-Anmeldung starten",
-				"turnedOff": "Im Task-Manager ausgeschaltet"
+				"label": "MiViA Desktop mit Windows starten",
+				"turnedOff": "Im Task-Manager ausgeschaltet",
+				"help": "Empfohlen, damit kein neues Bild verpasst wird. Die App startet minimiert im Infobereich."
 			},
 			"explorer": {
-				"label": "„Mit MiViA auswerten“ im Rechtsklick-Menü des Explorers anzeigen",
-				"help": "Windows 11 zeigt den Eintrag unter „Weitere Optionen anzeigen“. Mehr als 100 Bilder? Senden oder ziehen Sie den Ordner.",
+				"label": "„Mit MiViA auswerten“ zum Explorer-Menü hinzufügen",
+				"help": "Klicken Sie im Explorer mit der rechten Maustaste auf Bilder, um sie einzeln auszuwerten.",
 				"unavailable": "Nur im installierten MiViA Desktop verfügbar."
 			}
 		}

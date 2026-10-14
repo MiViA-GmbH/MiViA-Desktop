@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { integrationQuery } from '../../entities/setup/queries';
 import { commands } from '../../shared/ipc';
 import type { IntegrationView } from '../../shared/ipc/bindings';
+import { HelpLabel } from '../../shared/ui/help-label';
 
 type Change = { autostart: boolean | null; explorer: boolean | null };
 
@@ -33,10 +34,13 @@ export function AutostartSwitch() {
 	const off = view.autostart === 'turnedOffInTaskManager';
 	return (
 		<Switch
+			aria-label={t('desktop.integration.autostart.label')}
 			checked={view.autostart === 'on'}
 			description={off ? t('desktop.integration.autostart.turnedOff') : lockNote(view.locks.autostart, t)}
 			disabled={!view.available || off || view.locks.autostart !== null}
-			label={t('desktop.integration.autostart.label')}
+			label={
+				<HelpLabel help={t('desktop.integration.autostart.help')} label={t('desktop.integration.autostart.label')} />
+			}
 			onChange={(event) => set.mutate({ autostart: event.currentTarget.checked, explorer: null })}
 		/>
 	);
@@ -48,13 +52,16 @@ export function ExplorerSwitch() {
 	if (!view) {
 		return null;
 	}
-	const help = view.available ? t('desktop.integration.explorer.help') : t('desktop.integration.explorer.unavailable');
+	const unavailable = view.available ? undefined : t('desktop.integration.explorer.unavailable');
 	return (
 		<Switch
+			aria-label={t('desktop.integration.explorer.label')}
 			checked={view.explorer}
-			description={[lockNote(view.locks.explorer, t), help].filter(Boolean).join(' ')}
+			description={[lockNote(view.locks.explorer, t), unavailable].filter(Boolean).join(' ')}
 			disabled={!view.available || view.locks.explorer !== null}
-			label={t('desktop.integration.explorer.label')}
+			label={
+				<HelpLabel help={t('desktop.integration.explorer.help')} label={t('desktop.integration.explorer.label')} />
+			}
 			onChange={(event) => set.mutate({ autostart: null, explorer: event.currentTarget.checked })}
 		/>
 	);
