@@ -93,7 +93,7 @@ fn start(index: usize) -> Round {
 fn kill_primary(round: &mut Round, after: Duration) -> Option<u32> {
     let started = Instant::now();
     std::thread::sleep(after);
-    while started.elapsed() < after + Duration::from_secs(5) {
+    while started.elapsed() < after + SETTLE {
         if let Some(pid) = primary_pid(&round.local_app_data)
             && let Some(child) = round.children.iter_mut().find(|child| child.id() == pid)
         {
