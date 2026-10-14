@@ -6,7 +6,7 @@ use anyhow::{Context, Result, bail};
 
 use super::super::harness::{infra, usage};
 use super::super::model::{Budgets, Run};
-use super::super::{Options, count, mb};
+use super::super::{Options, count, mb, nsis_dir_flag};
 use super::{put, sleep};
 
 const BURST_SAMPLE: Duration = Duration::from_millis(250);
@@ -206,7 +206,7 @@ fn installed(options: &Options, budgets: &Budgets, run: &mut Run, installer: &Pa
     let begun = Instant::now();
     let status = Command::new(installer)
         .arg("/S")
-        .arg(format!("/D={}", target.display()).replace('/', "\\"))
+        .arg(nsis_dir_flag(&target))
         .status()
         .map_err(infra)?;
     if !status.success() {
