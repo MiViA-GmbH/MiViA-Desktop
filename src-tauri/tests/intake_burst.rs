@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -6,7 +7,7 @@ use mivia_application::intake::{
     AddFolder, Intake, IntakeError, IntakeSink, Ports, SIGNAL_CAPACITY, Tick, run,
 };
 use mivia_application::report_settings::ReportSettings;
-use mivia_domain::ids::{MINUTE_MS, ModelChoice};
+use mivia_domain::ids::{BatchId, MINUTE_MS, ModelChoice};
 use mivia_domain::label::LabelRule;
 use mivia_domain::output::ReportFolder;
 use mivia_domain::path::WinPath;
@@ -130,6 +131,36 @@ async fn settled(store: &SqliteStore, scope: AccountScope) -> (u32, bool) {
     (files, !detected)
 }
 
+async fn items(store: &SqliteStore, scope: AccountScope) -> String {
+    let page = store
+        .list_history(scope, HistoryFilter::default(), None)
+        .await
+        .unwrap();
+    let mut states: BTreeMap<String, usize> = BTreeMap::new();
+    let mut labels: BTreeMap<String, usize> = BTreeMap::new();
+    for row in page.head.iter().chain(&page.rows) {
+        let id = BatchId(row.summary.id.parse().unwrap());
+        let mut after = None;
+        loop {
+            let items = store.list_batch_items(scope, id, after).await.unwrap();
+            for item in &items.items {
+                *states.entry(item.state.clone()).or_default() += 1;
+                *labels.entry(item.label.clone()).or_default() += 1;
+            }
+            match items.next {
+                Some(next) => after = Some(next),
+                None => break,
+            }
+        }
+    }
+    let twice: Vec<String> = labels
+        .into_iter()
+        .filter(|(_, count)| *count > 1)
+        .map(|(label, count)| format!("{label} x{count}"))
+        .collect();
+    format!("states {states:?}, repeated {twice:?}")
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn burst_of_5000_files_loses_nothing() {
     let base = tempfile::tempdir_in(env!("CARGO_TARGET_TMPDIR")).unwrap();
@@ -192,8 +223,9 @@ async fn burst_of_5000_files_loses_nothing() {
         &report,
     )
     .unwrap();
-    assert_eq!(files as usize, FILES, "{report}");
-    assert!(done, "{report}");
+    let detail = items(&store, scope).await;
+    assert_eq!(files as usize, FILES, "{report} {detail}");
+    assert!(done, "{report} {detail}");
     let optimized = !cfg!(debug_assertions);
     assert!(!optimized || ready_after <= READY_BUDGET, "{report}");
     assert!(intake.high_water() < CHANNEL_BUDGET, "{report}");
