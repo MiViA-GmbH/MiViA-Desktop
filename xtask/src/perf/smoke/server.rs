@@ -67,7 +67,7 @@ impl Smoke {
                 "--profile",
                 "e2e",
                 "--features",
-                "custom-protocol",
+                "custom-protocol,e2e",
                 "-p",
                 "mivia-desktop",
                 "--test",
