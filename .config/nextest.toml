@@ -1,3 +1,10 @@
+[test-groups]
+heavy-io = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = 'package(mivia-desktop) & (binary(burst) | binary(intake_burst) | binary(gate_first))'
+test-group = 'heavy-io'
+
 [profile.ci-windows]
 retries = 0
 fail-fast = false
