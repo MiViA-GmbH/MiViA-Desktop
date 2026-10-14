@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { localeQuery } from '../entities/account/queries';
 import { PrivacyPanel } from '../features/privacy/privacy-panel';
+import { AboutPanel } from '../features/settings/about-panel';
 import { AccountPanel } from '../features/settings/account-panel';
 import { BackupPanel } from '../features/settings/backup-panel';
 import { AutostartSwitch, ExplorerSwitch } from '../features/settings/integration-panel';
@@ -24,6 +25,7 @@ const SECTIONS = {
 	updates: 'desktop.settings.updates',
 	privacy: 'desktop.settings.privacy',
 	support: 'desktop.settings.support',
+	about: 'desktop.settings.about',
 } as const;
 
 type Section = keyof typeof SECTIONS;
@@ -51,6 +53,7 @@ const PANELS = {
 	updates: { title: 'desktop.settings.updates', body: UpdatesPanel },
 	privacy: { title: 'desktop.settings.privacy', body: PrivacyPanel },
 	support: { title: 'desktop.settings.support', body: SupportPanel },
+	about: { title: 'desktop.settings.about', body: AboutPanel },
 } as const;
 
 function Section({ section }: { section: Section }) {

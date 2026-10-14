@@ -465,7 +465,7 @@ export type IntegrationView = {
 
 export type IssueReporting = "on" | "mailtoOnly" | "off";
 
-export type KnownLink = "support" | "releases" | "license" | "accessKeys" | "infoMail";
+export type KnownLink = "support" | "releases" | "license" | "accessKeys" | "infoMail" | "notices";
 
 export type Language = "en" | "de";
 

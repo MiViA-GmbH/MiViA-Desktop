@@ -323,6 +323,7 @@ const STATES: State[] = [
 		path: '/settings/support?scenario=calm',
 		act: (c) => dialog(c, 'desktop.support.deleteLogs'),
 	},
+	{ id: 'r7-about', path: '/settings/about?scenario=calm' },
 	{ id: 'w01-welcome', path: '/?scenario=setup' },
 	{
 		id: 'w02-legacy',
