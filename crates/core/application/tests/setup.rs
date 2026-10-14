@@ -59,6 +59,13 @@ fn blanking_the_key_keeps_every_other_setting_and_the_bom() {
 }
 
 #[test]
+fn blanking_keeps_single_quoted_attributes_readable() {
+    let config = br#"<add key="AccessToken" note='say "hi"' value="mv-old-key"/>"#;
+    let again = parse(&blank_access_token(config).unwrap()).unwrap();
+    assert_eq!(again, LegacyConfig::default());
+}
+
+#[test]
 fn hostile_or_huge_configs_are_refused() {
     let dtd = "<?xml version=\"1.0\"?><!DOCTYPE c [<!ENTITY x \"boom\">]>\
                <configuration><appSettings><add key=\"Models\" value=\"&x;\"/></appSettings></configuration>";

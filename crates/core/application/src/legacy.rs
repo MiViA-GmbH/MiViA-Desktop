@@ -119,7 +119,10 @@ fn blanked(element: &BytesStart<'_>) -> Result<Option<BytesStart<'static>>, Lega
         if attribute.key.as_ref() == "value" {
             copy.push_attribute(("value", ""));
         } else {
-            copy.push_attribute(attribute);
+            let value = attribute
+                .normalized_value(XmlVersion::Implicit1_0)
+                .map_err(|_| LegacyError::Unreadable)?;
+            copy.push_attribute((attribute.key.into_inner(), value.as_ref()));
         }
     }
     Ok(Some(copy))
