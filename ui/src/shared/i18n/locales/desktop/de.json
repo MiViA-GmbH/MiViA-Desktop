@@ -451,8 +451,8 @@
 			"series_other": "{{count}} Bildserien"
 		},
 		"privacy": {
-			"telemetry": "Optional: Technische Daten und Nutzungsdaten an die MiViA GmbH senden (App-Ereignisse, Fehler, Zeiten, Geräteangaben, mit einer Geräte-ID), um Fehler zu finden und die App zu verbessern. Aus, solange Sie es nicht einschalten; Sie können dies hier jederzeit widerrufen.",
-			"telemetryNever": "Nie gesendet: Bilder, Datei-, Ordner- und Seriennamen, Ergebnisse, Suchtexte, Ihr Zugangsschlüssel.",
+			"telemetry": "MiViA verbessern helfen: Nutzungs- und Fehlerdaten an die MiViA GmbH senden (optional)",
+			"telemetryHelp": "MiViA Desktop sendet App-Ereignisse, Fehler, Zeiten und Geräteangaben, zusammen mit einer Geräte-ID. Nie gesendet: Bilder, Datei-, Ordner- und Seriennamen, Ergebnisse, Suchtexte, Ihr Zugangsschlüssel. Sie können Ihre Einwilligung jederzeit unter Einstellungen > Datenschutz widerrufen.",
 			"offNote": "Solange dies ausgeschaltet ist, wird nichts aufgezeichnet oder gesendet.",
 			"idsTitle": "Ihre Kennungen",
 			"idsHelp": "Nennen Sie diese Kennungen, wenn Sie Auskunft über Ihre Daten oder deren Löschung verlangen.",
@@ -553,6 +553,9 @@
 		},
 		"viz": {
 			"resultUnavailable": "Dieses Ergebnis kann nicht angezeigt werden"
+		},
+		"help": {
+			"moreAbout": "Mehr zu: {{label}}"
 		}
 	}
 }

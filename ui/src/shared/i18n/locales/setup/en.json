@@ -132,10 +132,6 @@
 			},
 			"finish": {
 				"title": "Windows and privacy",
-				"autostart": "Start MiViA Desktop when I sign in to Windows (recommended, so no new image is missed)",
-				"explorer": "Add MiViA to the Explorer right-click menu, to analyze single images (“Analyze with MiViA”)",
-				"telemetry": "Optional: send technical and usage data to MiViA GmbH (app events, errors, timings, device facts, with a device ID) to find faults and improve the app. You can withdraw this at any time in Settings > Privacy.",
-				"telemetryNever": "Never sent: images, file, folder and series names, results, search text, your access key.",
 				"later": "You can change all of this later in Settings.",
 				"button": "Finish setup"
 			},
@@ -209,12 +205,13 @@
 		},
 		"integration": {
 			"autostart": {
-				"label": "Start MiViA Desktop when I sign in to Windows",
-				"turnedOff": "Turned off in Task Manager"
+				"label": "Start MiViA Desktop with Windows",
+				"turnedOff": "Turned off in Task Manager",
+				"help": "Recommended, so no new image is missed. The app starts minimized in the tray."
 			},
 			"explorer": {
-				"label": "Show “Analyze with MiViA” in the Explorer right-click menu",
-				"help": "Windows 11 shows the entry under “Show more options”. More than 100 images? Send or drag the folder.",
+				"label": "Add “Analyze with MiViA” to the Explorer menu",
+				"help": "Right-click images in Explorer to analyze them one at a time.",
 				"unavailable": "Available in the installed MiViA Desktop only."
 			}
 		}

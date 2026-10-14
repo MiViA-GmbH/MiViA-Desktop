@@ -8,6 +8,7 @@ import { SentDataDialog } from '../../entities/privacy/sent-data-dialog';
 import { notifyStatus } from '../../entities/support/toasts';
 import { commands } from '../../shared/ipc';
 import type { PrivacyView } from '../../shared/ipc/bindings';
+import { HelpLabel } from '../../shared/ui/help-label';
 
 function CopyId({ label, value }: { label: string; value: string | null }) {
 	const { t } = useTranslation();
@@ -47,14 +48,15 @@ function TelemetrySwitch({ view }: { view: PrivacyView }) {
 		mutationFn: (enabled: boolean) => commands.setTelemetry(enabled),
 		onSuccess: (next) => client.setQueryData(PRIVACY, next),
 	});
-	const description = view.locked ? t('desktop.wizard.common.policy') : t('desktop.privacy.telemetryNever');
+	const description = view.locked ? t('desktop.wizard.common.policy') : undefined;
 	return (
 		<Stack gap="xs">
 			<Switch
+				aria-label={t('desktop.privacy.telemetry')}
 				checked={view.enabled}
 				description={description}
 				disabled={view.locked || set.isPending}
-				label={t('desktop.privacy.telemetry')}
+				label={<HelpLabel help={t('desktop.privacy.telemetryHelp')} label={t('desktop.privacy.telemetry')} />}
 				onChange={(event) => set.mutate(event.currentTarget.checked)}
 			/>
 			{!view.enabled && (

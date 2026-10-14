@@ -101,9 +101,19 @@ test('the setup can be finished with the keyboard alone', async ({ page }) => {
 	await page.keyboard.press('Enter');
 
 	await heading(page, 'Windows and privacy');
-	await expect(page.getByRole('checkbox', { name: /send technical and usage data/ })).not.toBeChecked();
+	await expect(page.getByRole('checkbox', { name: /Help improve MiViA/ })).not.toBeChecked();
 	await structure(page);
 	await page.screenshot({ path: `${SHOTS}/w12-finish-en.png` });
+	const more = page.getByRole('button', { name: /^More about Help improve MiViA/ });
+	await tabTo(page, more);
+	await page.keyboard.press('Enter');
+	await expect(page.getByText('You can withdraw your consent at any time in Settings > Privacy.')).toBeVisible();
+	await expect(page.getByRole('checkbox', { name: /Help improve MiViA/ })).not.toBeChecked();
+	await expect(page.getByRole('dialog')).toHaveCSS('opacity', '1');
+	await page.screenshot({ path: `${SHOTS}/w12-finish-help-en.png` });
+	await page.keyboard.press('Escape');
+	await expect(page.getByText('You can withdraw your consent at any time in Settings > Privacy.')).toBeHidden();
+	await expect(more).toBeFocused();
 	await tabTo(page, page.getByRole('button', { name: 'What is sent' }));
 	await page.keyboard.press('Enter');
 	await expect(page.getByRole('dialog').getByText('session.start', { exact: true })).toBeVisible();
