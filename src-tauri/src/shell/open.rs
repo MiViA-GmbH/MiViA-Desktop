@@ -13,16 +13,21 @@ use super::preview;
 const SITE: &str = "open_target";
 const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-Desktop/releases";
 const INFO_MAIL: &str = "mailto:info@mivia.ai";
+const NOTICES: &str = "THIRD-PARTY-NOTICES.txt";
+
+fn shell_error(error: &io::Error) -> AppError {
+    AppError::new(
+        AppErrorKind::Internal,
+        Some("shell"),
+        error.to_string(),
+        SITE,
+    )
+}
 
 fn opened(result: Result<io::Result<()>, tokio::task::JoinError>) -> Result<(), AppError> {
     match result {
         Ok(Ok(())) => Ok(()),
-        Ok(Err(error)) => Err(AppError::new(
-            AppErrorKind::Internal,
-            Some("shell"),
-            error.to_string(),
-            SITE,
-        )),
+        Ok(Err(error)) => Err(shell_error(&error)),
         Err(error) => Err(AppError::new(
             AppErrorKind::Panic,
             None,
@@ -32,6 +37,11 @@ fn opened(result: Result<io::Result<()>, tokio::task::JoinError>) -> Result<(), 
     }
 }
 
+fn notices() -> Result<String, AppError> {
+    let exe = std::env::current_exe().map_err(|error| shell_error(&error))?;
+    Ok(exe.with_file_name(NOTICES).to_string_lossy().into_owned())
+}
+
 async fn link(ready: &Ready, link: KnownLink) -> Result<(), AppError> {
     let target = match link {
         KnownLink::Support => super::support::support_link(&ready.services),
@@ -39,6 +49,7 @@ async fn link(ready: &Ready, link: KnownLink) -> Result<(), AppError> {
         KnownLink::License => format!("{}/dashboard", ready.services.origin.0),
         KnownLink::AccessKeys => format!("{}/access-keys", ready.services.origin.0),
         KnownLink::InfoMail => INFO_MAIL.to_owned(),
+        KnownLink::Notices => notices()?,
     };
     opened(tokio::task::spawn_blocking(move || mivia_os::open_file(&target)).await)
 }

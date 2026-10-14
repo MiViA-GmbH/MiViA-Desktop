@@ -226,7 +226,12 @@
 			"explorer": "Explorer-Integration",
 			"support": "Support",
 			"privacy": "Datenschutz",
-			"updates": "Updates"
+			"updates": "Updates",
+			"about": "Über"
+		},
+		"about": {
+			"copyright": "© MiViA GmbH",
+			"notices": "Open-Source-Lizenzen"
 		},
 		"update": {
 			"current": "Installierte Version: {{version}}",

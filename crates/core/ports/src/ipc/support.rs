@@ -145,4 +145,5 @@ pub enum KnownLink {
     License,
     AccessKeys,
     InfoMail,
+    Notices,
 }
