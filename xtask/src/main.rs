@@ -30,7 +30,7 @@ use anyhow::{Result, anyhow, bail};
 
 const USAGE: &str = "usage: cargo xtask <arch | command-size | source-rules [paths] | canary | why <id> | \
 quality-diff --base <rev> --head <rev> | ci-integrity [--base <rev>] [--head <rev>] | \
-commit-text (--file <path> | --title <text> [--body <text>]) | floors-lower | \
+commit-text (--file <path> | --title <text> [--body <text>]) | floors-lower | mutation-floor <crate> <outcomes.json> | \
 telemetry-fields [--check] | quarantine-filter | fuzz (--shard <n>/<of> --seconds <total> | --cmin) | update-sig verify <asset> <sig> <version> | perf <scenario>>";
 
 fn main() -> ExitCode {
@@ -58,6 +58,7 @@ fn run(args: &[String]) -> Result<bool> {
         "ci-integrity" => ci_integrity::run(&root, rest),
         "commit-text" => commit_text::run(&root, rest),
         "floors-lower" => floors::lower(&root),
+        "mutation-floor" => floors::mutation(&root, rest),
         "telemetry-fields" => telemetry_fields::run(&root, rest),
         "update-sig" => update_sig::run(rest),
         "perf" => perf::run(&root, rest),
