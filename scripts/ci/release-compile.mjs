@@ -10,7 +10,7 @@ import {
 	rmSync,
 	writeFileSync,
 } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { delimiter, join, resolve } from 'node:path';
 
 const windows = process.platform === 'win32';
 const exe = windows ? '.exe' : '';
@@ -55,8 +55,11 @@ run('cargo', ['build', '--release', '--locked', '--frozen', '-p', 'mivia-desktop
 run('cargo', ['build', '--release', '--locked', '--frozen', '-p', 'xtask']);
 run('cargo', ['install', 'tauri-cli', '--version', `=${tauriCli}`, '--locked', '--root', tools]);
 run('cargo', ['install', 'cargo-cyclonedx', '--version', '=0.5.9', '--locked', '--root', tools]);
+run('cargo', ['install', 'cargo-about', '--version', '=0.9.2', '--locked', '--root', tools]);
 
 mkdirSync(out, { recursive: true });
+process.env.PATH = `${resolve(tools, 'bin')}${delimiter}${process.env.PATH}`;
+run('node', ['scripts/notices.mjs', join(out, 'THIRD-PARTY-NOTICES.txt')]);
 run(join(tools, 'bin', `cargo-cyclonedx${exe}`), [
 	'cyclonedx',
 	'--manifest-path',

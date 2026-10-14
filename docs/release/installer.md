@@ -19,6 +19,10 @@ The release ships one per-user NSIS installer, built with `src-tauri/tauri.relea
 - Uninstalling keeps the application data. The checkbox "Delete the application data" (off by default) asks for confirmation and then removes the data folders, the saved access keys and `HKCU\Software\MiViA\Desktop`. An update never removes data.
 - Uninstalling always removes the Send to shortcuts, the Explorer entries, the autostart value, the `inbox` folder and `instance.nonce`. When the installer itself runs the old uninstaller during an interactive upgrade, the autostart value is put back afterwards.
 
+## Third-party notices
+
+The installer puts `THIRD-PARTY-NOTICES.txt` next to `mivia-desktop.exe`; Settings, About opens it. `node scripts/notices.mjs <file>` writes it from the crates in the app's dependency graph for Windows (cargo-about 0.9.2, from `.tools/bin` or the PATH), the production packages of the UI (`pnpm licenses list --prod`) and `packaging/notices/other.txt` for what neither tool sees: the IJG sentence, the Visual C++ runtime, the WebView2 bootstrapper and NSIS. The release and nightly builds write it to `target/release` before bundling, and the bundler fails without it. Without an argument the script writes `target/debug/THIRD-PARTY-NOTICES.txt`, the copy a dev build opens. The `notices` check runs the script in CI, so a licence cargo-about cannot resolve, a package without a licence text or a release config that stops installing the file fails the pull request.
+
 ## Manual checks on a clean Windows VM
 
 Run these before each stable release; the local test on a developer machine cannot cover them.

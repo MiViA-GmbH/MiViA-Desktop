@@ -126,7 +126,7 @@ jobs:
         run: cd out && sha256sum -c <<< "$EXPECTED"
       - name: Place the compiled app
         shell: bash
-        run: mkdir -p target/release && cp out/mivia-desktop.exe target/release/ && cp out/package.json package.json
+        run: mkdir -p target/release && cp out/mivia-desktop.exe out/THIRD-PARTY-NOTICES.txt target/release/ && cp out/package.json package.json
       - name: Bundle
         shell: pwsh
         run: out/cargo-tauri.exe bundle --bundles nsis --config src-tauri/tauri.release.conf.json
