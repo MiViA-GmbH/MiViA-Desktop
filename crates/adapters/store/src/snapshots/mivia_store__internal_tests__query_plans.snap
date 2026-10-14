@@ -1,6 +1,5 @@
 ---
 source: crates/adapters/store/src/internal_tests.rs
-assertion_line: 55
 expression: report
 ---
 claim source probe:
@@ -79,6 +78,11 @@ plan computations:
   SEARCH e USING PRIMARY KEY (folder_id=? AND fingerprint=? AND model_choice_key=?) LEFT-JOIN
   SEARCH c USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
 list known paths:
+  COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+  SEARCH s USING INDEX source_file_due (account_id=? AND state=?)
+  SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
   SEARCH ledger_path USING PRIMARY KEY (folder_id=?)
 list baseline paths:
   SEARCH ledger_path USING INDEX ledger_path_by_fingerprint (folder_id=? AND fingerprint=?)

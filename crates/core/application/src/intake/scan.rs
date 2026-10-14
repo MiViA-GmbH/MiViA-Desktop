@@ -22,9 +22,13 @@ fn interval(row: &FolderRow) -> i64 {
 }
 
 fn unchanged(known: &BTreeMap<String, KnownPath>, entry: &WalkEntry) -> bool {
-    known
-        .get(&entry.path.key())
-        .is_some_and(|known| known.size == entry.size && known.mtime == entry.mtime)
+    known.get(&entry.path.key()).is_some_and(|known| {
+        if known.given_up {
+            entry.mtime <= known.mtime
+        } else {
+            known.size == entry.size && known.mtime == entry.mtime
+        }
+    })
 }
 
 impl Intake {

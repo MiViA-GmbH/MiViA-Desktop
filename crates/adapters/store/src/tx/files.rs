@@ -17,7 +17,7 @@ const INSERT_FILE: &str = "INSERT INTO source_file (account_id, batch_id, path, 
      FROM batch b WHERE b.id = ?2 AND b.account_id = ?1 RETURNING id";
 
 const UPDATE_STATE: &str = "UPDATE source_file SET state = ?2, reason = ?3, \
-     next_attempt_at = CASE WHEN ?2 IN ('detected', 'ready') THEN ?4 ELSE next_attempt_at END \
+     next_attempt_at = CASE WHEN ?2 IN ('detected', 'ready', 'unreadable') THEN ?4 ELSE next_attempt_at END \
      WHERE id = ?1";
 
 impl SqlTx<'_> {
