@@ -76,8 +76,14 @@ pub(super) fn plant(folder: &Path, machine: u16) -> Result<()> {
     } else {
         "System32"
     };
-    let source = windows_dir().join(system).join("version.dll");
+    let system = windows_dir().join(system);
     for name in CANARIES {
+        let own = system.join(format!("{name}.dll"));
+        let source = if own.is_file() {
+            own
+        } else {
+            system.join("version.dll")
+        };
         std::fs::copy(&source, folder.join(format!("{name}.dll")))
             .with_context(|| format!("planting {name}.dll in {}", folder.display()))?;
     }
