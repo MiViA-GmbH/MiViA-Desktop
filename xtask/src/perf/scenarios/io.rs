@@ -206,7 +206,7 @@ fn installed(options: &Options, budgets: &Budgets, run: &mut Run, installer: &Pa
     let begun = Instant::now();
     let status = Command::new(installer)
         .arg("/S")
-        .arg(format!("/D={}", target.display()))
+        .arg(format!("/D={}", target.display()).replace('/', "\\"))
         .status()
         .map_err(infra)?;
     if !status.success() {
