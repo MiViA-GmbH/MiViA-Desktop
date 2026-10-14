@@ -183,7 +183,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
         run: |
-          git diff "$BASE_SHA"...HEAD > target-pr.diff
+          git diff "$BASE_SHA"...HEAD -- '*.rs' > target-pr.diff
           cargo mutants --in-diff target-pr.diff -p mivia-domain --test-tool nextest
 
   perf-instr:
