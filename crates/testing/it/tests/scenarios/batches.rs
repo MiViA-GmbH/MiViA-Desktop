@@ -292,3 +292,59 @@ async fn a_file_still_waiting_at_the_time_cap_moves_to_the_next_series() {
     assert_eq!(series[1].closure_reason.as_deref(), Some("cap"));
     world.finish().await;
 }
+
+#[tokio::test]
+async fn a_rewritten_member_stays_one_item() {
+    let world = World::new().await;
+    world.add(MINUTE_MS, false).await;
+    world.drop_file(r"D:\Lab\probe.jpg", &jpeg(1));
+    world.pass(2 * SECOND_MS).await;
+    world.drop_file(r"D:\Lab\probe.jpg", &jpeg(2));
+    world.drop_file(r"D:\Lab\probe.jpg", &jpeg(3));
+    world.pass(2 * SECOND_MS).await;
+    let series = world.series().await;
+    assert_eq!(series.len(), 1);
+    assert_eq!(series[0].counts.files, 1);
+    assert_eq!(
+        world.states(&series[0]).await,
+        owned(&[("probe.jpg", "ready")])
+    );
+    world.finish().await;
+}
+
+#[tokio::test]
+async fn an_unreadable_file_is_detected_again_only_after_it_changes() {
+    let world = World::new().await;
+    world.add(MINUTE_MS, false).await;
+    world.drop_file(r"D:\Lab\held.jpg", JPEG);
+    world.fs.lock(&win(r"D:\Lab\held.jpg"));
+    world.pass(2 * SECOND_MS).await;
+    world.pass(10 * MINUTE_MS).await;
+    for _ in 0..80 {
+        world.pass(30 * SECOND_MS).await;
+    }
+    let series = world.series().await;
+    assert_eq!(
+        series.len(),
+        1,
+        "an unchanged unreadable file is not picked up again by a scan"
+    );
+    assert_eq!(
+        world.states(&series[0]).await,
+        owned(&[("held.jpg", "unreadable")])
+    );
+
+    world.fs.unlock(&win(r"D:\Lab\held.jpg"));
+    world.drop_file(r"D:\Lab\held.jpg", &jpeg(9));
+    world.pass(2 * SECOND_MS).await;
+    let mut items: Vec<(String, String)> = Vec::new();
+    for series in world.series().await {
+        items.extend(world.states(&series).await);
+    }
+    items.sort();
+    assert_eq!(
+        items,
+        owned(&[("held.jpg", "ready"), ("held.jpg", "unreadable")])
+    );
+    world.finish().await;
+}

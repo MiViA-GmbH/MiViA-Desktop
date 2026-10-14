@@ -188,7 +188,7 @@ pub(crate) const EARLIER_IN_BATCH: &str = "SELECT id FROM source_file \
 pub(crate) const IN_LEDGER: &str =
     "SELECT 1 FROM ledger_entry WHERE folder_id = ?1 AND fingerprint = ?2 LIMIT 1";
 
-pub(crate) const PATHS_WITH_CONTENT: &str = "SELECT path, size, mtime, fingerprint \
+pub(crate) const PATHS_WITH_CONTENT: &str = "SELECT path, size, mtime, fingerprint, 0 \
      FROM ledger_path INDEXED BY ledger_path_by_fingerprint \
      WHERE folder_id = ?1 AND fingerprint = ?2";
 
@@ -211,8 +211,7 @@ pub(crate) const CLAIM_LEDGER: &str = "INSERT INTO ledger_entry \
      JOIN batch b ON b.id = s.batch_id WHERE s.id = ?1 AND b.folder_id IS NOT NULL \
      ON CONFLICT DO NOTHING";
 
-pub(crate) const KNOWN_PATHS: &str =
-    "SELECT path, size, mtime, fingerprint FROM ledger_path WHERE folder_id = ?1";
+pub(crate) const KNOWN_PATHS: &str = "SELECT s.path, s.size, s.next_attempt_at,      X'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', 1      FROM source_file s INDEXED BY source_file_due JOIN batch b ON b.id = s.batch_id      WHERE s.account_id = ?2 AND s.state = 'unreadable' AND b.folder_id = ?1      UNION ALL SELECT path, size, mtime, fingerprint, 0 FROM ledger_path WHERE folder_id = ?1";
 
 pub(crate) const BASELINE_PATHS: &str = "SELECT path FROM ledger_path \
      INDEXED BY ledger_path_by_fingerprint \

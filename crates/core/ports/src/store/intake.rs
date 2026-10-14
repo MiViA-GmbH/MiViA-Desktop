@@ -87,6 +87,7 @@ pub struct KnownPath {
     pub size: u64,
     pub mtime: Timestamp,
     pub baseline: bool,
+    pub given_up: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
