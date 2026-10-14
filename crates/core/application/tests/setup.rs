@@ -65,6 +65,10 @@ fn hostile_or_huge_configs_are_refused() {
     assert_eq!(parse(dtd.as_bytes()), Err(LegacyError::Unreadable));
     assert_eq!(parse(b"<configuration><add"), Err(LegacyError::Unreadable));
     assert_eq!(parse(&[0xFF, 0xFE, 0x00]), Err(LegacyError::Unreadable));
+    assert_eq!(
+        parse(br#"<add key="AccessToken" value="mv-a" value="b"/>"#),
+        Err(LegacyError::Unreadable)
+    );
     let huge = vec![b' '; 1024 * 1024 + 1];
     assert_eq!(parse(&huge), Err(LegacyError::TooLarge));
 }

@@ -47,6 +47,9 @@ fn setting(element: &BytesStart<'_>) -> Result<Option<(String, String)>, LegacyE
     if element.name().as_ref() != "add" {
         return Ok(None);
     }
+    for checked in element.attributes() {
+        checked.map_err(|_| LegacyError::Unreadable)?;
+    }
     let key = attribute(element, "key")?;
     let value = attribute(element, "value")?.unwrap_or_default();
     Ok(key.map(|key| (key, value)))

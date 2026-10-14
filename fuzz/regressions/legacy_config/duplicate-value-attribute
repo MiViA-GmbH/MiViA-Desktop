@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <appSettings>
+    <add key="Models" value="GRAIN,PHASES" />
+    <add key="AccessToken" value="mv-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789" value="E:\Mikroskop" />
+    <adduration>
