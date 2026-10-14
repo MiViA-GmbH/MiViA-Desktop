@@ -74,6 +74,12 @@ pub(crate) async fn compute(
             .await
             .map_err(|e| format!("submit {model}: {e:?}"))?;
         check(submitted.len() == 1, &format!("submit {model}"))?;
+        check(
+            submitted
+                .iter()
+                .all(|job| job.status != ServerJobStatus::Cached || job.result_id.is_some()),
+            &format!("cached {model} job carries its result id"),
+        )?;
         if smoke.recorder.recording() {
             let body =
                 json!({ "modelId": found.model_id, "imageIds": [image_id], "source": "API" });
