@@ -75,6 +75,7 @@ fn cargo_fuzz_each(
             .arg("fuzz")
             .args(args(target))
             .current_dir(dir)
+            .env_remove("RUSTUP_TOOLCHAIN")
             .status()
             .context("running cargo fuzz")?;
         green &= status.success();

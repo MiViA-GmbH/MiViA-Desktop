@@ -330,6 +330,9 @@ jobs:
         with:
           profile: fuzz
           rust: "true"
+      - name: Install the fuzz toolchain
+        working-directory: fuzz
+        run: rustup toolchain install --no-self-update
       - name: Install cargo-fuzz
         run: cargo install cargo-fuzz --version =0.13.2 --locked
       - name: Fuzz
