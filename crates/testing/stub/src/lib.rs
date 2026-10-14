@@ -17,6 +17,7 @@ use tokio::net::TcpListener;
 pub struct Stub {
     pub engine: Arc<FakeServerApi>,
     pub key: String,
+    pub scheme: &'static str,
     files: Arc<Mutex<BTreeMap<String, Vec<u8>>>>,
     served: Arc<Mutex<Vec<Vec<u8>>>>,
 }
@@ -26,6 +27,7 @@ impl Stub {
         Self {
             engine: Arc::new(FakeServerApi::default()),
             key: key.to_owned(),
+            scheme: "http",
             files: Arc::default(),
             served: Arc::default(),
         }
