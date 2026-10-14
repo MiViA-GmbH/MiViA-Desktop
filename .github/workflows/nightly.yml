@@ -372,7 +372,21 @@ jobs:
         shell: bash
         env:
           CRATE: ${{ matrix.crate }}
-        run: cargo mutants -p "$CRATE" --test-tool nextest
+        run: |
+          status=0
+          cargo mutants -p "$CRATE" --test-tool nextest || status=$?
+          case "$status" in 0|2|3) ;; *) exit "$status" ;; esac
+          cargo xtask mutation-floor "$CRATE" mutants.out/outcomes.json
+      - name: Upload mutants-${{ matrix.crate }}
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutants-${{ matrix.crate }}
+          path: |
+            mutants.out/outcomes.json
+            mutants.out/missed.txt
+            mutants.out/timeout.txt
+          retention-days: 14
 
   checks:
     name: Release consistency
