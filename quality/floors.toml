@@ -15,6 +15,9 @@ ui-entities = 90
 ui-shared-lib = 90
 
 [mutation]
+mivia-domain = 79
+mivia-server = 64
+mivia-diagnostics = 36
 
 [suppressions]
 rust = 3
