@@ -176,6 +176,7 @@ pub(super) fn run(options: &Options) -> Result<bool> {
     let mut checks = Checks::default();
     let outcome = smoke.scenario(&installer, &mut cleanup, &mut checks);
     drop(cleanup);
+    copy_files(&smoke.data.join("logs"), &smoke.out.join("logs"));
     if let Err(error) = outcome {
         checks.check("smoke stopped early", false, format!("{error:#}"));
     }

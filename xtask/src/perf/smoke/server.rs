@@ -109,6 +109,7 @@ impl Smoke {
             .map_err(infra)?;
         let pid = primary.id();
         cleanup.app = Some(primary);
+        self.wait_for_tray()?;
         let mut second = Command::new(&exe)
             .args(["--open-paths", "--"])
             .args(&paths)
@@ -175,6 +176,18 @@ impl Smoke {
             ),
         ])?;
         Ok(())
+    }
+
+    fn wait_for_tray(&self) -> Result<()> {
+        let log = self.data.join("logs").join("mivia.log");
+        let deadline = Instant::now() + Duration::from_secs(60);
+        while Instant::now() < deadline {
+            if std::fs::read_to_string(&log).is_ok_and(|text| text.contains("tray_ready")) {
+                return Ok(());
+            }
+            std::thread::sleep(Duration::from_millis(500));
+        }
+        Err(anyhow!("the first start logged no tray_ready within 60 s"))
     }
 
     pub(super) fn report(&self, checks: &mut Checks) -> Result<()> {
