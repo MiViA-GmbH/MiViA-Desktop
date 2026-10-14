@@ -115,6 +115,11 @@ impl Smoke {
         )?;
         wait(&mut uninstaller, Duration::from_secs(10))?;
         checks.check(
+            "the uninstaller asks for no language",
+            !steps.contains("clicked OK"),
+            "the language of the install is remembered",
+        );
+        checks.check(
             "the uninstaller deletes the app data when asked",
             driven,
             steps,
