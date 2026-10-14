@@ -77,7 +77,7 @@ The budget row measures tree CPU over 10 minutes starting 60 s after hide, but t
 
 ## size.exe
 
-Pending. The release profile refuses to compile without the production updater keys and the signer EKU (`main.rs` const assert), and there is no local Tauri CLI for the NSIS bundle. The e2e exe is 31.3 MB without LTO and is not comparable. Measured by the nightly or release job.
+First measurement 28.615 MB on windows-2025 (nightly installer, LTO, symbols stripped). The budget went from 22 to 30 MB by owner decision on 2026-10-14. The e2e exe (31.3 MB without LTO) is not comparable.
 
 ## Scenarios and metrics not built yet
 
