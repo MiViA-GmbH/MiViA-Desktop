@@ -45,10 +45,12 @@ if (!/^\d+\.\d+\.\d+$/.test(core)) {
 }
 
 const prefix = `beta-v${core}-beta.`;
-const taken = gh(['api', `repos/${repo}/git/matching-refs/tags/${prefix}`, '--jq', '.[].ref'])
+const last = gh(['api', `repos/${repo}/git/matching-refs/tags/${prefix}`, '--jq', '.[].ref'])
 	.split('\n')
-	.filter(Boolean).length;
-const tag = `${prefix}${taken + 1}`;
+	.map((ref) => /\.(\d+)$/.exec(ref))
+	.filter(Boolean)
+	.reduce((max, match) => Math.max(max, Number(match[1])), 0);
+const tag = `${prefix}${last + 1}`;
 
 gh(['api', `repos/${repo}/git/refs`, '-f', `ref=refs/tags/${tag}`, '-f', `sha=${sha}`]);
 gh([
