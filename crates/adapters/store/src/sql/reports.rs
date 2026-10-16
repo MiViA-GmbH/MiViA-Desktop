@@ -30,7 +30,7 @@ pub(crate) fn next_request() -> String {
          r.decimal_separator, r.timezone, p.member_from, p.member_to, p.report_id, p.attempts \
          FROM report_part p INDEXED BY report_part_queue JOIN report r ON r.id = p.report_id \
          WHERE p.state = 'requested' AND p.server_report_id IS NULL AND p.next_attempt_at <= ?2 \
-         AND r.account_id = ?1 AND {} \
+         AND r.account_id = ?1 AND r.deleted_at IS NULL AND {} \
          ORDER BY p.part_no, p.report_id, p.format DESC LIMIT 1",
         gate_open(Gate::ReportRequest)
     )
@@ -51,7 +51,7 @@ pub(crate) fn poll_due() -> String {
     format!(
         "SELECT p.id, p.server_report_id, p.format, COALESCE(p.requested_at, 0), p.rerequests, \
          p.split FROM report_part p JOIN report r ON r.id = p.report_id \
-         WHERE {POLLABLE} AND p.next_poll_at <= ?2 AND r.account_id = ?1 AND {} \
+         WHERE {POLLABLE} AND p.next_poll_at <= ?2 AND r.account_id = ?1 AND r.deleted_at IS NULL AND {} \
          ORDER BY p.next_poll_at, p.id LIMIT 10",
         gate_open(Gate::ReportDownload)
     )
@@ -60,19 +60,20 @@ pub(crate) fn poll_due() -> String {
 pub(crate) fn next_poll() -> String {
     format!(
         "SELECT min(p.next_poll_at) FROM report_part p JOIN report r ON r.id = p.report_id \
-         WHERE {POLLABLE} AND r.account_id = ?1"
+         WHERE {POLLABLE} AND r.account_id = ?1 AND r.deleted_at IS NULL"
     )
 }
 
 pub(crate) const SAVE_DUE: &str = "SELECT p.id FROM report_part p INDEXED BY report_part_save \
      JOIN report r ON r.id = p.report_id \
      WHERE p.staging_path IS NOT NULL AND p.state IN ('requested', 'not_saved') \
-     AND p.next_attempt_at <= ?2 AND r.account_id = ?1 ORDER BY p.next_attempt_at, p.id LIMIT 10";
+     AND p.next_attempt_at <= ?2 AND r.account_id = ?1 AND r.deleted_at IS NULL \
+     ORDER BY p.next_attempt_at, p.id LIMIT 10";
 
 pub(crate) const NEXT_SAVE: &str = "SELECT min(p.next_attempt_at) \
      FROM report_part p INDEXED BY report_part_save JOIN report r ON r.id = p.report_id \
      WHERE p.staging_path IS NOT NULL AND p.state IN ('requested', 'not_saved') \
-     AND r.account_id = ?1";
+     AND r.account_id = ?1 AND r.deleted_at IS NULL";
 
 pub(crate) const SAVE_ROW: &str = "SELECT p.format, p.part_no, p.part_count, r.language, \
      COALESCE(r.custom_name, b.label), COALESCE(b.closed_at, r.created_at), \
@@ -104,7 +105,7 @@ pub(crate) const PART_HEAD: &str = "SELECT p.report_id, p.format, p.part_no, p.m
      WHERE p.id = ?1 AND r.account_id = ?2 AND r.deleted_at IS NULL";
 
 pub(crate) const STALE_CANDIDATES: &str = "SELECT DISTINCT m.report_id FROM report_member m \
-     JOIN report r ON r.id = m.report_id WHERE m.computation_id = ?1 AND r.stale = 0 \
+     JOIN report r ON r.id = m.report_id WHERE m.computation_id = ?1 AND r.stale = 0 AND r.deleted_at IS NULL \
      AND EXISTS (SELECT 1 FROM report_part p WHERE p.report_id = r.id AND p.state = 'saved')";
 
 pub(crate) const RECOVER_POLLS: &str = "UPDATE report_part SET next_poll_at = ?2 \

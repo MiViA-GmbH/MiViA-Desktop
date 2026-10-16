@@ -148,7 +148,7 @@ impl SqlTx<'_> {
         let head: Option<StaleHead> = self
             .tx
             .query_row(
-                "SELECT batch_id, formats, stale, replaced_by FROM report WHERE id = ?1 AND account_id = ?2",
+                "SELECT batch_id, formats, stale, replaced_by FROM report WHERE id = ?1 AND account_id = ?2 AND deleted_at IS NULL",
                 [id.0, self.account()],
                 |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
             )

@@ -146,7 +146,7 @@ impl SqlTx<'_> {
         let before: Option<String> = self
             .tx
             .query_row(
-                "SELECT label FROM batch WHERE id = ?1 AND account_id = ?2",
+                "SELECT label FROM batch WHERE id = ?1 AND account_id = ?2 AND deleted_at IS NULL",
                 [id.0, self.account()],
                 |row| row.get(0),
             )
