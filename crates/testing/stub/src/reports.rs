@@ -154,7 +154,8 @@ async fn link(State(stub): State<Stub>, headers: HeaderMap, Path(id): Path<Strin
                 .unwrap_or("127.0.0.1");
             let body = std::mem::take(&mut *bytes.lock());
             stub.files.lock().insert(id.clone(), body);
-            Json(json!({ "url": format!("http://{host}/__stub/files/{id}") })).into_response()
+            Json(json!({ "url": format!("{}://{host}/__stub/files/{id}", stub.scheme) }))
+                .into_response()
         }
         Err(error) => response(&error),
     }
