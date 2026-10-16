@@ -241,7 +241,7 @@ The ` (n)` added to a report file name only when that name is already taken; exi
 A saved report one of whose computations was later run again.
 
 **Replaced report**:
-A stale report the user moved into the `Replaced` subfolder after its update was saved; the only change the app ever makes to a saved report.
+A stale report the user moved into the `Replaced` subfolder after its update was saved; besides deleting report files the user asked to delete together with their results, the only change the app ever makes to a saved report.
 
 **History**:
 The app's own lasting record of batches, their computations and reports, kept on this PC only.
@@ -249,6 +249,10 @@ _Avoid_: log, jobs list
 
 **History entry**:
 One batch as shown in history.
+
+**Deleted from history**:
+An image or image series the user deleted in history: hidden everywhere, its running work cancelled, optionally with its report files and its jobs on the server; the change log keeps a record.
+_Avoid_: removed, purged
 
 **History event**:
 One insert-only entry of the action log: time, time zone, Windows user, action, trigger, before and after.
