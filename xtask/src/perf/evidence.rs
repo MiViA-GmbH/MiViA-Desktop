@@ -16,6 +16,8 @@ pub(crate) const CANARIES: [&str; 12] = [
     "wininet",
 ];
 
+pub(crate) const ACCEPTED_LOADS: [&str; 1] = ["cryptbase"];
+
 pub(crate) const I386: u16 = 0x14c;
 pub(crate) const AMD64: u16 = 0x8664;
 
@@ -54,6 +56,7 @@ pub(crate) fn canary_hits(trace: &str, folders: &[&str]) -> Vec<String> {
         .flat_map(|folder| {
             CANARIES
                 .iter()
+                .filter(|name| !ACCEPTED_LOADS.contains(name))
                 .map(move |name| format!("\\{}\\{name}.dll", folder.to_ascii_lowercase()))
         })
         .filter(|path| {

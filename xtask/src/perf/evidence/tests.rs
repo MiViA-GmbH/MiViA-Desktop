@@ -35,7 +35,8 @@ fn utf16_and_utf8_dumps_read_the_same() {
 fn only_a_canary_in_a_planted_folder_counts() {
     let trace = r"<Data Name='ImageName'>\Device\HarddiskVolume3\a\smoke\Downloads\VERSION.dll</Data>
 <Data Name='ImageName'>\Device\HarddiskVolume3\Windows\System32\uxtheme.dll</Data>
-<Data Name='ImageName'>\Device\HarddiskVolume3\a\smoke\install\winmm.dll.bak</Data>";
+<Data Name='ImageName'>\Device\HarddiskVolume3\a\smoke\install\winmm.dll.bak</Data>
+<Data Name='ImageName'>\Device\HarddiskVolume3\a\smoke\install\cryptbase.dll</Data>";
     assert_eq!(
         canary_hits(trace, &["downloads", "install"]),
         vec![r"\downloads\version.dll".to_owned()]
