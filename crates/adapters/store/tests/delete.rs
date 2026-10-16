@@ -1,14 +1,18 @@
+use mivia_domain::computation::{ComputationEvent, JobOutcome};
 use mivia_domain::ids::{BatchId, SourceFileId, Timestamp};
+use mivia_domain::source_file::SourceFileEvent;
+use mivia_domain::transition::IllegalTransition;
 use mivia_ports::ipc::history::HistoryFilter;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::history::{DeleteRequest, DeleteTarget, Deletion};
+use mivia_ports::store::pipeline::JobRecord;
 use mivia_ports::store::{StoreError, StoreExt, TxError};
 use mivia_store::{SqliteStore, StoreConfig};
 
-use crate::common::{account, fixture, seed};
+use crate::common::{account, fixture, new_file, seed};
 use crate::history::{SCOPE, folder, series};
 use crate::history_reports::report_with_saved_part;
-use crate::reports::{DONE, add, finish};
+use crate::reports::{DONE, NOW, add, finish};
 
 const LATER: Timestamp = Timestamp(20_000);
 
@@ -164,4 +168,55 @@ async fn deleting_an_open_series_closes_it_without_building_reports() {
         .await
         .unwrap();
     assert_eq!(open, []);
+}
+
+#[tokio::test]
+async fn work_that_finishes_after_the_deletion_is_dropped() {
+    let fx = fixture(StoreConfig::for_tests()).await;
+    let (batch, computing, uploading) = seed(&fx.store, |tx| {
+        account(tx, "a");
+        let origin = folder(tx, SCOPE, r"D:\Lab");
+        let batch = series(tx, origin, "Run", "grain");
+        let computing = add(tx, SCOPE, batch, "a.tif");
+        finish(tx, SCOPE, computing, JobOutcome::Pending);
+        let uploading = tx
+            .source_files(SCOPE)
+            .add(&new_file(batch, "b.tif"))
+            .unwrap();
+        for event in [
+            SourceFileEvent::ReadinessPassed,
+            SourceFileEvent::UploadClaimed,
+        ] {
+            tx.source_files(SCOPE).apply(uploading, event, NOW).unwrap();
+        }
+        (batch, computing, uploading)
+    })
+    .await;
+    delete(&fx.store, DeleteTarget::Series(batch), false)
+        .await
+        .unwrap();
+    let job = JobRecord {
+        job_id: "job-1".to_owned(),
+        outcome: DONE,
+        result_id: None,
+        submitted_at: NOW,
+        next_poll_at: NOW,
+    };
+    let state = fx
+        .store
+        .write(move |tx| {
+            tx.pipeline(SCOPE).uploaded(uploading, "image-2", LATER)?;
+            tx.pipeline(SCOPE).record_job(computing, &job, LATER)?;
+            tx.pipeline(SCOPE)
+                .computation_event(computing, ComputationEvent::Ambiguous, LATER)?;
+            tx.computations(SCOPE)
+                .apply(computing, ComputationEvent::Cancel, LATER)
+        })
+        .await;
+    assert_eq!(
+        state,
+        Err(StoreError::Tx(TxError::Illegal(IllegalTransition(
+            "computation"
+        ))))
+    );
 }

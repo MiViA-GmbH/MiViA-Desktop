@@ -44,6 +44,9 @@ impl PipelineRepo for SqlTx<'_> {
         image_id: &str,
         now: Timestamp,
     ) -> Result<(), TxError> {
+        if self.file_gone(id)? {
+            return Ok(());
+        }
         SourceFileRepo::apply(self, id, SourceFileEvent::UploadSucceeded, now)?;
         self.run(
             "UPDATE source_file SET server_image_id = ?2, attempts = 0, first_busy_at = NULL \
@@ -58,6 +61,9 @@ impl PipelineRepo for SqlTx<'_> {
         retry: Retry,
         now: Timestamp,
     ) -> Result<(), TxError> {
+        if self.file_gone(id)? {
+            return Ok(());
+        }
         SourceFileRepo::apply(self, id, SourceFileEvent::UploadInterrupted, now)?;
         self.run(
             "UPDATE source_file SET next_attempt_at = ?2, attempts = ?3 WHERE id = ?1",
@@ -71,6 +77,9 @@ impl PipelineRepo for SqlTx<'_> {
         event: SourceFileEvent,
         now: Timestamp,
     ) -> Result<(), TxError> {
+        if self.file_gone(id)? {
+            return Ok(());
+        }
         let state = SourceFileRepo::apply(self, id, event, now)?;
         if state.is_terminal() {
             self.cancel_work(id, now)?;
@@ -152,6 +161,9 @@ impl PipelineRepo for SqlTx<'_> {
         job: &JobRecord,
         now: Timestamp,
     ) -> Result<(), TxError> {
+        if self.computation_cancelled(id)? {
+            return Ok(());
+        }
         ComputationRepo::apply(self, id, ComputationEvent::Job(job.outcome), now)?;
         self.run(
             "UPDATE computation SET server_job_id = ?2, result_id = ?3, \
@@ -173,6 +185,9 @@ impl PipelineRepo for SqlTx<'_> {
         event: ComputationEvent,
         now: Timestamp,
     ) -> Result<(), TxError> {
+        if self.computation_cancelled(id)? {
+            return Ok(());
+        }
         ComputationRepo::apply(self, id, event, now)?;
         if event == ComputationEvent::Ambiguous {
             self.run(

@@ -1,4 +1,5 @@
 mod custom;
+mod delete;
 mod export;
 mod moves;
 
@@ -10,6 +11,7 @@ use mivia_ports::queries::Queries;
 use mivia_ports::store::{AccountScope, Store, StoreError, StoreExt, TxError, WriteTx};
 
 pub use custom::CustomRequest;
+pub use delete::DeleteOutcome;
 pub use export::ExportJob;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

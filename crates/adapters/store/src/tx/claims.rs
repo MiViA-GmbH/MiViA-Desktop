@@ -84,6 +84,22 @@ impl SqlTx<'_> {
             .tx()
     }
 
+    pub(super) fn file_gone(&self, id: SourceFileId) -> Result<bool, TxError> {
+        let found: Vec<String> = self.column(
+            "SELECT state FROM source_file WHERE id = ?1 AND account_id = ?2",
+            [id.0, self.account()],
+        )?;
+        Ok(found.iter().any(|state| state == "vanished"))
+    }
+
+    pub(super) fn computation_cancelled(&self, id: ComputationId) -> Result<bool, TxError> {
+        let found: Vec<String> = self.column(
+            "SELECT state FROM computation WHERE id = ?1 AND account_id = ?2",
+            [id.0, self.account()],
+        )?;
+        Ok(found.iter().any(|state| state == "cancelled"))
+    }
+
     pub(super) fn attempt(&self, key: String) -> Result<AttemptRow, TxError> {
         let (choice_key, started_at, server_offset_ms) = self
             .tx

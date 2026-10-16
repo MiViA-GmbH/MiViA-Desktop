@@ -1,4 +1,5 @@
 mod batches;
+mod delete;
 mod folders;
 mod history;
 mod line;
