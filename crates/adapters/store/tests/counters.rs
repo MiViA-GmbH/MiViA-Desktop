@@ -3,6 +3,7 @@ use mivia_domain::computation::{ComputationEvent, FailReason, JobOutcome};
 use mivia_domain::ids::{BatchId, ComputationId, ReportId, ReportPartId, SourceFileId, Timestamp};
 use mivia_domain::report::{PartEvent, SaveError, SaveProblem};
 use mivia_domain::source_file::{Classification, OpenFailure, SourceFileEvent, UnreadableReason};
+use mivia_ports::store::history::{DeleteRequest, DeleteTarget};
 use mivia_ports::store::{AccountScope, NewComputation, NewReport, StoreExt, TxError};
 use mivia_store::{SqliteStore, StoreConfig};
 use proptest::prelude::*;
@@ -57,6 +58,7 @@ enum Op {
     Part(usize, usize),
     Stale(usize, bool),
     Close,
+    Delete(usize, bool),
 }
 
 fn op() -> impl Strategy<Value = Op> {
@@ -69,6 +71,7 @@ fn op() -> impl Strategy<Value = Op> {
         (any::<usize>(), 0..PART_EVENTS.len()).prop_map(|(i, e)| Op::Part(i, e)),
         (any::<usize>(), any::<bool>()).prop_map(|(i, s)| Op::Stale(i, s)),
         Just(Op::Close),
+        (any::<usize>(), any::<bool>()).prop_map(|(i, f)| Op::Delete(i, f)),
     ]
 }
 
@@ -166,6 +169,20 @@ async fn run(store: &SqliteStore, scope: AccountScope, batch: BatchId, op: Op, i
             }
             None => Ok(()),
         },
+        Op::Delete(i, report_files) => match pick(&ids.files, i) {
+            Some(file) => {
+                let request = DeleteRequest {
+                    target: DeleteTarget::Image(batch, file),
+                    report_files,
+                    server: false,
+                };
+                store
+                    .write(move |tx| tx.history(scope).delete(request, now))
+                    .await
+                    .map(drop)
+            }
+            None => Ok(()),
+        },
         Op::Close => {
             store
                 .write(move |tx| tx.batches(scope).close(batch, ClosureReason::Manual, now))
@@ -176,7 +193,7 @@ async fn run(store: &SqliteStore, scope: AccountScope, batch: BatchId, op: Op, i
         assert!(
             matches!(
                 error,
-                mivia_ports::store::StoreError::Tx(TxError::Illegal(_))
+                mivia_ports::store::StoreError::Tx(TxError::Illegal(_) | TxError::NotFound)
             ),
             "{error:?}"
         );
@@ -190,13 +207,13 @@ const RECOUNT: &str = "SELECT
   b.problems - (SELECT count(*) FROM source_file WHERE batch_id = b.id AND state IN ('rejected', 'unreadable'))
              - (SELECT count(*) FROM computation WHERE batch_id = b.id AND state IN ('failed', 'unavailable', 'lost')),
   b.active_count - (SELECT count(*) FROM computation WHERE batch_id = b.id AND state IN ('queued', 'submitting', 'computing')),
-  b.reports_total - (SELECT count(*) FROM report_part p JOIN report r ON r.id = p.report_id WHERE r.batch_id = b.id),
-  b.reports_saved - (SELECT count(*) FROM report_part p JOIN report r ON r.id = p.report_id WHERE r.batch_id = b.id AND p.state = 'saved'),
-  b.reports_problem - (SELECT count(*) FROM report_part p JOIN report r ON r.id = p.report_id WHERE r.batch_id = b.id AND p.state IN ('not_saved', 'failed')),
-  b.reports_stale - (SELECT count(*) FROM report_part p JOIN report r ON r.id = p.report_id WHERE r.batch_id = b.id AND r.stale = 1 AND r.replaced_by IS NULL),
+  b.reports_total - (SELECT count(*) FROM report_part p JOIN report r ON r.id = p.report_id WHERE r.batch_id = b.id AND r.deleted_at IS NULL),
+  b.reports_saved - (SELECT count(*) FROM report_part p JOIN report r ON r.id = p.report_id WHERE r.batch_id = b.id AND r.deleted_at IS NULL AND p.state = 'saved'),
+  b.reports_problem - (SELECT count(*) FROM report_part p JOIN report r ON r.id = p.report_id WHERE r.batch_id = b.id AND r.deleted_at IS NULL AND p.state IN ('not_saved', 'failed')),
+  b.reports_stale - (SELECT count(*) FROM report_part p JOIN report r ON r.id = p.report_id WHERE r.batch_id = b.id AND r.deleted_at IS NULL AND r.stale = 1 AND r.replaced_by IS NULL),
   (SELECT count(*) FROM batch_model_choice WHERE batch_id = b.id AND sort_at <> b.sort_at),
   b.problems > 0 AND b.needs_attention = 0
-FROM batch b";
+FROM batch b WHERE b.deleted_at IS NULL";
 
 fn drift(db: &std::path::Path) -> Vec<Vec<i64>> {
     let conn = Connection::open(db).unwrap();

@@ -107,7 +107,9 @@ pub(crate) const ATTENTION_COUNT: &str = "SELECT count(*) FROM batch INDEXED BY 
      WHERE account_id = ?1 AND needs_attention = 1";
 
 pub(crate) fn batch_by_id() -> String {
-    format!("SELECT {BATCH_COLUMNS} FROM batch WHERE id = ?2 AND account_id = ?1")
+    format!(
+        "SELECT {BATCH_COLUMNS} FROM batch WHERE id = ?2 AND account_id = ?1 AND deleted_at IS NULL"
+    )
 }
 
 pub(crate) fn batch_items() -> String {

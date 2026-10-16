@@ -6,6 +6,7 @@ mod counters;
 mod files;
 mod folders;
 mod history;
+mod history_delete;
 mod history_reports;
 mod intake;
 mod intake_repo;

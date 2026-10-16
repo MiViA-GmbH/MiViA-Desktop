@@ -9,7 +9,7 @@ pub(crate) const WAITING: &str = "SELECT r.id, b.report_settings, \
      AND c.model_choice_key = r.model_choice_key \
      AND c.state IN ('queued', 'submitting', 'computing')) \
      FROM report r INDEXED BY report_waiting JOIN batch b ON b.id = r.batch_id \
-     WHERE r.account_id = ?1 AND r.state = 'waiting' ORDER BY r.id";
+     WHERE r.account_id = ?1 AND r.state = 'waiting' AND r.deleted_at IS NULL ORDER BY r.id";
 
 pub(crate) const INSERT_WAITING: &str = "INSERT INTO report (account_id, kind, batch_id, \
      model_choice_key, formats, language, state, created_at, app_version) \
@@ -101,7 +101,7 @@ pub(crate) const REPLACES: &str = "SELECT o.server_report_id FROM report r \
 
 pub(crate) const PART_HEAD: &str = "SELECT p.report_id, p.format, p.part_no, p.member_from, \
      p.member_to, p.split, p.rerequests FROM report_part p JOIN report r ON r.id = p.report_id \
-     WHERE p.id = ?1 AND r.account_id = ?2";
+     WHERE p.id = ?1 AND r.account_id = ?2 AND r.deleted_at IS NULL";
 
 pub(crate) const STALE_CANDIDATES: &str = "SELECT DISTINCT m.report_id FROM report_member m \
      JOIN report r ON r.id = m.report_id WHERE m.computation_id = ?1 AND r.stale = 0 \

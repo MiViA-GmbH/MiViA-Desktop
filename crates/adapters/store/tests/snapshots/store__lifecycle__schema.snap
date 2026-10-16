@@ -56,6 +56,9 @@ CREATE INDEX computation_claim ON computation(state, next_attempt_at) WHERE stat
 index computation_poll
 CREATE INDEX computation_poll ON computation(account_id, next_poll_at) WHERE state = 'computing'
 
+index computation_reused
+CREATE INDEX computation_reused ON computation(reused_from) WHERE reused_from IS NOT NULL
+
 index computation_server_job
 CREATE INDEX computation_server_job ON computation(server_job_id) WHERE server_job_id IS NOT NULL
 
@@ -182,7 +185,7 @@ CREATE TABLE batch (
   attention_cleared_how TEXT CHECK (attention_cleared_how IN ('opened', 'dismissed')),
   problems_changed_at INTEGER,
   app_version TEXT NOT NULL
-) STRICT
+, deleted_at INTEGER) STRICT
 
 table batch_model_choice
 CREATE TABLE batch_model_choice (
@@ -340,7 +343,7 @@ CREATE TABLE report (
   attention_cleared_at INTEGER,
   created_at INTEGER NOT NULL,
   app_version TEXT NOT NULL
-) STRICT
+, deleted_at INTEGER) STRICT
 
 table report_member
 CREATE TABLE report_member (

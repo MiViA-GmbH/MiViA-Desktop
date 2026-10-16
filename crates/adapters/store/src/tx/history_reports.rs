@@ -162,7 +162,7 @@ impl SqlTx<'_> {
 
     fn successors(&self, id: ReportId) -> Result<Vec<(i64, String, Membership)>, TxError> {
         let old: Vec<(i64, String)> = self.rows(
-            "SELECT computation_id, label FROM report_member WHERE report_id = ?1 ORDER BY seq",
+            "SELECT m.computation_id, m.label FROM report_member m JOIN computation c ON c.id = m.computation_id JOIN batch b ON b.id = c.batch_id WHERE m.report_id = ?1 AND b.deleted_at IS NULL ORDER BY m.seq",
             [id.0],
             |row| Ok((row.get(0)?, row.get(1)?)),
         )?;
