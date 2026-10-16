@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use mivia_domain::ids::Timestamp;
 use mivia_domain::update::{
-    FIRST_CHECK_MS, MANUAL_GAP_MS, Offer, Rules, after_check, next_check, vet,
+    FIRST_CHECK_MS, MANUAL_GAP_MS, Offer, Rules, after_check, next_check, parse, vet,
 };
 use mivia_ports::clock::Clock;
 use mivia_ports::id_gen::IdGen;
 use mivia_ports::ipc::update::{
-    RequiredUpdate, UpdatePolicy, UpdateSettingsInput, UpdateState, UpdateView,
+    RequiredUpdate, UpdateChannel, UpdatePolicy, UpdateSettingsInput, UpdateState, UpdateView,
 };
 use mivia_ports::server::ServerVersion;
 use mivia_ports::store::{Store, StoreError};
@@ -126,6 +126,14 @@ impl Updates {
         }
     }
 
+    fn channel(&self, stored: UpdateChannel) -> UpdateChannel {
+        if parse(&self.config.current).is_some_and(|version| version.is_prerelease()) {
+            UpdateChannel::Beta
+        } else {
+            stored
+        }
+    }
+
     pub fn next_check_at(&self) -> Timestamp {
         self.inner.lock().next_check
     }
@@ -134,7 +142,7 @@ impl Updates {
         let inner = self.inner.lock();
         UpdateView {
             current: self.config.current.clone(),
-            channel: inner.settings.channel,
+            channel: self.channel(inner.settings.channel),
             automatic: inner.settings.automatic,
             policy: self.config.policy.map(|policy| match policy {
                 AutoUpdate::On => UpdatePolicy::On,
@@ -201,7 +209,7 @@ impl Updates {
             .as_ref()
             .map(|server| server.blocked_versions.clone())
             .unwrap_or_default();
-        let channel = self.inner.lock().settings.channel.into();
+        let channel = self.channel(self.inner.lock().settings.channel).into();
         let rules = Rules {
             channel,
             blocked: &blocked,

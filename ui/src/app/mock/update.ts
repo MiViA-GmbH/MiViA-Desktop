@@ -16,6 +16,7 @@ const CURRENT: UpdateView = {
 const SCENARIOS: Record<string, Partial<UpdateView>> = {
 	'update-ready': { state: 'ready', version: '2.1.0', failedInstall: '2.1.0' },
 	'update-unsigned': { required: { min: '2.1.0', signed: false } },
+	'update-beta-build': { current: '2.0.0-beta.6', channel: 'beta' },
 	'update-locked': { automatic: false, policy: 'off' },
 	'update-available': { state: 'available', version: '2.1.0' },
 	'update-downloading': { state: 'downloading', version: '2.1.0', progress: 40 },

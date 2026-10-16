@@ -448,3 +448,18 @@ async fn connecting_reads_the_server_version() {
     assert_eq!(updates.view().required, None);
     assert_eq!(bench.env.held.lock().last(), Some(&false));
 }
+
+#[tokio::test]
+async fn a_prerelease_build_checks_the_beta_channel_whatever_is_stored() {
+    let beta = Bench::new().await;
+    let updates = beta.start("2.0.0-beta.6", None).await;
+    updates.check(Trigger::Start).await.unwrap();
+    assert_eq!(beta.updater.checks.lock().clone(), [Channel::Beta]);
+    assert_eq!(updates.view().channel, UpdateChannel::Beta);
+
+    let stable = Bench::new().await;
+    let updates = stable.start("2.0.0", None).await;
+    updates.check(Trigger::Start).await.unwrap();
+    assert_eq!(stable.updater.checks.lock().clone(), [Channel::Stable]);
+    assert_eq!(updates.view().channel, UpdateChannel::Stable);
+}
