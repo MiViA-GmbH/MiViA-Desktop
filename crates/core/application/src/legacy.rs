@@ -1,3 +1,4 @@
+use quick_xml::events::attributes::Attribute;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, Writer, XmlVersion};
 
@@ -119,7 +120,10 @@ fn blanked(element: &BytesStart<'_>) -> Result<Option<BytesStart<'static>>, Lega
         if attribute.key.as_ref() == "value" {
             copy.push_attribute(("value", ""));
         } else {
-            copy.push_attribute(attribute);
+            copy.push_attribute(Attribute {
+                key: attribute.key,
+                value: attribute.value.replace('"', "&quot;").into(),
+            });
         }
     }
     Ok(Some(copy))
