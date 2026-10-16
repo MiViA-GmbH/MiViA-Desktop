@@ -12,7 +12,7 @@ use crate::errors::response;
 
 pub(crate) fn routes() -> Router<Stub> {
     Router::new()
-        .route("/api/v2/jobs/{id}", get(detail))
+        .route("/api/v2/jobs/{id}", get(detail).delete(remove))
         .route("/api/jobs/results/{id}/{filename}", get(result_image))
 }
 
@@ -50,6 +50,24 @@ async fn result_image(
                 .into_response()
         }
         Ok(Download::Expired) => StatusCode::NOT_FOUND.into_response(),
+        Err(error) => response(&error),
+    }
+}
+
+async fn remove(State(stub): State<Stub>, headers: HeaderMap, Path(id): Path<String>) -> Response {
+    if let Some(denied) = denied(&stub, &headers) {
+        return denied;
+    }
+    match stub.engine.job_exists(&id).await {
+        Ok(true) => match stub.engine.delete_job(&id).await {
+            Ok(()) => StatusCode::NO_CONTENT.into_response(),
+            Err(error) => response(&error),
+        },
+        Ok(false) => (
+            StatusCode::NOT_FOUND,
+            Json(json!({ "statusCode": 404, "message": "Not found" })),
+        )
+            .into_response(),
         Err(error) => response(&error),
     }
 }

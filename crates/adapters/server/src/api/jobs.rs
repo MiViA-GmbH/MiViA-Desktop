@@ -221,6 +221,19 @@ impl HttpServerApi {
         Ok(listed_page.data.iter().map(listed).collect())
     }
 
+    pub(super) async fn remove_job(&self, job_id: &str) -> Result<(), ServerError> {
+        let id = uuid(job_id)?;
+        self.authorized(|auth| async move {
+            let client = self.client(auth);
+            let result = client.jobs_v2_controller_delete_job(&id).await;
+            match self.generated("jobDelete", result, Call::Other).await {
+                Ok(()) | Err(Failure::Error(ServerError::Gone)) => Ok(()),
+                Err(other) => Err(other),
+            }
+        })
+        .await
+    }
+
     pub(super) async fn exists(&self, job_id: &str) -> Result<bool, ServerError> {
         let id = uuid(job_id)?;
         let found = self

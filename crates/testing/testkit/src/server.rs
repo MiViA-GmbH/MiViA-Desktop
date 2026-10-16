@@ -16,7 +16,7 @@ use mivia_ports::server::{
     TelemetryAck, UploadRequest,
 };
 use parking_lot::Mutex;
-use stream::feed;
+use stream::{drain, feed};
 
 pub use reports::{ReportFaults, SimDownload, SimReport};
 pub use sim::{Licence, ServerSim, SimJob, sim_id};
@@ -32,6 +32,7 @@ pub enum Op {
     Status,
     Find,
     Exists,
+    DeleteJob,
     ReportRequest,
     ReportStatus,
     ReportDownload,
@@ -166,19 +167,6 @@ impl FakeServerApi {
     }
 }
 
-async fn drain(mut request: UploadRequest) -> Result<Vec<u8>, ServerError> {
-    let mut bytes = Vec::new();
-    while let Some(chunk) = request
-        .source
-        .next_chunk()
-        .await
-        .map_err(ServerError::Source)?
-    {
-        bytes.extend_from_slice(&chunk);
-    }
-    Ok(bytes)
-}
-
 #[async_trait]
 impl ServerApi for FakeServerApi {
     async fn version(&self) -> Result<ServerVersion, ServerError> {
@@ -255,6 +243,12 @@ impl ServerApi for FakeServerApi {
         let fault = self.enter(Op::Exists)?;
         let exists = self.sim.lock().job_exists(job_id);
         Self::after(fault, exists).await
+    }
+
+    async fn delete_job(&self, job_id: &str) -> Result<(), ServerError> {
+        let fault = self.enter(Op::DeleteJob)?;
+        self.sim.lock().delete_job(job_id);
+        Self::after(fault, ()).await
     }
 
     async fn request_report(&self, request: ReportRequest) -> Result<String, ServerError> {

@@ -246,6 +246,10 @@ impl ServerApi for HttpServerApi {
         self.exists(job_id).await
     }
 
+    async fn delete_job(&self, job_id: &str) -> Result<(), ServerError> {
+        self.remove_job(job_id).await
+    }
+
     async fn request_report(&self, request: ReportRequest) -> Result<String, ServerError> {
         self.create_report(&request).await
     }
