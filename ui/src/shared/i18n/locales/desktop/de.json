@@ -239,6 +239,7 @@
 			"advanced": "Erweitert",
 			"stable": "Stabil",
 			"beta": "Beta",
+			"channelPrerelease": "Beta-Versionen nutzen immer den Beta-Kanal.",
 			"channelNote": "Beim Wechsel von Beta zu Stabil bleibt die Beta-Version installiert, bis eine neuere stabile Version erscheint.",
 			"automatic": "Updates automatisch herunterladen und installieren",
 			"checking": "Suche nach Updates…",

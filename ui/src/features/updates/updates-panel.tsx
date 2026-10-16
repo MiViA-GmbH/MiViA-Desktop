@@ -128,8 +128,9 @@ export function UpdatesPanel() {
 	}
 	const locked = view.policy !== null;
 	const automatic = locked ? view.policy === 'on' : view.automatic;
+	const prerelease = view.current.includes('-');
 	const channels = [
-		{ value: 'stable', label: t('desktop.update.stable') },
+		{ value: 'stable', label: t('desktop.update.stable'), disabled: prerelease },
 		{ value: 'beta', label: t('desktop.update.beta') },
 	];
 	return (
@@ -154,7 +155,7 @@ export function UpdatesPanel() {
 						<Select
 							allowDeselect={false}
 							data={channels}
-							description={t('desktop.update.channelNote')}
+							description={t(prerelease ? 'desktop.update.channelPrerelease' : 'desktop.update.channelNote')}
 							disabled={save.isPending}
 							label={t('desktop.update.channel')}
 							maw={320}

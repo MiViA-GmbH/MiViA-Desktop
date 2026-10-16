@@ -239,6 +239,7 @@
 			"advanced": "Advanced",
 			"stable": "Stable",
 			"beta": "Beta",
+			"channelPrerelease": "Beta builds always use the Beta channel.",
 			"channelNote": "Switching from Beta to Stable keeps the beta version until a newer stable version is released.",
 			"automatic": "Download and install updates automatically",
 			"checking": "Checking for updates…",
