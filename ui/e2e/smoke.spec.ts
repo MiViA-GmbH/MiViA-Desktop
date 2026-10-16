@@ -204,7 +204,7 @@ test('a policy that turns off automatic updates locks the switch', async ({ page
 test('a beta build keeps the channel on Beta and cannot pick Stable', async ({ page }) => {
 	await open(page, '/settings/updates?scenario=update-beta-build');
 	await page.getByRole('button', { name: 'Advanced' }).click();
-	await expect(page.getByText('Beta builds always follow the Beta channel', { exact: false })).toBeVisible();
+	await expect(page.getByText('Beta builds always use the Beta channel', { exact: false })).toBeVisible();
 	await page.getByRole('combobox', { name: 'Update channel' }).click();
 	await expect(page.getByRole('option', { name: 'Stable' })).toHaveAttribute('data-combobox-disabled', 'true');
 });
