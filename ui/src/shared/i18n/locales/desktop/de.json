@@ -297,9 +297,32 @@
 				"cancelled": "Abgebrochen"
 			}
 		},
+		"delete": {
+			"seriesAction": "Bildserie löschen",
+			"imageAction": "{{name}} löschen",
+			"seriesTitle": "Bildserie löschen",
+			"imageTitle": "Bild löschen",
+			"seriesText_one": "{{name}} und das zugehörige Bild werden aus dem Verlauf auf diesem PC entfernt. Wird das Bild noch hochgeladen oder ausgewertet, wird das abgebrochen.",
+			"seriesText_other": "{{name}} und die {{count}} zugehörigen Bilder werden aus dem Verlauf auf diesem PC entfernt. Bilder, die noch hochgeladen oder ausgewertet werden, werden abgebrochen.",
+			"imageText": "{{name}} wird im Verlauf auf diesem PC aus dieser Bildserie entfernt. Wird es noch hochgeladen oder ausgewertet, wird das abgebrochen.",
+			"logNote": "Das Änderungsprotokoll hält die Löschung fest. Ihre Bilddateien bleiben unverändert.",
+			"reportFiles": "Gespeicherte Berichtsdateien ebenfalls löschen",
+			"reportFilesHelp": "Löscht jeden gespeicherten Bericht, der diese Ergebnisse enthält, samt den anderen Bildern darin. Berichte, die nach dem Speichern geändert wurden, bleiben erhalten. Ist dies aus, bleiben die Berichtsdateien auf dem Datenträger.",
+			"server": "Auch auf dem MiViA-Server löschen",
+			"serverHelp": "Löscht diese Ergebnisse aus Ihrem MiViA-Konto. Ist dies aus, bleiben sie auf dem Server und in der MiViA-Web-App sichtbar.",
+			"confirm": "Löschen",
+			"cancel": "Abbrechen",
+			"done_one": "1 Bild wurde aus dem Verlauf entfernt.",
+			"done_other": "{{count}} Bilder wurden aus dem Verlauf entfernt.",
+			"filesFailed_one": "1 Berichtsdatei konnte nicht gelöscht werden und liegt weiterhin auf dem Datenträger.",
+			"filesFailed_other": "{{count}} Berichtsdateien konnten nicht gelöscht werden und liegen weiterhin auf dem Datenträger.",
+			"serverFailed_one": "1 Ergebnis konnte auf dem MiViA-Server nicht gelöscht werden und bleibt dort.",
+			"serverFailed_other": "{{count}} Ergebnisse konnten auf dem MiViA-Server nicht gelöscht werden und bleiben dort."
+		},
 		"toast": {
 			"cancelled": "Abgebrochen",
 			"copied": "Kopiert",
+			"deleted": "Gelöscht",
 			"exported": "Export fertig",
 			"logsDeleted": "Protokolle gelöscht",
 			"notSent": "Nicht gesendet",
@@ -418,7 +441,9 @@
 				"restored_from_replaced": "Bericht in den Berichtsordner zurückgelegt",
 				"attention_cleared": "Aus Bitte prüfen entfernt",
 				"history_exported": "Verlauf exportiert",
-				"backup_restored": "Verlauf aus einer Sicherung wiederhergestellt"
+				"backup_restored": "Verlauf aus einer Sicherung wiederhergestellt",
+				"deleted": "Aus dem Verlauf gelöscht",
+				"deletion_finished": "Löschung abgeschlossen"
 			},
 			"reasons": {
 				"quiet_period": "Eine Zeit lang kamen keine neuen Bilder",

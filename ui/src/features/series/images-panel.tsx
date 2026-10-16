@@ -1,6 +1,6 @@
-import { ActionIcon, SegmentedControl, Table, Text } from '@mantine/core';
+import { ActionIcon, Group, SegmentedControl, Table, Text } from '@mantine/core';
 import { ICON_STROKE } from '@mivia-ai/theme';
-import { IconEye } from '@tabler/icons-react';
+import { IconEye, IconTrash } from '@tabler/icons-react';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +11,13 @@ import type { AnalysisView, BatchItem, Language } from '../../shared/ipc/binding
 import { Panel } from '../../shared/ui/panel';
 import { StatusBadge } from '../../shared/ui/status-badge';
 
-type ImagesPanelProps = { seriesId: string; items: BatchItem[]; analyses: AnalysisView[]; language: Language };
+type ImagesPanelProps = {
+	seriesId: string;
+	items: BatchItem[];
+	analyses: AnalysisView[];
+	language: Language;
+	onDelete: (item: BatchItem) => void;
+};
 
 function Filter({ problems, value, onChange }: { problems: number; value: string; onChange: (next: string) => void }) {
 	const { t } = useTranslation();
@@ -22,7 +28,7 @@ function Filter({ problems, value, onChange }: { problems: number; value: string
 	return <SegmentedControl data={data} onChange={onChange} size="xs" value={value} />;
 }
 
-export function ImagesPanel({ seriesId, items, analyses, language }: ImagesPanelProps) {
+export function ImagesPanel({ seriesId, items, analyses, language, onDelete }: ImagesPanelProps) {
 	const { t } = useTranslation();
 	const [filter, setFilter] = useState('all');
 	const problems = items.filter(hasProblem);
@@ -41,7 +47,7 @@ export function ImagesPanel({ seriesId, items, analyses, language }: ImagesPanel
 								{analysisName(analysis, language)}
 							</Table.Th>
 						))}
-						<Table.Th w={48} />
+						<Table.Th w={84} />
 					</Table.Tr>
 				</Table.Thead>
 				<Table.Tbody>
@@ -58,17 +64,29 @@ export function ImagesPanel({ seriesId, items, analyses, language }: ImagesPanel
 								</Table.Td>
 							))}
 							<Table.Td>
-								<ActionIcon
-									aria-label={t('desktop.preview.open', { name: item.label })}
-									color="stone"
-									renderRoot={(props) => (
-										<Link params={{ seriesId, itemId: item.id }} to="/preview/$seriesId/$itemId" {...props} />
-									)}
-									size="md"
-									variant="subtle"
-								>
-									<IconEye size={16} stroke={ICON_STROKE} />
-								</ActionIcon>
+								<Group gap={4} wrap="nowrap">
+									<ActionIcon
+										aria-label={t('desktop.preview.open', { name: item.label })}
+										color="stone"
+										renderRoot={(props) => (
+											<Link params={{ seriesId, itemId: item.id }} to="/preview/$seriesId/$itemId" {...props} />
+										)}
+										size="md"
+										variant="subtle"
+									>
+										<IconEye size={16} stroke={ICON_STROKE} />
+									</ActionIcon>
+									<ActionIcon
+										aria-label={t('desktop.delete.imageAction', { name: item.label })}
+										color="stone"
+										onClick={() => onDelete(item)}
+										size="md"
+										title={t('desktop.delete.imageTitle')}
+										variant="subtle"
+									>
+										<IconTrash size={16} stroke={ICON_STROKE} />
+									</ActionIcon>
+								</Group>
 							</Table.Td>
 						</Table.Tr>
 					))}

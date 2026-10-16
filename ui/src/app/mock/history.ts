@@ -132,5 +132,12 @@ export function historyResponses(scenario: string, language: Language): Record<s
 		list_batch_events: () => EVENTS,
 		get_custom_report_draft: () => ({ ...DRAFT, language }),
 		list_backups: () => BACKUPS,
+		delete_history: (args) => ({
+			images: (args.input as { image: string | null }).image ? 1 : 132,
+			filesDeleted: 0,
+			filesFailed: 0,
+			serverDeleted: 132,
+			serverFailed: 0,
+		}),
 	};
 }
