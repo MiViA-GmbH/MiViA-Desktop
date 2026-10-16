@@ -57,6 +57,7 @@
 		"allow-get-custom-report-draft",
 		"allow-create-custom-report",
 		"allow-rename-series",
+		"allow-delete-history",
 		"allow-update-report",
 		"allow-keep-report",
 		"allow-move-report-to-replaced",

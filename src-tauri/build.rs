@@ -45,6 +45,7 @@ const COMMANDS: &[&str] = &[
     "get_custom_report_draft",
     "create_custom_report",
     "rename_series",
+    "delete_history",
     "update_report",
     "keep_report",
     "move_report_to_replaced",

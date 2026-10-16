@@ -2,8 +2,8 @@ use mivia_application::errors::app_error;
 use mivia_domain::ids::BatchId;
 use mivia_ports::ipc::error::AppError;
 use mivia_ports::ipc::history::{
-    BackupsView, CustomReportDraft, CustomReportInput, CustomReportsPage, ExportView,
-    HistoryCursor, HistoryEventsPage, HistoryFilter, HistoryPage,
+    BackupsView, CustomReportDraft, CustomReportInput, CustomReportsPage, DeleteHistoryInput,
+    DeleteHistoryView, ExportView, HistoryCursor, HistoryEventsPage, HistoryFilter, HistoryPage,
 };
 use mivia_ports::queries::Queries;
 use tauri::State;
@@ -77,6 +77,15 @@ pub(crate) async fn rename_series(
     label: String,
 ) -> Result<(), AppError> {
     history::rename(&cx, &id, label).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn delete_history(
+    cx: State<'_, Cx>,
+    input: DeleteHistoryInput,
+) -> Result<DeleteHistoryView, AppError> {
+    history::delete(&cx, input).await
 }
 
 #[tauri::command]
