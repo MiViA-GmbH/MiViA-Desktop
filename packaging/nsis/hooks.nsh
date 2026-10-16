@@ -119,6 +119,20 @@
   ${EndIf}
 !macroend
 
+!macro MiviaRemoveTree TREE
+  nsExec::Exec '"$SYSDIR\cmd.exe" /c rd /s /q "${TREE}"'
+  Pop $R9
+!macroend
+
+!macro MiviaRemoveDataWithoutFollowingLinks
+  ${If} $DeleteAppDataCheckboxState = 1
+  ${AndIf} $UpdateMode <> 1
+    SetShellVarContext current
+    !insertmacro MiviaRemoveTree "$APPDATA\${BUNDLEID}"
+    !insertmacro MiviaRemoveTree "$LOCALAPPDATA\${BUNDLEID}"
+  ${EndIf}
+!macroend
+
 !macro MiviaRemoveShellEntries
   SetShellVarContext current
   Delete "$SENDTO\Analyze with MiViA.lnk"
@@ -130,7 +144,7 @@
   !insertmacro MiviaRemoveVerb "SystemFileAssociations\.tif"
   !insertmacro MiviaRemoveVerb "SystemFileAssociations\.tiff"
   !insertmacro MiviaRemoveVerb "SystemFileAssociations\.bmp"
-  RMDir /r "$LOCALAPPDATA\${BUNDLEID}\inbox"
+  !insertmacro MiviaRemoveTree "$LOCALAPPDATA\${BUNDLEID}\inbox"
   Delete "$LOCALAPPDATA\${BUNDLEID}\instance.nonce"
 !macroend
 
@@ -153,6 +167,7 @@
     !insertmacro MiviaKeepRun
   ${EndIf}
   !insertmacro MiviaConfirmDataDeletion
+  !insertmacro MiviaRemoveDataWithoutFollowingLinks
 !macroend
 
 !macro NSIS_HOOK_POSTUNINSTALL
