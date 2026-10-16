@@ -204,18 +204,22 @@ impl Drop for RealCredentials {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .build()
             .unwrap();
-        for case in CASES {
-            let origin = self.origin(case);
-            runtime.block_on(self.store.delete(&origin)).unwrap();
-            assert!(
-                runtime
+        let left: Vec<_> = CASES
+            .into_iter()
+            .filter(|case| {
+                let origin = self.origin(case);
+                let deleted = runtime.block_on(self.store.delete(&origin)).is_ok();
+                let gone = runtime
                     .block_on(self.store.load(&origin))
-                    .unwrap()
-                    .is_none(),
-                "{} left behind",
-                self.prefix
-            );
-        }
+                    .is_ok_and(|found| found.is_none());
+                !(deleted && gone)
+            })
+            .collect();
+        assert!(
+            left.is_empty() || std::thread::panicking(),
+            "{} left behind: {left:?}",
+            self.prefix
+        );
     }
 }
 
