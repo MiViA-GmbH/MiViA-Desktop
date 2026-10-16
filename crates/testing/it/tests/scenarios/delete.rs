@@ -6,7 +6,7 @@ use mivia_ports::fs::FileSystem;
 use mivia_ports::queries::Queries;
 use mivia_ports::server::ServerError;
 use mivia_ports::store::history::{DeleteRequest, DeleteTarget};
-use mivia_testkit::server::Op;
+use mivia_testkit::server::{Fault, Op};
 
 use super::line::Line;
 use super::world::win;
@@ -114,4 +114,15 @@ async fn a_report_changed_after_saving_is_kept() {
     let outcome = delete(&line, DeleteTarget::Series(batch), true).await;
     assert_eq!((outcome.files_failed, reports(&line).await), (1, 1));
     assert_eq!(line.world.fs.contents(&changed).unwrap(), b"edited");
+}
+
+#[tokio::test]
+async fn one_failing_server_job_does_not_stop_the_others() {
+    let line = Line::new().await;
+    let batch = analysed(&line).await;
+    let busy = ServerError::Unavailable { status: 503 };
+    line.server.fail_next(Op::DeleteJob, Fault::Before(busy));
+    let outcome = delete(&line, DeleteTarget::Series(batch), false).await;
+    assert_eq!((outcome.server_deleted, outcome.server_failed), (3, 1));
+    assert_eq!(jobs(&line), 1);
 }

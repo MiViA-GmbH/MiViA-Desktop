@@ -1,6 +1,6 @@
 use mivia_domain::ids::Timestamp;
 use mivia_ports::fs::{FileSystem, FsError};
-use mivia_ports::server::ServerApi;
+use mivia_ports::server::{ServerApi, ServerError};
 use mivia_ports::store::StoreExt;
 use mivia_ports::store::history::{DeleteRequest, MovablePart, NewEvent, Trigger};
 
@@ -34,17 +34,37 @@ async fn remove_report(fs: &dyn FileSystem, part: &MovablePart) -> bool {
     }
 }
 
+const fn blocks_every_call(error: &ServerError) -> bool {
+    matches!(
+        error,
+        ServerError::Unreachable
+            | ServerError::TlsUntrusted
+            | ServerError::ProxyAuth
+            | ServerError::ProxyRefused
+            | ServerError::Unauthorized(_)
+            | ServerError::LicenseInvalid
+            | ServerError::NotSignedIn
+            | ServerError::AccountMismatch
+    )
+}
+
 async fn remove_jobs(server: Option<&dyn ServerApi>, jobs: &[String]) -> (u32, u32) {
     let Some(server) = server else {
         return (0, count(jobs.len()));
     };
+    let (mut deleted, mut failed) = (0, 0);
     for (done, job) in jobs.iter().enumerate() {
-        if let Err(error) = server.delete_job(job).await {
-            tracing::warn!(?error, "history.serverDeleteFailed");
-            return (count(done), count(jobs.len() - done));
+        let Err(error) = server.delete_job(job).await else {
+            deleted += 1;
+            continue;
+        };
+        tracing::warn!(?error, "history.serverDeleteFailed");
+        if blocks_every_call(&error) {
+            return (deleted, failed + count(jobs.len() - done));
         }
+        failed += 1;
     }
-    (count(jobs.len()), 0)
+    (deleted, failed)
 }
 
 fn outcome_event(request: DeleteRequest, outcome: DeleteOutcome, now: Timestamp) -> NewEvent {
