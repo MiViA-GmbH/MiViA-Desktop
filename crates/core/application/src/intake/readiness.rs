@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
+use mivia_domain::ids::{MINUTE_MS, Timestamp};
 use mivia_domain::image_format::FormatCheck;
 use mivia_domain::intake::{Seen, classify};
+use mivia_domain::path::WinPath;
 use mivia_domain::readiness::{Failure, Step, after_failure, still_copying};
 use mivia_domain::source_file::{Classification, SourceFileEvent};
 use mivia_ports::fs::{FsError, ImageRead};
@@ -10,6 +12,8 @@ use mivia_ports::store::intake::{Classified, ContentLookup, IntakeRepo, ProbeRow
 use mivia_ports::store::{AccountScope, WriteTx};
 
 use super::{Intake, IntakeError, PROBE_CHUNK, Tick, tolerate};
+
+const SETTLED_MS: i64 = 5 * MINUTE_MS;
 
 type Deferred = Vec<(mivia_domain::ids::SourceFileId, ContentLookup)>;
 
@@ -63,7 +67,7 @@ fn settle(
     intake: &mut dyn IntakeRepo,
     id: mivia_domain::ids::SourceFileId,
     read: &ImageRead,
-    now: mivia_domain::ids::Timestamp,
+    now: Timestamp,
 ) -> Result<Option<ContentLookup>, TxError> {
     match intake.ready(id, read, now)? {
         Sighting::Unchanged { copy_of: Some(of) } => {
@@ -84,7 +88,7 @@ fn record(
     tx: &mut dyn WriteTx,
     scope: AccountScope,
     result: (&ProbeRow, Result<ImageRead, Failure>),
-    (now, cap): (mivia_domain::ids::Timestamp, u64),
+    (now, cap): (Timestamp, u64),
 ) -> Result<Option<ContentLookup>, TxError> {
     let (row, result) = result;
     let read = match result {
@@ -167,6 +171,7 @@ impl Intake {
             results.push((row, assessed));
         }
         let now = self.now();
+        self.remember_settled(&results, now);
         let cap = self.upload_cap.load(std::sync::atomic::Ordering::Relaxed);
         let deferred: Deferred = self
             .write(move |tx, scope| {
@@ -182,6 +187,24 @@ impl Intake {
         self.classify_deferred(deferred).await?;
         self.wakers.closer.notify_one();
         Ok(())
+    }
+
+    fn remember_settled(&self, results: &[(ProbeRow, Result<ImageRead, Failure>)], now: Timestamp) {
+        let mut settled = self.settled.lock();
+        settled.retain(|_, (_, at)| now.0 - at.0 < SETTLED_MS);
+        for (row, read) in results {
+            if let Ok(read) = read {
+                settled.insert(row.path.key(), (read.stat, now));
+            }
+        }
+    }
+
+    pub(super) async fn is_settled_unchanged(&self, path: &WinPath) -> bool {
+        let Some((stat, at)) = self.settled.lock().get(&path.key()).copied() else {
+            return false;
+        };
+        self.now().0 - at.0 < SETTLED_MS
+            && self.ports.fs.stat(path).await.is_ok_and(|now| now == stat)
     }
 
     async fn classify_deferred(&self, deferred: Deferred) -> Result<(), IntakeError> {
