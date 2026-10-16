@@ -158,6 +158,7 @@
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
+  WriteRegStr HKCU "${MANUPRODUCTKEY}" "Installer Language" $LANGUAGE
   !insertmacro MiviaRestoreKeptRun
   !insertmacro MiviaAutostartBeforeSetup
 !macroend
