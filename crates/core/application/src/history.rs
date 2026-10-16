@@ -12,6 +12,7 @@ use mivia_ports::store::{AccountScope, Store, StoreError, StoreExt, TxError, Wri
 
 pub use custom::CustomRequest;
 pub use delete::DeleteOutcome;
+pub(crate) use delete::{blocks_every_call, remove_on_server};
 pub use export::ExportJob;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

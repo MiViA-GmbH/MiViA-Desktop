@@ -5,8 +5,8 @@ use mivia_domain::transition::IllegalTransition;
 use mivia_ports::ipc::history::HistoryFilter;
 use mivia_ports::queries::Queries;
 use mivia_ports::store::history::{DeleteRequest, DeleteTarget, Deletion};
-use mivia_ports::store::pipeline::JobRecord;
-use mivia_ports::store::{StoreError, StoreExt, TxError};
+use mivia_ports::store::pipeline::{JobRecord, LeftoverKind};
+use mivia_ports::store::{NewComputation, StoreError, StoreExt, TxError};
 use mivia_store::{SqliteStore, StoreConfig};
 
 use crate::common::{account, fixture, new_file, seed};
@@ -202,13 +202,18 @@ async fn work_that_finishes_after_the_deletion_is_dropped() {
         submitted_at: NOW,
         next_poll_at: NOW,
     };
-    let state = fx
-        .store
+    fx.store
         .write(move |tx| {
             tx.pipeline(SCOPE).uploaded(uploading, "image-2", LATER)?;
             tx.pipeline(SCOPE).record_job(computing, &job, LATER)?;
             tx.pipeline(SCOPE)
-                .computation_event(computing, ComputationEvent::Ambiguous, LATER)?;
+                .computation_event(computing, ComputationEvent::Ambiguous, LATER)
+        })
+        .await
+        .unwrap();
+    let state = fx
+        .store
+        .write(move |tx| {
             tx.computations(SCOPE)
                 .apply(computing, ComputationEvent::Cancel, LATER)
         })
@@ -219,4 +224,96 @@ async fn work_that_finishes_after_the_deletion_is_dropped() {
             "computation"
         ))))
     );
+    let left = fx
+        .store
+        .write(|tx| tx.pipeline(SCOPE).leftovers())
+        .await
+        .unwrap();
+    let kinds: Vec<(LeftoverKind, String)> = left
+        .into_iter()
+        .map(|leftover| (leftover.kind, leftover.server_id))
+        .collect();
+    assert_eq!(
+        kinds,
+        [
+            (LeftoverKind::Image, "image-2".to_owned()),
+            (LeftoverKind::Job, "job-1".to_owned())
+        ]
+    );
+}
+
+#[tokio::test]
+async fn a_file_removed_from_its_folder_still_refuses_late_events() {
+    let fx = fixture(StoreConfig::for_tests()).await;
+    let file = seed(&fx.store, |tx| {
+        account(tx, "a");
+        let origin = folder(tx, SCOPE, r"D:\Lab");
+        let batch = series(tx, origin, "Run", "grain");
+        let file = tx
+            .source_files(SCOPE)
+            .add(&new_file(batch, "b.tif"))
+            .unwrap();
+        for event in [
+            SourceFileEvent::ReadinessPassed,
+            SourceFileEvent::UploadClaimed,
+            SourceFileEvent::Removed,
+        ] {
+            tx.source_files(SCOPE).apply(file, event, NOW).unwrap();
+        }
+        file
+    })
+    .await;
+    let late = fx
+        .store
+        .write(move |tx| tx.pipeline(SCOPE).uploaded(file, "image-1", LATER))
+        .await;
+    assert_eq!(
+        late,
+        Err(StoreError::Tx(TxError::Illegal(IllegalTransition(
+            "source file"
+        ))))
+    );
+}
+
+#[tokio::test]
+async fn a_reused_result_keeps_its_job_until_its_last_user_is_deleted() {
+    let fx = fixture(StoreConfig::for_tests()).await;
+    let (first, second) = seed(&fx.store, |tx| {
+        account(tx, "a");
+        let origin = folder(tx, SCOPE, r"D:\Lab");
+        let first = series(tx, origin, "First", "grain");
+        let done = add(tx, SCOPE, first, "a.tif");
+        finish(tx, SCOPE, done, DONE);
+        let second = series(tx, origin, "Second", "grain");
+        let file = tx
+            .source_files(SCOPE)
+            .add(&new_file(second, "a.tif"))
+            .unwrap();
+        tx.computations(SCOPE)
+            .add(&NewComputation {
+                batch_id: second,
+                source_file_id: file,
+                model_choice_key: "grain:".to_owned(),
+                model_version: None,
+                app_version: "2.0.0".to_owned(),
+                next_attempt_at: NOW,
+                reused_from: Some(done),
+            })
+            .unwrap();
+        (first, second)
+    })
+    .await;
+    let kept = delete(&fx.store, DeleteTarget::Series(first), false)
+        .await
+        .unwrap();
+    assert_eq!(kept.jobs, Vec::<String>::new());
+    let last = delete(&fx.store, DeleteTarget::Series(second), false)
+        .await
+        .unwrap();
+    assert_eq!(last.jobs, ["job-1"]);
+    let renamed = fx
+        .store
+        .write(move |tx| tx.history(SCOPE).rename(first, "Again", LATER))
+        .await;
+    assert_eq!(renamed, Err(StoreError::Tx(TxError::NotFound)));
 }

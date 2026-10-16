@@ -67,6 +67,19 @@ pub struct CatalogueRow {
     pub names_json: String,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LeftoverKind {
+    Job,
+    Image,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Leftover {
+    pub id: i64,
+    pub kind: LeftoverKind,
+    pub server_id: String,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct JobRecord {
     pub job_id: String,
@@ -155,4 +168,6 @@ pub trait PipelineRepo {
     fn clamp_schedule(&mut self, clamp: Clamp) -> Result<(), TxError>;
     fn replace_catalogue(&mut self, rows: &[CatalogueRow], now: Timestamp) -> Result<(), TxError>;
     fn queued_choices(&mut self) -> Result<Vec<(ComputationId, String)>, TxError>;
+    fn leftovers(&mut self) -> Result<Vec<Leftover>, TxError>;
+    fn cleaned(&mut self, id: i64) -> Result<(), TxError>;
 }

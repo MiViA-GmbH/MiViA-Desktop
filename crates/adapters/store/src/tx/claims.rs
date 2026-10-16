@@ -8,6 +8,10 @@ use crate::codec::{parse_path, root_of};
 use crate::errors::SqlResult;
 use crate::sql::pipeline as sql;
 
+const DELETED_FILE: &str = "SELECT b.delete_on_server FROM source_file s      JOIN batch b ON b.id = s.batch_id WHERE s.id = ?1 AND s.account_id = ?2      AND s.state = 'vanished' AND b.deleted_at IS NOT NULL";
+
+const DELETED_COMPUTATION: &str = "SELECT b.delete_on_server FROM computation c      JOIN batch b ON b.id = c.batch_id WHERE c.id = ?1 AND c.account_id = ?2      AND c.state = 'cancelled' AND b.deleted_at IS NOT NULL";
+
 pub(super) fn count(value: i64) -> u32 {
     u32::try_from(value).unwrap_or(u32::MAX)
 }
@@ -84,20 +88,14 @@ impl SqlTx<'_> {
             .tx()
     }
 
-    pub(super) fn file_gone(&self, id: SourceFileId) -> Result<bool, TxError> {
-        let found: Vec<String> = self.column(
-            "SELECT state FROM source_file WHERE id = ?1 AND account_id = ?2",
-            [id.0, self.account()],
-        )?;
-        Ok(found.iter().any(|state| state == "vanished"))
+    pub(super) fn deleted_file(&self, id: SourceFileId) -> Result<Option<bool>, TxError> {
+        let found: Vec<bool> = self.column(DELETED_FILE, [id.0, self.account()])?;
+        Ok(found.into_iter().next())
     }
 
-    pub(super) fn computation_cancelled(&self, id: ComputationId) -> Result<bool, TxError> {
-        let found: Vec<String> = self.column(
-            "SELECT state FROM computation WHERE id = ?1 AND account_id = ?2",
-            [id.0, self.account()],
-        )?;
-        Ok(found.iter().any(|state| state == "cancelled"))
+    pub(super) fn deleted_computation(&self, id: ComputationId) -> Result<Option<bool>, TxError> {
+        let found: Vec<bool> = self.column(DELETED_COMPUTATION, [id.0, self.account()])?;
+        Ok(found.into_iter().next())
     }
 
     pub(super) fn attempt(&self, key: String) -> Result<AttemptRow, TxError> {

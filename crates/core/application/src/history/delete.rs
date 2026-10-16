@@ -3,6 +3,7 @@ use mivia_ports::fs::{FileSystem, FsError};
 use mivia_ports::server::{ServerApi, ServerError};
 use mivia_ports::store::StoreExt;
 use mivia_ports::store::history::{DeleteRequest, MovablePart, NewEvent, Trigger};
+use mivia_ports::store::pipeline::LeftoverKind;
 
 use super::{History, HistoryError};
 
@@ -34,7 +35,7 @@ async fn remove_report(fs: &dyn FileSystem, part: &MovablePart) -> bool {
     }
 }
 
-const fn blocks_every_call(error: &ServerError) -> bool {
+pub(crate) const fn blocks_every_call(error: &ServerError) -> bool {
     matches!(
         error,
         ServerError::Unreachable
@@ -48,19 +49,30 @@ const fn blocks_every_call(error: &ServerError) -> bool {
     )
 }
 
-async fn remove_jobs(server: Option<&dyn ServerApi>, jobs: &[String]) -> (u32, u32) {
+pub(crate) async fn remove_on_server(
+    server: &dyn ServerApi,
+    kind: LeftoverKind,
+    id: &str,
+) -> Result<(), ServerError> {
+    match kind {
+        LeftoverKind::Job => server.delete_job(id).await,
+        LeftoverKind::Image => server.delete_image(id).await,
+    }
+}
+
+async fn remove_all(server: Option<&dyn ServerApi>, items: &[(LeftoverKind, &str)]) -> (u32, u32) {
     let Some(server) = server else {
-        return (0, count(jobs.len()));
+        return (0, count(items.len()));
     };
     let (mut deleted, mut failed) = (0, 0);
-    for (done, job) in jobs.iter().enumerate() {
-        let Err(error) = server.delete_job(job).await else {
+    for (done, (kind, id)) in items.iter().enumerate() {
+        let Err(error) = remove_on_server(server, *kind, id).await else {
             deleted += 1;
             continue;
         };
         tracing::warn!(?error, "history.serverDeleteFailed");
         if blocks_every_call(&error) {
-            return (deleted, failed + count(jobs.len() - done));
+            return (deleted, failed + count(items.len() - done));
         }
         failed += 1;
     }
@@ -104,8 +116,16 @@ impl History {
             }
         }
         if request.server {
-            (outcome.server_deleted, outcome.server_failed) =
-                remove_jobs(server, &deletion.jobs).await;
+            let jobs = deletion
+                .jobs
+                .iter()
+                .map(|id| (LeftoverKind::Job, id.as_str()));
+            let images = deletion
+                .server_images
+                .iter()
+                .map(|id| (LeftoverKind::Image, id.as_str()));
+            let items: Vec<_> = jobs.chain(images).collect();
+            (outcome.server_deleted, outcome.server_failed) = remove_all(server, &items).await;
         }
         let event = outcome_event(request, outcome, now);
         let logged = self

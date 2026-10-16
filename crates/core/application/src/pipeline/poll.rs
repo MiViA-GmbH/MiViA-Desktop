@@ -28,6 +28,7 @@ impl Pipeline {
             Access::Throttled { min_interval_ms } => min_interval_ms,
             Access::Allowed => 0,
         };
+        self.clean_server().await?;
         let (computing, next) = self
             .write(|tx, scope| {
                 let repo = tx.pipeline(scope);

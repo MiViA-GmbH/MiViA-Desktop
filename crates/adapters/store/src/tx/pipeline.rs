@@ -2,8 +2,8 @@ use mivia_domain::computation::ComputationEvent;
 use mivia_domain::ids::{BatchId, ComputationId, SourceFileId, Timestamp};
 use mivia_domain::source_file::SourceFileEvent;
 use mivia_ports::store::pipeline::{
-    AttemptRow, CatalogueRow, Clamp, JobRecord, NewAttempt, PipelineRepo, PollRow, Retry,
-    SubmitRow, UploadRow,
+    AttemptRow, CatalogueRow, Clamp, JobRecord, Leftover, LeftoverKind, NewAttempt, PipelineRepo,
+    PollRow, Retry, SubmitRow, UploadRow,
 };
 use mivia_ports::store::{ComputationRepo, SourceFileRepo, TxError};
 use rusqlite::params;
@@ -44,8 +44,8 @@ impl PipelineRepo for SqlTx<'_> {
         image_id: &str,
         now: Timestamp,
     ) -> Result<(), TxError> {
-        if self.file_gone(id)? {
-            return Ok(());
+        if let Some(server) = self.deleted_file(id)? {
+            return self.leftover(server, LeftoverKind::Image, image_id);
         }
         SourceFileRepo::apply(self, id, SourceFileEvent::UploadSucceeded, now)?;
         self.run(
@@ -61,7 +61,7 @@ impl PipelineRepo for SqlTx<'_> {
         retry: Retry,
         now: Timestamp,
     ) -> Result<(), TxError> {
-        if self.file_gone(id)? {
+        if self.deleted_file(id)?.is_some() {
             return Ok(());
         }
         SourceFileRepo::apply(self, id, SourceFileEvent::UploadInterrupted, now)?;
@@ -77,7 +77,7 @@ impl PipelineRepo for SqlTx<'_> {
         event: SourceFileEvent,
         now: Timestamp,
     ) -> Result<(), TxError> {
-        if self.file_gone(id)? {
+        if self.deleted_file(id)?.is_some() {
             return Ok(());
         }
         let state = SourceFileRepo::apply(self, id, event, now)?;
@@ -161,8 +161,8 @@ impl PipelineRepo for SqlTx<'_> {
         job: &JobRecord,
         now: Timestamp,
     ) -> Result<(), TxError> {
-        if self.computation_cancelled(id)? {
-            return Ok(());
+        if let Some(server) = self.deleted_computation(id)? {
+            return self.leftover(server, LeftoverKind::Job, &job.job_id);
         }
         ComputationRepo::apply(self, id, ComputationEvent::Job(job.outcome), now)?;
         self.run(
@@ -185,7 +185,7 @@ impl PipelineRepo for SqlTx<'_> {
         event: ComputationEvent,
         now: Timestamp,
     ) -> Result<(), TxError> {
-        if self.computation_cancelled(id)? {
+        if self.deleted_computation(id)?.is_some() {
             return Ok(());
         }
         ComputationRepo::apply(self, id, event, now)?;
@@ -280,6 +280,14 @@ impl PipelineRepo for SqlTx<'_> {
 
     fn replace_catalogue(&mut self, rows: &[CatalogueRow], now: Timestamp) -> Result<(), TxError> {
         self.catalogue_rows(rows, now)
+    }
+
+    fn leftovers(&mut self) -> Result<Vec<Leftover>, TxError> {
+        self.server_leftovers()
+    }
+
+    fn cleaned(&mut self, id: i64) -> Result<(), TxError> {
+        self.run("DELETE FROM server_cleanup WHERE id = ?1", [id])
     }
 
     fn queued_choices(&mut self) -> Result<Vec<(ComputationId, String)>, TxError> {

@@ -24,11 +24,22 @@ const IMAGE_LABEL: &str =
 
 const FILES: &str = "SELECT id FROM source_file WHERE batch_id = ?1 ORDER BY arrival_seq";
 
-const JOBS: &str = "SELECT DISTINCT c.server_job_id FROM computation c \
+const JOBS: &str = "SELECT DISTINCT x.job FROM (SELECT c.id AS origin, c.server_job_id AS job \
+     FROM computation c WHERE c.source_file_id IN (SELECT value FROM json_each(?1)) \
+     AND c.server_job_id IS NOT NULL UNION SELECT o.id, o.server_job_id FROM computation c \
+     JOIN computation o ON o.id = c.reused_from JOIN batch ob ON ob.id = o.batch_id \
      WHERE c.source_file_id IN (SELECT value FROM json_each(?1)) \
-     AND c.server_job_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM computation o \
-     WHERE o.reused_from = c.id AND o.source_file_id NOT IN (SELECT value FROM json_each(?1))) \
-     ORDER BY c.server_job_id";
+     AND o.server_job_id IS NOT NULL AND ob.deleted_at IS NOT NULL) x \
+     WHERE NOT EXISTS (SELECT 1 FROM computation u JOIN batch ub ON ub.id = u.batch_id \
+     WHERE u.reused_from = x.origin AND ub.deleted_at IS NULL \
+     AND u.source_file_id NOT IN (SELECT value FROM json_each(?1))) ORDER BY x.job";
+
+const IMAGES: &str = "SELECT DISTINCT s.server_image_id FROM source_file s \
+     WHERE s.id IN (SELECT value FROM json_each(?1)) AND s.server_image_id IS NOT NULL \
+     AND NOT EXISTS (SELECT 1 FROM source_file o JOIN batch b ON b.id = o.batch_id \
+     WHERE o.account_id = s.account_id AND o.server_image_id = s.server_image_id \
+     AND b.deleted_at IS NULL AND o.id NOT IN (SELECT value FROM json_each(?1))) \
+     ORDER BY s.server_image_id";
 
 const RELEASE_LEDGER: &str = "DELETE FROM ledger_entry WHERE computation_id IN \
      (SELECT id FROM computation WHERE source_file_id IN (SELECT value FROM json_each(?1)))";
@@ -51,8 +62,8 @@ const STOP_PARTS: &str = "UPDATE report_part SET state = 'failed', error = 'disc
      WHERE report_id IN (SELECT value FROM json_each(?1)) AND state IN ('requested', 'not_saved')";
 
 const TRASH: &str = "INSERT INTO batch (account_id, origin, batch_key, label, label_sort, open, \
-     opened_at, closed_at, sort_at, report_settings, app_version, deleted_at) \
-     SELECT account_id, 'one_off', 'deleted', '', ?4, 0, ?2, ?2, ?3, '{}', app_version, ?2 \
+     opened_at, closed_at, sort_at, report_settings, app_version, deleted_at, delete_on_server) \
+     SELECT account_id, 'one_off', 'deleted', '', ?4, 0, ?2, ?2, ?3, '{}', app_version, ?2, ?5 \
      FROM batch WHERE id = ?1 RETURNING id";
 
 const RECOUNT: &str = "UPDATE batch SET \
@@ -172,8 +183,8 @@ impl SqlTx<'_> {
 
     fn trash_image(
         &self,
-        batch: BatchId,
-        file: SourceFileId,
+        (batch, file): (BatchId, SourceFileId),
+        server: bool,
         now: Timestamp,
     ) -> Result<(), TxError> {
         let latest: Option<i64> = self
@@ -187,7 +198,7 @@ impl SqlTx<'_> {
             .tx
             .query_row(
                 TRASH,
-                params![batch.0, now.0, sort_at, sort_key("")],
+                params![batch.0, now.0, sort_at, sort_key(""), server],
                 |row| row.get(0),
             )
             .tx()?;
@@ -227,16 +238,17 @@ impl SqlTx<'_> {
         Ok(reports)
     }
 
-    fn remove_target(&self, target: DeleteTarget, now: Timestamp) -> Result<(), TxError> {
-        match target {
+    fn remove_target(&self, request: DeleteRequest, now: Timestamp) -> Result<(), TxError> {
+        let server = request.server;
+        match request.target {
             DeleteTarget::Series(batch) => {
                 self.trash_series(batch)?;
                 self.run(
-                    "UPDATE batch SET deleted_at = ?2, needs_attention = 0 WHERE id = ?1",
-                    [batch.0, now.0],
+                    "UPDATE batch SET deleted_at = ?2, needs_attention = 0, delete_on_server = ?3 WHERE id = ?1",
+                    params![batch.0, now.0, server],
                 )
             }
-            DeleteTarget::Image(batch, file) => self.trash_image(batch, file, now),
+            DeleteTarget::Image(batch, file) => self.trash_image((batch, file), server, now),
         }
     }
 
@@ -267,13 +279,15 @@ impl SqlTx<'_> {
         self.stop_work(&files, now)?;
         let list = id_list(&files, |id| id);
         let jobs: Vec<String> = self.column(JOBS, [&list])?;
+        let server_images: Vec<String> = self.column(IMAGES, [&list])?;
         self.run(RELEASE_LEDGER, [&list])?;
         let reports = self.affected_reports(request, &list)?;
         let parts = self.hide_reports(&reports, request.report_files, now)?;
-        self.remove_target(request.target, now)?;
+        self.remove_target(request, now)?;
         let deletion = Deletion {
             images: u32::try_from(files.len()).unwrap_or(u32::MAX),
             jobs,
+            server_images,
             parts,
         };
         self.log_event(&deleted_event(request, &deletion, label, now))?;

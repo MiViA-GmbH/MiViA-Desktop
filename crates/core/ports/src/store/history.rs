@@ -138,6 +138,7 @@ pub struct DeleteRequest {
 pub struct Deletion {
     pub images: u32,
     pub jobs: Vec<String>,
+    pub server_images: Vec<String>,
     pub parts: Vec<MovablePart>,
 }
 
