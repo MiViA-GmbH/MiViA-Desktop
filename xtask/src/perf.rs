@@ -1,9 +1,13 @@
+#[cfg(any(windows, test))]
+mod evidence;
 #[cfg(windows)]
 mod harness;
 mod instr;
 mod model;
 #[cfg(windows)]
 mod scenarios;
+#[cfg(windows)]
+mod smoke;
 #[cfg(test)]
 mod tests;
 
@@ -18,7 +22,7 @@ use crate::quality_diff::custom::today;
 use crate::{flag_value, repo};
 
 const USAGE: &str = "usage: cargo xtask perf <start-idle-window | io | preview | startup | idle | window | \
-suspend-ab | burst | history | report | size | upload | instr [--baseline-out <dir>] | calibrate | \
+suspend-ab | burst | history | report | size | upload | smoke | instr [--baseline-out <dir>] | calibrate | \
 compare <dir>> [--exe <path>] [--stub <path>] [--out <dir>] [--runs <n>] [--idle-minutes <n>] \
 [--hidden-minutes <n>] [--installer <dir>] [--previous <dir>] [--allow-noise]";
 
@@ -80,6 +84,7 @@ pub(crate) fn run(root: &Path, args: &[String]) -> Result<bool> {
             return Ok(true);
         }
         "compare" => return compare(&options, rest.first().context(USAGE)?),
+        "smoke" => return smoke(&options),
         "start-idle-window" => &["startup", "idle", "window"],
         "io" => &["burst", "history", "report", "size"],
         "preview" => &["preview"],
@@ -109,6 +114,16 @@ fn measure(options: &Options, scenarios: &[&str]) -> Result<bool> {
 #[cfg(windows)]
 fn nsis_dir_flag(target: &Path) -> String {
     format!("/D={}", target.display().to_string().replace('/', "\\"))
+}
+
+#[cfg(windows)]
+fn smoke(options: &Options) -> Result<bool> {
+    smoke::run(options)
+}
+
+#[cfg(not(windows))]
+fn smoke(_: &Options) -> Result<bool> {
+    Err(Infra("the release artifact smoke runs on Windows only".to_owned()).into())
 }
 
 #[cfg(windows)]

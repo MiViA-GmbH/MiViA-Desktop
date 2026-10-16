@@ -122,6 +122,9 @@ impl Intake {
         }
         let name = path.file_name().unwrap_or_default();
         if has_accepted_extension(name) {
+            if self.is_settled_unchanged(path).await {
+                return;
+            }
             plan.detect(self, path, self.now());
             return;
         }
