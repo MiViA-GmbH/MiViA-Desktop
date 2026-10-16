@@ -204,6 +204,7 @@ pub trait ServerApi: Send + Sync {
     async fn find_jobs(&self, query: FindJobs) -> Result<Vec<ServerJob>, ServerError>;
     async fn job_exists(&self, job_id: &str) -> Result<bool, ServerError>;
     async fn delete_job(&self, job_id: &str) -> Result<(), ServerError>;
+    async fn delete_image(&self, image_id: &str) -> Result<(), ServerError>;
     async fn request_report(&self, request: ReportRequest) -> Result<String, ServerError>;
     async fn report_status(&self, report_id: &str) -> Result<ReportProgress, ServerError>;
     async fn download_report(

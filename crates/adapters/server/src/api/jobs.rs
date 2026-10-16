@@ -234,6 +234,22 @@ impl HttpServerApi {
         .await
     }
 
+    pub(super) async fn remove_image(&self, image_id: &str) -> Result<(), ServerError> {
+        let id = uuid(image_id)?.to_string();
+        self.authorized(|auth| {
+            let id = &id;
+            async move {
+                let client = self.client(auth);
+                let result = client.image_controller_remove_image(id).await;
+                match self.generated("imageDelete", result, Call::Other).await {
+                    Ok(()) | Err(Failure::Error(ServerError::Gone)) => Ok(()),
+                    Err(other) => Err(other),
+                }
+            }
+        })
+        .await
+    }
+
     pub(super) async fn exists(&self, job_id: &str) -> Result<bool, ServerError> {
         let id = uuid(job_id)?;
         let found = self

@@ -13,6 +13,7 @@ use crate::errors::response;
 pub(crate) fn routes() -> Router<Stub> {
     Router::new()
         .route("/api/v2/jobs/{id}", get(detail).delete(remove))
+        .route("/api/image/{id}", axum::routing::delete(remove_image))
         .route("/api/jobs/results/{id}/{filename}", get(result_image))
 }
 
@@ -50,6 +51,20 @@ async fn result_image(
                 .into_response()
         }
         Ok(Download::Expired) => StatusCode::NOT_FOUND.into_response(),
+        Err(error) => response(&error),
+    }
+}
+
+async fn remove_image(
+    State(stub): State<Stub>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+) -> Response {
+    if let Some(denied) = denied(&stub, &headers) {
+        return denied;
+    }
+    match stub.engine.delete_image(&id).await {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(error) => response(&error),
     }
 }

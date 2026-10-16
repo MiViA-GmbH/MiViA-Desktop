@@ -250,6 +250,10 @@ impl ServerApi for HttpServerApi {
         self.remove_job(job_id).await
     }
 
+    async fn delete_image(&self, image_id: &str) -> Result<(), ServerError> {
+        self.remove_image(image_id).await
+    }
+
     async fn request_report(&self, request: ReportRequest) -> Result<String, ServerError> {
         self.create_report(&request).await
     }

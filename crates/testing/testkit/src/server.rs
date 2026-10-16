@@ -33,6 +33,7 @@ pub enum Op {
     Find,
     Exists,
     DeleteJob,
+    DeleteImage,
     ReportRequest,
     ReportStatus,
     ReportDownload,
@@ -248,6 +249,12 @@ impl ServerApi for FakeServerApi {
     async fn delete_job(&self, job_id: &str) -> Result<(), ServerError> {
         let fault = self.enter(Op::DeleteJob)?;
         self.sim.lock().delete_job(job_id);
+        Self::after(fault, ()).await
+    }
+
+    async fn delete_image(&self, image_id: &str) -> Result<(), ServerError> {
+        let fault = self.enter(Op::DeleteImage)?;
+        self.sim.lock().delete_image(image_id);
         Self::after(fault, ()).await
     }
 

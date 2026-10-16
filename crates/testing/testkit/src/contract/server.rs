@@ -198,7 +198,13 @@ pub async fn server_deletes_a_job_once_and_then_finds_it_gone(
     let exists = server.job_exists(&job).await.map_err(|e| failed(&e))?;
     check(!exists, "deleted job still exists")?;
     let again = server.delete_job(&job).await;
-    check_eq(&again, &Ok(()), "deleting a gone job")
+    check_eq(&again, &Ok(()), "deleting a gone job")?;
+    server
+        .delete_image(&deleted)
+        .await
+        .map_err(|e| failed(&e))?;
+    let twice = server.delete_image(&deleted).await;
+    check_eq(&twice, &Ok(()), "deleting a gone image")
 }
 
 pub async fn server_unknown_image_is_named(harness: &impl ServerHarness) -> CaseResult {
