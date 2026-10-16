@@ -55,7 +55,7 @@ run('cargo', ['build', '--release', '--locked', '--frozen', '-p', 'mivia-desktop
 run('cargo', ['build', '--release', '--locked', '--frozen', '-p', 'xtask']);
 run('cargo', ['install', 'tauri-cli', '--version', `=${tauriCli}`, '--locked', '--root', tools]);
 run('cargo', ['install', 'cargo-cyclonedx', '--version', '=0.5.9', '--locked', '--root', tools]);
-run('cargo', ['install', 'cargo-about', '--version', '=0.9.2', '--locked', '--root', tools]);
+run('cargo', ['install', 'cargo-about', '--version', '=0.9.2', '--locked', '--features', 'cli', '--root', tools]);
 
 mkdirSync(out, { recursive: true });
 process.env.PATH = `${resolve(tools, 'bin')}${delimiter}${process.env.PATH}`;
