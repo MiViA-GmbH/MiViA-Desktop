@@ -117,3 +117,12 @@ fn a_waiver_holds_until_its_expiry_day() {
         Status::Red
     );
 }
+
+#[cfg(windows)]
+#[test]
+fn nsis_gets_backslashes_only_after_the_flag() {
+    assert_eq!(
+        super::nsis_dir_flag(std::path::Path::new(r"C:\a/perf\run/install")),
+        r"/D=C:\a\perf\run\install"
+    );
+}

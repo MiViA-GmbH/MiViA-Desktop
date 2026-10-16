@@ -112,6 +112,11 @@ fn measure(options: &Options, scenarios: &[&str]) -> Result<bool> {
 }
 
 #[cfg(windows)]
+fn nsis_dir_flag(target: &Path) -> String {
+    format!("/D={}", target.display().to_string().replace('/', "\\"))
+}
+
+#[cfg(windows)]
 fn smoke(options: &Options) -> Result<bool> {
     smoke::run(options)
 }

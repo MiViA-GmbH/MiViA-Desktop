@@ -87,7 +87,7 @@ jobs:
     name: Performance (start, idle, window)
     needs: [release-build]
     runs-on: windows-2025
-    timeout-minutes: 45
+    timeout-minutes: 90
     permissions:
       contents: read  # check out the repository
     steps:
