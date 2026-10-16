@@ -60,9 +60,7 @@ export function RowActions({ row }: { row: HistoryRow }) {
 							{t('desktop.support.reportAction')}
 						</Menu.Item>
 					)}
-					<Menu.Item color="red" onClick={() => setRemove(true)}>
-						{t('desktop.delete.seriesAction')}
-					</Menu.Item>
+					<Menu.Item onClick={() => setRemove(true)}>{t('desktop.delete.seriesAction')}</Menu.Item>
 				</Menu.Dropdown>
 			</Menu>
 			{remove && (

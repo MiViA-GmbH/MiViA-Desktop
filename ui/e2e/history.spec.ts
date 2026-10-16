@@ -113,6 +113,18 @@ test('deleting a series asks first and says what each choice does', async ({ pag
 	await expect(page).toHaveURL(/\/history/);
 });
 
+test('a failed deletion keeps the dialog open and says why', async ({ page }) => {
+	await open(page, '/series/214?scenario=failure');
+	await page
+		.getByRole('button', { name: /^Delete / })
+		.first()
+		.click();
+	const dialog = page.getByRole('dialog', { name: 'Delete image' });
+	await dialog.getByRole('button', { name: 'Delete' }).click();
+	await expect(dialog.getByText(/Probe 4709/)).toBeVisible();
+	await expect(dialog).toBeVisible();
+});
+
 test('an image can be deleted from its series by keyboard', async ({ page }) => {
 	await open(page, '/series/214?scenario=calm');
 	const remove = page.getByRole('button', { name: /^Delete / }).first();

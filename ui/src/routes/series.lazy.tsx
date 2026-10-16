@@ -13,7 +13,7 @@ import { foldersQuery } from '../entities/folder/queries';
 import { useOrigin } from '../entities/series/origin';
 import { seriesEventsQuery, seriesItemsQuery, seriesQuery, seriesReportsQuery } from '../entities/series/queries';
 import { CustomReportDialog } from '../features/history/custom-report-dialog';
-import { DeleteDialog } from '../features/history/delete-dialog';
+import { DeleteDialog, type DeleteSubject } from '../features/history/delete-dialog';
 import { useExport } from '../features/history/use-export';
 import { ChangesPanel } from '../features/series/changes-panel';
 import { ImagesPanel } from '../features/series/images-panel';
@@ -70,12 +70,10 @@ function useOpened(series: BatchSummary | undefined): void {
 	}, [id]);
 }
 
-function SeriesMenu({ series }: { series: BatchSummary }) {
+function SeriesMenu({ series, onDelete }: { series: BatchSummary; onDelete: (subject: DeleteSubject) => void }) {
 	const { t } = useTranslation();
-	const navigate = useNavigate();
 	const exporter = useExport();
 	const [custom, setCustom] = useState(false);
-	const [remove, setRemove] = useState(false);
 	const { id } = series;
 	return (
 		<>
@@ -90,24 +88,19 @@ function SeriesMenu({ series }: { series: BatchSummary }) {
 						{t('desktop.history.exportSeries')}
 					</Menu.Item>
 					<Menu.Item onClick={() => setCustom(true)}>{t('desktop.history.createReport')}</Menu.Item>
-					<Menu.Item color="red" onClick={() => setRemove(true)}>
+					<Menu.Item onClick={() => onDelete({ series: id, name: series.label, images: series.counts.files })}>
 						{t('desktop.delete.seriesAction')}
 					</Menu.Item>
 				</Menu.Dropdown>
 			</Menu>
 			{custom && <CustomReportDialog onClose={() => setCustom(false)} series={[id]} />}
-			{remove && (
-				<DeleteDialog
-					onClose={() => setRemove(false)}
-					onDeleted={() => navigate({ to: '/history' })}
-					subject={{ series: id, name: series.label, images: series.counts.files }}
-				/>
-			)}
 		</>
 	);
 }
 
-function SeriesContent({ series, id }: { series: BatchSummary; id: string }) {
+type ContentProps = { series: BatchSummary; id: string; onDelete: (subject: DeleteSubject) => void };
+
+function SeriesContent({ series, id, onDelete }: ContentProps) {
 	const language = useQuery(localeQuery).data?.language ?? 'en';
 	const view = useQuery(seriesQuery(id)).data;
 	const reports = useQuery(seriesReportsQuery(id)).data;
@@ -118,7 +111,7 @@ function SeriesContent({ series, id }: { series: BatchSummary; id: string }) {
 	const actions = (
 		<Group gap="sm" wrap="nowrap">
 			<ShowReports partId={firstSaved(reports)} />
-			<SeriesMenu series={series} />
+			<SeriesMenu onDelete={onDelete} series={series} />
 		</Group>
 	);
 	return (
@@ -152,11 +145,27 @@ function SeriesContent({ series, id }: { series: BatchSummary; id: string }) {
 function Series() {
 	const { seriesId } = useParams({ from: '/app/series/$seriesId' });
 	const view = useQuery(seriesQuery(seriesId));
+	const navigate = useNavigate();
+	const [removing, setRemoving] = useState<DeleteSubject | null>(null);
 	useOpened(view.data?.summary);
+	const dialog = removing && (
+		<DeleteDialog onClose={() => setRemoving(null)} onDeleted={() => navigate({ to: '/history' })} subject={removing} />
+	);
+	if (removing && !view.data) {
+		return dialog;
+	}
 	if (view.data === null) {
 		return <NotFound />;
 	}
-	return view.data ? <SeriesContent id={seriesId} series={view.data.summary} /> : null;
+	if (!view.data) {
+		return null;
+	}
+	return (
+		<>
+			<SeriesContent id={seriesId} onDelete={setRemoving} series={view.data.summary} />
+			{dialog}
+		</>
+	);
 }
 
 export const SeriesRoute = createLazyRoute('/app/series/$seriesId')({ component: Series });

@@ -307,7 +307,7 @@
 			"imageText": "{{name}} is removed from this image series in the history on this PC. If it is still being uploaded or analysed, that stops.",
 			"logNote": "The change log keeps a record of the deletion. Your image files are not touched.",
 			"reportFiles": "Also delete the saved report files",
-			"reportFilesHelp": "Deletes each saved report that contains these results, with the other images in it. Reports changed since they were saved are kept. If this is off, the report files stay on disk.",
+			"reportFilesHelp": "Deletes every saved report that contains these images, also reports that cover other images as well. Those reports are gone for the other images too. Reports changed since they were saved are kept. If this is off, all report files stay on disk.",
 			"server": "Also delete on the MiViA server",
 			"serverHelp": "Deletes these results from your MiViA account. If this is off, they stay on the server and remain visible in the MiViA web app.",
 			"confirm": "Delete",

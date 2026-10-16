@@ -307,7 +307,7 @@
 			"imageText": "{{name}} wird im Verlauf auf diesem PC aus dieser Bildserie entfernt. Wird es noch hochgeladen oder ausgewertet, wird das abgebrochen.",
 			"logNote": "Das Änderungsprotokoll hält die Löschung fest. Ihre Bilddateien bleiben unverändert.",
 			"reportFiles": "Gespeicherte Berichtsdateien ebenfalls löschen",
-			"reportFilesHelp": "Löscht jeden gespeicherten Bericht, der diese Ergebnisse enthält, samt den anderen Bildern darin. Berichte, die nach dem Speichern geändert wurden, bleiben erhalten. Ist dies aus, bleiben die Berichtsdateien auf dem Datenträger.",
+			"reportFilesHelp": "Löscht jeden gespeicherten Bericht, der diese Bilder enthält, auch Berichte, die zusätzlich andere Bilder abdecken. Diese Berichte fehlen dann auch für die anderen Bilder. Berichte, die nach dem Speichern geändert wurden, bleiben erhalten. Ist dies aus, bleiben alle Berichtsdateien auf dem Datenträger.",
 			"server": "Auch auf dem MiViA-Server löschen",
 			"serverHelp": "Löscht diese Ergebnisse aus Ihrem MiViA-Konto. Ist dies aus, bleiben sie auf dem Server und in der MiViA-Web-App sichtbar.",
 			"confirm": "Löschen",
