@@ -34,6 +34,8 @@
 		"@axe-core/playwright": "4.13.0",
 		"@playwright/test": "1.63.0",
 		"@size-limit/file": "14.1.0",
+		"@stryker-mutator/core": "10.0.0",
+		"@stryker-mutator/vitest-runner": "10.0.0",
 		"@testing-library/react": "16.3.3",
 		"@types/node": "24.19.1",
 		"@types/react": "19.2.18",

@@ -67,7 +67,7 @@ jobs:
       - name: Install node packages
         run: pnpm install --frozen-lockfile
       - name: Mutation
-        run: pnpm --filter @mivia-desktop/ui stryker run --incremental
+        run: pnpm --filter @mivia-desktop/ui exec stryker run
 
   fuzz-cmin:
     name: Fuzz corpus minimisation
