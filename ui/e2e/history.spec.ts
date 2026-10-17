@@ -104,7 +104,7 @@ test('deleting a series asks first and says what each choice does', async ({ pag
 	const dialog = page.getByRole('dialog');
 	await expect(dialog.getByRole('checkbox', { name: /saved report files/ })).not.toBeChecked();
 	await expect(dialog.getByRole('checkbox', { name: /MiViA server/ })).toBeChecked();
-	await expect(dialog.getByText(/stay on the server/)).toBeVisible();
+	await expect(dialog.getByText(/stay in your MiViA account/)).toBeVisible();
 	await expect(page.getByRole('menu')).toBeHidden();
 	await structure(page);
 	await page.screenshot({ path: `${SHOTS}/d1-delete-series-en.png` });
