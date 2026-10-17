@@ -297,9 +297,32 @@
 				"cancelled": "Cancelled"
 			}
 		},
+		"delete": {
+			"seriesAction": "Delete image series",
+			"imageAction": "Delete {{name}}",
+			"seriesTitle": "Delete image series",
+			"imageTitle": "Delete image",
+			"seriesText_one": "{{name}} and its image leave the history. Running work stops.",
+			"seriesText_other": "{{name}} and its {{count}} images leave the history. Running work stops.",
+			"imageText": "{{name}} leaves the history. Running work stops.",
+			"logNote": "The change log keeps a record. Your image files stay.",
+			"reportFiles": "Also delete the saved report files",
+			"reportFilesHelp": "Includes reports that also cover other images.",
+			"server": "Also delete on the MiViA server",
+			"serverHelp": "Otherwise results stay in your MiViA account.",
+			"confirm": "Delete",
+			"cancel": "Cancel",
+			"done_one": "1 image was removed from the history.",
+			"done_other": "{{count}} images were removed from the history.",
+			"filesFailed_one": "1 report file could not be deleted and is still on disk.",
+			"filesFailed_other": "{{count}} report files could not be deleted and are still on disk.",
+			"serverFailed_one": "1 result could not be deleted on the MiViA server and stays there.",
+			"serverFailed_other": "{{count}} results could not be deleted on the MiViA server and stay there."
+		},
 		"toast": {
 			"cancelled": "Cancelled",
 			"copied": "Copied",
+			"deleted": "Deleted",
 			"exported": "Export finished",
 			"logsDeleted": "Logs deleted",
 			"notSent": "Not sent",
@@ -418,7 +441,9 @@
 				"restored_from_replaced": "Report restored to the report folder",
 				"attention_cleared": "Removed from Needs attention",
 				"history_exported": "History exported",
-				"backup_restored": "History restored from a backup"
+				"backup_restored": "History restored from a backup",
+				"deleted": "Deleted from the history",
+				"deletion_finished": "Deletion finished"
 			},
 			"reasons": {
 				"quiet_period": "No new images arrived for a while",

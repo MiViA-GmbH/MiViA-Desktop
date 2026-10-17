@@ -212,7 +212,7 @@ fn saved_names(tx: &Transaction<'_>, batch_id: i64) -> rusqlite::Result<Vec<Stri
 pub(super) fn write_search_doc(tx: &Transaction<'_>, batch_id: i64) -> rusqlite::Result<()> {
     let Some((label, sort_at)) = tx
         .query_row(
-            "SELECT label, sort_at FROM batch WHERE id = ?1 AND open = 0",
+            "SELECT label, sort_at FROM batch WHERE id = ?1 AND open = 0 AND deleted_at IS NULL",
             [batch_id],
             |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
         )
@@ -244,7 +244,7 @@ pub(crate) fn rebuild_search(tx: &Transaction<'_>) -> rusqlite::Result<()> {
         [],
     )?;
     let ids = tx
-        .prepare("SELECT id FROM batch WHERE open = 0 ORDER BY sort_at")?
+        .prepare("SELECT id FROM batch WHERE open = 0 AND deleted_at IS NULL ORDER BY sort_at")?
         .query_map([], |row| row.get::<_, i64>(0))?
         .collect::<rusqlite::Result<Vec<_>>>()?;
     ids.into_iter().try_for_each(|id| write_search_doc(tx, id))

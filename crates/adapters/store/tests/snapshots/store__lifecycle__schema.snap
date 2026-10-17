@@ -56,6 +56,9 @@ CREATE INDEX computation_claim ON computation(state, next_attempt_at) WHERE stat
 index computation_poll
 CREATE INDEX computation_poll ON computation(account_id, next_poll_at) WHERE state = 'computing'
 
+index computation_reused
+CREATE INDEX computation_reused ON computation(reused_from) WHERE reused_from IS NOT NULL
+
 index computation_server_job
 CREATE INDEX computation_server_job ON computation(server_job_id) WHERE server_job_id IS NOT NULL
 
@@ -114,6 +117,9 @@ index sqlite_autoindex_account_1
 
 
 index sqlite_autoindex_report_part_1
+
+
+index sqlite_autoindex_server_cleanup_1
 
 
 index telemetry_sent
@@ -182,7 +188,7 @@ CREATE TABLE batch (
   attention_cleared_how TEXT CHECK (attention_cleared_how IN ('opened', 'dismissed')),
   problems_changed_at INTEGER,
   app_version TEXT NOT NULL
-) STRICT
+, deleted_at INTEGER, delete_on_server INTEGER NOT NULL DEFAULT 0 CHECK (delete_on_server IN (0, 1))) STRICT
 
 table batch_model_choice
 CREATE TABLE batch_model_choice (
@@ -340,7 +346,7 @@ CREATE TABLE report (
   attention_cleared_at INTEGER,
   created_at INTEGER NOT NULL,
   app_version TEXT NOT NULL
-) STRICT
+, deleted_at INTEGER) STRICT
 
 table report_member
 CREATE TABLE report_member (
@@ -383,6 +389,15 @@ CREATE TABLE report_part (
   app_version TEXT NOT NULL,
   server_version TEXT,
   UNIQUE (report_id, part_no, format)
+) STRICT
+
+table server_cleanup
+CREATE TABLE server_cleanup (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id INTEGER NOT NULL REFERENCES account(id),
+  kind TEXT NOT NULL CHECK (kind IN ('job', 'image')),
+  server_id TEXT NOT NULL,
+  UNIQUE (account_id, kind, server_id)
 ) STRICT
 
 table settings

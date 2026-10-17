@@ -34,6 +34,8 @@ fn op(name: &str) -> Option<Op> {
         "status" => Op::Status,
         "find" => Op::Find,
         "exists" => Op::Exists,
+        "deleteJob" => Op::DeleteJob,
+        "deleteImage" => Op::DeleteImage,
         "problemReport" => Op::ProblemReport,
         _ => return None,
     })

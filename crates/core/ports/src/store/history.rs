@@ -1,5 +1,7 @@
 use mivia_domain::computation::ComputationState;
-use mivia_domain::ids::{BatchId, ComputationId, Fingerprint, ReportId, ReportPartId, Timestamp};
+use mivia_domain::ids::{
+    BatchId, ComputationId, Fingerprint, ReportId, ReportPartId, SourceFileId, Timestamp,
+};
 use mivia_domain::naming::Language;
 use mivia_domain::path::WinPath;
 use mivia_domain::report::OmittedReason;
@@ -111,6 +113,35 @@ pub enum Moved {
     Restored(Timestamp),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DeleteTarget {
+    Series(BatchId),
+    Image(BatchId, SourceFileId),
+}
+
+impl DeleteTarget {
+    pub const fn batch(self) -> BatchId {
+        match self {
+            Self::Series(batch) | Self::Image(batch, _) => batch,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DeleteRequest {
+    pub target: DeleteTarget,
+    pub report_files: bool,
+    pub server: bool,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Deletion {
+    pub images: u32,
+    pub jobs: Vec<String>,
+    pub server_images: Vec<String>,
+    pub parts: Vec<MovablePart>,
+}
+
 pub trait HistoryRepo {
     fn log(&mut self, event: &NewEvent) -> Result<(), TxError>;
     fn rename(&mut self, id: BatchId, label: &str, now: Timestamp) -> Result<(), TxError>;
@@ -120,4 +151,5 @@ pub trait HistoryRepo {
     fn keep_as_is(&mut self, id: ReportId, now: Timestamp) -> Result<Option<BatchId>, TxError>;
     fn move_set(&mut self, id: ReportId) -> Result<MoveSet, TxError>;
     fn moved(&mut self, part: ReportPartId, path: &WinPath, how: Moved) -> Result<(), TxError>;
+    fn delete(&mut self, request: DeleteRequest, now: Timestamp) -> Result<Deletion, TxError>;
 }

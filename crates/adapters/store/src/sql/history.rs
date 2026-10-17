@@ -91,7 +91,7 @@ const COLUMNS: &str = "b.id, b.folder_id, b.origin = 'one_off', b.problems, b.re
 fn batch(index: &str, extra: &str, key: &'static str) -> (String, String, &'static str) {
     (
         format!("batch b INDEXED BY {index}"),
-        format!("b.account_id = :acc{extra} AND b.open = 0"),
+        format!("b.account_id = :acc{extra} AND b.open = 0 AND b.deleted_at IS NULL"),
         key,
     )
 }
@@ -117,12 +117,13 @@ fn source(driver: Driver) -> (String, String, &'static str) {
         Driver::Analysis => (
             "batch_model_choice m INDEXED BY bmc_hist CROSS JOIN batch b ON b.id = m.batch_id"
                 .to_owned(),
-            "m.account_id = :acc AND m.model_id = :model AND b.open = 0".to_owned(),
+            "m.account_id = :acc AND m.model_id = :model AND b.open = 0 AND b.deleted_at IS NULL"
+                .to_owned(),
             "m.sort_at",
         ),
         Driver::Search => (
             "batch_search s CROSS JOIN batch b INDEXED BY batch_closed_sort \
-             ON b.sort_at = s.rowid AND b.open = 0"
+             ON b.sort_at = s.rowid AND b.open = 0 AND b.deleted_at IS NULL"
                 .to_owned(),
             "batch_search MATCH :q".to_owned(),
             "s.rowid",
@@ -239,7 +240,7 @@ pub(crate) const SAVED_FILES: &str = "SELECT p.file_path FROM report r INDEXED B
 
 pub(crate) const CUSTOM_WINDOW: &str = "SELECT r.id, r.created_at, r.custom_name FROM report r \
      INDEXED BY report_custom WHERE r.account_id = ?1 AND r.kind = 'custom' \
-     AND (r.created_at, r.id) < (?2, ?3) ORDER BY r.created_at DESC, r.id DESC LIMIT ?4";
+     AND r.deleted_at IS NULL AND (r.created_at, r.id) < (?2, ?3) ORDER BY r.created_at DESC, r.id DESC LIMIT ?4";
 
 pub(crate) const CUSTOM_ROW: &str = "SELECT r.id, r.custom_name, r.created_at, r.state, r.stale, \
      r.model_choice_key, \

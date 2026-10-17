@@ -4,7 +4,7 @@ import { ActionIcon, Button, Group, Menu, Text } from '@mantine/core';
 import { ICON_STROKE } from '@mivia-ai/theme';
 import { IconDots } from '@tabler/icons-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createLazyRoute, useParams } from '@tanstack/react-router';
+import { createLazyRoute, useNavigate, useParams } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +13,7 @@ import { foldersQuery } from '../entities/folder/queries';
 import { useOrigin } from '../entities/series/origin';
 import { seriesEventsQuery, seriesItemsQuery, seriesQuery, seriesReportsQuery } from '../entities/series/queries';
 import { CustomReportDialog } from '../features/history/custom-report-dialog';
+import { DeleteDialog, type DeleteSubject } from '../features/history/delete-dialog';
 import { useExport } from '../features/history/use-export';
 import { ChangesPanel } from '../features/series/changes-panel';
 import { ImagesPanel } from '../features/series/images-panel';
@@ -20,7 +21,7 @@ import { RenameSeries } from '../features/series/rename-series';
 import { ReportsPanel } from '../features/series/reports-panel';
 import { SeriesSummary } from '../features/series/series-summary';
 import { commands } from '../shared/ipc';
-import type { BatchSummary, SeriesReportsView } from '../shared/ipc/bindings';
+import type { BatchItem, BatchSummary, SeriesReportsView } from '../shared/ipc/bindings';
 import { formatDateTime, formatTime, sameDay } from '../shared/lib/format';
 import { ShowInFolderIcon } from '../shared/ui/icons';
 import { PageHeader } from '../shared/ui/page-header';
@@ -69,10 +70,11 @@ function useOpened(series: BatchSummary | undefined): void {
 	}, [id]);
 }
 
-function SeriesMenu({ id }: { id: string }) {
+function SeriesMenu({ series, onDelete }: { series: BatchSummary; onDelete: (subject: DeleteSubject) => void }) {
 	const { t } = useTranslation();
 	const exporter = useExport();
 	const [custom, setCustom] = useState(false);
+	const { id } = series;
 	return (
 		<>
 			<Menu position="bottom-end" withinPortal>
@@ -86,6 +88,9 @@ function SeriesMenu({ id }: { id: string }) {
 						{t('desktop.history.exportSeries')}
 					</Menu.Item>
 					<Menu.Item onClick={() => setCustom(true)}>{t('desktop.history.createReport')}</Menu.Item>
+					<Menu.Item onClick={() => onDelete({ series: id, name: series.label, images: series.counts.files })}>
+						{t('desktop.delete.seriesAction')}
+					</Menu.Item>
 				</Menu.Dropdown>
 			</Menu>
 			{custom && <CustomReportDialog onClose={() => setCustom(false)} series={[id]} />}
@@ -93,17 +98,20 @@ function SeriesMenu({ id }: { id: string }) {
 	);
 }
 
-function SeriesContent({ series, id }: { series: BatchSummary; id: string }) {
+type ContentProps = { series: BatchSummary; id: string; onDelete: (subject: DeleteSubject) => void };
+
+function SeriesContent({ series, id, onDelete }: ContentProps) {
 	const language = useQuery(localeQuery).data?.language ?? 'en';
 	const view = useQuery(seriesQuery(id)).data;
 	const reports = useQuery(seriesReportsQuery(id)).data;
 	const items = useQuery(seriesItemsQuery(id)).data;
 	const events = useQuery(seriesEventsQuery(id)).data;
 	const analyses = view?.analyses ?? [];
+	const [image, setImage] = useState<BatchItem | null>(null);
 	const actions = (
 		<Group gap="sm" wrap="nowrap">
 			<ShowReports partId={firstSaved(reports)} />
-			<SeriesMenu id={id} />
+			<SeriesMenu onDelete={onDelete} series={series} />
 		</Group>
 	);
 	return (
@@ -116,7 +124,19 @@ function SeriesContent({ series, id }: { series: BatchSummary; id: string }) {
 			/>
 			<SeriesSummary series={series} />
 			<ReportsPanel analyses={analyses} language={language} reports={reports?.reports ?? []} />
-			<ImagesPanel analyses={analyses} items={items?.items ?? []} language={language} seriesId={id} />
+			<ImagesPanel
+				analyses={analyses}
+				items={items?.items ?? []}
+				language={language}
+				onDelete={setImage}
+				seriesId={id}
+			/>
+			{image && (
+				<DeleteDialog
+					onClose={() => setImage(null)}
+					subject={{ series: id, name: image.label, image: image.id, images: 1 }}
+				/>
+			)}
 			<ChangesPanel events={events?.events ?? []} />
 		</>
 	);
@@ -125,11 +145,27 @@ function SeriesContent({ series, id }: { series: BatchSummary; id: string }) {
 function Series() {
 	const { seriesId } = useParams({ from: '/app/series/$seriesId' });
 	const view = useQuery(seriesQuery(seriesId));
+	const navigate = useNavigate();
+	const [removing, setRemoving] = useState<DeleteSubject | null>(null);
 	useOpened(view.data?.summary);
+	const dialog = removing && (
+		<DeleteDialog onClose={() => setRemoving(null)} onDeleted={() => navigate({ to: '/history' })} subject={removing} />
+	);
+	if (removing && !view.data) {
+		return dialog;
+	}
 	if (view.data === null) {
 		return <NotFound />;
 	}
-	return view.data ? <SeriesContent id={seriesId} series={view.data.summary} /> : null;
+	if (!view.data) {
+		return null;
+	}
+	return (
+		<>
+			<SeriesContent id={seriesId} onDelete={setRemoving} series={view.data.summary} />
+			{dialog}
+		</>
+	);
 }
 
 export const SeriesRoute = createLazyRoute('/app/series/$seriesId')({ component: Series });

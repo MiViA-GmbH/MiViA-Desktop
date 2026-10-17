@@ -19,7 +19,7 @@ use crate::common::{account, fixture, seed};
 use crate::history::{SCOPE, folder, labels, page, series};
 use crate::reports::{DONE, NOW, add, closed, finish, spec};
 
-fn report_with_saved_part(tx: &mut dyn WriteTx, name: &str) -> (BatchId, ComputationId) {
+pub(crate) fn report_with_saved_part(tx: &mut dyn WriteTx, name: &str) -> (BatchId, ComputationId) {
     let origin = folder(tx, SCOPE, r"F:\Run");
     let batch = series(tx, origin, name, "grain");
     let id = add(tx, SCOPE, batch, "a.tif");

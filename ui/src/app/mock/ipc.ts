@@ -110,7 +110,7 @@ const setup = {
 
 mockIPC(
 	(command, args) => {
-		if (scenario === 'failure' && command === 'open_target') {
+		if (scenario === 'failure' && (command === 'open_target' || command === 'delete_history')) {
 			throw FAILURE;
 		}
 		return setup[command]?.((args ?? {}) as Record<string, unknown>) ?? responses[command] ?? null;

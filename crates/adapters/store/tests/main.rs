@@ -1,5 +1,6 @@
 mod common;
 mod counters;
+mod delete;
 mod history;
 mod history_reports;
 mod lifecycle;

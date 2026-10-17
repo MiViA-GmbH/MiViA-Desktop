@@ -272,6 +272,10 @@ impl ServerSim {
             .collect()
     }
 
+    pub fn delete_image(&mut self, image_id: &str) {
+        self.images.retain(|_, id| id != image_id);
+    }
+
     pub fn job_exists(&self, job_id: &str) -> bool {
         self.jobs.iter().any(|job| job.id == job_id)
     }

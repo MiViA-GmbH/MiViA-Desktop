@@ -9,7 +9,7 @@ const SERIES: &str = "SELECT b.id, b.label, b.origin, f.path, b.opened_at, b.clo
      b.closure_reason FROM batch b LEFT JOIN watched_folder f ON f.id = b.folder_id \
      WHERE b.id = ?1 AND b.account_id = ?2";
 
-const ALL_SERIES: &str = "SELECT id FROM batch INDEXED BY batch_hist_time \
+const ALL_SERIES: &str = "SELECT id, deleted_at IS NOT NULL FROM batch INDEXED BY batch_hist_time \
      WHERE account_id = ?1 ORDER BY sort_at, id";
 
 const IMAGES: &str = "SELECT s.path, s.label, s.size, s.mtime, lower(hex(s.fingerprint)), \
@@ -109,7 +109,7 @@ impl Writer<'_> {
             line.extend(images);
             self.emit(ExportTable::Images, line)?;
         }
-        self.reports(&format!("SELECT {REPORT_COLUMNS} FROM report r INDEXED BY report_by_batch JOIN report_part p ON p.report_id = r.id WHERE r.batch_id = ?1 ORDER BY r.id, p.format DESC, p.part_no"), batch)?;
+        self.reports(&format!("SELECT {REPORT_COLUMNS} FROM report r INDEXED BY report_by_batch JOIN report_part p ON p.report_id = r.id WHERE r.batch_id = ?1 AND r.deleted_at IS NULL ORDER BY r.id, p.format DESC, p.part_no"), batch)?;
         self.events(SERIES_EVENTS, batch)
     }
 
@@ -142,14 +142,15 @@ fn series_ids(
     tx: &Transaction<'_>,
     scope: AccountScope,
     request: &ExportRequest,
-) -> rusqlite::Result<Vec<i64>> {
+) -> rusqlite::Result<Vec<(i64, bool)>> {
+    let live = |ids: Vec<i64>| ids.into_iter().map(|id| (id, false)).collect();
     match &request.selection {
         ExportSelection::All => tx
             .prepare_cached(ALL_SERIES)?
-            .query_map([scope.0.0], |row| row.get(0))?
+            .query_map([scope.0.0], |row| Ok((row.get(0)?, row.get(1)?)))?
             .collect(),
-        ExportSelection::Series(id) => Ok(vec![id.0]),
-        ExportSelection::Filtered(filter) => filtered_ids(tx, scope, filter),
+        ExportSelection::Series(id) => Ok(live(vec![id.0])),
+        ExportSelection::Filtered(filter) => filtered_ids(tx, scope, filter).map(live),
     }
 }
 
@@ -176,11 +177,15 @@ pub(crate) fn export(
             Cell::Text(request.computer_name.clone()),
         ],
     };
-    for id in ids {
-        writer.series(id, scope)?;
+    for (id, deleted) in ids {
+        if deleted {
+            writer.events(SERIES_EVENTS, id)?;
+        } else {
+            writer.series(id, scope)?;
+        }
     }
     if request.selection == ExportSelection::All {
-        writer.reports(&format!("SELECT {REPORT_COLUMNS} FROM report r INDEXED BY report_custom JOIN report_part p ON p.report_id = r.id WHERE r.account_id = ?1 AND r.kind = 'custom' ORDER BY r.created_at, r.id, p.format DESC, p.part_no"), scope.0.0)?;
+        writer.reports(&format!("SELECT {REPORT_COLUMNS} FROM report r INDEXED BY report_custom JOIN report_part p ON p.report_id = r.id WHERE r.account_id = ?1 AND r.kind = 'custom' AND r.deleted_at IS NULL ORDER BY r.created_at, r.id, p.format DESC, p.part_no"), scope.0.0)?;
         writer.events(ACCOUNT_EVENTS, scope.0.0)?;
     }
     drop(writer);

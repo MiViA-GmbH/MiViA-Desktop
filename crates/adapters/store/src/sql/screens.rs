@@ -7,7 +7,7 @@ pub(crate) const FOLDER_VIEWS: &str = "SELECT id, path, position, active, missin
 pub(crate) fn last_closed_of_folder() -> String {
     format!(
         "SELECT {BATCH_COLUMNS} FROM batch INDEXED BY batch_hist_folder \
-         WHERE account_id = ?1 AND folder_id = ?2 AND open = 0 \
+         WHERE account_id = ?1 AND folder_id = ?2 AND open = 0 AND deleted_at IS NULL \
          ORDER BY sort_at DESC, id DESC LIMIT 1"
     )
 }
@@ -17,18 +17,18 @@ pub(crate) const HOLDS: &str =
 
 pub(crate) const PROBLEM_PART: &str = "SELECT p.id, max(p.state) FROM report r \
      INDEXED BY report_by_batch JOIN report_part p ON p.report_id = r.id \
-     WHERE r.batch_id = ?1 AND r.replaced_by IS NULL AND p.state IN ('not_saved', 'failed')";
+     WHERE r.batch_id = ?1 AND r.replaced_by IS NULL AND r.deleted_at IS NULL AND p.state IN ('not_saved', 'failed')";
 
 pub(crate) const FIRST_PROBLEM_IMAGE: &str = "SELECT f.id, f.label,      CASE WHEN f.state IN ('rejected', 'unreadable') THEN f.state ELSE      (SELECT c.state FROM computation c INDEXED BY computation_by_source      WHERE c.source_file_id = f.id AND c.state IN ('failed', 'unavailable', 'lost') LIMIT 1) END      FROM source_file f INDEXED BY source_file_by_batch WHERE f.batch_id = ?1      AND (f.state IN ('rejected', 'unreadable') OR f.id IN (SELECT c.source_file_id      FROM computation c INDEXED BY computation_by_batch WHERE c.batch_id = ?1      AND c.state IN ('failed', 'unavailable', 'lost'))) ORDER BY f.arrival_seq LIMIT 1";
 
 pub(crate) const LATEST_SAVED_PART: &str = "SELECT p.id, max(p.format) FROM report r \
      INDEXED BY report_by_batch JOIN report_part p ON p.report_id = r.id \
-     WHERE r.batch_id = ?1 AND r.replaced_by IS NULL AND p.state = 'saved'";
+     WHERE r.batch_id = ?1 AND r.replaced_by IS NULL AND r.deleted_at IS NULL AND p.state = 'saved'";
 
 pub(crate) const SERIES_REPORTS: &str = "SELECT r.id, r.model_choice_key, r.state, r.stale, \
      r.replaced_by, EXISTS (SELECT 1 FROM report_part p WHERE p.report_id = r.id \
      AND p.moved_to_replaced_at IS NOT NULL) FROM report r INDEXED BY report_by_batch \
-     WHERE r.batch_id = ?2 AND r.account_id = ?1 ORDER BY r.id";
+     WHERE r.batch_id = ?2 AND r.account_id = ?1 AND r.deleted_at IS NULL ORDER BY r.id";
 
 pub(crate) const REPORT_PARTS: &str = "SELECT id, part_no, part_count, format, member_from, \
      member_to, state, coalesce(save_problem, error), file_path FROM report_part \

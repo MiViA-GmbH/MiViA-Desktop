@@ -80,6 +80,7 @@ export const commands = {
 	getCustomReportDraft: (series: string[]) => __TAURI_INVOKE<CustomReportDraft>("get_custom_report_draft", { series }),
 	createCustomReport: (input: CustomReportInput) => __TAURI_INVOKE<number>("create_custom_report", { input }),
 	renameSeries: (id: string, label: string) => __TAURI_INVOKE<null>("rename_series", { id, label }),
+	deleteHistory: (input: DeleteHistoryInput) => __TAURI_INVOKE<DeleteHistoryView>("delete_history", { input }),
 	updateReport: (id: string) => __TAURI_INVOKE<null>("update_report", { id }),
 	keepReport: (id: string) => __TAURI_INVOKE<null>("keep_report", { id }),
 	moveReportToReplaced: (id: string) => __TAURI_INVOKE<null>("move_report_to_replaced", { id }),
@@ -317,6 +318,21 @@ export type CustomReportsPage = {
 export type CustomizationView = {
 	id: string,
 	name: string,
+};
+
+export type DeleteHistoryInput = {
+	series: string,
+	image: string | null,
+	reportFiles: boolean,
+	server: boolean,
+};
+
+export type DeleteHistoryView = {
+	images: number,
+	filesDeleted: number,
+	filesFailed: number,
+	serverDeleted: number,
+	serverFailed: number,
 };
 
 export type DoneProblem = "autostart" | "explorer";

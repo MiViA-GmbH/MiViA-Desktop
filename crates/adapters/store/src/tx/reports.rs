@@ -22,7 +22,8 @@ const INSERT_PART: &str = "INSERT INTO report_part (report_id, part_no, part_cou
      SELECT ?1, ?2, ?3, ?4, ?5, ?6, 'requested', app_version FROM report WHERE id = ?1";
 
 const PART_ROW: &str = "SELECT r.batch_id, p.state, p.error, r.stale = 1 AND r.replaced_by IS NULL \
-     FROM report_part p JOIN report r ON r.id = p.report_id WHERE p.id = ?1 AND r.account_id = ?2";
+     FROM report_part p JOIN report r ON r.id = p.report_id WHERE p.id = ?1 AND r.account_id = ?2 \
+     AND r.deleted_at IS NULL";
 
 const UPDATE_PART: &str = "UPDATE report_part SET state = ?2, error = ?3, \
      saved_at = CASE WHEN ?2 = 'saved' THEN ?4 ELSE saved_at END WHERE id = ?1";

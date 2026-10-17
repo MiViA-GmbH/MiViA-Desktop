@@ -12,7 +12,7 @@ use crate::sql::history::{Plan, window};
 const BATCHES: i64 = 100_000;
 const OPEN: i64 = 5;
 const FOLDERS: i64 = 9;
-const FIXTURE_VERSION: u32 = 1;
+const FIXTURE_VERSION: u32 = 2;
 const MATERIALS: [&str; 6] = [
     "42CrMo4",
     "S355",

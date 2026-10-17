@@ -3,6 +3,7 @@ import { ICON_STROKE } from '@mivia-ai/theme';
 import { IconDots } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useReporting } from '../../entities/support/hooks';
@@ -10,6 +11,7 @@ import { requestReport } from '../../entities/support/queries';
 import { commands } from '../../shared/ipc';
 import type { HistoryRow, OpenTarget } from '../../shared/ipc/bindings';
 import { ShowInFolderIcon } from '../../shared/ui/icons';
+import { DeleteDialog } from './delete-dialog';
 import { useExport } from './use-export';
 
 export function RowActions({ row }: { row: HistoryRow }) {
@@ -19,6 +21,7 @@ export function RowActions({ row }: { row: HistoryRow }) {
 	const exporter = useExport();
 	const client = useQueryClient();
 	const reporting = useReporting();
+	const [remove, setRemove] = useState(false);
 	const { summary, savedPart } = row;
 	const failed = summary.counts.failed > 0 || summary.counts.reportsProblem > 0;
 	return (
@@ -57,8 +60,15 @@ export function RowActions({ row }: { row: HistoryRow }) {
 							{t('desktop.support.reportAction')}
 						</Menu.Item>
 					)}
+					<Menu.Item onClick={() => setRemove(true)}>{t('desktop.delete.seriesAction')}</Menu.Item>
 				</Menu.Dropdown>
 			</Menu>
+			{remove && (
+				<DeleteDialog
+					onClose={() => setRemove(false)}
+					subject={{ series: summary.id, name: summary.label, images: summary.counts.files }}
+				/>
+			)}
 		</Group>
 	);
 }

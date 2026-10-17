@@ -184,6 +184,29 @@ pub async fn server_lists_jobs_newest_first(harness: &impl ServerHarness) -> Cas
     check(!gone, "unknown job exists")
 }
 
+pub async fn server_deletes_a_job_once_and_then_finds_it_gone(
+    harness: &impl ServerHarness,
+) -> CaseResult {
+    let server = harness.sut();
+    let deleted = image(server.as_ref(), b"deleted").await?;
+    let jobs = submit(server.as_ref(), &[&deleted]).await?;
+    let job = jobs
+        .first()
+        .map(|job| job.job_id.clone())
+        .unwrap_or_default();
+    server.delete_job(&job).await.map_err(|e| failed(&e))?;
+    let exists = server.job_exists(&job).await.map_err(|e| failed(&e))?;
+    check(!exists, "deleted job still exists")?;
+    let again = server.delete_job(&job).await;
+    check_eq(&again, &Ok(()), "deleting a gone job")?;
+    server
+        .delete_image(&deleted)
+        .await
+        .map_err(|e| failed(&e))?;
+    let twice = server.delete_image(&deleted).await;
+    check_eq(&twice, &Ok(()), "deleting a gone image")
+}
+
 pub async fn server_unknown_image_is_named(harness: &impl ServerHarness) -> CaseResult {
     let server = harness.sut();
     let known = image(server.as_ref(), b"known").await?;
@@ -210,6 +233,7 @@ macro_rules! server_contract_tests {
             server_status_accepts_at_most_100_ids,
             server_jobs_finish_with_a_result,
             server_lists_jobs_newest_first,
+            server_deletes_a_job_once_and_then_finds_it_gone,
             server_unknown_image_is_named,
         );
         $crate::contract_cases!(

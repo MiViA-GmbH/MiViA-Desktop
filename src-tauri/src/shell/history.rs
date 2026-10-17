@@ -3,22 +3,27 @@ use std::sync::Arc;
 use mivia_application::errors::{app_error, history_error};
 use mivia_application::history::{CustomRequest, History};
 use mivia_application::settings::global_settings;
-use mivia_domain::ids::{BatchId, ReportId};
+use mivia_domain::ids::{BatchId, ReportId, SourceFileId};
 use mivia_domain::naming::Language;
 use mivia_domain::output::Format;
 use mivia_domain::path::WinPath;
 use mivia_os::{KnownFolder, OsFileSystem, SystemClock};
 use mivia_ports::clock::Clock;
 use mivia_ports::ipc::error::{AppError, AppErrorKind};
-use mivia_ports::ipc::history::{CustomReportDraft, CustomReportInput, ReportOrder};
+use mivia_ports::ipc::history::{
+    CustomReportDraft, CustomReportInput, DeleteHistoryInput, DeleteHistoryView, ReportOrder,
+};
 use mivia_ports::ipc::views::OriginView;
 use mivia_ports::queries::Queries;
+use mivia_ports::server::ServerApi;
+use mivia_ports::store::history::{DeleteRequest, DeleteTarget};
 use mivia_ports::store::reports::ReportSpec;
 use mivia_ports::store::{StoreError, StoreExt, TxError};
 use mivia_ports::telemetry::{BatchRenamed, ReportStaleUpdated};
 
 use super::cx::{Cx, Ready, now, parse_id};
 use super::folders::known;
+use super::pipeline::server_api;
 use super::setup::language;
 use super::telemetry::custom_report;
 
@@ -172,6 +177,44 @@ pub(crate) async fn report_action(cx: &Cx, id: &str, action: ReportAction) -> Re
         );
     }
     Ok(())
+}
+
+pub(crate) async fn delete(
+    cx: &Cx,
+    input: DeleteHistoryInput,
+) -> Result<DeleteHistoryView, AppError> {
+    const SITE: &str = "delete_history";
+    let ready = cx.ready().await;
+    let batch = BatchId(parse_id(&input.series, SITE)?);
+    let target = match input.image.as_deref() {
+        Some(image) => DeleteTarget::Image(batch, SourceFileId(parse_id(image, SITE)?)),
+        None => DeleteTarget::Series(batch),
+    };
+    let request = DeleteRequest {
+        target,
+        report_files: input.report_files,
+        server: input.server,
+    };
+    let server = ready
+        .authorizer
+        .as_ref()
+        .map(|authorizer| server_api(&ready.services, ready.scope.0, authorizer));
+    let outcome = history(&ready)
+        .delete(
+            request,
+            server.as_ref().map(|api| api as &dyn ServerApi),
+            now(),
+        )
+        .await
+        .map_err(|error| history_error(&error, SITE))?;
+    ready.wake();
+    Ok(DeleteHistoryView {
+        images: outcome.images,
+        files_deleted: outcome.files_deleted,
+        files_failed: outcome.files_failed,
+        server_deleted: outcome.server_deleted,
+        server_failed: outcome.server_failed,
+    })
 }
 
 pub(crate) async fn rename(cx: &Cx, id: &str, label: String) -> Result<(), AppError> {

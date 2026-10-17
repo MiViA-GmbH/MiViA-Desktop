@@ -18,7 +18,7 @@ const MOVE_HEAD: &str = "SELECT r.batch_id, r.language, r.replaced_by, \
      EXISTS (SELECT 1 FROM report_part x WHERE x.report_id = r.id \
      AND x.moved_to_replaced_at IS NOT NULL), \
      (SELECT count(*) FROM report_part x WHERE x.report_id = r.id AND x.state <> 'saved') \
-     FROM report r WHERE r.id = ?1 AND r.account_id = ?2";
+     FROM report r WHERE r.id = ?1 AND r.account_id = ?2 AND r.deleted_at IS NULL";
 
 const MOVE_PARTS: &str = "SELECT id, file_path, size, sha256 FROM report_part \
      WHERE report_id = ?1 AND state = 'saved' AND file_path IS NOT NULL \
@@ -60,7 +60,7 @@ impl SqlTx<'_> {
             .tx
             .query_row(
                 "UPDATE report SET attention_cleared_at = ?3 WHERE id = ?1 AND account_id = ?2 \
-                 AND stale = 1 RETURNING batch_id",
+                 AND stale = 1 AND deleted_at IS NULL RETURNING batch_id",
                 params![id.0, self.account(), now.0],
                 |row| row.get(0),
             )
@@ -130,7 +130,7 @@ impl SqlTx<'_> {
             .tx
             .query_row(
                 "SELECT r.batch_id, r.id, p.file_path FROM report_part p \
-                 JOIN report r ON r.id = p.report_id WHERE p.id = ?1 AND r.account_id = ?2",
+                 JOIN report r ON r.id = p.report_id WHERE p.id = ?1 AND r.account_id = ?2 AND r.deleted_at IS NULL",
                 [part.0, self.account()],
                 |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
             )

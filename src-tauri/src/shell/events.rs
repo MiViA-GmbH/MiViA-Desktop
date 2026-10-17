@@ -82,6 +82,7 @@ macro_rules! app_commands {
             history::get_custom_report_draft,
             history::create_custom_report,
             history::rename_series,
+            history::delete_history,
             history::update_report,
             history::keep_report,
             history::move_report_to_replaced,

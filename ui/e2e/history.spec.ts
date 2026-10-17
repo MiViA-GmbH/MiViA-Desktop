@@ -97,6 +97,46 @@ test('series page lists its changes', async ({ page }) => {
 	await page.screenshot({ path: `${SHOTS}/s2-series-changes-en.png` });
 });
 
+test('deleting a series asks first and says what each choice does', async ({ page }) => {
+	await open(page, '/series/214?scenario=calm');
+	await page.getByRole('button', { name: 'More actions' }).click();
+	await page.getByRole('menuitem', { name: 'Delete image series' }).click();
+	const dialog = page.getByRole('dialog');
+	await expect(dialog.getByRole('checkbox', { name: /saved report files/ })).not.toBeChecked();
+	await expect(dialog.getByRole('checkbox', { name: /MiViA server/ })).toBeChecked();
+	await expect(dialog.getByText(/stay in your MiViA account/)).toBeVisible();
+	await expect(page.getByRole('menu')).toBeHidden();
+	await structure(page);
+	await page.screenshot({ path: `${SHOTS}/d1-delete-series-en.png` });
+	await dialog.getByRole('button', { name: 'Delete' }).click();
+	await expect(page.getByText('132 images were removed from the history.')).toBeVisible();
+	await expect(page).toHaveURL(/\/history/);
+});
+
+test('a failed deletion keeps the dialog open and says why', async ({ page }) => {
+	await open(page, '/series/214?scenario=failure');
+	await page
+		.getByRole('button', { name: /^Delete / })
+		.first()
+		.click();
+	const dialog = page.getByRole('dialog', { name: 'Delete image' });
+	await dialog.getByRole('button', { name: 'Delete' }).click();
+	await expect(dialog.getByText(/Probe 4709/)).toBeVisible();
+	await expect(dialog).toBeVisible();
+});
+
+test('an image can be deleted from its series by keyboard', async ({ page }) => {
+	await open(page, '/series/214?scenario=calm');
+	const remove = page.getByRole('button', { name: /^Delete / }).first();
+	await remove.focus();
+	await page.keyboard.press('Enter');
+	const dialog = page.getByRole('dialog', { name: 'Delete image' });
+	await expect(dialog).toBeVisible();
+	await page.keyboard.press('Escape');
+	await expect(dialog).toBeHidden();
+	await expect(remove).toBeFocused();
+});
+
 test('settings list backups to restore', async ({ page }) => {
 	await open(page, '/settings/general?scenario=calm');
 	await expect(page.getByText('\\\\labserver\\backup\\MiViA')).toBeVisible();

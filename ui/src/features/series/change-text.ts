@@ -14,6 +14,8 @@ const ACTIONS = {
 	attention_cleared: 'desktop.changes.actions.attention_cleared',
 	history_exported: 'desktop.changes.actions.history_exported',
 	backup_restored: 'desktop.changes.actions.backup_restored',
+	deleted: 'desktop.changes.actions.deleted',
+	deletion_finished: 'desktop.changes.actions.deletion_finished',
 } as const;
 
 const REASONS = {
@@ -69,7 +71,7 @@ export function eventDetail(event: HistoryEventView, t: TFunction): string {
 	if (how) {
 		return t(how);
 	}
-	return value(after, 'path');
+	return value(after, event.action === 'deleted' ? 'label' : 'path');
 }
 
 export function eventTitle(event: HistoryEventView, t: TFunction): string {

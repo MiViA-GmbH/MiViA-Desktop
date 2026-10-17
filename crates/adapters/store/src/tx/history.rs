@@ -7,7 +7,8 @@ use mivia_domain::transition::IllegalTransition;
 use mivia_ports::ipc::change::Change;
 use mivia_ports::store::TxError;
 use mivia_ports::store::history::{
-    HistoryRepo, MemberCandidate, MoveSet, Moved, NewCustomReport, NewEvent, Trigger,
+    DeleteRequest, Deletion, HistoryRepo, MemberCandidate, MoveSet, Moved, NewCustomReport,
+    NewEvent, Trigger,
 };
 use rusqlite::{OptionalExtension, Row, params};
 
@@ -145,7 +146,7 @@ impl SqlTx<'_> {
         let before: Option<String> = self
             .tx
             .query_row(
-                "SELECT label FROM batch WHERE id = ?1 AND account_id = ?2",
+                "SELECT label FROM batch WHERE id = ?1 AND account_id = ?2 AND deleted_at IS NULL",
                 [id.0, self.account()],
                 |row| row.get(0),
             )
@@ -216,5 +217,9 @@ impl HistoryRepo for SqlTx<'_> {
 
     fn moved(&mut self, part: ReportPartId, path: &WinPath, how: Moved) -> Result<(), TxError> {
         self.record_move(part, path, how)
+    }
+
+    fn delete(&mut self, request: DeleteRequest, now: Timestamp) -> Result<Deletion, TxError> {
+        self.delete_history(request, now)
     }
 }

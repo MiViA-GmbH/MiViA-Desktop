@@ -204,3 +204,24 @@ pub struct ExportView {
     pub folder: String,
     pub files: Vec<String>,
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteHistoryInput {
+    pub series: String,
+    pub image: Option<String>,
+    pub report_files: bool,
+    pub server: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteHistoryView {
+    pub images: u32,
+    pub files_deleted: u32,
+    pub files_failed: u32,
+    pub server_deleted: u32,
+    pub server_failed: u32,
+}
