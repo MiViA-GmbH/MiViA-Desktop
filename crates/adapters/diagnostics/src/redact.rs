@@ -127,8 +127,10 @@ impl Redactor {
         self.literals
             .replace_all(&text, |found: &Captures<'_>| {
                 let matched = found.get(0).map_or("", |m| m.as_str());
+                let inner = matched.trim_matches(['<', '>', '%']);
                 self.replacements
                     .get(&matched.to_lowercase())
+                    .or_else(|| self.replacements.get(&inner.to_lowercase()))
                     .map_or_else(|| matched.to_owned(), |token| (*token).to_owned())
             })
             .into_owned()
