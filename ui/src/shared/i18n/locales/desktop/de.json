@@ -256,7 +256,9 @@
 			"report": "Problem melden",
 			"requiredTitle": "Eine neuere Version ist erforderlich.",
 			"requiredText": "Sie wird automatisch installiert, sobald sie verfügbar ist. Bis dahin funktioniert alles weiter.",
-			"releases": "Downloadseite"
+			"releases": "Downloadseite",
+			"applied": "Auf {{version}} aktualisiert.",
+			"notes": "Versionshinweise"
 		},
 		"status": {
 			"batch": {

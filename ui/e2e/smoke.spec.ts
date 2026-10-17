@@ -209,6 +209,13 @@ test('a beta build keeps the channel on Beta and cannot pick Stable', async ({ p
 	await expect(page.getByRole('option', { name: 'Stable' })).toHaveAttribute('data-combobox-disabled', 'true');
 });
 
+test('a finished update is announced with a release notes button', async ({ page }) => {
+	await open(page, '/?scenario=update-applied');
+	const notice = page.getByRole('status').filter({ hasText: 'Updated to 2.0.0.' });
+	await expect(notice).toBeVisible();
+	await expect(notice.getByRole('button', { name: 'Release notes' })).toBeVisible();
+});
+
 test('a required update shows a red banner with one filled restart button', async ({ page }) => {
 	await open(page, '/?scenario=too-old');
 	const banner = page.getByRole('status').filter({ hasText: 'Update required.' });

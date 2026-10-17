@@ -78,6 +78,7 @@ const COMMANDS: &[&str] = &[
     "check_for_updates",
     "install_update",
     "set_update_settings",
+    "dismiss_update_applied",
 ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

@@ -31,3 +31,9 @@ pub(crate) async fn set_update_settings(
 ) -> Result<UpdateView, AppError> {
     update::set(&cx, input).await
 }
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn dismiss_update_applied(cx: State<'_, Cx>) -> Result<(), AppError> {
+    update::dismiss_applied(&cx).await
+}

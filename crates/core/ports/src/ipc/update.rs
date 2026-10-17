@@ -61,6 +61,7 @@ pub struct UpdateView {
     pub version: Option<String>,
     pub last_check_at: Option<String>,
     pub failed_install: Option<String>,
+    pub applied: Option<String>,
     pub required: Option<RequiredUpdate>,
     pub progress: Option<u8>,
 }

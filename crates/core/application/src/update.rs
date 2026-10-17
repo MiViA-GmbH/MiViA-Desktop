@@ -156,11 +156,19 @@ impl Updates {
                 .last_check_at
                 .map(|at| iso_utc(Timestamp(at))),
             failed_install: inner.settings.failed.clone(),
+            applied: inner.settings.applied.clone(),
             required: inner.required.clone(),
             progress: (inner.state == UpdateState::Downloading)
                 .then(|| self.ports.updater.progress())
                 .flatten(),
         }
+    }
+
+    pub async fn dismiss_applied(&self) -> Result<(), StoreError> {
+        let store = self.ports.store.as_ref();
+        let saved = update_global(store, |global| global.update.applied = None).await?;
+        self.inner.lock().settings = saved.update;
+        Ok(())
     }
 
     pub async fn set_settings(&self, input: UpdateSettingsInput) -> Result<UpdateView, StoreError> {

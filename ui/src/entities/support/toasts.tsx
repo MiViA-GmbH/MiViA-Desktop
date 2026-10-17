@@ -142,3 +142,7 @@ export function showOutcome(reportId: string, outcome: SendOutcome, client: Quer
 		notifyStatus(TITLES[outcome.kind], message);
 	}
 }
+
+export function notifyUpdated(version: string, openNotes: () => void): void {
+	notifyAction(i18n.t('desktop.update.applied', { version }), i18n.t('desktop.update.notes'), openNotes, STATUS);
+}

@@ -111,6 +111,7 @@ macro_rules! app_commands {
             update::check_for_updates,
             update::install_update,
             update::set_update_settings,
+            update::dismiss_update_applied,
             preview::get_preview,
             preview::get_preview_results,
             preview::close_preview,

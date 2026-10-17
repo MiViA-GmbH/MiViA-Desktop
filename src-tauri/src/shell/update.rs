@@ -249,3 +249,12 @@ pub(crate) async fn quit(app: &AppHandle) {
     }
     app.exit(0);
 }
+
+pub(crate) async fn dismiss_applied(cx: &Cx) -> Result<(), AppError> {
+    const SITE: &str = "dismiss_update_applied";
+    let updates = updates(cx, SITE)?;
+    updates
+        .dismiss_applied()
+        .await
+        .map_err(|error| app_error(&error, SITE))
+}
