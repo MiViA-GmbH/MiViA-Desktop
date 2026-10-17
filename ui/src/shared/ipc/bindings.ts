@@ -119,6 +119,7 @@ export const commands = {
 	checkForUpdates: () => __TAURI_INVOKE<UpdateView>("check_for_updates"),
 	installUpdate: () => __TAURI_INVOKE<UpdateView>("install_update"),
 	setUpdateSettings: (input: UpdateSettingsInput) => __TAURI_INVOKE<UpdateView>("set_update_settings", { input }),
+	dismissUpdateApplied: () => __TAURI_INVOKE<null>("dismiss_update_applied"),
 	getPreview: (target: PreviewTarget) => __TAURI_INVOKE<PreviewView>("get_preview", { target }),
 	getPreviewResults: (computationId: string) => __TAURI_INVOKE<PreviewResultsView>("get_preview_results", { computationId }),
 	closePreview: () => __TAURI_INVOKE<null>("close_preview"),
@@ -798,6 +799,7 @@ export type UpdateView = {
 	version: string | null,
 	lastCheckAt: string | null,
 	failedInstall: string | null,
+	applied: string | null,
 	required: RequiredUpdate | null,
 	progress: number | null,
 };

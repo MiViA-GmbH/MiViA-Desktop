@@ -85,6 +85,7 @@
 		"allow-get-update",
 		"allow-check-for-updates",
 		"allow-install-update",
-		"allow-set-update-settings"
+		"allow-set-update-settings",
+		"allow-dismiss-update-applied"
 	]
 }

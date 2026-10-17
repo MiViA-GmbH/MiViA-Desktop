@@ -463,3 +463,26 @@ async fn a_prerelease_build_checks_the_beta_channel_whatever_is_stored() {
     assert_eq!(stable.updater.checks.lock().clone(), [Channel::Stable]);
     assert_eq!(updates.view().channel, UpdateChannel::Stable);
 }
+
+#[tokio::test]
+async fn a_finished_update_is_reported_once() {
+    let bench = Bench::new().await;
+    let pending = PendingInstall {
+        from: "2.0.0".to_owned(),
+        to: "2.1.0".to_owned(),
+        at: START.0,
+    };
+    update_global(bench.store.as_ref(), move |global| {
+        global.update.pending_install = Some(pending);
+    })
+    .await
+    .unwrap();
+    let updates = bench.start("2.1.0", None).await;
+    assert_eq!(updates.view().applied.as_deref(), Some("2.1.0"));
+    updates.dismiss_applied().await.unwrap();
+    assert_eq!(updates.view().applied, None);
+    drop(updates);
+
+    let restarted = bench.start("2.1.0", None).await;
+    assert_eq!(restarted.view().applied, None);
+}

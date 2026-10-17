@@ -256,7 +256,9 @@
 			"report": "Report a problem",
 			"requiredTitle": "A newer version is required.",
 			"requiredText": "It installs by itself as soon as it is available. Everything keeps working until then.",
-			"releases": "Download page"
+			"releases": "Download page",
+			"applied": "Updated to {{version}}.",
+			"notes": "Release notes"
 		},
 		"status": {
 			"batch": {

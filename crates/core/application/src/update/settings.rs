@@ -14,6 +14,7 @@ pub struct UpdateSettings {
     pub pending: Option<Pending>,
     pub pending_install: Option<PendingInstall>,
     pub failed: Option<String>,
+    pub applied: Option<String>,
 }
 
 impl Default for UpdateSettings {
@@ -25,6 +26,7 @@ impl Default for UpdateSettings {
             pending: None,
             pending_install: None,
             failed: None,
+            applied: None,
         }
     }
 }
@@ -50,6 +52,7 @@ pub(super) fn settle_install(settings: &mut UpdateSettings, current: &str) {
             settings.failed = Some(pending.to);
         } else {
             settings.pending = None;
+            settings.applied = Some(current.to_owned());
         }
     }
     let installed = parse(current);
