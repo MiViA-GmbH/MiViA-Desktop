@@ -192,7 +192,7 @@ impl SqlTx<'_> {
         let (batch, was, open, parts): (Option<i64>, bool, bool, i64) = self
             .tx
             .query_row(
-                "SELECT batch_id, stale, replaced_by IS NULL, \
+                "SELECT batch_id, stale, replaced_by IS NULL AND deleted_at IS NULL, \
                  (SELECT count(*) FROM report_part WHERE report_id = report.id) \
                  FROM report WHERE id = ?1 AND account_id = ?2",
                 [id.0, self.account()],
