@@ -116,6 +116,25 @@ lto = "fat"
 codegen-units = 1
 panic = "unwind"
 strip = "symbols"
+opt-level = "s"
+
+[profile.release.package.mivia-preview]
+opt-level = 3
+
+[profile.release.package.fast_image_resize]
+opt-level = 3
+
+[profile.release.package.jpeg-decoder]
+opt-level = 3
+
+[profile.release.package.jpeg-encoder]
+opt-level = 3
+
+[profile.release.package.zune-jpeg]
+opt-level = 3
+
+[profile.release.package.sha2]
+opt-level = 3
 
 [profile.ci]
 inherits = "dev"
