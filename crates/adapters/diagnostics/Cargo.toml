@@ -29,7 +29,7 @@ tracing = { version = "=0.1.44", default-features = false, features = ["std", "r
 tracing-appender = { version = "=0.2.5", optional = true }
 tracing-subscriber = { version = "=0.3.23", optional = true, default-features = false, features = ["fmt", "json", "registry", "std"] }
 uuid = { version = "=1.26.1", default-features = false, features = ["v4"] }
-zip = { version = "=8.6.0", default-features = false, features = ["deflate-flate2"] }
+zip = { version = "=9.0.0", default-features = false, features = ["deflate-flate2"] }
 
 [dev-dependencies]
 flate2 = "=1.1.9"
