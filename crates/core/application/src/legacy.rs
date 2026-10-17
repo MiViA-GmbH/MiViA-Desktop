@@ -117,13 +117,13 @@ fn blanked(element: &BytesStart<'_>) -> Result<Option<BytesStart<'static>>, Lega
     let mut copy = BytesStart::new("add");
     for attribute in element.attributes() {
         let attribute = attribute.map_err(|_| LegacyError::Unreadable)?;
-        if attribute.key.as_ref() == "value" {
-            copy.push_attribute(("value", ""));
-        } else {
-            copy.push_attribute(Attribute {
+        match attribute.key.as_ref() {
+            "key" => copy.push_attribute(Attribute {
                 key: attribute.key,
                 value: attribute.value.replace('"', "&quot;").into(),
-            });
+            }),
+            "value" => copy.push_attribute(("value", "")),
+            _ => {}
         }
     }
     Ok(Some(copy))
