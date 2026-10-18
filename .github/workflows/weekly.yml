@@ -114,6 +114,7 @@ jobs:
     timeout-minutes: 20
     environment: release-bot
     permissions:
+      actions: read  # download the nightly mutation results
       contents: read  # check out the repository
     steps:
       - name: Check out
@@ -135,6 +136,15 @@ jobs:
           permission-pull-requests: write
       - name: Raise
         run: cargo xtask floors-lower
+      - name: Raise mutation floors
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=$(gh run list --workflow nightly.yml --branch main --event schedule --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          for crate in mivia-domain mivia-server mivia-diagnostics; do
+            gh run download "$run" --name "mutants-$crate" --dir "$RUNNER_TEMP/mutants/$crate"
+            cargo xtask mutation-floor "$crate" "$RUNNER_TEMP/mutants/$crate/outcomes.json" --raise
+          done
       - name: Pull request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
