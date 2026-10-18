@@ -30,7 +30,7 @@ use anyhow::{Result, anyhow, bail};
 
 const USAGE: &str = "usage: cargo xtask <arch | command-size | source-rules [paths] | canary | why <id> | \
 quality-diff --base <rev> --head <rev> | ci-integrity [--base <rev>] [--head <rev>] | \
-commit-text (--file <path> | --title <text> [--body <text>]) | floors-lower | mutation-floor <crate> <outcomes.json> | \
+commit-text (--file <path> | --title <text> [--body <text>]) | floors-lower | mutation-floor <crate> <outcomes.json> [--raise] | \
 telemetry-fields [--check] | quarantine-filter | fuzz (--shard <n>/<of> --seconds <total> | --cmin) | update-sig verify <asset> <sig> <version> | perf <scenario>>";
 
 fn main() -> ExitCode {

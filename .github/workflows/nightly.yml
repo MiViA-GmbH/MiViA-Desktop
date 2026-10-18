@@ -377,7 +377,9 @@ jobs:
           CRATE: ${{ matrix.crate }}
         run: |
           status=0
-          cargo mutants -p "$CRATE" --test-tool nextest || status=$?
+          tests=()
+          if [ "$CRATE" = mivia-domain ]; then tests=(--test-package mivia-domain --test-package mivia-it); fi
+          cargo mutants -p "$CRATE" "${tests[@]}" --test-tool nextest || status=$?
           case "$status" in 0|2|3) ;; *) exit "$status" ;; esac
           cargo xtask mutation-floor "$CRATE" mutants.out/outcomes.json
       - name: Upload mutants-${{ matrix.crate }}
