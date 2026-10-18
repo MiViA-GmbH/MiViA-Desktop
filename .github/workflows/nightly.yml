@@ -344,7 +344,7 @@ jobs:
   mutants:
     name: Mutants
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: ${{ matrix.crate == 'mivia-domain' && 240 || 120 }}
     strategy:
       fail-fast: false
       matrix:
