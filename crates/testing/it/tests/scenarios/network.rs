@@ -268,3 +268,32 @@ async fn no_marker_is_written_or_read_when_the_policy_turns_it_off() {
     assert!(attention(&world).await.is_empty(), "markers are off");
     world.finish().await;
 }
+
+#[tokio::test]
+async fn a_local_folder_that_answers_too_slowly_is_checked_again_and_never_waits_for_network() {
+    let world = World::with_marker(None).await;
+    world.fs.mkdir(&win(r"D:\lab"));
+    world.fs.mkdir(&win(r"D:\lab\Scans"));
+    let id = world
+        .add_at(r"D:\lab\Scans", MINUTE_MS, false, ReportSettings::default())
+        .await;
+    world.fs.set_offline(&win(r"D:\lab"), true);
+    world.intake.check_again(id);
+    world.settle().await;
+    let slow = folder(&world).await;
+    assert!(
+        !slow.missing && slow.waiting_since.is_none(),
+        "no condition yet"
+    );
+
+    world.fs.set_offline(&win(r"D:\lab"), false);
+    world.fs.put(&win(r"D:\lab\Scans\late.jpg"), &jpeg(7));
+    world.pass(16 * SECOND_MS).await;
+    assert_eq!(
+        world.watcher.watched().len(),
+        1,
+        "watched again after the retry"
+    );
+    assert_eq!(conditions(&world), []);
+    world.finish().await;
+}
