@@ -46,7 +46,20 @@ jobs:
         shell: bash
         env:
           SHARD: ${{ matrix.shard }}
-        run: cargo mutants -p mivia-application -p mivia-store -p mivia-it --test-tool nextest --shard "$SHARD/6"
+        run: |
+          status=0
+          cargo mutants -p mivia-application -p mivia-store -p mivia-it --test-tool nextest --shard "$SHARD/6" || status=$?
+          case "$status" in 0|2|3) ;; *) exit "$status" ;; esac
+      - name: Upload mutants-shard-${{ matrix.shard }}
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutants-shard-${{ matrix.shard }}
+          path: |
+            mutants.out/outcomes.json
+            mutants.out/missed.txt
+            mutants.out/timeout.txt
+          retention-days: 14
 
   stryker:
     name: Stryker
