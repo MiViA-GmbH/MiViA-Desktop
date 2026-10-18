@@ -226,7 +226,10 @@ fn write_crash_file(
 
 #[cfg(test)]
 mod tests {
-    use super::is_swept;
+    use std::io::Write;
+    use std::time::Duration;
+
+    use super::{CappedFile, RETENTION, TAIL_LINES, Tail, is_swept, sink, sweep};
 
     #[test]
     fn sweep_keeps_the_live_log_and_lock() {
@@ -235,5 +238,71 @@ mod tests {
         assert!(!is_swept("mivia.log"));
         assert!(!is_swept("mivia.lock"));
         assert!(!is_swept("session.json"));
+    }
+
+    #[test]
+    fn sweep_removes_only_old_rotated_logs() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        for name in ["mivia.log", "mivia.log.1.gz", "notes.txt"] {
+            std::fs::write(dir.path().join(name), "x").expect("written");
+        }
+        let modified = std::fs::metadata(dir.path().join("mivia.log.1.gz"))
+            .and_then(|meta| meta.modified())
+            .expect("modified");
+        assert_eq!(RETENTION, Duration::from_hours(720));
+        sweep(dir.path(), modified + RETENTION);
+        assert_eq!(std::fs::read_dir(dir.path()).expect("dir").count(), 3);
+        sweep(dir.path(), modified + RETENTION + Duration::from_secs(1));
+        let mut left: Vec<String> = std::fs::read_dir(dir.path())
+            .expect("dir")
+            .map(|entry| {
+                entry
+                    .expect("entry")
+                    .file_name()
+                    .to_string_lossy()
+                    .into_owned()
+            })
+            .collect();
+        left.sort();
+        assert_eq!(left, ["mivia.log", "notes.txt"]);
+    }
+
+    #[test]
+    fn the_tail_keeps_the_last_thousand_lines() {
+        let tail = Tail::default();
+        for line in 0..=TAIL_LINES {
+            tail.push(format!("{line}\n").as_bytes());
+        }
+        let lines = tail.lines.lock();
+        assert_eq!(lines.len(), TAIL_LINES);
+        assert_eq!(lines.front().map(String::as_str), Some("1"));
+    }
+
+    #[test]
+    fn a_capped_file_drops_writes_that_do_not_fit() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let path = dir.path().join("capped.log");
+        let mut capped = CappedFile {
+            file: std::fs::File::create(&path).expect("created"),
+            left: 5,
+        };
+        assert_eq!(capped.write(b"abc").expect("write"), 3);
+        assert_eq!(capped.write(b"abc").expect("write"), 3);
+        assert_eq!(capped.write(b"de").expect("write"), 2);
+        assert_eq!(capped.left, 0);
+        assert_eq!(std::fs::read(&path).expect("read"), b"abcde");
+    }
+
+    #[test]
+    fn a_second_instance_writes_at_most_five_megabytes() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let mut file = sink(dir.path(), false).expect("sink");
+        let cap = 5 * 1024 * 1024;
+        file.write_all(&vec![b'x'; cap]).expect("write");
+        file.write_all(b"y").expect("write");
+        drop(file);
+        let name = format!("mivia-{}.log", std::process::id());
+        let written = std::fs::metadata(dir.path().join(name)).expect("file");
+        assert_eq!(written.len(), cap as u64);
     }
 }
