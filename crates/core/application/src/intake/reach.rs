@@ -104,14 +104,18 @@ impl Intake {
                     None,
                 )
             }
-            Root::Unreachable if unc => {
+            Root::Unreachable => {
                 schedule.confirming.remove(&row.id);
                 let fresh = !schedule.waits.contains_key(&row.id);
                 let wait = schedule.waits.entry(row.id).or_insert(Wait {
                     clock: now,
                     attempt: 0,
                 });
-                unreachable(wait, row, fresh, now)
+                let step = unreachable(wait, row, fresh, now);
+                let shown = |(_, state): &(FolderChange, FolderState)| {
+                    unc || *state == FolderState::Missing
+                };
+                Step::new(step.change.filter(shown), step.retry_ms)
             }
             Root::Gone if unc && row.missing_since.is_none() => {
                 schedule.waits.remove(&row.id);
@@ -121,9 +125,7 @@ impl Intake {
                 schedule.confirming.remove(&row.id);
                 Step::new(missing, None)
             }
-            Root::Gone | Root::Unreachable => {
-                Step::new(missing.filter(|_| row.missing_since.is_none()), None)
-            }
+            Root::Gone => Step::new(missing.filter(|_| row.missing_since.is_none()), None),
         }
     }
 
