@@ -2603,6 +2603,7 @@ dependencies = [
 name = "mivia-diagnostics"
 version = "0.0.0"
 dependencies = [
+ "async-trait",
  "flate2",
  "getrandom 0.4.3",
  "hmac",
