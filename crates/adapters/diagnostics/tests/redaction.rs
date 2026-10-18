@@ -1,4 +1,4 @@
-use mivia_diagnostics::{Known, Redactor};
+use mivia_diagnostics::{Known, Redactor, report_key};
 use proptest::prelude::*;
 
 #[derive(Debug)]
@@ -161,4 +161,39 @@ fn roots_and_drives_get_stable_tokens() {
         redactor.description("mail a@b.de gx12ab"),
         "mail <email> <user>"
     );
+}
+
+#[test]
+fn only_real_pseudonyms_and_tokens_survive_a_second_pass() {
+    let redactor = Redactor::new([5; 32], &Known::default(), false).unwrap();
+    for segment in ["n-abc", "n-zzzzzzzz", "<abc", "abc>"] {
+        let output = redactor.path(segment);
+        assert!(
+            output.starts_with("n-") && output != segment,
+            "{segment} -> {output}"
+        );
+        assert!(!output.starts_with("n-000000"), "{output}");
+    }
+    assert_eq!(redactor.path("n-0123abcd"), "n-0123abcd");
+    assert_eq!(redactor.path("<user>"), "<user>");
+}
+
+#[test]
+fn names_included_keep_whole_paths_and_lines_are_redacted() {
+    let names = Redactor::new([5; 32], &Known::default(), true).unwrap();
+    assert_eq!(names.path(r"C:\Lab\a.tif"), r"C:\Lab\a.tif");
+    let redactor = Redactor::new([5; 32], &Known::default(), false).unwrap();
+    assert_eq!(
+        redactor.line(r#"{"message":"a@b.de"}"#),
+        r#"{"message":"<email>"}"#
+    );
+    assert_eq!(redactor.line("plain a@b.de"), "plain <email>");
+}
+
+#[test]
+fn report_keys_are_random() {
+    let key = report_key();
+    assert_ne!(key, report_key());
+    assert_ne!(key, [0; 32]);
+    assert_ne!(key, [1; 32]);
 }

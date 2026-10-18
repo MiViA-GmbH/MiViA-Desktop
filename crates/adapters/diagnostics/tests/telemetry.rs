@@ -1,8 +1,13 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::Read;
 
-use mivia_diagnostics::{Kind, Plain, payload, schema, source};
+use mivia_diagnostics::{
+    Context, Kind, MAX_BATCH_EVENTS, MAX_BODY_BYTES, Plain, event, fit, gzip, payload, schema,
+    sent_batches, source,
+};
 use mivia_domain::ids::{BatchId, FolderId};
 use mivia_ports::ipc::setup::{ArrivalPreset, ReportMode};
+use mivia_ports::store::telemetry::TelemetryRow;
 use mivia_ports::telemetry::{
     BatchRenamed, Field, FieldKind, FolderAdded, FolderPaused, FolderVia, ProductEvent, UiView,
     UpdateCheck, Version, View,
@@ -244,9 +249,6 @@ fn entity_fields_become_stable_install_scoped_pseudonyms() {
 
 #[test]
 fn batches_stop_at_the_byte_limit_and_the_event_limit() {
-    use mivia_diagnostics::{Context, MAX_BATCH_EVENTS, MAX_BODY_BYTES, fit};
-    use mivia_ports::store::telemetry::TelemetryRow;
-
     let row = |seq: i64, padding: usize| TelemetryRow {
         seq,
         session_id: "mdt-x".to_owned(),
@@ -288,4 +290,76 @@ fn batches_stop_at_the_byte_limit_and_the_event_limit() {
     );
     assert_eq!(fit(&thin, &context, 7).unwrap().seqs.len(), 7);
     assert!(fit(&[row(1, 100_000)], &context, MAX_BATCH_EVENTS).is_none());
+}
+
+fn sent_row(seq: i64, account: Option<&str>, sent: Option<(&str, i64)>) -> TelemetryRow {
+    TelemetryRow {
+        seq,
+        session_id: "mdt-x".to_owned(),
+        account_id: account.map(str::to_owned),
+        recorded_at: 1_791_590_400_000,
+        name: "ui.view".to_owned(),
+        category: "usage".to_owned(),
+        interaction: true,
+        payload: r#"{"state":"a"}"#.to_owned(),
+        batch_id: sent.map(|(batch, _)| batch.to_owned()),
+        sent_at: sent.map(|(_, at)| at),
+    }
+}
+
+#[test]
+fn events_say_whether_they_belong_to_the_signed_in_account() {
+    let matches =
+        |row: Option<&str>| event(&sent_row(1, row, None), Some("acct-1"))["accountMatch"].clone();
+    assert_eq!(matches(None), Value::Bool(true));
+    assert_eq!(matches(Some("acct-1")), Value::Bool(true));
+    assert_eq!(matches(Some("acct-2")), Value::Bool(false));
+}
+
+#[test]
+fn a_batch_filling_the_body_exactly_still_fits_and_gzips_back() {
+    let resource = serde_json::json!({"os": "windows"});
+    let context = Context {
+        batch_id: "b-1",
+        sent_at: 1_791_590_400_000,
+        install_id: "i",
+        machine_id: "m",
+        session_id: "mdt-x",
+        account: None,
+        resource: &resource,
+    };
+    let padded = |padding: usize| {
+        let mut row = sent_row(1, None, None);
+        row.payload = format!(r#"{{"state":"{}"}}"#, "a".repeat(padding));
+        row
+    };
+    let small = fit(&[padded(1)], &context, MAX_BATCH_EVENTS).unwrap();
+    let body: Value = serde_json::from_str(&small.json).unwrap();
+    assert_eq!(body["schema"], 1);
+    assert_eq!(body["batchId"], "b-1");
+    assert_eq!(body["installId"], "i");
+    assert_eq!(body["resource"], resource);
+    let exact = 1 + MAX_BODY_BYTES - small.json.len();
+    let full = fit(&[padded(exact)], &context, MAX_BATCH_EVENTS).unwrap();
+    assert_eq!(full.json.len(), MAX_BODY_BYTES);
+    let mut unzipped = String::new();
+    flate2::read::GzDecoder::new(gzip(&full.json).as_slice())
+        .read_to_string(&mut unzipped)
+        .unwrap();
+    assert_eq!(unzipped, full.json);
+}
+
+#[test]
+fn sent_rows_group_into_their_batches() {
+    let rows = [
+        sent_row(1, None, Some(("a", 10))),
+        sent_row(2, None, Some(("a", 10))),
+        sent_row(3, None, Some(("b", 20))),
+        sent_row(4, None, None),
+    ];
+    let batches: Vec<(String, i64, usize)> = sent_batches(&rows, None)
+        .into_iter()
+        .map(|batch| (batch.batch_id, batch.sent_at, batch.events))
+        .collect();
+    assert_eq!(batches, [("a".to_owned(), 10, 2), ("b".to_owned(), 20, 1)]);
 }
