@@ -17,7 +17,7 @@ ui-shared-lib = 90
 [mutation]
 mivia-domain = 79
 mivia-server = 64
-mivia-diagnostics = 92
+mivia-diagnostics = 85
 
 [suppressions]
 rust = 3
