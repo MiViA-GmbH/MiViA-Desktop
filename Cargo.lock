@@ -2603,12 +2603,14 @@ dependencies = [
 name = "mivia-diagnostics"
 version = "0.0.0"
 dependencies = [
+ "async-trait",
  "flate2",
  "getrandom 0.4.3",
  "hmac",
  "logroller",
  "mivia-domain",
  "mivia-ports",
+ "mivia-testkit",
  "parking_lot",
  "proptest",
  "regex",
@@ -2616,6 +2618,7 @@ dependencies = [
  "serde_json",
  "sha2 0.11.0",
  "tempfile",
+ "tokio",
  "toml 1.1.6+spec-1.1.0",
  "tracing",
  "tracing-appender",
