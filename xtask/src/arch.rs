@@ -105,7 +105,13 @@ pub(crate) const RULES: &[Rule] = &[
         &["tauri", "rusqlite", "notify"],
     ),
     rule("mivia-os", CORE, &["tauri", "reqwest", "rusqlite"]),
-    rule("mivia-diagnostics", CORE, &["tauri", "rusqlite", "reqwest"]),
+    Rule {
+        krate: "mivia-diagnostics",
+        may_use: CORE,
+        dev_may_use: &["mivia-testkit"],
+        must_not_reach: &["tauri", "rusqlite", "reqwest"],
+        no_direct: &[],
+    },
     rule("mivia-preview", CORE, &["tauri", "reqwest", "rusqlite"]),
     Rule {
         krate: "mivia-update-sig",
