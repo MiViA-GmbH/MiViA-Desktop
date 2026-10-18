@@ -344,7 +344,7 @@ jobs:
   mutants:
     name: Mutants
     runs-on: ubuntu-24.04
-    timeout-minutes: ${{ matrix.crate == 'mivia-domain' && 240 || 120 }}
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -377,9 +377,7 @@ jobs:
           CRATE: ${{ matrix.crate }}
         run: |
           status=0
-          tests=()
-          if [ "$CRATE" = mivia-domain ]; then tests=(--test-package mivia-domain --test-package mivia-it); fi
-          cargo mutants -p "$CRATE" "${tests[@]}" --test-tool nextest || status=$?
+          cargo mutants -p "$CRATE" --test-tool nextest || status=$?
           case "$status" in 0|2|3) ;; *) exit "$status" ;; esac
           cargo xtask mutation-floor "$CRATE" mutants.out/outcomes.json
       - name: Upload mutants-${{ matrix.crate }}
