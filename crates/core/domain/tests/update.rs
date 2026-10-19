@@ -1,6 +1,7 @@
 use mivia_domain::ids::{HOUR_MS, MINUTE_MS, Timestamp};
 use mivia_domain::update::{
-    Channel, Offer, Refusal, Rules, after_check, next_check, parse, satisfies, too_old, vet,
+    Channel, NOTICE_AFTER_MS, Offer, Refusal, Rules, after_check, next_check, parse, satisfies,
+    too_old, vet,
 };
 
 const PREFIX: &str = "https://github.com/MiViA-GmbH/MiViA-Desktop/releases/download/";
@@ -183,4 +184,9 @@ fn versions_follow_semver_precedence() {
     ] {
         assert_eq!(parse(bad), None, "{bad}");
     }
+}
+
+#[test]
+fn a_waiting_update_is_announced_after_three_days() {
+    assert_eq!(NOTICE_AFTER_MS, 259_200_000);
 }
