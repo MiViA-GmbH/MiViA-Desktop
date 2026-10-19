@@ -86,6 +86,6 @@
 		"allow-check-for-updates",
 		"allow-install-update",
 		"allow-set-update-settings",
-		"allow-dismiss-update-applied"
+		"allow-mark-update-seen"
 	]
 }

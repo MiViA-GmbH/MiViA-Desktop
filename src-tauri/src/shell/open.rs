@@ -11,7 +11,7 @@ use super::cx::{Ready, parse_id};
 use super::preview;
 
 const SITE: &str = "open_target";
-const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-Desktop/releases";
+pub(crate) const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-Desktop/releases";
 const INFO_MAIL: &str = "mailto:info@mivia.ai";
 const NOTICES: &str = "THIRD-PARTY-NOTICES.txt";
 

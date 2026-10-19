@@ -326,6 +326,9 @@ The at least 48 hours a version spends on the beta channel before it may be prom
 **Pending install**:
 A downloaded and verified update waiting for a moment to install (user request, quit, or the first idle moment 24 hours later).
 
+**Update notice**:
+Telling the user that a newer version can be installed now, once per version; the user decides when, nothing stops working. A Forced update is not an Update notice.
+
 **Forced update**:
 An update the app installs as soon as no upload is in flight, because the server requires a newer minimum version and a signed update satisfies it.
 

@@ -8,7 +8,6 @@ import { DropOverlay } from './drop-overlay';
 import { OneOffHost } from './one-off-host';
 import { ReportHost } from './report-host';
 import { Sidebar } from './sidebar';
-import { UpdatedHost } from './updated-host';
 
 export function Shell() {
 	const rail = useMediaQuery('(max-width: 959px)') ?? false;
@@ -29,7 +28,6 @@ export function Shell() {
 				</Stack>
 				<OneOffHost />
 				<ReportHost />
-				<UpdatedHost />
 				<DropOverlay />
 			</AppShell.Main>
 		</AppShell>

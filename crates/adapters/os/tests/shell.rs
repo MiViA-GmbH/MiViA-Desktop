@@ -237,3 +237,31 @@ fn setup_completion_is_marked_for_it_inventory_and_the_sandbox_is_removed() {
     }
     assert!(user().open_subkey(prefix.trim_end_matches('\\')).is_err());
 }
+
+#[test]
+fn the_toast_app_id_is_registered_and_the_uninstaller_removes_it() {
+    let sandbox = sandbox();
+    let icon = sandbox.dir.path().join("icon.ico");
+    mivia_os::register_app_id(&sandbox.places(), "MiViA Desktop", &icon).unwrap();
+    let key = user()
+        .open_subkey(format!(
+            r"{}\AppUserModelId\{}",
+            sandbox.places().classes,
+            mivia_os::APP_ID
+        ))
+        .unwrap();
+    assert_eq!(
+        key.get_raw_value("DisplayName").unwrap().vtype,
+        REG_EXPAND_SZ
+    );
+    assert_eq!(
+        key.get_value::<String, _>("DisplayName").unwrap(),
+        "MiViA Desktop"
+    );
+    assert_eq!(
+        key.get_value::<String, _>("IconUri").unwrap(),
+        icon.display().to_string()
+    );
+    let hooks = include_str!("../../../../packaging/nsis/hooks.nsh");
+    assert!(hooks.contains(r#"DeleteRegKey HKCU "Software\Classes\AppUserModelId\${BUNDLEID}""#));
+}

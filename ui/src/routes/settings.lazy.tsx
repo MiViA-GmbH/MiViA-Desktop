@@ -5,6 +5,7 @@ import { createLazyRoute, Link, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import { localeQuery } from '../entities/account/queries';
+import { updateQuery } from '../entities/update/queries';
 import { PrivacyPanel } from '../features/privacy/privacy-panel';
 import { AboutPanel } from '../features/settings/about-panel';
 import { AccountPanel } from '../features/settings/account-panel';
@@ -13,6 +14,7 @@ import { AutostartSwitch, ExplorerSwitch } from '../features/settings/integratio
 import { LanguageSelect } from '../features/settings/language-select';
 import { SupportPanel } from '../features/support/support-panel';
 import { UpdatesPanel } from '../features/updates/updates-panel';
+import { Dot } from '../shared/ui/dot';
 import { PageHeader } from '../shared/ui/page-header';
 import { Panel } from '../shared/ui/panel';
 import { NotFound } from './errors';
@@ -70,6 +72,7 @@ function Settings() {
 	const { t } = useTranslation();
 	const { section } = useParams({ from: '/app/settings/$section' });
 	const narrow = useMediaQuery('(max-width: 959px)') ?? false;
+	const notice = useQuery(updateQuery).data?.notice ?? false;
 	if (!isSection(section)) {
 		return <NotFound />;
 	}
@@ -85,6 +88,7 @@ function Settings() {
 							key={key}
 							label={t(SECTIONS[key])}
 							renderRoot={(props) => <Link params={{ section: key }} to="/settings/$section" {...props} />}
+							rightSection={key === 'updates' && notice ? <Dot label={t('desktop.update.notice')} /> : undefined}
 							w={narrow ? 'auto' : undefined}
 						/>
 					))}

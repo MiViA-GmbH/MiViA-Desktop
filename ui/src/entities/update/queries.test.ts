@@ -12,7 +12,7 @@ const VIEW: UpdateView = {
 	version: null,
 	lastCheckAt: null,
 	failedInstall: null,
-	applied: null,
+	notice: false,
 	required: null,
 	progress: null,
 };

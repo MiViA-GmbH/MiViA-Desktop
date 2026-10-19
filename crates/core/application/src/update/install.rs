@@ -11,6 +11,7 @@ use super::report::{defer_reason, telemetry_version};
 use super::settings::{Pending, PendingInstall};
 impl Updates {
     pub async fn tick(&self) -> Result<(), StoreError> {
+        self.announce().await?;
         let (ready, forced, pending, failed) = {
             let inner = self.inner.lock();
             (

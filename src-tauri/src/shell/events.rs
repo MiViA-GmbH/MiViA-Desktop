@@ -14,7 +14,7 @@ pub(crate) struct StoreChangedEvent(pub(crate) StoreChanged);
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct LanguageChanged(pub(crate) LocaleView);
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, Type)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub(crate) enum Route {
     Overview,
@@ -32,6 +32,15 @@ pub(crate) struct QuitRequested;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct DropHover(pub(crate) bool);
+
+#[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
+pub(crate) struct UpdateNotice {
+    pub(crate) version: String,
+    pub(crate) ready: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
+pub(crate) struct UpdateChanged;
 
 macro_rules! app_commands {
     () => {
@@ -111,7 +120,7 @@ macro_rules! app_commands {
             update::check_for_updates,
             update::install_update,
             update::set_update_settings,
-            update::dismiss_update_applied,
+            update::mark_update_seen,
             preview::get_preview,
             preview::get_preview_results,
             preview::close_preview,
@@ -132,7 +141,9 @@ pub(crate) fn builder() -> Builder<tauri::Wry> {
             LanguageChanged,
             Navigate,
             QuitRequested,
-            DropHover
+            DropHover,
+            UpdateNotice,
+            UpdateChanged
         ])
         .error_handling(ErrorHandlingMode::Throw)
 }

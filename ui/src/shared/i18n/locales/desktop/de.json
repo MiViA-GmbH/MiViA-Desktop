@@ -259,8 +259,8 @@
 			"requiredTitle": "Eine neuere Version ist erforderlich.",
 			"requiredText": "Sie wird automatisch installiert, sobald sie verfügbar ist. Bis dahin funktioniert alles weiter.",
 			"releases": "Downloadseite",
-			"applied": "Auf {{version}} aktualisiert.",
-			"notes": "Versionshinweise"
+			"notice": "Update verfügbar",
+			"show": "Anzeigen"
 		},
 		"status": {
 			"batch": {
@@ -591,6 +591,19 @@
 		},
 		"help": {
 			"moreAbout": "Mehr zu: {{label}}"
+		},
+		"native": {
+			"tray": {
+				"starting": "Wird gestartet...",
+				"open": "MiViA Desktop öffnen",
+				"report": "Problem melden...",
+				"restart": "Neu starten und auf {{version}} aktualisieren",
+				"quit": "Beenden"
+			},
+			"update": {
+				"applied": "Auf {{version}} aktualisiert.",
+				"notes": "Versionshinweise"
+			}
 		}
 	}
 }

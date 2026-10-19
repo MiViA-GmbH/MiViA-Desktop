@@ -1,3 +1,4 @@
+use mivia_domain::naming::Language;
 use mivia_ports::queries::Queries;
 use parking_lot::Mutex;
 use tauri::menu::{Menu, MenuEvent, MenuItem};
@@ -6,21 +7,36 @@ use tauri::{AppHandle, Manager, Wry};
 
 use super::cx::Cx;
 use super::events::Route;
-use super::{update, window};
+use super::text::{t, text};
+use super::{locale, update, window};
 
 mod icon;
 
 use icon::Mark;
 
+const STARTING: &str = "starting";
 const OPEN: &str = "open";
 const QUIT: &str = "quit";
 const REPORT: &str = "report";
+const RESTART: &str = "restart";
 const UPDATES: &str = "updates";
 
-struct Starting {
+struct Tray {
     menu: Menu<Wry>,
-    item: MenuItem<Wry>,
-    report: MenuItem<Wry>,
+    items: [MenuItem<Wry>; 6],
+    language: Mutex<Language>,
+    notice: Mutex<Option<String>>,
+}
+
+fn labels(language: Language, version: &str) -> [String; 6] {
+    [
+        t!("desktop.native.tray.starting", language),
+        t!("desktop.native.tray.open", language),
+        t!("desktop.native.tray.report", language),
+        t!("desktop.native.tray.restart", language).replace("{{version}}", version),
+        text(language, "desktop.update.check"),
+        t!("desktop.native.tray.quit", language),
+    ]
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -34,16 +50,25 @@ fn render(look: Look) -> Option<tauri::image::Image<'static>> {
 }
 
 pub(super) fn build(app: &AppHandle) -> tauri::Result<()> {
-    let starting = MenuItem::with_id(app, "starting", "Starting...", false, None::<&str>)?;
-    let open = MenuItem::with_id(app, OPEN, "Open MiViA Desktop", true, None::<&str>)?;
-    let report = MenuItem::with_id(app, REPORT, "Report a problem...", true, None::<&str>)?;
-    let updates = MenuItem::with_id(app, UPDATES, "Check for updates", true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, QUIT, "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&starting, &open, &report, &updates, &quit])?;
-    app.manage(Starting {
+    let language = locale::system_language();
+    let [starting, open, report, restart, updates, quit] = labels(language, "");
+    let item =
+        |id: &str, text: String| MenuItem::with_id(app, id, text, id != STARTING, None::<&str>);
+    let items = [
+        item(STARTING, starting)?,
+        item(OPEN, open)?,
+        item(REPORT, report)?,
+        item(RESTART, restart)?,
+        item(UPDATES, updates)?,
+        item(QUIT, quit)?,
+    ];
+    let [starting, open, report, _, updates, quit] = &items;
+    let menu = Menu::with_items(app, &[starting, open, report, updates, quit])?;
+    app.manage(Tray {
         menu: menu.clone(),
-        item: starting,
-        report,
+        items,
+        language: Mutex::new(language),
+        notice: Mutex::new(None),
     });
     let look = Look {
         light: mivia_os::taskbar_is_light(),
@@ -129,16 +154,58 @@ pub(super) async fn refresh(app: &AppHandle) {
     });
 }
 
-pub(super) fn started(app: &AppHandle, reporting: bool) {
-    let starting = app.state::<Starting>();
-    let removed = starting.menu.remove(&starting.item).and_then(|()| {
+pub(super) fn started(app: &AppHandle, reporting: bool, language: Language) {
+    let tray = app.state::<Tray>();
+    let [starting, _, report, ..] = &tray.items;
+    let removed = tray.menu.remove(starting).and_then(|()| {
         if reporting {
             Ok(())
         } else {
-            starting.menu.remove(&starting.report)
+            tray.menu.remove(report)
         }
     });
     if let Err(error) = removed {
+        tracing::warn!(%error, "tray.menuFailed");
+    }
+    relabel(app, language);
+}
+
+pub(super) fn relabel(app: &AppHandle, language: Language) {
+    let tray = app.state::<Tray>();
+    *tray.language.lock() = language;
+    let version = tray.notice.lock().clone().unwrap_or_default();
+    for (item, label) in tray.items.iter().zip(labels(language, &version)) {
+        if let Err(error) = item.set_text(label) {
+            tracing::warn!(%error, "tray.menuFailed");
+        }
+    }
+}
+
+pub(super) fn notice(app: &AppHandle, version: Option<&str>) {
+    let tray = app.state::<Tray>();
+    tray.notice.lock().clone_from(&version.map(str::to_owned));
+    let [.., restart, _, _] = &tray.items;
+    let shown = tray.menu.get(RESTART).is_some();
+    let changed = match version {
+        Some(version) => {
+            let language = *tray.language.lock();
+            let [.., label, _, _] = labels(language, version);
+            restart.set_text(label).and_then(|()| {
+                let at = tray
+                    .menu
+                    .items()?
+                    .iter()
+                    .position(|item| item.id() == UPDATES);
+                match at {
+                    Some(at) if !shown => tray.menu.insert(restart, at),
+                    _ => Ok(()),
+                }
+            })
+        }
+        None if shown => tray.menu.remove(restart),
+        None => Ok(()),
+    };
+    if let Err(error) = changed {
         tracing::warn!(%error, "tray.menuFailed");
     }
 }
@@ -159,6 +226,7 @@ fn on_menu(app: &AppHandle, event: &MenuEvent) {
         OPEN => window::open(app),
         REPORT => window::open_at(app, Route::ProblemReport),
         UPDATES => check_updates(app),
+        RESTART => install_update(app),
         QUIT => {
             let app = app.clone();
             tauri::async_runtime::spawn(async move { update::quit(&app).await });
@@ -175,4 +243,32 @@ fn check_updates(app: &AppHandle) {
             tracing::warn!(?error, "tray.updateCheckFailed");
         }
     });
+}
+
+fn install_update(app: &AppHandle) {
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        if let Err(error) = update::install(&app.state::<Cx>()).await {
+            tracing::warn!(?error, "tray.installFailed");
+        }
+    });
+}
+
+#[cfg(test)]
+mod tests {
+    use mivia_domain::naming::Language;
+
+    use super::labels;
+
+    #[test]
+    fn every_menu_text_is_found_in_both_languages() {
+        let en = labels(Language::En, "2.1.0");
+        let de = labels(Language::De, "2.1.0");
+        for label in en.iter().chain(&de) {
+            assert!(!label.starts_with("desktop."), "{label} is missing");
+        }
+        assert_eq!(en[3], "Restart and update to 2.1.0");
+        assert_eq!(de[3], "Neu starten und auf 2.1.0 aktualisieren");
+        assert_eq!(de[4], "Nach Updates suchen");
+    }
 }

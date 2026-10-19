@@ -63,7 +63,7 @@ const valueRules = [
 	[6, ({ text }) => /['"]/.test(text), 'uses an ASCII quote'],
 	[6, ({ text, language }) => language === 'de' && /\b(du|dich|dir|dein\w*)\b/i.test(text), 'uses du'],
 	[6, ({ text }) => neverShown.some((word) => new RegExp(`\\b${word}\\b`, 'i').test(text)), 'uses a never-shown word'],
-	[6, ({ key, value }) => key.startsWith('desktop.native.') && value.length > 30, 'is longer than 30 characters'],
+	[6, ({ key, value }) => key.endsWith('.sendToName') && value.length > 30, 'is longer than 30 characters'],
 	[6, ({ key, value }) => key.endsWith('.sendToName') && !value.startsWith('MiViA'), 'does not start with MiViA'],
 ];
 

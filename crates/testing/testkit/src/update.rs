@@ -3,7 +3,7 @@ use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
 use mivia_domain::update::{Channel, Offer};
 use mivia_ports::server::ServerVersion;
-use mivia_ports::update::{Activity, UpdateEnv, UpdateError, Updater};
+use mivia_ports::update::{Activity, Delivery, UpdateEnv, UpdateError, UpdateNotifier, Updater};
 use parking_lot::Mutex;
 use ring::signature::{Ed25519KeyPair, KeyPair as _};
 
@@ -143,5 +143,57 @@ impl UpdateEnv for FakeUpdateEnv {
 
     async fn hold_too_old(&self, held: bool) {
         self.held.lock().push(held);
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Shown {
+    Available { version: String, ready: bool },
+    Applied(String),
+}
+
+#[derive(Default)]
+pub struct FakeUpdateNotifier {
+    pub off: Mutex<bool>,
+    pub focused: Mutex<bool>,
+    pub shown: Mutex<Vec<Shown>>,
+    pub notices: Mutex<Vec<Option<String>>>,
+    pub withdrawn: Mutex<u32>,
+}
+
+impl FakeUpdateNotifier {
+    fn deliver(&self, shown: Shown) -> Delivery {
+        if *self.off.lock() {
+            return Delivery::Off;
+        }
+        let in_app = *self.focused.lock() && matches!(shown, Shown::Available { .. });
+        self.shown.lock().push(shown);
+        if in_app {
+            Delivery::InApp
+        } else {
+            Delivery::Os
+        }
+    }
+}
+
+#[async_trait]
+impl UpdateNotifier for FakeUpdateNotifier {
+    async fn notice_changed(&self, version: Option<&str>) {
+        self.notices.lock().push(version.map(str::to_owned));
+    }
+
+    async fn show_available(&self, version: &str, ready: bool) -> Delivery {
+        self.deliver(Shown::Available {
+            version: version.to_owned(),
+            ready,
+        })
+    }
+
+    async fn show_applied(&self, version: &str) -> Delivery {
+        self.deliver(Shown::Applied(version.to_owned()))
+    }
+
+    fn withdraw(&self) {
+        *self.withdrawn.lock() += 1;
     }
 }
