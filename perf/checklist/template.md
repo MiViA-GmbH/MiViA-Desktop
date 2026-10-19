@@ -25,3 +25,20 @@ Filled once per stable release and committed with the release pull request. Sign
    - Result:
 9. Battery: 30 min tray-only and 30 min hidden on battery with `powercfg /energy`; `powercfg /sleepstudy` after a Modern Standby night. Sleep and resume: watchers re-armed, a burst written during sleep caught by catch-up within 15 s of resume, uploads resume.
    - Result:
+
+## Update notice (Hyper-V virtual machine, beta N installed through NSIS, update to beta N+1)
+
+10. With automatic updates off, beta N+1 found while the window is closed: an "Update available" toast shows once; the tray menu has "Restart and update to N+1" above "Check for updates"; Settings and the Updates section carry a dot. A later check or a restart shows no second toast.
+    - Result:
+11. Click the toast after the window was destroyed (hidden for 10 min): the window opens on Settings > Updates.
+    - Result:
+12. Language German in Settings > General: the whole tray menu and the next toast are German.
+    - Result:
+13. Restart and update from the tray: after the relaunch an "Updated to N+1." toast shows; "Release notes" and a click on the toast open the release page; no in-app message about the update follows.
+    - Result:
+14. Click a toast left in the notification center by an earlier session after quitting the app: nothing happens or the app starts plainly.
+    - Result:
+15. MiViA notifications turned off in Windows Settings: no toast, the tray item and the dot still show.
+    - Result:
+16. Install with `/NS` (no Start menu shortcut): the toast still shows with the MiViA name and icon.
+    - Result:
