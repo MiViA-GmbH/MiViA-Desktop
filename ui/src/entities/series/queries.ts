@@ -15,6 +15,19 @@ async function filledPage(filter: HistoryFilter, cursor: HistoryCursor | null): 
 	return page;
 }
 
+export async function seriesIds(filter: HistoryFilter): Promise<string[]> {
+	const ids = new Set<string>();
+	let cursor: HistoryCursor | null = null;
+	do {
+		const page: HistoryPage = await commands.listHistory(filter, cursor);
+		for (const row of [...page.head, ...page.rows]) {
+			ids.add(row.summary.id);
+		}
+		cursor = page.next;
+	} while (cursor);
+	return [...ids];
+}
+
 export const historyQuery = (filter: HistoryFilter = NO_FILTER) =>
 	queryOptions({ queryKey: ['history', 'first', filter], queryFn: () => commands.listHistory(filter, null) });
 

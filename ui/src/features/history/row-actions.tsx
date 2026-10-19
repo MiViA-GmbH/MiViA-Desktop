@@ -11,6 +11,7 @@ import { requestReport } from '../../entities/support/queries';
 import { commands } from '../../shared/ipc';
 import type { HistoryRow, OpenTarget } from '../../shared/ipc/bindings';
 import { ShowInFolderIcon } from '../../shared/ui/icons';
+import { CustomReportDialog } from './custom-report-dialog';
 import { DeleteDialog } from './delete-dialog';
 import { useExport } from './use-export';
 
@@ -22,6 +23,7 @@ export function RowActions({ row }: { row: HistoryRow }) {
 	const client = useQueryClient();
 	const reporting = useReporting();
 	const [remove, setRemove] = useState(false);
+	const [csv, setCsv] = useState(false);
 	const { summary, savedPart } = row;
 	const failed = summary.counts.failed > 0 || summary.counts.reportsProblem > 0;
 	return (
@@ -52,6 +54,7 @@ export function RowActions({ row }: { row: HistoryRow }) {
 					<Menu.Item onClick={() => navigate({ to: '/series/$seriesId', params: { seriesId: summary.id } })}>
 						{t('desktop.history.showSeries')}
 					</Menu.Item>
+					<Menu.Item onClick={() => setCsv(true)}>{t('desktop.history.saveResults')}</Menu.Item>
 					<Menu.Item onClick={() => exporter.mutate({ filter: null, series: summary.id })}>
 						{t('desktop.history.exportSeries')}
 					</Menu.Item>
@@ -63,6 +66,7 @@ export function RowActions({ row }: { row: HistoryRow }) {
 					<Menu.Item onClick={() => setRemove(true)}>{t('desktop.delete.seriesAction')}</Menu.Item>
 				</Menu.Dropdown>
 			</Menu>
+			{csv && <CustomReportDialog csvOnly onClose={() => setCsv(false)} series={[summary.id]} />}
 			{remove && (
 				<DeleteDialog
 					onClose={() => setRemove(false)}

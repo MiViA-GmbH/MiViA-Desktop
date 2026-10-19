@@ -68,6 +68,14 @@ test('selected series open the custom report dialog', async ({ page }) => {
 	await page.screenshot({ path: `${SHOTS}/c1-custom-report-en.png` });
 });
 
+test('save list as CSV opens the report dialog for the listed series', async ({ page }) => {
+	await open(page, '/history?scenario=calm');
+	await page.getByRole('button', { name: 'Save list as CSV' }).click();
+	const dialog = page.getByRole('dialog');
+	await expect(dialog.getByRole('checkbox', { name: 'Data (CSV)' })).toBeChecked();
+	await expect(dialog.getByRole('checkbox', { name: 'PDF' })).not.toBeChecked();
+});
+
 test('the header checkbox selects and clears all shown series', async ({ page }) => {
 	await open(page, '/history?scenario=calm');
 	const all = page.getByRole('checkbox', { name: 'Select all shown series' });
@@ -95,6 +103,15 @@ test('series page lists its changes', async ({ page }) => {
 	await page.getByRole('heading', { name: 'Changes' }).scrollIntoViewIfNeeded();
 	await structure(page);
 	await page.screenshot({ path: `${SHOTS}/s2-series-changes-en.png` });
+});
+
+test('save results as CSV opens the report dialog with only the data file', async ({ page }) => {
+	await open(page, '/series/214?scenario=calm');
+	await page.getByRole('button', { name: 'More actions' }).click();
+	await page.getByRole('menuitem', { name: 'Save results as CSV' }).click();
+	const dialog = page.getByRole('dialog');
+	await expect(dialog.getByRole('checkbox', { name: 'Data (CSV)' })).toBeChecked();
+	await expect(dialog.getByRole('checkbox', { name: 'PDF' })).not.toBeChecked();
 });
 
 test('deleting a series asks first and says what each choice does', async ({ page }) => {
