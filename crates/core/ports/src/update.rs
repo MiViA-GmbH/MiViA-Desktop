@@ -27,6 +27,21 @@ pub struct Activity {
     pub accepts_notifications: bool,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Delivery {
+    Os,
+    InApp,
+    Off,
+}
+
+#[async_trait]
+pub trait UpdateNotifier: Send + Sync {
+    async fn notice_changed(&self, version: Option<&str>);
+    async fn show_available(&self, version: &str, ready: bool) -> Delivery;
+    async fn show_applied(&self, version: &str) -> Delivery;
+    fn withdraw(&self);
+}
+
 #[async_trait]
 pub trait UpdateEnv: Send + Sync {
     async fn server_version(&self) -> Option<ServerVersion>;

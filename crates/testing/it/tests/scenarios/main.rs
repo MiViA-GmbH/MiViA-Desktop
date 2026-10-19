@@ -11,5 +11,6 @@ mod recovery;
 mod reports;
 mod setup;
 mod update;
+mod update_notice;
 mod worker;
 mod world;

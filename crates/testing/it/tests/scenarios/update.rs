@@ -17,26 +17,27 @@ use mivia_testkit::clock::ManualClock;
 use mivia_testkit::id_gen::SeqIdGen;
 use mivia_testkit::observer::RecordingObserver;
 use mivia_testkit::telemetry::RecordingTelemetry;
-use mivia_testkit::update::{FakeUpdateEnv, FakeUpdater};
+use mivia_testkit::update::{FakeUpdateEnv, FakeUpdateNotifier, FakeUpdater};
 use tempfile::TempDir;
 
-const START: Timestamp = Timestamp(1_800_000_000_000);
+pub(super) const START: Timestamp = Timestamp(1_800_000_000_000);
 const PREFIX: &str = "https://github.com/MiViA-GmbH/MiViA-Desktop/releases/download/";
 
-struct Bench {
+pub(super) struct Bench {
     _dir: TempDir,
-    store: Arc<SqliteStore>,
-    clock: Arc<ManualClock>,
-    telemetry: Arc<RecordingTelemetry>,
-    updater: Arc<FakeUpdater>,
-    env: Arc<FakeUpdateEnv>,
+    pub(super) store: Arc<SqliteStore>,
+    pub(super) clock: Arc<ManualClock>,
+    pub(super) telemetry: Arc<RecordingTelemetry>,
+    pub(super) updater: Arc<FakeUpdater>,
+    pub(super) env: Arc<FakeUpdateEnv>,
+    pub(super) notifier: Arc<FakeUpdateNotifier>,
 }
 
-fn url(version: &str) -> String {
+pub(super) fn url(version: &str) -> String {
     format!("{PREFIX}v{version}/MiViA.Desktop_{version}_x64-setup.exe")
 }
 
-fn idle() -> Activity {
+pub(super) fn idle() -> Activity {
     Activity {
         busy: Vec::new(),
         user_idle_ms: 20 * MINUTE_MS,
@@ -45,7 +46,7 @@ fn idle() -> Activity {
 }
 
 impl Bench {
-    async fn new() -> Self {
+    pub(super) async fn new() -> Self {
         let dir = tempfile::tempdir().unwrap();
         let store = SqliteStore::open(
             &dir.path().join("mivia.db"),
@@ -63,10 +64,11 @@ impl Bench {
             telemetry: Arc::new(RecordingTelemetry::default()),
             updater: Arc::new(FakeUpdater::default()),
             env,
+            notifier: Arc::new(FakeUpdateNotifier::default()),
         }
     }
 
-    async fn start(&self, current: &str, policy: Option<AutoUpdate>) -> Updates {
+    pub(super) async fn start(&self, current: &str, policy: Option<AutoUpdate>) -> Updates {
         let ports = UpdatePorts {
             store: Arc::clone(&self.store) as _,
             clock: Arc::clone(&self.clock) as _,
@@ -74,6 +76,7 @@ impl Bench {
             telemetry: Arc::clone(&self.telemetry) as _,
             updater: Arc::clone(&self.updater) as _,
             env: Arc::clone(&self.env) as _,
+            notifier: Arc::clone(&self.notifier) as _,
         };
         let config = UpdateConfig {
             current: current.to_owned(),
@@ -83,11 +86,11 @@ impl Bench {
         Updates::start(ports, config).await.unwrap()
     }
 
-    fn pass(&self, ms: i64) {
+    pub(super) fn pass(&self, ms: i64) {
         self.clock.advance(ms);
     }
 
-    fn installs(&self) -> Vec<String> {
+    pub(super) fn installs(&self) -> Vec<String> {
         self.updater.installs.lock().clone()
     }
 
@@ -462,27 +465,4 @@ async fn a_prerelease_build_checks_the_beta_channel_whatever_is_stored() {
     updates.check(Trigger::Start).await.unwrap();
     assert_eq!(stable.updater.checks.lock().clone(), [Channel::Stable]);
     assert_eq!(updates.view().channel, UpdateChannel::Stable);
-}
-
-#[tokio::test]
-async fn a_finished_update_is_reported_once() {
-    let bench = Bench::new().await;
-    let pending = PendingInstall {
-        from: "2.0.0".to_owned(),
-        to: "2.1.0".to_owned(),
-        at: START.0,
-    };
-    update_global(bench.store.as_ref(), move |global| {
-        global.update.pending_install = Some(pending);
-    })
-    .await
-    .unwrap();
-    let updates = bench.start("2.1.0", None).await;
-    assert_eq!(updates.view().applied.as_deref(), Some("2.1.0"));
-    updates.dismiss_applied().await.unwrap();
-    assert_eq!(updates.view().applied, None);
-    drop(updates);
-
-    let restarted = bench.start("2.1.0", None).await;
-    assert_eq!(restarted.view().applied, None);
 }

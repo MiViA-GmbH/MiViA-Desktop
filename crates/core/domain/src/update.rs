@@ -8,6 +8,7 @@ pub const CHECK_JITTER_MS: i64 = 30 * MINUTE_MS;
 pub const CHECK_GAP_MS: i64 = HOUR_MS;
 pub const MANUAL_GAP_MS: i64 = MINUTE_MS;
 pub const AUTO_INSTALL_AFTER_MS: i64 = 24 * HOUR_MS;
+pub const NOTICE_AFTER_MS: i64 = 72 * HOUR_MS;
 pub const USER_IDLE_MS: i64 = 10 * MINUTE_MS;
 pub const IDLE_RECHECK_MS: i64 = 30 * MINUTE_MS;
 pub const MAX_DOWNLOAD_BYTES: u64 = 300 * 1024 * 1024;

@@ -15,6 +15,7 @@ pub struct UpdateSettings {
     pub pending_install: Option<PendingInstall>,
     pub failed: Option<String>,
     pub applied: Option<String>,
+    pub notified: Option<String>,
 }
 
 impl Default for UpdateSettings {
@@ -27,6 +28,7 @@ impl Default for UpdateSettings {
             pending_install: None,
             failed: None,
             applied: None,
+            notified: None,
         }
     }
 }

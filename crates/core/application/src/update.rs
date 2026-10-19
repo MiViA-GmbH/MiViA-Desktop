@@ -13,13 +13,14 @@ use mivia_ports::server::ServerVersion;
 use mivia_ports::store::{Store, StoreError};
 use mivia_ports::telemetry::{CheckState, TelemetrySink, UpdateDownloaded};
 use mivia_ports::time::iso_utc;
-use mivia_ports::update::{UpdateEnv, UpdateError, Updater};
+use mivia_ports::update::{UpdateEnv, UpdateError, UpdateNotifier, Updater};
 use parking_lot::Mutex;
 
 use crate::policy::AutoUpdate;
 use crate::settings::update_global;
 
 mod install;
+mod notice;
 mod report;
 mod server;
 mod settings;
@@ -42,6 +43,7 @@ pub struct UpdatePorts {
     pub telemetry: Arc<dyn TelemetrySink>,
     pub updater: Arc<dyn Updater>,
     pub env: Arc<dyn UpdateEnv>,
+    pub notifier: Arc<dyn UpdateNotifier>,
 }
 
 pub struct UpdateConfig {
@@ -59,6 +61,7 @@ struct Inner {
     server: Option<ServerVersion>,
     next_check: Timestamp,
     last_manual: Option<Timestamp>,
+    announced: Option<String>,
 }
 
 pub struct Updates {
@@ -91,6 +94,7 @@ impl Updates {
                 required: None,
                 server: None,
                 last_manual: None,
+                announced: None,
             }),
             ports,
             config,
@@ -99,6 +103,8 @@ impl Updates {
         if let Some(pending) = before {
             updates.settled(&pending, now);
         }
+        updates.ports.notifier.withdraw();
+        updates.applied(None).await?;
         Ok(updates)
     }
 
@@ -156,19 +162,12 @@ impl Updates {
                 .last_check_at
                 .map(|at| iso_utc(Timestamp(at))),
             failed_install: inner.settings.failed.clone(),
-            applied: inner.settings.applied.clone(),
+            notice: notice::version(&inner).is_some(),
             required: inner.required.clone(),
             progress: (inner.state == UpdateState::Downloading)
                 .then(|| self.ports.updater.progress())
                 .flatten(),
         }
-    }
-
-    pub async fn dismiss_applied(&self) -> Result<(), StoreError> {
-        let store = self.ports.store.as_ref();
-        let saved = update_global(store, |global| global.update.applied = None).await?;
-        self.inner.lock().settings = saved.update;
-        Ok(())
     }
 
     pub async fn set_settings(&self, input: UpdateSettingsInput) -> Result<UpdateView, StoreError> {
