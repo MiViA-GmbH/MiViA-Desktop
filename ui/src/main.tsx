@@ -10,8 +10,13 @@ import { router } from './app/router';
 import { DROP_HOVER } from './entities/one-off/queries';
 import { QUIT_REQUESTED } from './entities/setup/queries';
 import { requestReport } from './entities/support/queries';
+import { UPDATE } from './entities/update/queries';
 import { changeLanguage, startI18n } from './shared/i18n/i18n';
 import { commands, events } from './shared/ipc';
+
+function openUpdates(): void {
+	router.navigate({ to: '/settings/$section', params: { section: 'updates' } });
+}
 
 async function start(root: HTMLElement): Promise<void> {
 	if (import.meta.env.MODE === 'mock') {
@@ -31,10 +36,21 @@ async function start(root: HTMLElement): Promise<void> {
 		if (payload.route === 'problemReport') {
 			requestReport(queryClient, { trigger: 'manual', signature: null });
 		} else if (payload.route === 'updates') {
-			router.navigate({ to: '/settings/$section', params: { section: 'updates' } });
+			openUpdates();
 		} else {
 			router.navigate({ to: '/' });
 		}
+	});
+	await events.updateChanged.listen(() => {
+		queryClient.invalidateQueries({ queryKey: UPDATE });
+	});
+	await events.updateNotice.listen(({ payload }) => {
+		import('./entities/support/toasts').then(({ notifyUpdateNotice }) =>
+			notifyUpdateNotice(payload, () => {
+				commands.markUpdateSeen(true);
+				openUpdates();
+			}),
+		);
 	});
 	await startI18n(await commands.getLocale());
 	createRoot(root).render(

@@ -209,11 +209,21 @@ test('a beta build keeps the channel on Beta and cannot pick Stable', async ({ p
 	await expect(page.getByRole('option', { name: 'Stable' })).toHaveAttribute('data-combobox-disabled', 'true');
 });
 
-test('a finished update is announced with a release notes button', async ({ page }) => {
-	await open(page, '/?scenario=update-applied');
-	const notice = page.getByRole('status').filter({ hasText: 'Updated to 2.0.0.' });
-	await expect(notice).toBeVisible();
-	await expect(notice.getByRole('button', { name: 'Release notes' })).toBeVisible();
+test('a possible update marks Settings and offers to show the Updates page', async ({ page }) => {
+	await open(page, '/?scenario=update-notice-available');
+	await expect(page.getByRole('navigation').getByRole('img', { name: 'Update available' })).toBeVisible();
+	const notice = page.getByRole('status').filter({ has: page.getByRole('button', { name: 'Show' }) });
+	await expect(notice).toContainText('Version 2.1.0 is available.');
+	await notice.getByRole('button', { name: 'Show' }).click();
+	await expect(page).toHaveURL(/\/settings\/updates/);
+	await expect(page.getByRole('img', { name: 'Update available' })).toHaveCount(2);
+	await expect(notice).toBeHidden();
+});
+
+test('a downloaded update is announced as ready to install', async ({ page }) => {
+	await open(page, '/?scenario=update-notice-ready');
+	const notice = page.getByRole('status').filter({ hasText: 'Version 2.1.0 is ready to install.' });
+	await expect(notice.getByRole('button', { name: 'Show' })).toBeVisible();
 });
 
 test('a required update shows a red banner with one filled restart button', async ({ page }) => {

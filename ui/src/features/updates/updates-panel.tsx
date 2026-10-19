@@ -2,6 +2,7 @@ import '../../shared/ui/forms.css';
 
 import { Accordion, Alert, Button, Group, Progress, Select, Stack, Switch, Text } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ReportButton } from '../../entities/support/report-button';
@@ -123,6 +124,12 @@ export function UpdatesPanel() {
 	const { t } = useTranslation();
 	const view = useQuery(updateQuery).data;
 	const save = useSaveSettings();
+	const seen = view?.notice ? view.version : null;
+	useEffect(() => {
+		if (seen) {
+			commands.markUpdateSeen(false);
+		}
+	}, [seen]);
 	if (!view) {
 		return null;
 	}

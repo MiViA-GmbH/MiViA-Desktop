@@ -265,6 +265,8 @@ const STATES: State[] = [
 	{ id: 'u6-updates-failed', path: '/settings/updates?scenario=update-failed' },
 	{ id: 'u7-updates-locked', path: '/settings/updates?scenario=update-locked' },
 	{ id: 'u8-updates-required', path: '/settings/updates?scenario=update-unsigned' },
+	{ id: 'u9-update-notice', path: '/?scenario=update-notice-available' },
+	{ id: 'u10-updates-notice', path: '/settings/updates?scenario=update-notice-ready' },
 	{ id: 'v1-privacy', path: '/settings/privacy?scenario=calm' },
 	{ id: 'v2-privacy-locked', path: '/settings/privacy?scenario=privacy-locked' },
 	{

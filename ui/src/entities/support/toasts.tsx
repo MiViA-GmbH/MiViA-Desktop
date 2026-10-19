@@ -4,7 +4,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import i18n, { type ParseKeys } from 'i18next';
 
 import { commands, isAppError } from '../../shared/ipc';
-import type { SendOutcome } from '../../shared/ipc/bindings';
+import type { SendOutcome, UpdateNotice } from '../../shared/ipc/bindings';
 import { requestReport, SUPPORT } from './queries';
 
 const MESSAGES = {
@@ -143,6 +143,9 @@ export function showOutcome(reportId: string, outcome: SendOutcome, client: Quer
 	}
 }
 
-export function notifyUpdated(version: string, openNotes: () => void): void {
-	notifyAction(i18n.t('desktop.update.applied', { version }), i18n.t('desktop.update.notes'), openNotes, STATUS);
+export function notifyUpdateNotice(notice: UpdateNotice, show: () => void): void {
+	const message = i18n.t(notice.ready ? 'desktop.update.ready' : 'desktop.update.available', {
+		version: notice.version,
+	});
+	notifyAction(message, i18n.t('desktop.update.show'), show, STATUS);
 }

@@ -10,6 +10,8 @@ import { accountQuery } from '../../entities/account/queries';
 import { foldersQuery } from '../../entities/folder/queries';
 import { folderStatus, monogram } from '../../entities/folder/status';
 import { holdsQuery } from '../../entities/hold/queries';
+import { updateQuery } from '../../entities/update/queries';
+import { Dot } from '../../shared/ui/dot';
 import { AddFolderIcon } from '../../shared/ui/icons';
 import type { Tone } from '../../shared/ui/tone';
 import { NAVIGATION } from './navigation';
@@ -61,9 +63,7 @@ function Monogram({ name, tone }: { name: string; tone: Tone }) {
 			<Text fw={700} fz={11} lh="18px" ta="center">
 				{monogram(name)}
 			</Text>
-			{marked && (
-				<Box bg="currentColor" h={6} pos="absolute" right={-4} style={{ borderRadius: '50%' }} top={-2} w={6} />
-			)}
+			{marked && <Dot pos="absolute" right={-4} top={-2} />}
 		</Box>
 	);
 }
@@ -133,13 +133,20 @@ function Account({ rail }: { rail: boolean }) {
 export function Sidebar({ rail }: { rail: boolean }) {
 	const { t } = useTranslation();
 	const path = useLocation({ select: (location) => location.pathname });
+	const notice = useQuery(updateQuery).data?.notice ?? false;
 	const links = (group: 'main' | 'bottom') =>
 		NAVIGATION.filter((entry) => entry.group === group).map((entry) => {
 			const EntryIcon = entry.icon;
+			const dotted = notice && entry.label === 'desktop.nav.settings';
 			return (
 				<Item
 					active={entry.active(path)}
-					icon={<EntryIcon {...ICON} />}
+					icon={
+						<Box pos="relative">
+							<EntryIcon {...ICON} />
+							{dotted && <Dot label={t('desktop.update.notice')} pos="absolute" right={-4} top={-2} />}
+						</Box>
+					}
 					key={entry.label}
 					label={t(entry.label)}
 					link={entry.link}
