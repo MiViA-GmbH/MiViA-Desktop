@@ -19,7 +19,8 @@ use mivia_testkit::network::{FakeResolver, FakeRoute};
 use mivia_testkit::observer::RecordingObserver;
 use mivia_testkit::telemetry::RecordingTelemetry;
 use mivia_testkit::update::{
-    FakeUpdateEnv, TEST_UPDATE_KEY_A, TEST_UPDATE_KEY_B, TestUpdateKey, trusted_comment,
+    FakeUpdateEnv, FakeUpdateNotifier, TEST_UPDATE_KEY_A, TEST_UPDATE_KEY_B, TestUpdateKey,
+    trusted_comment,
 };
 use parking_lot::Mutex;
 use serde_json::json;
@@ -194,6 +195,7 @@ impl Lab {
             telemetry: Arc::clone(&self.telemetry) as _,
             updater: Arc::new(self.updater(app, signer, max)),
             env: Arc::clone(&self.env) as _,
+            notifier: Arc::new(FakeUpdateNotifier::default()),
         };
         let config = UpdateConfig {
             current: "2.0.0".to_owned(),

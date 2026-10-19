@@ -34,6 +34,6 @@ pub(crate) async fn set_update_settings(
 
 #[tauri::command]
 #[specta::specta]
-pub(crate) async fn dismiss_update_applied(cx: State<'_, Cx>) -> Result<(), AppError> {
-    update::dismiss_applied(&cx).await
+pub(crate) async fn mark_update_seen(cx: State<'_, Cx>, clicked: bool) -> Result<(), AppError> {
+    update::mark_seen(&cx, clicked).await
 }

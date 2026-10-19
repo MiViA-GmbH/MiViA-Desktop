@@ -14,7 +14,7 @@ use mivia_os::LegacyInstall;
 use mivia_ports::auth::{
     CredentialStore, CredentialStoreError, Identity, ServerOrigin, StoredCredential,
 };
-use mivia_ports::ipc::screens::{self, AccountView};
+use mivia_ports::ipc::screens::AccountView;
 use parking_lot::Mutex;
 use secrecy::SecretString;
 use tauri::{AppHandle, Manager};
@@ -162,10 +162,7 @@ impl CredentialStore for SessionCredentials {
 }
 
 pub(crate) async fn language(ready: &Ready) -> Language {
-    match locale::current(ready).await.map(|view| view.language) {
-        Ok(screens::Language::De) => Language::De,
-        Ok(screens::Language::En) | Err(_) => Language::En,
-    }
+    locale::language(ready.store.as_ref()).await
 }
 
 pub(crate) fn owner(app: &AppHandle) -> isize {

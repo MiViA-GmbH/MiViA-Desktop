@@ -119,7 +119,7 @@ export const commands = {
 	checkForUpdates: () => __TAURI_INVOKE<UpdateView>("check_for_updates"),
 	installUpdate: () => __TAURI_INVOKE<UpdateView>("install_update"),
 	setUpdateSettings: (input: UpdateSettingsInput) => __TAURI_INVOKE<UpdateView>("set_update_settings", { input }),
-	dismissUpdateApplied: () => __TAURI_INVOKE<null>("dismiss_update_applied"),
+	markUpdateSeen: (clicked: boolean) => __TAURI_INVOKE<null>("mark_update_seen", { clicked }),
 	getPreview: (target: PreviewTarget) => __TAURI_INVOKE<PreviewView>("get_preview", { target }),
 	getPreviewResults: (computationId: string) => __TAURI_INVOKE<PreviewResultsView>("get_preview_results", { computationId }),
 	closePreview: () => __TAURI_INVOKE<null>("close_preview"),
@@ -133,6 +133,8 @@ export const events = {
 	navigate: makeEvent<Navigate>("navigate"),
 	quitRequested: makeEvent<QuitRequested>("quit-requested"),
 	storeChangedEvent: makeEvent<StoreChangedEvent>("store-changed-event"),
+	updateChanged: makeEvent<UpdateChanged>("update-changed"),
+	updateNotice: makeEvent<UpdateNotice>("update-notice"),
 };
 
 /* Types */
@@ -779,7 +781,14 @@ export type SupportView = {
 	pending: number,
 };
 
+export type UpdateChanged = null;
+
 export type UpdateChannel = "stable" | "beta";
+
+export type UpdateNotice = {
+	version: string,
+	ready: boolean,
+};
 
 export type UpdatePolicy = "on" | "notifyOnly" | "off";
 
@@ -799,7 +808,7 @@ export type UpdateView = {
 	version: string | null,
 	lastCheckAt: string | null,
 	failedInstall: string | null,
-	applied: string | null,
+	notice: boolean,
 	required: RequiredUpdate | null,
 	progress: number | null,
 };

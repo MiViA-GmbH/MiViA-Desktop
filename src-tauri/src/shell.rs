@@ -24,6 +24,7 @@ mod shutdown;
 mod start;
 pub(crate) mod support;
 pub(crate) mod telemetry;
+mod text;
 mod tray;
 pub(crate) mod update;
 pub(crate) mod window;
@@ -153,6 +154,9 @@ fn on_event(shutdown: &Shutdown, event: &RunEvent) {
         api.prevent_exit();
     }
     if matches!(event, RunEvent::Exit) {
+        if let Err(error) = mivia_os::withdraw_toasts() {
+            tracing::debug!(%error, "update.withdrawFailed");
+        }
         shutdown.finish();
     }
 }
@@ -229,7 +233,11 @@ async fn init(app: AppHandle, shutdown: Arc<Shutdown>, launch: Launch) {
     app.state::<Cx>()
         .set(account::compose(&services, launch.minimized, None).await);
     let reporting = services.policies.issue_reporting != Some(IssueReporting::Off);
-    tray::started(&app, reporting);
+    tray::started(
+        &app,
+        reporting,
+        locale::language(services.store.as_ref()).await,
+    );
     tray::refresh(&app).await;
     one_off::ingest_inbox(&app, &instance::inbox(&launch.data_dir)).await;
     if !completed {

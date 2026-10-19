@@ -1,3 +1,4 @@
+mod notifier;
 mod plugin;
 #[cfg(test)]
 mod tests;
@@ -24,6 +25,7 @@ use tauri::{AppHandle, Manager};
 use super::cx::{Cx, Services};
 use super::pipeline::{SystemIds, server_api};
 use super::shutdown::Shutdown;
+use notifier::ShellNotifier;
 use plugin::{Endpoints, Keys, Limits, Parts, PluginUpdater, SignerCheck};
 
 pub(crate) const STABLE: &str = "https://updates.mivia.ai/stable/latest.json";
@@ -147,6 +149,7 @@ pub(super) async fn start(app: &AppHandle, services: &Arc<Services>, shutdown: A
     if !AUTHENTICODE {
         tracing::info!("update.authenticodeOff");
     }
+    notifier::register(&services.data_dir);
     let ports = UpdatePorts {
         store: Arc::clone(&services.store) as _,
         clock: Arc::new(SystemClock),
@@ -157,6 +160,7 @@ pub(super) async fn start(app: &AppHandle, services: &Arc<Services>, shutdown: A
             parts(app, services, shutdown),
         )),
         env: Arc::new(ShellEnv { app: app.clone() }),
+        notifier: Arc::new(ShellNotifier::new(app, services)),
     };
     let config = UpdateConfig {
         current: services.version.clone(),
@@ -250,11 +254,11 @@ pub(crate) async fn quit(app: &AppHandle) {
     app.exit(0);
 }
 
-pub(crate) async fn dismiss_applied(cx: &Cx) -> Result<(), AppError> {
-    const SITE: &str = "dismiss_update_applied";
+pub(crate) async fn mark_seen(cx: &Cx, clicked: bool) -> Result<(), AppError> {
+    const SITE: &str = "mark_update_seen";
     let updates = updates(cx, SITE)?;
     updates
-        .dismiss_applied()
+        .mark_seen(clicked)
         .await
         .map_err(|error| app_error(&error, SITE))
 }
