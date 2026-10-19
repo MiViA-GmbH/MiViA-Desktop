@@ -1,15 +1,17 @@
 import '../features/history/history.css';
 
-import { Button, Stack, Tabs, TextInput } from '@mantine/core';
+import { Button, Group, Stack, Tabs, TextInput } from '@mantine/core';
 import { useDebouncedCallback } from '@mantine/hooks';
 import { ICON_STROKE } from '@mivia-ai/theme';
 import { IconDownload, IconSearch } from '@tabler/icons-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLazyRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { historyQuery } from '../entities/series/queries';
+import { historyQuery, seriesIds } from '../entities/series/queries';
 import { type HistorySearch, historyFilter } from '../entities/series/search';
+import { CustomReportDialog } from '../features/history/custom-report-dialog';
 import { CustomReportsList } from '../features/history/custom-reports-list';
 import { HistoryToolbar } from '../features/history/history-toolbar';
 import { SeriesList } from '../features/history/series-list';
@@ -28,15 +30,27 @@ function useAnySeries(search: HistorySearch): boolean {
 function ExportList({ search }: { search: HistorySearch }) {
 	const { t } = useTranslation();
 	const exporter = useExport();
+	const [series, setSeries] = useState<string[] | null>(null);
+	const collect = useMutation({ mutationFn: () => seriesIds(historyFilter(search)), onSuccess: setSeries });
 	return (
-		<Button
-			leftSection={<IconDownload size={16} stroke={ICON_STROKE} />}
-			loading={exporter.isPending}
-			onClick={() => exporter.mutate({ filter: historyFilter(search), series: null })}
-			variant="default"
-		>
-			{t('desktop.history.export')}
-		</Button>
+		<Group gap="sm" wrap="nowrap">
+			<Button
+				leftSection={<IconDownload size={16} stroke={ICON_STROKE} />}
+				loading={collect.isPending}
+				onClick={() => collect.mutate()}
+				variant="default"
+			>
+				{t('desktop.history.export')}
+			</Button>
+			<Button
+				loading={exporter.isPending}
+				onClick={() => exporter.mutate({ filter: historyFilter(search), series: null })}
+				variant="default"
+			>
+				{t('desktop.history.exportRecord')}
+			</Button>
+			{series && <CustomReportDialog csvOnly onClose={() => setSeries(null)} series={series} />}
+		</Group>
 	);
 }
 

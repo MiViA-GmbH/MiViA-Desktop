@@ -203,6 +203,7 @@
 			"clearSelection": "Clear selection",
 			"createReport": "Create custom report",
 			"export": "Save list as CSV",
+			"exportRecord": "Save history record (CSV)",
 			"exportSeries": "Save series record (CSV)",
 			"saveResults": "Save results as CSV",
 			"exported_one": "Exported 1 file to {{folder}}",
