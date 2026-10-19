@@ -13,6 +13,7 @@ mod policy;
 mod proxy;
 mod reports;
 mod taskbar;
+mod toast;
 mod trust;
 mod upload;
 mod watch;
@@ -34,6 +35,7 @@ pub use fs::OsFileSystem;
 pub use images::{ImageCount, count_images};
 pub use integration::{
     Applied, Desired, RUN_NAME, SEND_TO_ARGS, ShellIntegration, ShellPlaces, VERB_KEY,
+    register_app_id,
 };
 pub use legacy::{
     LegacyInstall, StartupEntry, close_legacy, find_legacy, is_network, legacy_at,
@@ -44,5 +46,6 @@ pub use pipe::open_pipe_client;
 pub use policy::{machine_guid, read_policies};
 pub use proxy::{WinHttpProxyResolver, static_entries};
 pub use taskbar::taskbar_is_light;
+pub use toast::{APP_ID, Toast, show_toast, withdraw_toasts};
 pub use trust::{AuthenticodeError, SignerFacts, SignerPin, verify_authenticode};
 pub use watch::NotifyWatcher;

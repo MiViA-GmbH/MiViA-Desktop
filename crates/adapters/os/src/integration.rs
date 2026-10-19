@@ -116,6 +116,13 @@ fn set_text(key: &RegKey, name: &str, value: &str, changed: &mut bool) -> io::Re
     Ok(())
 }
 
+pub fn register_app_id(places: &ShellPlaces, name: &str, icon: &Path) -> io::Result<()> {
+    let path = format!(r"{}\AppUserModelId\{}", places.classes, crate::APP_ID);
+    let (key, _) = user().create_subkey(path)?;
+    key.set_raw_value("DisplayName", &expand_sz(name))?;
+    key.set_raw_value("IconUri", &expand_sz(&icon.display().to_string()))
+}
+
 impl ShellIntegration {
     pub fn for_install(places: ShellPlaces, exe: &Path) -> Option<Self> {
         let location: String = user()

@@ -144,6 +144,7 @@
   !insertmacro MiviaRemoveVerb "SystemFileAssociations\.tif"
   !insertmacro MiviaRemoveVerb "SystemFileAssociations\.tiff"
   !insertmacro MiviaRemoveVerb "SystemFileAssociations\.bmp"
+  DeleteRegKey HKCU "Software\Classes\AppUserModelId\${BUNDLEID}"
   !insertmacro MiviaRemoveTree "$LOCALAPPDATA\${BUNDLEID}\inbox"
   Delete "$LOCALAPPDATA\${BUNDLEID}\instance.nonce"
 !macroend
