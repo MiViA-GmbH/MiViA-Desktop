@@ -2,6 +2,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Duration;
 
 use mivia_domain::path::WinPath;
+use parking_lot::Mutex;
 use tauri::utils::config::Color;
 use tauri::webview::{NewWindowResponse, PermissionResponse};
 use tauri::{
@@ -26,7 +27,7 @@ const NO_PEER_CONNECTIONS: &str = "delete window.RTCPeerConnection;\
 const WRY_DEFAULT_ARGS: &str = "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection";
 
 static GENERATION: AtomicU64 = AtomicU64::new(0);
-static REPORT_PENDING: AtomicBool = AtomicBool::new(false);
+static PENDING: Mutex<Option<Route>> = Mutex::new(None);
 static PAINTED: AtomicBool = AtomicBool::new(false);
 static PREVIEW_SHOWN: AtomicBool = AtomicBool::new(false);
 
@@ -122,8 +123,12 @@ pub(crate) fn open_at(app: &AppHandle, route: Route) {
     if existed {
         navigate(app, route);
     } else {
-        REPORT_PENDING.store(matches!(route, Route::ProblemReport), Ordering::SeqCst);
+        remember(route);
     }
+}
+
+fn remember(route: Route) {
+    *PENDING.lock() = (route != Route::Overview).then_some(route);
 }
 
 fn navigate(app: &AppHandle, route: Route) {
@@ -150,8 +155,9 @@ pub(crate) fn shown(app: &AppHandle) {
             "ui_ready"
         });
     }
-    if REPORT_PENDING.swap(false, Ordering::SeqCst) {
-        navigate(app, Route::ProblemReport);
+    let pending = PENDING.lock().take();
+    if let Some(route) = pending {
+        navigate(app, route);
     }
 }
 
@@ -228,5 +234,19 @@ async fn destroy_later(app: AppHandle, generation: u64, checks: u32) {
         && let Err(error) = window.destroy()
     {
         tracing::warn!(%error, "window.destroyFailed");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{PENDING, Route, remember};
+
+    #[test]
+    fn a_route_asked_for_before_the_window_exists_is_kept_until_it_is_ready() {
+        remember(Route::Updates);
+        assert_eq!(PENDING.lock().take(), Some(Route::Updates));
+        remember(Route::ProblemReport);
+        remember(Route::Overview);
+        assert_eq!(PENDING.lock().take(), None);
     }
 }

@@ -14,7 +14,7 @@ pub(crate) struct StoreChangedEvent(pub(crate) StoreChanged);
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct LanguageChanged(pub(crate) LocaleView);
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, Type)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub(crate) enum Route {
     Overview,
