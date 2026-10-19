@@ -73,7 +73,7 @@ function useOpened(series: BatchSummary | undefined): void {
 function SeriesMenu({ series, onDelete }: { series: BatchSummary; onDelete: (subject: DeleteSubject) => void }) {
 	const { t } = useTranslation();
 	const exporter = useExport();
-	const [custom, setCustom] = useState(false);
+	const [custom, setCustom] = useState<'report' | 'csv' | null>(null);
 	const { id } = series;
 	return (
 		<>
@@ -84,16 +84,17 @@ function SeriesMenu({ series, onDelete }: { series: BatchSummary; onDelete: (sub
 					</ActionIcon>
 				</Menu.Target>
 				<Menu.Dropdown>
+					<Menu.Item onClick={() => setCustom('csv')}>{t('desktop.history.saveResults')}</Menu.Item>
 					<Menu.Item onClick={() => exporter.mutate({ filter: null, series: id })}>
 						{t('desktop.history.exportSeries')}
 					</Menu.Item>
-					<Menu.Item onClick={() => setCustom(true)}>{t('desktop.history.createReport')}</Menu.Item>
+					<Menu.Item onClick={() => setCustom('report')}>{t('desktop.history.createReport')}</Menu.Item>
 					<Menu.Item onClick={() => onDelete({ series: id, name: series.label, images: series.counts.files })}>
 						{t('desktop.delete.seriesAction')}
 					</Menu.Item>
 				</Menu.Dropdown>
 			</Menu>
-			{custom && <CustomReportDialog onClose={() => setCustom(false)} series={[id]} />}
+			{custom && <CustomReportDialog csvOnly={custom === 'csv'} onClose={() => setCustom(null)} series={[id]} />}
 		</>
 	);
 }

@@ -25,7 +25,7 @@ type Form = {
 	folder: FolderPick | null;
 };
 
-type DialogProps = { series: string[]; onClose: () => void };
+type DialogProps = { series: string[]; csvOnly?: boolean; onClose: () => void };
 
 const LANGUAGES = [
 	{ value: 'en', label: 'English' },
@@ -129,12 +129,12 @@ function SettingsFields({ draft, form, update }: FieldsProps) {
 	);
 }
 
-function Body({ draft, series, onClose }: DialogProps & { draft: CustomReportDraft }) {
+function Body({ draft, series, csvOnly = false, onClose }: DialogProps & { draft: CustomReportDraft }) {
 	const { t } = useTranslation();
 	const [form, setForm] = useState<Form>(() => ({
 		name: '',
-		pdf: true,
-		csv: false,
+		pdf: !csvOnly,
+		csv: csvOnly,
 		includeImages: false,
 		language: draft.language,
 		decimalComma: draft.language === 'de',
@@ -182,7 +182,7 @@ function Body({ draft, series, onClose }: DialogProps & { draft: CustomReportDra
 	);
 }
 
-export function CustomReportDialog({ series, onClose }: DialogProps) {
+export function CustomReportDialog({ series, csvOnly = false, onClose }: DialogProps) {
 	const { t } = useTranslation();
 	const draft = useQuery(customDraftQuery(series)).data;
 	const title = (
@@ -200,7 +200,7 @@ export function CustomReportDialog({ series, onClose }: DialogProps) {
 			title={title}
 			yOffset="2dvh"
 		>
-			{draft ? <Body draft={draft} onClose={onClose} series={series} /> : <Loader size="sm" />}
+			{draft ? <Body csvOnly={csvOnly} draft={draft} onClose={onClose} series={series} /> : <Loader size="sm" />}
 		</Modal>
 	);
 }

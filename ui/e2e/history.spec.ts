@@ -97,6 +97,15 @@ test('series page lists its changes', async ({ page }) => {
 	await page.screenshot({ path: `${SHOTS}/s2-series-changes-en.png` });
 });
 
+test('save results as CSV opens the report dialog with only the data file', async ({ page }) => {
+	await open(page, '/series/214?scenario=calm');
+	await page.getByRole('button', { name: 'More actions' }).click();
+	await page.getByRole('menuitem', { name: 'Save results as CSV' }).click();
+	const dialog = page.getByRole('dialog');
+	await expect(dialog.getByRole('checkbox', { name: 'Data (CSV)' })).toBeChecked();
+	await expect(dialog.getByRole('checkbox', { name: 'PDF' })).not.toBeChecked();
+});
+
 test('deleting a series asks first and says what each choice does', async ({ page }) => {
 	await open(page, '/series/214?scenario=calm');
 	await page.getByRole('button', { name: 'More actions' }).click();
