@@ -21,8 +21,8 @@ function useIntegration() {
 	return { view, set };
 }
 
-function lockNote(locked: boolean | null, t: ReturnType<typeof useTranslation>['t']): string | undefined {
-	return locked === null ? undefined : t('desktop.wizard.common.policy');
+function lockNote(locked: boolean | null, note: string): string | undefined {
+	return locked === null ? undefined : note;
 }
 
 export function AutostartSwitch() {
@@ -36,7 +36,11 @@ export function AutostartSwitch() {
 		<Switch
 			aria-label={t('desktop.integration.autostart.label')}
 			checked={view.autostart === 'on'}
-			description={off ? t('desktop.integration.autostart.turnedOff') : lockNote(view.locks.autostart, t)}
+			description={
+				off
+					? t('desktop.integration.autostart.turnedOff')
+					: lockNote(view.locks.autostart, t('desktop.wizard.common.policy'))
+			}
 			disabled={!view.available || off || view.locks.autostart !== null}
 			label={
 				<HelpLabel help={t('desktop.integration.autostart.help')} label={t('desktop.integration.autostart.label')} />
@@ -57,7 +61,9 @@ export function ExplorerSwitch() {
 		<Switch
 			aria-label={t('desktop.integration.explorer.label')}
 			checked={view.explorer}
-			description={[lockNote(view.locks.explorer, t), unavailable].filter(Boolean).join(' ')}
+			description={[lockNote(view.locks.explorer, t('desktop.wizard.common.policy')), unavailable]
+				.filter(Boolean)
+				.join(' ')}
 			disabled={!view.available || view.locks.explorer !== null}
 			label={
 				<HelpLabel help={t('desktop.integration.explorer.help')} label={t('desktop.integration.explorer.label')} />
