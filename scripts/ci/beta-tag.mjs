@@ -51,6 +51,19 @@ const last = gh(['api', `repos/${repo}/git/matching-refs/tags/${prefix}`, '--jq'
 	.filter(Boolean)
 	.reduce((max, match) => Math.max(max, Number(match[1])), 0);
 const tag = `${prefix}${last + 1}`;
+const previous = gh([
+	'release',
+	'list',
+	'--repo',
+	repo,
+	'--exclude-drafts',
+	'--limit',
+	'1',
+	'--json',
+	'tagName',
+	'--jq',
+	'.[0].tagName // ""',
+]).trim();
 
 gh(['api', `repos/${repo}/git/refs`, '-f', `ref=refs/tags/${tag}`, '-f', `sha=${sha}`]);
 gh([
@@ -64,8 +77,8 @@ gh([
 	'--verify-tag',
 	'--title',
 	tag,
-	'--notes',
-	'',
+	'--generate-notes',
+	...(previous ? ['--notes-start-tag', previous] : []),
 ]);
 process.stdout.write(`beta-tag: ${tag} at ${sha}\n`);
 if (process.env.GITHUB_OUTPUT) {
