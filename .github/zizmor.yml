@@ -9,6 +9,7 @@ rules:
   superfluous-actions:
     ignore:
       # create-pull-request signs bot commits through the API, which gh pr create does not.
+      - i18n-pull.yml
       - promote.yml
       - release-published.yml
       - update-visual-baselines.yml

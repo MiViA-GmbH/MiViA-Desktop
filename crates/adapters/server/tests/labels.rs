@@ -40,7 +40,6 @@ async fn fresh_labels_are_validated_cached_and_merged_over_the_snapshot() {
     let served = labels.served("en");
     assert_eq!(served["model"]["new-model-id"], "New model");
     assert!(served.get("dashboard").is_none());
-    assert_eq!(served["feedback"], before["feedback"]);
     assert!(!labels.refresh(&api, "en").await.unwrap());
 }
 

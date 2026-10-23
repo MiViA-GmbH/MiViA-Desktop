@@ -10,3 +10,4 @@ Model and feedback labels (Tolgee namespace `core`) change when new models ship,
 ## Consequences
 
 - `core` never sits in the JS bundle; labels are current without a release; server-side `desktop` keys can never override the app's own strings.
+- Since ADR 0051 the snapshot holds only `model` and the nightly pull refreshes it.
