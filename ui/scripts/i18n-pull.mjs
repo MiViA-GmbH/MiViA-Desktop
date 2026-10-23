@@ -51,15 +51,15 @@ export function pull(files, remote) {
 	};
 }
 
-export function core(remote) {
+export function modelLabels(remote) {
 	if (!isObject(remote.model) || Object.keys(remote.model).length === 0) {
 		throw new Error('the language file has no model labels');
 	}
 	return sorted({ model: remote.model });
 }
 
-async function fetchLanguage(origin, language) {
-	const response = await fetch(`${origin}/api/languages/${language}`);
+async function fetchLanguage(language) {
+	const response = await fetch(`https://app.mivia.ai/api/languages/${language}`);
 	if (!response.ok) {
 		throw new Error(`${language}: HTTP ${response.status}`);
 	}
@@ -75,10 +75,10 @@ function list(title, keys) {
 	return [`${title}:`, '', ...keys.map((key) => `- \`${key}\``), ''];
 }
 
-async function main(origin) {
+async function main() {
 	const body = ['Texts pulled from Tolgee through the public language files of app.mivia.ai.', ''];
 	for (const language of ['en', 'de']) {
-		const remote = await fetchLanguage(origin, language);
+		const remote = await fetchLanguage(language);
 		const paths = {
 			desktop: `ui/src/shared/i18n/locales/desktop/${language}.json`,
 			setup: `ui/src/shared/i18n/locales/setup/${language}.json`,
@@ -86,7 +86,7 @@ async function main(origin) {
 		const { files, onlyRemote, onlyRepo } = pull({ desktop: read(paths.desktop), setup: read(paths.setup) }, remote);
 		write(paths.desktop, files.desktop);
 		write(paths.setup, files.setup);
-		write(`crates/adapters/server/labels/core.${language}.json`, core(remote));
+		write(`crates/adapters/server/labels/core.${language}.json`, modelLabels(remote));
 		body.push(
 			...list(`Keys only in Tolgee (${language})`, onlyRemote),
 			...list(`Keys only in the repo (${language})`, onlyRepo),
@@ -96,5 +96,5 @@ async function main(origin) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-	await main(process.argv[2] ?? 'https://app.mivia.ai');
+	await main();
 }

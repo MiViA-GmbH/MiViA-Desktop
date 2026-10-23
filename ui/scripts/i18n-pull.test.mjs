@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { core, pull } from './i18n-pull.mjs';
+import { modelLabels, pull } from './i18n-pull.mjs';
 
 describe('pull', () => {
 	const repo = {
@@ -36,14 +36,14 @@ describe('pull', () => {
 	});
 });
 
-describe('core', () => {
+describe('modelLabels', () => {
 	it('keeps only the sorted model tree', () => {
-		const labels = core({ model: { b: 'B', a: 'A', feedback: { MAG: 'Mag' } }, feedback: { MAG: 'Mag' } });
+		const labels = modelLabels({ model: { b: 'B', a: 'A', feedback: { MAG: 'Mag' } }, feedback: { MAG: 'Mag' } });
 		expect(labels).toEqual({ model: { a: 'A', b: 'B', feedback: { MAG: 'Mag' } } });
 		expect(Object.keys(labels.model)).toEqual(['a', 'b', 'feedback']);
 	});
 
 	it('refuses a file without models', () => {
-		expect(() => core({ model: {} })).toThrow();
+		expect(() => modelLabels({ model: {} })).toThrow();
 	});
 });
