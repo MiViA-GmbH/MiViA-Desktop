@@ -1,0 +1,64 @@
+name: i18n-pull
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: i18n-pull
+  cancel-in-progress: false
+
+jobs:
+  pull:
+    name: Pull strings from Tolgee
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: release-bot
+    permissions:
+      contents: read  # check out the repository
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          allowed-endpoints: api.github.com:443 github.com:443 app.mivia.ai:443
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: App token
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Pull
+        id: pull
+        run: |
+          status=0
+          node ui/scripts/i18n-pull.mjs > "$RUNNER_TEMP/i18n-pull.md" || status=$?
+          case "$status" in
+            0) ;;
+            2) echo "missing=true" >> "$GITHUB_OUTPUT" ;;
+            *) exit "$status" ;;
+          esac
+      - name: Pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.app.outputs.token }}
+          branch: bot/i18n-pull
+          title: "chore(i18n): pull the strings from Tolgee"
+          commit-message: "chore(i18n): pull the strings from Tolgee"
+          body-path: ${{ runner.temp }}/i18n-pull.md
+          sign-commits: true
+      - name: Keys missing in Tolgee
+        if: steps.pull.outputs.missing == 'true'
+        run: |
+          cat "$RUNNER_TEMP/i18n-pull.md"
+          echo "::error::Some repo keys are missing in the published Tolgee strings. Add them in Tolgee and update the translations."
+          exit 1

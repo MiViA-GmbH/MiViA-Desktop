@@ -19,6 +19,7 @@ const TRIGGERS: &[(&str, &[&str])] = &[
     ("main.yml", &["push"]),
     ("nightly.yml", &["schedule", "workflow_dispatch"]),
     ("weekly.yml", &["schedule", "workflow_dispatch"]),
+    ("i18n-pull.yml", &["schedule", "workflow_dispatch"]),
     ("release-please.yml", &["push"]),
     ("build-release.yml", &["workflow_call"]),
     ("beta.yml", &["workflow_dispatch"]),

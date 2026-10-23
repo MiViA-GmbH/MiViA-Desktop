@@ -77,6 +77,7 @@ function list(title, keys) {
 
 async function main() {
 	const body = ['Texts pulled from Tolgee through the public language files of app.mivia.ai.', ''];
+	let missing = false;
 	for (const language of ['en', 'de']) {
 		const remote = await fetchLanguage(language);
 		const paths = {
@@ -91,8 +92,10 @@ async function main() {
 			...list(`Keys only in Tolgee (${language})`, onlyRemote),
 			...list(`Keys only in the repo (${language})`, onlyRepo),
 		);
+		missing ||= onlyRepo.length > 0;
 	}
 	process.stdout.write(`${body.join('\n')}\n`);
+	process.exitCode = missing ? 2 : 0;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

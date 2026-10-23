@@ -13,3 +13,4 @@ Desktop strings are edited only in Tolgee. A nightly job pulls the texts from th
 - Text changes need no developer; key changes still go through a PR.
 - New texts reach the desktop only after an admin update on prod.
 - Drift between Tolgee and the repo shows up as the nightly PR.
+- A repo key missing from the published strings turns the `i18n-pull` workflow red until it is added in Tolgee and published. The workflow can also be run by hand.
