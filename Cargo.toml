@@ -116,7 +116,7 @@ lto = "fat"
 codegen-units = 1
 panic = "unwind"
 strip = "symbols"
-opt-level = "s"
+opt-level = "z"
 
 [profile.release.package.mivia-preview]
 opt-level = 3

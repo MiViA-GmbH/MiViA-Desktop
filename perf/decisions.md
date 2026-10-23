@@ -77,7 +77,7 @@ The budget row measures tree CPU over 10 minutes starting 60 s after hide, but t
 
 ## size.exe
 
-Pending. The release profile refuses to compile without the production updater keys and the signer EKU (`main.rs` const assert), and there is no local Tauri CLI for the NSIS bundle. The e2e exe is 31.3 MB without LTO and is not comparable. Measured by the nightly or release job.
+Measured by the nightly. The update notice (#117) took the exe from 21.99 to 22.15 MiB at opt-level s. At opt-level z it is 19.95 MiB (local build, same command as the nightly). Hashing, JPEG, resize, preview and SQLite stay at opt-level 3. Local io run at z: burst.5000.ready 18.1 s (18.3 s at s), hist.page 3.2 ms, report.save 56 ms, one run each.
 
 ## Scenarios and metrics not built yet
 
