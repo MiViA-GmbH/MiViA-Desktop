@@ -38,7 +38,7 @@ specta-typescript = "=0.0.12"
 tauri = { version = "=2.12.1", features = ["protocol-asset", "tray-icon", "specta"] }
 tauri-plugin-updater = { version = "=2.13.2", default-features = false, features = ["rustls-tls"] }
 tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
-tokio = { version = "=1.53.1", features = ["macros", "rt-multi-thread", "sync", "time"] }
+tokio = { version = "=1.53.3", features = ["macros", "rt-multi-thread", "sync", "time"] }
 tracing = "=0.1.44"
 uuid = { version = "=1.26.1", default-features = false, features = ["v7"] }
 
@@ -49,5 +49,5 @@ mivia-testkit.workspace = true
 mivia-update-sig = { workspace = true, features = ["test-keys"] }
 tauri = { version = "=2.12.1", features = ["protocol-asset", "tray-icon", "specta", "test"] }
 tempfile = "=3.27.0"
-tokio = { version = "=1.53.1", features = ["macros", "net"] }
+tokio = { version = "=1.53.3", features = ["macros", "net"] }
 zip = { version = "=9.0.0", default-features = false, features = ["deflate-flate2"] }
