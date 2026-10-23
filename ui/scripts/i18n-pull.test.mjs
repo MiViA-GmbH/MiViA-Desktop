@@ -1,5 +1,22 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { modelLabels, pull } from './i18n-pull.mjs';
+import { modelLabels, pull, sorted } from './i18n-pull.mjs';
+
+describe('committed language files', () => {
+	const files = [
+		'src/shared/i18n/locales/desktop/en.json',
+		'src/shared/i18n/locales/desktop/de.json',
+		'src/shared/i18n/locales/setup/en.json',
+		'src/shared/i18n/locales/setup/de.json',
+		'../crates/adapters/server/labels/core.en.json',
+		'../crates/adapters/server/labels/core.de.json',
+	];
+
+	it.each(files)('%s is sorted like the pull writes it', (path) => {
+		const text = readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+		expect(text).toBe(`${JSON.stringify(sorted(JSON.parse(text)), null, '\t')}\n`);
+	});
+});
 
 describe('pull', () => {
 	const repo = {

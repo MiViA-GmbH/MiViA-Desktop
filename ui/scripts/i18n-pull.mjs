@@ -11,7 +11,7 @@ function leaves(value, prefix = '') {
 	);
 }
 
-function sorted(value) {
+export function sorted(value) {
 	if (!isObject(value)) {
 		return value;
 	}

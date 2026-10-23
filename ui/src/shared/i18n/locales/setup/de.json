@@ -1,218 +1,218 @@
 {
 	"desktop": {
-		"wizard": {
-			"common": {
-				"next": "Weiter",
-				"back": "Zurück",
-				"tryAgain": "Erneut versuchen",
-				"stepOf": "Schritt {{n}} von {{m}}",
-				"policy": "Von Ihrer IT-Abteilung festgelegt",
-				"server": "Server: {{host}}",
-				"help": "Hilfe: {{contact}}"
-			},
-			"steps": {
-				"legacy": "Alte Version",
-				"key": "Zugangsschlüssel",
-				"folder": "Eingangsordner",
-				"series": "Bildserien",
-				"models": "Modelle",
-				"finish": "Abschluss",
-				"skipped": "übersprungen"
-			},
-			"welcome": {
-				"title": "Willkommen bei MiViA Desktop",
-				"lead": "MiViA Desktop wertet Ihre Mikroskopbilder automatisch aus. Neue Bilder in einem Ordner Ihrer Wahl werden an MiViA gesendet, die Berichte werden auf diesem PC gespeichert.",
-				"need": "Die Einrichtung dauert etwa 3 Minuten. Sie brauchen Ihren MiViA-Zugangsschlüssel, und dieser PC braucht eine Internetverbindung.",
-				"noKey": "Noch keinen Schlüssel? Sie können MiViA Desktop schließen und später weitermachen. Es geht nichts verloren.",
-				"language": "Sprache / Language",
-				"langAuto": "Automatisch, wie Windows ({{language}}) / Automatic, like Windows ({{language}})",
-				"legacyManual": "Ich habe bisher das alte MiViA Desktop benutzt",
-				"start": "Einrichtung starten"
-			},
-			"legacy": {
-				"title": "Alte Einstellungen übernehmen?",
-				"found": "Das alte MiViA Desktop ist auf diesem PC, in <code>{{path}}</code>. Es hat diese Einstellungen:",
-				"hasKey": "Zugangsschlüssel",
-				"hasFolder": "Eingangsordner: <code>{{path}}</code>",
-				"hasModels": "Modelle: {{count}}",
-				"safe": "Ihre Bilder und bisherigen Berichte bleiben, wo sie sind.",
-				"takeAll": "Alles übernehmen",
-				"keyOnly": "Nur den Zugangsschlüssel",
-				"none": "Ohne alte Einstellungen beginnen",
-				"stop": "Altes MiViA Desktop abschalten (empfohlen, verhindert doppelte Auswertung). Es wird nicht gelöscht.",
-				"stopNetwork": "Das alte MiViA Desktop liegt in einem Netzwerkordner. Andere PCs nutzen es vielleicht noch, deshalb wird es nicht abgeschaltet.",
-				"running": "Das alte MiViA Desktop läuft noch.",
-				"closeIt": "Altes MiViA Desktop schließen",
-				"other": "Nicht der richtige? Ordner des alten MiViA Desktop wählen",
-				"notInFolder": "In diesem Ordner wurden keine Einstellungen des alten MiViA Desktop gefunden. Wählen Sie den Ordner, der „MiViA Desktop.exe“ enthält.",
-				"unreadable": "Die Einstellungen des alten MiViA Desktop konnten nicht gelesen werden. Geben Sie Ihren Zugangsschlüssel im nächsten Schritt ein."
-			},
+		"account": {
 			"key": {
-				"title": "Mit Ihrem MiViA-Konto verbinden",
-				"lead": "Fügen Sie Ihren Zugangsschlüssel ein oder tippen Sie ihn ab. Er verbindet diesen PC mit Ihrem MiViA-Konto.",
-				"label": "Zugangsschlüssel",
-				"helpTitle": "Wo finde ich meinen Zugangsschlüssel?",
-				"help": "Fragen Sie die Person, die MiViA in Ihrem Labor verwaltet, oder melden Sie sich bei {{host}} an und öffnen Sie Zugangsschlüssel. Ein Schlüssel beginnt mit „mv-“, danach folgen 64 Buchstaben.",
-				"malformed": "Das sieht nicht wie ein Zugangsschlüssel aus. Kopieren Sie den ganzen Schlüssel erneut.",
-				"rejected": "Dieser Zugangsschlüssel wurde nicht akzeptiert. Prüfen Sie, ob Sie den ganzen Schlüssel kopiert haben, oder fragen Sie nach einem neuen.",
-				"blocked": "Ihr MiViA-Konto ist gesperrt. Wenden Sie sich an den MiViA-Support.",
-				"adminScope": "Dieser Schlüssel hat Administratorrechte. Erstellen Sie in MiViA einen Schlüssel ohne Administratorrechte und verwenden Sie diesen.",
-				"offline": "MiViA ist nicht erreichbar. Prüfen Sie die Internetverbindung. Funktioniert sie im Browser, bitten Sie Ihre IT, {{host}} freizugeben.",
-				"autoRetry": "MiViA versucht es alle 30 Sekunden erneut. Sie können MiViA Desktop auch schließen und später weitermachen.",
-				"copyForIt": "Details für die IT kopieren",
-				"connected": "Verbunden als {{name}} ({{email}})",
-				"imported": "Der Zugangsschlüssel des alten MiViA Desktop wurde akzeptiert.",
-				"importedInvalid": "Der Zugangsschlüssel des alten MiViA Desktop wird nicht mehr akzeptiert. Geben Sie einen neuen ein.",
-				"stored": "Der Schlüssel ist sicher in Windows gespeichert. Aus Sicherheitsgründen wurde die Kopie in der Zwischenablage gelöscht.",
-				"storedOnly": "Der Schlüssel ist sicher in Windows gespeichert.",
-				"licenseInactive": "Ihre MiViA-Lizenz ist nicht aktiv. Sie können die Einrichtung jetzt abschließen; die Auswertung beginnt, sobald die Lizenz aktiv ist.",
-				"storeFailed": "Windows konnte den Zugangsschlüssel nicht speichern. Nach einem Neustart von MiViA Desktop müssen Sie ihn erneut eingeben.",
-				"other": "Anderen Schlüssel verwenden",
-				"otherAccount": "Dieser Schlüssel gehört zu einem anderen Konto. Die gewählten Modelle wurden zurückgesetzt."
+				"connect": "Mit einem Zugangsschlüssel verbinden",
+				"connectLead": "Es ist kein Konto verbunden. Fügen Sie Ihren Zugangsschlüssel ein, um diesen PC wieder zu verbinden.",
+				"hint": "Tipp für die Person, der der Schlüssel gehört: Der alte Schlüssel kann unter {{host}} › Zugangsschlüssel gelöscht werden.",
+				"replace": "Zugangsschlüssel ersetzen",
+				"save": "Schlüssel speichern",
+				"saved": "Neuer Zugangsschlüssel gespeichert. Verbunden als {{name}}."
 			},
-			"folder": {
-				"title": "Wo speichert Ihr Mikroskop die Bilder?",
-				"lead": "Wählen Sie diesen Ordner. MiViA wertet jedes neue Bild aus, das dort ankommt. Ihre Bilder werden nie verschoben oder gelöscht.",
-				"choose": "Ordner wählen…",
-				"change": "Anderen Ordner wählen",
-				"notSure": "Nicht sicher? Speichern Sie im Mikroskop-Programm ein Testbild und schauen Sie, wo es gespeichert wird. Sie können den Ordner später ändern.",
-				"skip": "Überspringen: Ich möchte nur Einzelbilder aus dem Explorer auswerten. Sie können später einen Ordner hinzufügen.",
-				"required": "Wählen Sie einen Ordner oder überspringen Sie diesen Schritt.",
-				"notFound": "MiViA kann diesen Ordner nicht öffnen. Wählen Sie einen anderen Ordner.",
-				"tooBroad": "Wählen Sie einen Ordner nur für Mikroskopbilder, nicht ein ganzes Laufwerk oder einen Systemordner.",
-				"general": "MiViA würde jedes Bild in diesem Ordner auswerten, auch Bilder, die nicht vom Mikroskop stammen. Ein eigener Ordner ist besser.",
-				"nested": "Dieser Ordner liegt im Eingangsordner {{name}} oder enthält ihn. Wählen Sie einen anderen Ordner.",
-				"network": "Dies ist ein Netzwerkordner. Neue Bilder werden dort etwas später erkannt. Überwacht auch der PC einer Kollegin oder eines Kollegen diesen Ordner, wertet jeder PC die Bilder aus. Einigen Sie sich auf einen PC.",
-				"oneDrive": "Dieser Ordner liegt in OneDrive. Bilder und Berichte darin werden in das OneDrive Ihrer Organisation kopiert. Bilder, die nur online liegen, werden vor der Auswertung heruntergeladen. Überwacht auch der PC einer Kollegin oder eines Kollegen diesen Ordner, wertet jeder PC die Bilder aus.",
-				"mappedDrive": "Laufwerk {{letter}} ist ein Netzlaufwerk. MiViA verwendet seine vollständige Adresse {{unc}}, damit der Ordner auch ohne Laufwerksbuchstaben gefunden wird.",
-				"existing_one": "Dieser Ordner enthält bereits 1 Bild.",
-				"existing_other": "Dieser Ordner enthält bereits {{count}} Bilder.",
-				"existingMany": "Dieser Ordner enthält bereits mehr als {{count}} Bilder.",
-				"onlyNew": "Nur neue Bilder auswerten (empfohlen)",
-				"alsoExisting_one": "Auch das vorhandene Bild auswerten",
-				"alsoExisting_other": "Auch die {{count}} vorhandenen Bilder auswerten",
-				"existingLater": "Bilder, die bereits im Ordner liegen, werden nur ausgewertet, wenn Sie das hier wählen.",
-				"uploadCost": "Sie haben noch {{remaining}} Bild-Uploads. Das nutzt bis zu {{count}} davon.",
-				"legacyMissing": "Der Eingangsordner des alten MiViA Desktop ({{path}}) existiert nicht mehr. Wählen Sie einen Ordner.",
-				"watchedElsewhere": "Dieser Ordner wird bereits von MiViA Desktop auf „{{machine}}“ („{{user}}“) überwacht. Bilder würden doppelt ausgewertet und Berichte doppelt gespeichert. Pausieren oder entfernen Sie ihn zuerst auf dem anderen PC."
+			"signOut": {
+				"button": "Abmelden",
+				"cancel": "Abbrechen",
+				"text": "Eingangsordner werden nicht mehr überwacht. Bilder in den Ordnern werden nicht gelöscht. Bildserien, die noch gesammelt werden, werden abgeschlossen; Auswertungen und Berichte werden fortgesetzt, wenn Sie sich wieder als {{name}} anmelden.",
+				"title": "Von {{name}} abmelden?"
 			},
-			"series": {
-				"title": "Wie kommen die Bilder in diesen Ordner?",
-				"lead": "MiViA sammelt Bilder, die zusammen ankommen, zum Beispiel die Bilder einer Probe, und speichert dafür einen Bericht pro Modell.",
-				"microscope": "Die Mikroskop-Software speichert jedes Bild hier",
-				"microscopeHint": "Der Bericht wird 15 Minuten nach dem letzten neuen Bild erstellt.",
-				"wholeFolder": "Ich kopiere einen ganzen Ordner pro Probe",
-				"wholeFolderHint": "Der Bericht wird 1 Minute nach dem Kopieren des Ordners erstellt. Jeder Unterordner erhält einen eigenen Bericht.",
-				"byHand": "Ich kopiere Bilder von Hand",
-				"byHandHint": "Der Bericht wird 5 Minuten nach dem letzten neuen Bild erstellt.",
-				"later": "Sie können den Bericht jederzeit mit „Bericht jetzt erstellen“ vorzeitig erstellen und die Wartezeit später in den Ordnereinstellungen ändern.",
-				"reportsIn": "Berichte werden gespeichert in:",
-				"reportsChange": "Ändern",
-				"modeSubfolder": "Im Unterordner „{{name}}“ des Eingangsordners (empfohlen)",
-				"modeBeside": "Neben den Bildern (im Unterordner jeder Bildserie)",
-				"asBefore": "wie beim alten MiViA Desktop",
-				"modeCustom": "In einem anderen Ordner…",
-				"probeDenied": "MiViA kann in {{folder}} keine Berichte speichern. Die Berichte werden stattdessen in {{fallback}} gespeichert.",
-				"longPath": "Dieser Ordnerpfad ist lang, Berichtsnamen werden gekürzt."
-			},
-			"models": {
-				"title": "Mit welchen Modellen sollen die Bilder ausgewertet werden?",
-				"lead": "Wählen Sie eines oder mehrere. Jedes neue Bild wird mit jedem gewählten Modell ausgewertet, jedes Modell erhält einen eigenen Bericht.",
-				"search": "Modelle suchen",
-				"customization": "Benutzerdefinierte Konfiguration",
-				"customizationHint": "Für Ihr Labor auf {{host}} gespeicherte Einstellungen",
-				"standard": "Standardeinstellungen",
-				"choosePlaceholder": "Konfiguration wählen",
-				"loading": "Modelle werden geladen…",
-				"required": "Wählen Sie mindestens ein Modell.",
-				"none": "Ihr Konto hat noch keine Modelle. Wenden Sie sich an die verantwortliche Person in Ihrem Labor oder an {{contact}}. Sie können die Einrichtung jetzt abschließen; der Ordner beginnt, sobald ein Modell verfügbar ist.",
-				"loadFailed": "Die Liste der Modelle konnte nicht geladen werden. Prüfen Sie die Internetverbindung.",
-				"legacyGone": "{{name}} aus dem alten MiViA Desktop ist für Ihr Konto nicht mehr verfügbar. Fragen Sie die verantwortliche Person in Ihrem Labor oder {{contact}}.",
-				"legacyCustomGone": "Die benutzerdefinierte Konfiguration, die das alte MiViA Desktop für {{name}} verwendet hat, ist nicht mehr verfügbar. Wählen Sie eine aus."
-			},
-			"finish": {
-				"title": "Windows und Datenschutz",
-				"later": "Sie können alles später in den Einstellungen ändern.",
-				"button": "Einrichtung abschließen"
-			},
-			"done": {
-				"title": "MiViA Desktop ist bereit",
-				"titleWaiting": "MiViA Desktop ist eingerichtet, kann aber noch nicht auswerten",
-				"reasonNoModels": "Ihr Konto hat noch keine Modelle.",
-				"reasonLicense": "Ihre MiViA-Lizenz ist nicht aktiv.",
-				"reasonOffline": "MiViA ist im Moment nicht erreichbar.",
-				"waitingSafe": "Neue Bilder warten im Ordner und werden ausgewertet, sobald das gelöst ist.",
-				"watching": "Überwacht <b>{{folder}}</b>",
-				"models": "Modelle: {{models}}",
-				"reports": "Berichte werden gespeichert in {{folder}}",
-				"nextTitle": "Wie es weitergeht",
-				"how": "Speichern oder kopieren Sie Bilder in <b>{{folder}}</b>. MiViA wertet sie aus und speichert dort den Bericht.",
-				"existing_one": "Das vorhandene Bild wird jetzt ausgewertet.",
-				"existing_other": "Die {{count}} vorhandenen Bilder werden jetzt ausgewertet.",
-				"single": "Einzelbilder: Klicken Sie im Explorer mit der rechten Maustaste darauf, wählen Sie „Weitere Optionen anzeigen“ und dann „Mit MiViA auswerten“.",
-				"tray": "MiViA Desktop läuft weiter, nachdem Sie dieses Fenster geschlossen haben. Sie finden es im Startmenü und neben der Uhr (klicken Sie auf ^, wenn Sie das Symbol nicht sehen).",
-				"perUser": "Andere Windows-Benutzer auf diesem PC richten MiViA Desktop für sich selbst ein.",
-				"legacyStopped": "Das alte MiViA Desktop ist abgeschaltet. Sein Ordner enthält nur Programmdateien, keine Berichte; Sie können ihn löschen.",
-				"legacyClose": "Schließen Sie das alte MiViA Desktop. Es wird beim nächsten Start von MiViA Desktop abgeschaltet.",
-				"legacyFailed": "Das alte MiViA Desktop konnte nicht abgeschaltet werden. Schließen Sie es und löschen Sie seinen Ordner.",
-				"legacyStartup": "Diesen Starteintrag des alten MiViA Desktop muss eine Administratorin oder ein Administrator entfernen: {{path}}",
-				"autostartFailed": "MiViA Desktop konnte nicht für den Start mit Windows eingerichtet werden. Versuchen Sie es erneut unter Einstellungen › Allgemein.",
-				"explorerFailed": "MiViA konnte nicht zum Rechtsklick-Menü hinzugefügt werden. Versuchen Sie es erneut unter Einstellungen › Explorer-Integration.",
-				"open": "Zur Übersicht"
-			},
-			"quit": {
-				"title": "Einrichtung später abschließen?",
-				"text": "Bis die Einrichtung abgeschlossen ist, werden keine Bilder ausgewertet, auch nicht über Nacht. Ihre Eingaben bleiben erhalten. MiViA Desktop fragt bei der nächsten Windows-Anmeldung erneut.",
-				"continue": "Einrichtung fortsetzen",
-				"close": "MiViA Desktop beenden"
-			},
-			"resume": {
-				"note": "Die Einrichtung ist noch nicht abgeschlossen. Ihre Eingaben sind gespeichert."
+			"switch": {
+				"cancel": "Abbrechen",
+				"confirm": "Konto wechseln",
+				"text": "Dieser Schlüssel gehört zu {{next}}, nicht zu {{current}}. Wenn Sie fortfahren, werden die Eingangsordner von {{current}} nicht mehr überwacht. Berichte und Verlauf bleiben auf diesem PC.",
+				"title": "Konto wechseln?"
 			}
 		},
 		"addFolder": {
 			"page": {
-				"title": "Eingangsordner hinzufügen",
-				"folder": "Eingangsordner",
-				"arrival": "Bildserien",
-				"models": "Modelle",
 				"add": "Ordner hinzufügen",
+				"arrival": "Bildserien",
+				"denied": "MiViA kann in diesem Ordner keine Berichte speichern. Wählen Sie einen anderen Berichtsordner.",
+				"folder": "Eingangsordner",
+				"models": "Modelle",
 				"overlaps": "Dieser Ordner liegt in einem anderen Eingangsordner oder enthält einen. Wählen Sie einen anderen Ordner.",
-				"denied": "MiViA kann in diesem Ordner keine Berichte speichern. Wählen Sie einen anderen Berichtsordner."
-			}
-		},
-		"account": {
-			"key": {
-				"replace": "Zugangsschlüssel ersetzen",
-				"connect": "Mit einem Zugangsschlüssel verbinden",
-				"connectLead": "Es ist kein Konto verbunden. Fügen Sie Ihren Zugangsschlüssel ein, um diesen PC wieder zu verbinden.",
-				"save": "Schlüssel speichern",
-				"saved": "Neuer Zugangsschlüssel gespeichert. Verbunden als {{name}}.",
-				"hint": "Tipp für die Person, der der Schlüssel gehört: Der alte Schlüssel kann unter {{host}} › Zugangsschlüssel gelöscht werden."
-			},
-			"switch": {
-				"title": "Konto wechseln?",
-				"text": "Dieser Schlüssel gehört zu {{next}}, nicht zu {{current}}. Wenn Sie fortfahren, werden die Eingangsordner von {{current}} nicht mehr überwacht. Berichte und Verlauf bleiben auf diesem PC.",
-				"confirm": "Konto wechseln",
-				"cancel": "Abbrechen"
-			},
-			"signOut": {
-				"button": "Abmelden",
-				"title": "Von {{name}} abmelden?",
-				"text": "Eingangsordner werden nicht mehr überwacht. Bilder in den Ordnern werden nicht gelöscht. Bildserien, die noch gesammelt werden, werden abgeschlossen; Auswertungen und Berichte werden fortgesetzt, wenn Sie sich wieder als {{name}} anmelden.",
-				"cancel": "Abbrechen"
+				"title": "Eingangsordner hinzufügen"
 			}
 		},
 		"integration": {
 			"autostart": {
+				"help": "Empfohlen, damit kein neues Bild verpasst wird. Die App startet minimiert im Infobereich.",
 				"label": "MiViA Desktop mit Windows starten",
-				"turnedOff": "Im Task-Manager ausgeschaltet",
-				"help": "Empfohlen, damit kein neues Bild verpasst wird. Die App startet minimiert im Infobereich."
+				"turnedOff": "Im Task-Manager ausgeschaltet"
 			},
 			"explorer": {
-				"label": "„Mit MiViA auswerten“ zum Explorer-Menü hinzufügen",
 				"help": "Klicken Sie im Explorer mit der rechten Maustaste auf Bilder, um sie einzeln auszuwerten.",
+				"label": "„Mit MiViA auswerten“ zum Explorer-Menü hinzufügen",
 				"unavailable": "Nur im installierten MiViA Desktop verfügbar."
+			}
+		},
+		"wizard": {
+			"common": {
+				"back": "Zurück",
+				"help": "Hilfe: {{contact}}",
+				"next": "Weiter",
+				"policy": "Von Ihrer IT-Abteilung festgelegt",
+				"server": "Server: {{host}}",
+				"stepOf": "Schritt {{n}} von {{m}}",
+				"tryAgain": "Erneut versuchen"
+			},
+			"done": {
+				"autostartFailed": "MiViA Desktop konnte nicht für den Start mit Windows eingerichtet werden. Versuchen Sie es erneut unter Einstellungen › Allgemein.",
+				"existing_one": "Das vorhandene Bild wird jetzt ausgewertet.",
+				"existing_other": "Die {{count}} vorhandenen Bilder werden jetzt ausgewertet.",
+				"explorerFailed": "MiViA konnte nicht zum Rechtsklick-Menü hinzugefügt werden. Versuchen Sie es erneut unter Einstellungen › Explorer-Integration.",
+				"how": "Speichern oder kopieren Sie Bilder in <b>{{folder}}</b>. MiViA wertet sie aus und speichert dort den Bericht.",
+				"legacyClose": "Schließen Sie das alte MiViA Desktop. Es wird beim nächsten Start von MiViA Desktop abgeschaltet.",
+				"legacyFailed": "Das alte MiViA Desktop konnte nicht abgeschaltet werden. Schließen Sie es und löschen Sie seinen Ordner.",
+				"legacyStartup": "Diesen Starteintrag des alten MiViA Desktop muss eine Administratorin oder ein Administrator entfernen: {{path}}",
+				"legacyStopped": "Das alte MiViA Desktop ist abgeschaltet. Sein Ordner enthält nur Programmdateien, keine Berichte; Sie können ihn löschen.",
+				"models": "Modelle: {{models}}",
+				"nextTitle": "Wie es weitergeht",
+				"open": "Zur Übersicht",
+				"perUser": "Andere Windows-Benutzer auf diesem PC richten MiViA Desktop für sich selbst ein.",
+				"reasonLicense": "Ihre MiViA-Lizenz ist nicht aktiv.",
+				"reasonNoModels": "Ihr Konto hat noch keine Modelle.",
+				"reasonOffline": "MiViA ist im Moment nicht erreichbar.",
+				"reports": "Berichte werden gespeichert in {{folder}}",
+				"single": "Einzelbilder: Klicken Sie im Explorer mit der rechten Maustaste darauf, wählen Sie „Weitere Optionen anzeigen“ und dann „Mit MiViA auswerten“.",
+				"title": "MiViA Desktop ist bereit",
+				"titleWaiting": "MiViA Desktop ist eingerichtet, kann aber noch nicht auswerten",
+				"tray": "MiViA Desktop läuft weiter, nachdem Sie dieses Fenster geschlossen haben. Sie finden es im Startmenü und neben der Uhr (klicken Sie auf ^, wenn Sie das Symbol nicht sehen).",
+				"waitingSafe": "Neue Bilder warten im Ordner und werden ausgewertet, sobald das gelöst ist.",
+				"watching": "Überwacht <b>{{folder}}</b>"
+			},
+			"finish": {
+				"button": "Einrichtung abschließen",
+				"later": "Sie können alles später in den Einstellungen ändern.",
+				"title": "Windows und Datenschutz"
+			},
+			"folder": {
+				"alsoExisting_one": "Auch das vorhandene Bild auswerten",
+				"alsoExisting_other": "Auch die {{count}} vorhandenen Bilder auswerten",
+				"change": "Anderen Ordner wählen",
+				"choose": "Ordner wählen…",
+				"existingLater": "Bilder, die bereits im Ordner liegen, werden nur ausgewertet, wenn Sie das hier wählen.",
+				"existingMany": "Dieser Ordner enthält bereits mehr als {{count}} Bilder.",
+				"existing_one": "Dieser Ordner enthält bereits 1 Bild.",
+				"existing_other": "Dieser Ordner enthält bereits {{count}} Bilder.",
+				"general": "MiViA würde jedes Bild in diesem Ordner auswerten, auch Bilder, die nicht vom Mikroskop stammen. Ein eigener Ordner ist besser.",
+				"lead": "Wählen Sie diesen Ordner. MiViA wertet jedes neue Bild aus, das dort ankommt. Ihre Bilder werden nie verschoben oder gelöscht.",
+				"legacyMissing": "Der Eingangsordner des alten MiViA Desktop ({{path}}) existiert nicht mehr. Wählen Sie einen Ordner.",
+				"mappedDrive": "Laufwerk {{letter}} ist ein Netzlaufwerk. MiViA verwendet seine vollständige Adresse {{unc}}, damit der Ordner auch ohne Laufwerksbuchstaben gefunden wird.",
+				"nested": "Dieser Ordner liegt im Eingangsordner {{name}} oder enthält ihn. Wählen Sie einen anderen Ordner.",
+				"network": "Dies ist ein Netzwerkordner. Neue Bilder werden dort etwas später erkannt. Überwacht auch der PC einer Kollegin oder eines Kollegen diesen Ordner, wertet jeder PC die Bilder aus. Einigen Sie sich auf einen PC.",
+				"notFound": "MiViA kann diesen Ordner nicht öffnen. Wählen Sie einen anderen Ordner.",
+				"notSure": "Nicht sicher? Speichern Sie im Mikroskop-Programm ein Testbild und schauen Sie, wo es gespeichert wird. Sie können den Ordner später ändern.",
+				"oneDrive": "Dieser Ordner liegt in OneDrive. Bilder und Berichte darin werden in das OneDrive Ihrer Organisation kopiert. Bilder, die nur online liegen, werden vor der Auswertung heruntergeladen. Überwacht auch der PC einer Kollegin oder eines Kollegen diesen Ordner, wertet jeder PC die Bilder aus.",
+				"onlyNew": "Nur neue Bilder auswerten (empfohlen)",
+				"required": "Wählen Sie einen Ordner oder überspringen Sie diesen Schritt.",
+				"skip": "Überspringen: Ich möchte nur Einzelbilder aus dem Explorer auswerten. Sie können später einen Ordner hinzufügen.",
+				"title": "Wo speichert Ihr Mikroskop die Bilder?",
+				"tooBroad": "Wählen Sie einen Ordner nur für Mikroskopbilder, nicht ein ganzes Laufwerk oder einen Systemordner.",
+				"uploadCost": "Sie haben noch {{remaining}} Bild-Uploads. Das nutzt bis zu {{count}} davon.",
+				"watchedElsewhere": "Dieser Ordner wird bereits von MiViA Desktop auf „{{machine}}“ („{{user}}“) überwacht. Bilder würden doppelt ausgewertet und Berichte doppelt gespeichert. Pausieren oder entfernen Sie ihn zuerst auf dem anderen PC."
+			},
+			"key": {
+				"adminScope": "Dieser Schlüssel hat Administratorrechte. Erstellen Sie in MiViA einen Schlüssel ohne Administratorrechte und verwenden Sie diesen.",
+				"autoRetry": "MiViA versucht es alle 30 Sekunden erneut. Sie können MiViA Desktop auch schließen und später weitermachen.",
+				"blocked": "Ihr MiViA-Konto ist gesperrt. Wenden Sie sich an den MiViA-Support.",
+				"connected": "Verbunden als {{name}} ({{email}})",
+				"copyForIt": "Details für die IT kopieren",
+				"help": "Fragen Sie die Person, die MiViA in Ihrem Labor verwaltet, oder melden Sie sich bei {{host}} an und öffnen Sie Zugangsschlüssel. Ein Schlüssel beginnt mit „mv-“, danach folgen 64 Buchstaben.",
+				"helpTitle": "Wo finde ich meinen Zugangsschlüssel?",
+				"imported": "Der Zugangsschlüssel des alten MiViA Desktop wurde akzeptiert.",
+				"importedInvalid": "Der Zugangsschlüssel des alten MiViA Desktop wird nicht mehr akzeptiert. Geben Sie einen neuen ein.",
+				"label": "Zugangsschlüssel",
+				"lead": "Fügen Sie Ihren Zugangsschlüssel ein oder tippen Sie ihn ab. Er verbindet diesen PC mit Ihrem MiViA-Konto.",
+				"licenseInactive": "Ihre MiViA-Lizenz ist nicht aktiv. Sie können die Einrichtung jetzt abschließen; die Auswertung beginnt, sobald die Lizenz aktiv ist.",
+				"malformed": "Das sieht nicht wie ein Zugangsschlüssel aus. Kopieren Sie den ganzen Schlüssel erneut.",
+				"offline": "MiViA ist nicht erreichbar. Prüfen Sie die Internetverbindung. Funktioniert sie im Browser, bitten Sie Ihre IT, {{host}} freizugeben.",
+				"other": "Anderen Schlüssel verwenden",
+				"otherAccount": "Dieser Schlüssel gehört zu einem anderen Konto. Die gewählten Modelle wurden zurückgesetzt.",
+				"rejected": "Dieser Zugangsschlüssel wurde nicht akzeptiert. Prüfen Sie, ob Sie den ganzen Schlüssel kopiert haben, oder fragen Sie nach einem neuen.",
+				"storeFailed": "Windows konnte den Zugangsschlüssel nicht speichern. Nach einem Neustart von MiViA Desktop müssen Sie ihn erneut eingeben.",
+				"stored": "Der Schlüssel ist sicher in Windows gespeichert. Aus Sicherheitsgründen wurde die Kopie in der Zwischenablage gelöscht.",
+				"storedOnly": "Der Schlüssel ist sicher in Windows gespeichert.",
+				"title": "Mit Ihrem MiViA-Konto verbinden"
+			},
+			"legacy": {
+				"closeIt": "Altes MiViA Desktop schließen",
+				"found": "Das alte MiViA Desktop ist auf diesem PC, in <code>{{path}}</code>. Es hat diese Einstellungen:",
+				"hasFolder": "Eingangsordner: <code>{{path}}</code>",
+				"hasKey": "Zugangsschlüssel",
+				"hasModels": "Modelle: {{count}}",
+				"keyOnly": "Nur den Zugangsschlüssel",
+				"none": "Ohne alte Einstellungen beginnen",
+				"notInFolder": "In diesem Ordner wurden keine Einstellungen des alten MiViA Desktop gefunden. Wählen Sie den Ordner, der „MiViA Desktop.exe“ enthält.",
+				"other": "Nicht der richtige? Ordner des alten MiViA Desktop wählen",
+				"running": "Das alte MiViA Desktop läuft noch.",
+				"safe": "Ihre Bilder und bisherigen Berichte bleiben, wo sie sind.",
+				"stop": "Altes MiViA Desktop abschalten (empfohlen, verhindert doppelte Auswertung). Es wird nicht gelöscht.",
+				"stopNetwork": "Das alte MiViA Desktop liegt in einem Netzwerkordner. Andere PCs nutzen es vielleicht noch, deshalb wird es nicht abgeschaltet.",
+				"takeAll": "Alles übernehmen",
+				"title": "Alte Einstellungen übernehmen?",
+				"unreadable": "Die Einstellungen des alten MiViA Desktop konnten nicht gelesen werden. Geben Sie Ihren Zugangsschlüssel im nächsten Schritt ein."
+			},
+			"models": {
+				"choosePlaceholder": "Konfiguration wählen",
+				"customization": "Benutzerdefinierte Konfiguration",
+				"customizationHint": "Für Ihr Labor auf {{host}} gespeicherte Einstellungen",
+				"lead": "Wählen Sie eines oder mehrere. Jedes neue Bild wird mit jedem gewählten Modell ausgewertet, jedes Modell erhält einen eigenen Bericht.",
+				"legacyCustomGone": "Die benutzerdefinierte Konfiguration, die das alte MiViA Desktop für {{name}} verwendet hat, ist nicht mehr verfügbar. Wählen Sie eine aus.",
+				"legacyGone": "{{name}} aus dem alten MiViA Desktop ist für Ihr Konto nicht mehr verfügbar. Fragen Sie die verantwortliche Person in Ihrem Labor oder {{contact}}.",
+				"loadFailed": "Die Liste der Modelle konnte nicht geladen werden. Prüfen Sie die Internetverbindung.",
+				"loading": "Modelle werden geladen…",
+				"none": "Ihr Konto hat noch keine Modelle. Wenden Sie sich an die verantwortliche Person in Ihrem Labor oder an {{contact}}. Sie können die Einrichtung jetzt abschließen; der Ordner beginnt, sobald ein Modell verfügbar ist.",
+				"required": "Wählen Sie mindestens ein Modell.",
+				"search": "Modelle suchen",
+				"standard": "Standardeinstellungen",
+				"title": "Mit welchen Modellen sollen die Bilder ausgewertet werden?"
+			},
+			"quit": {
+				"close": "MiViA Desktop beenden",
+				"continue": "Einrichtung fortsetzen",
+				"text": "Bis die Einrichtung abgeschlossen ist, werden keine Bilder ausgewertet, auch nicht über Nacht. Ihre Eingaben bleiben erhalten. MiViA Desktop fragt bei der nächsten Windows-Anmeldung erneut.",
+				"title": "Einrichtung später abschließen?"
+			},
+			"resume": {
+				"note": "Die Einrichtung ist noch nicht abgeschlossen. Ihre Eingaben sind gespeichert."
+			},
+			"series": {
+				"asBefore": "wie beim alten MiViA Desktop",
+				"byHand": "Ich kopiere Bilder von Hand",
+				"byHandHint": "Der Bericht wird 5 Minuten nach dem letzten neuen Bild erstellt.",
+				"later": "Sie können den Bericht jederzeit mit „Bericht jetzt erstellen“ vorzeitig erstellen und die Wartezeit später in den Ordnereinstellungen ändern.",
+				"lead": "MiViA sammelt Bilder, die zusammen ankommen, zum Beispiel die Bilder einer Probe, und speichert dafür einen Bericht pro Modell.",
+				"longPath": "Dieser Ordnerpfad ist lang, Berichtsnamen werden gekürzt.",
+				"microscope": "Die Mikroskop-Software speichert jedes Bild hier",
+				"microscopeHint": "Der Bericht wird 15 Minuten nach dem letzten neuen Bild erstellt.",
+				"modeBeside": "Neben den Bildern (im Unterordner jeder Bildserie)",
+				"modeCustom": "In einem anderen Ordner…",
+				"modeSubfolder": "Im Unterordner „{{name}}“ des Eingangsordners (empfohlen)",
+				"probeDenied": "MiViA kann in {{folder}} keine Berichte speichern. Die Berichte werden stattdessen in {{fallback}} gespeichert.",
+				"reportsChange": "Ändern",
+				"reportsIn": "Berichte werden gespeichert in:",
+				"title": "Wie kommen die Bilder in diesen Ordner?",
+				"wholeFolder": "Ich kopiere einen ganzen Ordner pro Probe",
+				"wholeFolderHint": "Der Bericht wird 1 Minute nach dem Kopieren des Ordners erstellt. Jeder Unterordner erhält einen eigenen Bericht."
+			},
+			"steps": {
+				"finish": "Abschluss",
+				"folder": "Eingangsordner",
+				"key": "Zugangsschlüssel",
+				"legacy": "Alte Version",
+				"models": "Modelle",
+				"series": "Bildserien",
+				"skipped": "übersprungen"
+			},
+			"welcome": {
+				"langAuto": "Automatisch, wie Windows ({{language}}) / Automatic, like Windows ({{language}})",
+				"language": "Sprache / Language",
+				"lead": "MiViA Desktop wertet Ihre Mikroskopbilder automatisch aus. Neue Bilder in einem Ordner Ihrer Wahl werden an MiViA gesendet, die Berichte werden auf diesem PC gespeichert.",
+				"legacyManual": "Ich habe bisher das alte MiViA Desktop benutzt",
+				"need": "Die Einrichtung dauert etwa 3 Minuten. Sie brauchen Ihren MiViA-Zugangsschlüssel, und dieser PC braucht eine Internetverbindung.",
+				"noKey": "Noch keinen Schlüssel? Sie können MiViA Desktop schließen und später weitermachen. Es geht nichts verloren.",
+				"start": "Einrichtung starten",
+				"title": "Willkommen bei MiViA Desktop"
 			}
 		}
 	}
