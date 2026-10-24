@@ -221,7 +221,7 @@
 			"emptyTitle": "No image series yet",
 			"export": "Save list as CSV",
 			"exportRecord": "Save history record (CSV)",
-			"exportSeries": "Save series record (CSV)",
+			"exportSeries": "Save results as CSV",
 			"exported_one": "Exported 1 file to {{folder}}",
 			"exported_other": "Exported {{count}} files to {{folder}}",
 			"folderFilter": "Input folder",

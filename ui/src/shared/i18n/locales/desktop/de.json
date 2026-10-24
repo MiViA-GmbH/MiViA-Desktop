@@ -221,7 +221,7 @@
 			"emptyTitle": "Noch keine Bildserie",
 			"export": "Liste als CSV speichern",
 			"exportRecord": "Protokoll des Verlaufs speichern (CSV)",
-			"exportSeries": "Protokoll der Bildserie speichern (CSV)",
+			"exportSeries": "Ergebnisse als CSV speichern",
 			"exported_one": "1 Datei nach {{folder}} exportiert",
 			"exported_other": "{{count}} Dateien nach {{folder}} exportiert",
 			"folderFilter": "Eingangsordner",
