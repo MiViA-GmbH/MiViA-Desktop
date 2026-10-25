@@ -22,6 +22,7 @@ const TRIGGERS: &[(&str, &[&str])] = &[
     ("i18n-pull.yml", &["schedule", "workflow_dispatch"]),
     ("release-please.yml", &["push"]),
     ("build-release.yml", &["workflow_call"]),
+    ("signed-release.yml", &["workflow_dispatch"]),
     ("beta.yml", &["workflow_dispatch"]),
     ("release-published.yml", &["release"]),
     ("promote.yml", &["workflow_dispatch"]),
@@ -80,7 +81,10 @@ fn workflow_messages(workflow: &Workflow, proto: &str) -> Vec<String> {
     if workflow.name == "ci.yml" {
         messages.extend(jobs::ci_rules(&workflow.value));
     }
-    if matches!(workflow.name.as_str(), "guard.yml" | "build-release.yml") {
+    if matches!(
+        workflow.name.as_str(),
+        "guard.yml" | "build-release.yml" | "signed-release.yml"
+    ) {
         messages.extend(jobs::no_cache(workflow));
     }
     messages
