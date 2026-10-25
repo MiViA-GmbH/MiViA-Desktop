@@ -19,7 +19,7 @@ pub(crate) async fn identity(smoke: &Smoke) -> Outcome<()> {
         !identity.admin_scope,
         "access key info, key without admin rights",
     )?;
-    smoke.get("accessKeysInfo", "/api/access-keys/info").await?;
+    smoke.get("accessKeysInfo", "/api/api-keys/info").await?;
     Ok(())
 }
 

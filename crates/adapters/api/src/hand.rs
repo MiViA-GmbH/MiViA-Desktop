@@ -74,7 +74,7 @@ pub fn access_key_current(
     authorization: HeaderValue,
 ) -> RequestBuilder {
     client
-        .get(format!("{base_url}/api/access-keys/info"))
+        .get(format!("{base_url}/api/api-keys/info"))
         .header(ACCEPT, JSON)
         .header(AUTHORIZATION, authorization)
 }
