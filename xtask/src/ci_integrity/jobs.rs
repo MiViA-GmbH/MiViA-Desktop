@@ -32,8 +32,7 @@ const CACHE_ACTIONS: &[&str] = &[
 ];
 const UNTRUSTED: &[&str] = &["github.event.", "github.head_ref", "inputs."];
 const SIGNING_KEY: &str = "TAURI_SIGNING_";
-const BUILD_RELEASE: &str = "./.github/workflows/build-release.yml";
-const SIGNERS: &[&str] = &["build-release.yml", "signed-release.yml"];
+const SIGNER: &str = "signed-release.yml";
 
 fn jobs(value: &Value) -> Vec<(String, &Value)> {
     value
@@ -240,13 +239,8 @@ fn secret_refs(value: &Value, pointer: &str) -> usize {
 }
 
 fn signing_mentions_allowed(workflow: &Workflow) -> Option<usize> {
-    if !SIGNERS.contains(&workflow.name.as_str()) {
-        let passed: usize = jobs(&workflow.value)
-            .into_iter()
-            .filter(|(_, job)| job.get("uses").and_then(Value::as_str) == Some(BUILD_RELEASE))
-            .map(|(_, job)| secret_refs(job, "/secrets"))
-            .sum();
-        return (passed > 0).then_some(2 * passed);
+    if workflow.name != SIGNER {
+        return None;
     }
     let release = Some(&Value::String("release".to_owned()));
     let signing_steps: Vec<usize> = jobs(&workflow.value)
@@ -256,12 +250,8 @@ fn signing_mentions_allowed(workflow: &Workflow) -> Option<usize> {
         .map(|step| secret_refs(step, "/env"))
         .filter(|secrets| *secrets > 0)
         .collect();
-    let declared = keys(&workflow.value, "/on/workflow_call/secrets")
-        .iter()
-        .filter(|key| key.starts_with(SIGNING_KEY))
-        .count();
     match signing_steps.as_slice() {
-        [secrets] => Some(2 * secrets + declared),
+        [secrets] => Some(2 * secrets),
         _ => None,
     }
 }
@@ -272,6 +262,6 @@ pub(crate) fn signing_key(workflow: &Workflow) -> Option<String> {
         return None;
     }
     Some(
-        "TAURI_SIGNING_* may appear only as a secret in the env of one step of the package job under environment release, in build-release.yml (declared and passed by its callers) or signed-release.yml".to_owned(),
+        "TAURI_SIGNING_* may appear only as a secret in the env of one step of the package job under environment release in signed-release.yml".to_owned(),
     )
 }

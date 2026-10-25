@@ -12,6 +12,10 @@ pub const KEY_A: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDl
 #[cfg(feature = "test-keys")]
 pub const KEY_B: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU1QTUzMUYyRDc2RkQ3QUQKUldTdDEyL1g4akdsNWNHdlJSU2ZKMjhNRFNjL2lUaXlNVGFnY1ZYV2FjclZuM25uL1llRjVyWG0K";
 pub const TEST_KEYS: bool = cfg!(feature = "test-keys");
+pub const SIGNER_ORGANIZATION: &str = "Unlimited Consulting Krzysztof Bzowski";
+pub const SIGNER_COMMON_NAME: &str = "Unlimited Consulting Krzysztof Bzowski";
+pub const SIGNER_INTERMEDIATE_KEY: &str =
+    "e64d532cf987ee0260fda04a8251103cb650f7cf8fc92a7d3865f5d6e8992e50";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Slot {

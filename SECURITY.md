@@ -12,8 +12,10 @@ Only the latest stable release receives security fixes. Updates are delivered th
 
 ## Verifying a release
 
-Every installer is built by GitHub Actions from `main`, carries a build provenance attestation and has a minisign signature (`.sig`) that the built-in updater checks. Beta installers are not Authenticode-signed yet, so Windows SmartScreen may warn about them.
+Every app is compiled by GitHub Actions from `main`. The installer is Authenticode-signed by Unlimited Consulting Krzysztof Bzowski (issued by Certum Code Signing 2021 CA), carries a build provenance attestation and has a minisign signature (`.sig`). The built-in updater checks both signatures before it installs an update.
 
 ```
-gh attestation verify <installer> --repo MiViA-GmbH/MiViA-Desktop --signer-workflow MiViA-GmbH/MiViA-Desktop/.github/workflows/build-release.yml --source-ref refs/heads/main --deny-self-hosted-runners
+gh attestation verify <installer> --repo MiViA-GmbH/MiViA-Desktop --signer-workflow MiViA-GmbH/MiViA-Desktop/.github/workflows/signed-release.yml --source-ref refs/heads/main --deny-self-hosted-runners
 ```
+
+In PowerShell, `Get-AuthenticodeSignature <installer>` shows `Valid` and the publisher above.

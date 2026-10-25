@@ -55,16 +55,13 @@ jobs:
     name: Build beta
     needs: [tag]
     permissions:
-      contents: write  # upload release assets
+      contents: read  # check out the repository
       actions: read  # read nightly perf results
       issues: read  # read perf-red issues
-      id-token: write  # OIDC for signing and attestations
+      id-token: write  # OIDC for attestations
       attestations: write  # write build provenance
       artifact-metadata: write  # attach attestation metadata
     uses: ./.github/workflows/build-release.yml
-    secrets:
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
     with:
       tag_name: ${{ needs.tag.outputs.tag }}
-      sha: ${{ github.sha }}
       perf_override_reason: ${{ inputs.perf_override_reason }}

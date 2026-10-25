@@ -15,13 +15,13 @@ Both keys were generated on 2026-10-12 in Windows Sandbox with networking disabl
 
 ## Custody
 
-- Key A: the secret `TAURI_SIGNING_PRIVATE_KEY` of the `release` environment in `MiViA-GmbH/MiViA-Desktop`. The environment allows only `main`, with no admin bypass. Only the `package` job of `build-release.yml` reads it, in the environment of the single signing step (`cargo xtask ci-integrity` fails on any other use). The environment has no required reviewers while there is one maintainer; add a reviewer when a second maintainer joins.
+- Key A: the secret `TAURI_SIGNING_PRIVATE_KEY` of the `release` environment in `MiViA-GmbH/MiViA-Desktop`. The environment allows only `main`, with no admin bypass. Only the `package` job of `signed-release.yml` reads it, in the environment of the single signing step (`cargo xtask ci-integrity` fails on any other use). The environment has no required reviewers while there is one maintainer; add a reviewer when a second maintainer joins.
 - Keys A and B: one copy each on two USB sticks, kept in two separate places. Neither stick is ever plugged into a machine that runs project code or has network access.
 - Besides the maintainer, the owner of the MiViA GmbH GitHub organisation can retrieve the sticks. Where the sticks are kept is recorded in the company's internal records, not in this repository.
 
 ## Signing in CI
 
-`build-release.yml` builds the installer in `compile` (no secrets), then `package` bundles it, signs it with `scripts/ci/sign-installer.sh` (`cargo-tauri signer sign --password '' --app-version <version>`), checks the signature with `out/xtask.exe update-sig verify`, attests the installer, the `.sig` and the SBOMs, and uploads them. The step fails with a clear message when the secret is missing. `release-published.yml` downloads the published assets, verifies their attestations and runs `cargo xtask update-sig verify` before it opens the channel pull request.
+`build-release.yml` compiles and attests the app (no secrets). The installer is bundled and Authenticode-signed on the release workstation ([signing.md](signing.md)). `signed-release.yml` then checks the uploaded installer in `check` (no secrets), and `package` signs it with `scripts/ci/sign-installer.sh` (`cargo-tauri signer sign --password '' --app-version <version>`), checks the signature with `out/xtask.exe update-sig verify`, attests the installer, the `.sig` and the SBOMs, and uploads the `.sig` and the SBOMs. The step fails with a clear message when the secret is missing. `release-published.yml` downloads the published assets, verifies their attestations and runs `cargo xtask update-sig verify` before it opens the channel pull request.
 
 ## Yearly backup check
 

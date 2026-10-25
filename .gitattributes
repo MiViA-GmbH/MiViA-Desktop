@@ -8,3 +8,4 @@
 *.ico binary
 *.db binary
 *.der binary
+*.exe binary

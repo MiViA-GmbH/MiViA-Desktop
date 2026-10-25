@@ -21,7 +21,7 @@ fi
 for asset in "$dir"/*; do
   gh attestation verify "$asset" \
     --repo "$REPO" \
-    --signer-workflow "$REPO/.github/workflows/build-release.yml" \
+    --signer-workflow "$REPO/.github/workflows/signed-release.yml" \
     --source-ref refs/heads/main \
     --deny-self-hosted-runners
 done

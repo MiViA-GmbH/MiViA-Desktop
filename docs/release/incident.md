@@ -26,7 +26,7 @@ Treat any release that was not built from reviewed code on `main`, and any expos
 3. Switch to key B and replace key A as described in [updater-keys.md](updater-keys.md).
 4. Revoke every access key the server saw with the bad version in its User-Agent, and ask the affected customers to create new ones.
 5. Tell customers what happened, which versions are affected, and how to reinstall a trusted version silently for the current user: `"MiViA Desktop_<version>_x64-setup.exe" /S`.
-6. Once releases are Authenticode-signed, also ask the certificate provider to revoke the signing certificate with an effective time before the bad signing.
+6. If the bad installer carries a valid Authenticode signature, ask Certum to revoke the code signing certificate with an effective time before the bad signing, then follow the replacement steps in [signing.md](signing.md).
 
 ## After the incident
 
