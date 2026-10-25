@@ -19,7 +19,6 @@ jobs:
     outputs:
       created: ${{ steps.release.outputs.release_created }}
       tag: ${{ steps.release.outputs.tag_name }}
-      sha: ${{ steps.release.outputs.sha }}
     permissions: {}
     steps:
       - name: Harden runner
@@ -46,15 +45,12 @@ jobs:
     needs: [release-please]
     if: needs.release-please.outputs.created == 'true'
     permissions:
-      contents: write  # upload release assets
+      contents: read  # check out the repository
       actions: read  # read nightly perf results
       issues: read  # read perf-red issues
-      id-token: write  # OIDC for signing and attestations
+      id-token: write  # OIDC for attestations
       attestations: write  # write build provenance
       artifact-metadata: write  # attach attestation metadata
     uses: ./.github/workflows/build-release.yml
-    secrets:
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
     with:
       tag_name: ${{ needs.release-please.outputs.tag }}
-      sha: ${{ needs.release-please.outputs.sha }}

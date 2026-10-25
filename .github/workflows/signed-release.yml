@@ -1,0 +1,168 @@
+name: signed-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag whose draft holds the signed installer
+        required: true
+        type: string
+      compile_run:
+        description: Run id of the build that attested the compile output
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check the signed installer
+    runs-on: windows-2025
+    timeout-minutes: 20
+    outputs:
+      name: ${{ steps.check.outputs.name }}
+      digest: ${{ steps.check.outputs.digest }}
+    permissions:
+      contents: write  # read the assets of the draft release
+      actions: read  # download the compile output of the build run
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - name: Only from main
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: test "$GITHUB_REF" = refs/heads/main && printf '%s' "$TAG" | grep -Pq '^(beta-)?v\d+\.\d+\.\d+(-beta\.\d+)?$'
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compile output, image and signatures
+        id: check
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          RUN: ${{ inputs.compile_run }}
+          REPO: ${{ github.repository }}
+        run: bash scripts/ci/check-signed.sh
+
+  package:
+    name: Sign for the updater
+    needs: [check]
+    runs-on: windows-2025
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: write  # upload release assets
+      actions: read  # download the compile output of the build run
+      id-token: write  # OIDC for attestations
+      attestations: write  # write build provenance
+      artifact-metadata: write  # attach attestation metadata
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - name: Only from main
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: test "$GITHUB_REF" = refs/heads/main && printf '%s' "$TAG" | grep -Pq '^(beta-)?v\d+\.\d+\.\d+(-beta\.\d+)?$'
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compile output and the checked installer
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          RUN: ${{ inputs.compile_run }}
+          REPO: ${{ github.repository }}
+          NAME: ${{ needs.check.outputs.name }}
+          DIGEST: ${{ needs.check.outputs.digest }}
+        run: |
+          node scripts/ci/compile-out.mjs
+          dir=target/release/bundle/nsis
+          gh release download "$TAG" --repo "$REPO" --pattern '*-setup.exe' --dir "$dir"
+          cd "$dir" && printf '%s  %s\n' "$DIGEST" "$NAME" | sha256sum -c
+      - name: Sign for the updater
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: bash scripts/ci/sign-installer.sh
+      - name: Check the updater signature
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: for exe in target/release/bundle/nsis/*-setup.exe; do out/xtask.exe update-sig verify "$exe" "$exe.sig" "$TAG"; done
+      - name: Provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: |
+            target/release/bundle/nsis/*-setup.exe
+            target/release/bundle/nsis/*-setup.exe.sig
+            out/*.cdx.json
+      - name: SBOM names
+        id: sbom
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          version="${TAG#beta-}"
+          version="${version#v}"
+          echo "cargo=out/mivia-desktop-$version-cargo.cdx.json" >> "$GITHUB_OUTPUT"
+          echo "npm=out/mivia-desktop-$version-npm.cdx.json" >> "$GITHUB_OUTPUT"
+      - name: Cargo SBOM attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: target/release/bundle/nsis/*-setup.exe
+          sbom-path: ${{ steps.sbom.outputs.cargo }}
+      - name: npm SBOM attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: target/release/bundle/nsis/*-setup.exe
+          sbom-path: ${{ steps.sbom.outputs.npm }}
+      - name: Upload release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: gh release upload "$TAG" target/release/bundle/nsis/*-setup.exe.sig out/*.cdx.json
+
+  verify:
+    name: Verify
+    needs: [package]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write  # read the assets of the draft release
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          allowed-endpoints: api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443 tuf-repo-cdn.sigstore.dev:443 tuf-repo.github.com:443 tmaproduction.blob.core.windows.net:443
+      - name: Validate the tag
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: printf '%s' "$TAG" | grep -Pq '^(beta-)?v\d+\.\d+\.\d+(-beta\.\d+)?$'
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Attestations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          REPO: ${{ github.repository }}
+        run: bash scripts/ci/verify-release.sh

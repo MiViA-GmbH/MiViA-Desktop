@@ -11,6 +11,7 @@
 		"fix": "node scripts/check.mjs fix",
 		"floors:lower": "cargo xtask floors-lower",
 		"icons:tray": "node scripts/tray-icons.mjs",
+		"release:sign": "node scripts/release-sign.mjs",
 		"gen:telemetry-fields": "cargo xtask telemetry-fields",
 		"tauri": "tauri",
 		"why": "cargo xtask why"
