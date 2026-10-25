@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use windows_native_keyring_store::Store;
 
 const TARGET_PREFIX: &str = "MiViA Desktop/v1/";
-const COMMENT: &str = "MiViA Desktop access key";
+const COMMENT: &str = "MiViA Desktop API key";
 const BLOB_VERSION: u32 = 1;
 const ACCESS_KEY: &str = "accessKey";
 

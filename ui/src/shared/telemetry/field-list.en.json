@@ -342,7 +342,7 @@
 			],
 			"name": "account.connected",
 			"priority": "core",
-			"purpose": "Shows that an access key was accepted."
+			"purpose": "Shows that an API key was accepted."
 		},
 		{
 			"category": "diagnostics",

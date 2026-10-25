@@ -57,8 +57,8 @@ test('the setup can be finished with the keyboard alone', async ({ page }) => {
 	await page.keyboard.press('Tab');
 	await page.keyboard.type('mv-bad-key-0123456789-0123456789-0123456789');
 	await page.keyboard.press('Enter');
-	await expect(page.getByText('This access key was not accepted.')).toBeVisible();
-	await expect(page.getByLabel('Access key')).toBeFocused();
+	await expect(page.getByText('This API key was not accepted.')).toBeVisible();
+	await expect(page.getByLabel('API key')).toBeFocused();
 	await structure(page);
 	await page.screenshot({ path: `${SHOTS}/w03-key-rejected-en.png` });
 	await page.keyboard.press('Control+A');
@@ -138,7 +138,7 @@ test('the old version step offers to take over the old settings', async ({ page 
 	await structure(page);
 	await page.screenshot({ path: `${SHOTS}/w02-legacy-en.png` });
 	await page.getByRole('button', { name: 'Take over all' }).click();
-	await expect(page.getByText('The access key of the old MiViA Desktop was accepted.')).toBeVisible();
+	await expect(page.getByText('The API key of the old MiViA Desktop was accepted.')).toBeVisible();
 });
 
 test('closing the window during setup asks before quitting', async ({ page }) => {
@@ -161,7 +161,7 @@ test('closing the window during setup asks before quitting', async ({ page }) =>
 test('the German setup fits and the window minimum hides the step list', async ({ page }) => {
 	await open(page, 'scenario=setup&lang=de');
 	await page.getByRole('button', { name: 'Einrichtung starten' }).click();
-	await page.getByLabel('Zugangsschlüssel').fill(KEY);
+	await page.getByLabel('API-Schlüssel').fill(KEY);
 	await page.getByRole('button', { name: 'Weiter' }).click();
 	await page.getByRole('button', { name: 'Weiter' }).click();
 	await page.getByRole('button', { name: 'Ordner wählen…' }).click();

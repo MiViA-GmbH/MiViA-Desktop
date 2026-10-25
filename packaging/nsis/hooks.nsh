@@ -94,9 +94,9 @@
   ${If} $DeleteAppDataCheckboxState = 1
   ${AndIf} $UpdateMode <> 1
     ${If} $LANGUAGE = 1031
-      StrCpy $R9 "Die Anwendungsdaten werden endgültig gelöscht: Einstellungen, Verlauf, gespeicherter Zugriffsschlüssel und Protokolle. Fortfahren?"
+      StrCpy $R9 "Die Anwendungsdaten werden endgültig gelöscht: Einstellungen, Verlauf, gespeicherter API-Schlüssel und Protokolle. Fortfahren?"
     ${Else}
-      StrCpy $R9 "The application data will be deleted for good: settings, history, the saved access key and logs. Continue?"
+      StrCpy $R9 "The application data will be deleted for good: settings, history, the saved API key and logs. Continue?"
     ${EndIf}
     MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 $R9 /SD IDNO IDYES +2
     StrCpy $DeleteAppDataCheckboxState 0

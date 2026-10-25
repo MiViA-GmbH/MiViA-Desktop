@@ -254,7 +254,7 @@
 		},
 		"hold": {
 			"accessKey": {
-				"title": "Der Zugangsschlüssel funktioniert nicht mehr."
+				"title": "Der API-Schlüssel funktioniert nicht mehr."
 			},
 			"accountBlocked": {
 				"text": "Wenden Sie sich an den MiViA-Support.",
@@ -268,7 +268,7 @@
 			"continues": "Die Bilder sind sicher, es geht automatisch weiter.",
 			"copied": "Kopiert",
 			"copyDetails": "Details für die IT kopieren",
-			"enterKey": "Neuen Zugangsschlüssel eingeben",
+			"enterKey": "Neuen API-Schlüssel eingeben",
 			"license": {
 				"text": "Die Bilder sind sicher und warten hier. Fragen Sie die MiViA-Ansprechperson im Labor.",
 				"title": "Ihre MiViA-Lizenz ist nicht gültig."
@@ -289,7 +289,7 @@
 				"title": "Keine Verbindung seit {{time}}."
 			},
 			"open": {
-				"accessKeys": "Zugangsschlüssel in MiViA öffnen",
+				"accessKeys": "API-Schlüssel in MiViA öffnen",
 				"infoMail": "E-Mail an info@mivia.ai",
 				"license": "Lizenz in MiViA anzeigen"
 			},
@@ -406,7 +406,7 @@
 			"idsHelp": "Nennen Sie diese Kennungen, wenn Sie Auskunft über Ihre Daten oder deren Löschung verlangen.",
 			"idsTitle": "Ihre Kennungen",
 			"installId": "Installations-ID",
-			"intro": "Jedes Ereignis enthält nur die hier aufgeführten Felder. Datei-, Ordner- und Seriennamen, Suchtexte, Ergebnisse, Bilder und Ihr Zugangsschlüssel werden nie gesendet.",
+			"intro": "Jedes Ereignis enthält nur die hier aufgeführten Felder. Datei-, Ordner- und Seriennamen, Suchtexte, Ergebnisse, Bilder und Ihr API-Schlüssel werden nie gesendet.",
 			"machineId": "Geräte-ID",
 			"notRead": "nicht gelesen",
 			"offNote": "Solange dies ausgeschaltet ist, wird nichts aufgezeichnet oder gesendet.",
@@ -417,7 +417,7 @@
 			"sent_other": "{{time}}, {{count}} Ereignisse",
 			"serverAdds": "Beim Empfang ergänzt der Server die Uhrzeit, Ihren Lizenztyp und Einwegcodes für Ihr Konto, Ihre Organisation, die Installation und das Gerät. Die Codes für Konto und Organisation werden nach 90 Tagen entfernt. Nichts wird länger als 400 Tage gespeichert.",
 			"telemetry": "MiViA verbessern helfen: Nutzungs- und Fehlerdaten an die MiViA GmbH senden (optional)",
-			"telemetryHelp": "MiViA Desktop sendet App-Ereignisse, Fehler, Zeiten und Geräteangaben, zusammen mit einer Geräte-ID. Nie gesendet: Bilder, Datei-, Ordner- und Seriennamen, Ergebnisse, Suchtexte, Ihr Zugangsschlüssel. Sie können Ihre Einwilligung jederzeit unter Einstellungen > Datenschutz widerrufen.",
+			"telemetryHelp": "MiViA Desktop sendet App-Ereignisse, Fehler, Zeiten und Geräteangaben, zusammen mit einer Geräte-ID. Nie gesendet: Bilder, Datei-, Ordner- und Seriennamen, Ergebnisse, Suchtexte, Ihr API-Schlüssel. Sie können Ihre Einwilligung jederzeit unter Einstellungen > Datenschutz widerrufen.",
 			"typeChoice": "eines von: {{values}}",
 			"typeFlag": "ja oder nein",
 			"typeId": "zufällige Kennung",
@@ -529,7 +529,7 @@
 			"description": "Was ist passiert?",
 			"descriptionHint": "Optional. Geben Sie keine vertraulichen Proben- oder Kundennamen ein.",
 			"discard": "Verwerfen",
-			"disclosure": "Sendet die gewählten Protokolle, Systemangaben und Einstellungen an den Support der MiViA GmbH (kein Zugangsschlüssel, keine Bilder, keine Ergebnisse) und informiert Ihre Ansprechperson bei MiViA. Wird 90 Tage gespeichert. Umfasst alle MiViA-Aktivitäten auf diesem Computer im gewählten Zeitraum.",
+			"disclosure": "Sendet die gewählten Protokolle, Systemangaben und Einstellungen an den Support der MiViA GmbH (kein API-Schlüssel, keine Bilder, keine Ergebnisse) und informiert Ihre Ansprechperson bei MiViA. Wird 90 Tage gespeichert. Umfasst alle MiViA-Aktivitäten auf diesem Computer im gewählten Zeitraum.",
 			"files_one": "1 Datei, {{size}}",
 			"files_other": "{{count}} Dateien, {{size}}",
 			"firstErrors": "Erste Fehler: {{errors}}",

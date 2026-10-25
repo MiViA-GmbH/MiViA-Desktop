@@ -20,8 +20,8 @@ The MiViA user on a server on whose behalf the app works; it owns everything the
 _Avoid_: user (ambiguous with the person at the PC), profile, connection
 
 **Access key**:
-The secret that lets the app act for an account.
-_Avoid_: token, API key, password
+The secret that lets the app act for an account; the server and the UI call it API key.
+_Avoid_: token, password
 
 **Credential store**:
 Where the app keeps the access key: Windows Credential Manager, local to this PC, never a file.
@@ -411,15 +411,15 @@ Model and Customization use the MiViA web app's words so both products speak ali
 | Diagnostic log | Technical log (for support) | Technisches Protokoll (für Support) |
 | Problem report | Report a problem | Problem melden |
 | Account | Account | Konto |
-| Access key | Access key | Zugangsschlüssel |
+| Access key | API key | API-Schlüssel |
 | License | License | Lizenz |
 | Dormant | Not watched (other account) | Nicht überwacht (anderes Konto) |
 | Sign out | Sign out | Abmelden |
-| Replace access key | Replace access key | Zugangsschlüssel ersetzen |
+| Replace access key | Replace API key | API-Schlüssel ersetzen |
 | Hold (offline) | Waiting for connection | Wartet auf Verbindung |
 | Hold (service unavailable) | MiViA service unavailable, waiting | MiViA-Dienst nicht verfügbar, wartet |
 | Hold (network blocked) | Network blocks MiViA | Netzwerk blockiert MiViA |
-| Hold (access key) | Waiting for a valid access key | Wartet auf gültigen Zugangsschlüssel |
+| Hold (access key) | The API key no longer works. | Der API-Schlüssel funktioniert nicht mehr. |
 | Hold (access key, account blocked) | Your MiViA account is blocked. Contact MiViA support. | Ihr MiViA-Konto ist gesperrt. Wenden Sie sich an den MiViA-Support. |
 | Hold (access key, missing scopes) | This key lacks rights for images or jobs. | Diesem Schlüssel fehlen Rechte für Bilder oder Jobs. |
 | Hold (license) | Waiting for license | Wartet auf Lizenz |

@@ -2,12 +2,12 @@
 	"desktop": {
 		"account": {
 			"key": {
-				"connect": "Mit einem Zugangsschlüssel verbinden",
-				"connectLead": "Es ist kein Konto verbunden. Fügen Sie Ihren Zugangsschlüssel ein, um diesen PC wieder zu verbinden.",
-				"hint": "Tipp für die Person, der der Schlüssel gehört: Der alte Schlüssel kann unter {{host}} › Zugangsschlüssel gelöscht werden.",
-				"replace": "Zugangsschlüssel ersetzen",
+				"connect": "Mit einem API-Schlüssel verbinden",
+				"connectLead": "Es ist kein Konto verbunden. Fügen Sie Ihren API-Schlüssel ein, um diesen PC wieder zu verbinden.",
+				"hint": "Tipp für die Person, der der Schlüssel gehört: Der alte Schlüssel kann unter {{host}} › API-Schlüssel gelöscht werden.",
+				"replace": "API-Schlüssel ersetzen",
 				"save": "Schlüssel speichern",
-				"saved": "Neuer Zugangsschlüssel gespeichert. Verbunden als {{name}}."
+				"saved": "Neuer API-Schlüssel gespeichert. Verbunden als {{name}}."
 			},
 			"signOut": {
 				"button": "Abmelden",
@@ -117,20 +117,20 @@
 				"blocked": "Ihr MiViA-Konto ist gesperrt. Wenden Sie sich an den MiViA-Support.",
 				"connected": "Verbunden als {{name}} ({{email}})",
 				"copyForIt": "Details für die IT kopieren",
-				"help": "Fragen Sie die Person, die MiViA in Ihrem Labor verwaltet, oder melden Sie sich bei {{host}} an und öffnen Sie Zugangsschlüssel. Ein Schlüssel beginnt mit „mv-“, danach folgen 64 Buchstaben.",
-				"helpTitle": "Wo finde ich meinen Zugangsschlüssel?",
-				"imported": "Der Zugangsschlüssel des alten MiViA Desktop wurde akzeptiert.",
-				"importedInvalid": "Der Zugangsschlüssel des alten MiViA Desktop wird nicht mehr akzeptiert. Geben Sie einen neuen ein.",
-				"label": "Zugangsschlüssel",
-				"lead": "Fügen Sie Ihren Zugangsschlüssel ein oder tippen Sie ihn ab. Er verbindet diesen PC mit Ihrem MiViA-Konto.",
+				"help": "Fragen Sie die Person, die MiViA in Ihrem Labor verwaltet, oder melden Sie sich bei {{host}} an und öffnen Sie API-Schlüssel. Ein Schlüssel beginnt mit „mv-“, danach folgen 64 Buchstaben.",
+				"helpTitle": "Wo finde ich meinen API-Schlüssel?",
+				"imported": "Der API-Schlüssel des alten MiViA Desktop wurde akzeptiert.",
+				"importedInvalid": "Der API-Schlüssel des alten MiViA Desktop wird nicht mehr akzeptiert. Geben Sie einen neuen ein.",
+				"label": "API-Schlüssel",
+				"lead": "Fügen Sie Ihren API-Schlüssel ein oder tippen Sie ihn ab. Er verbindet diesen PC mit Ihrem MiViA-Konto.",
 				"licenseInactive": "Ihre MiViA-Lizenz ist nicht aktiv. Sie können die Einrichtung jetzt abschließen; die Auswertung beginnt, sobald die Lizenz aktiv ist.",
-				"malformed": "Das sieht nicht wie ein Zugangsschlüssel aus. Kopieren Sie den ganzen Schlüssel erneut.",
+				"malformed": "Das sieht nicht wie ein API-Schlüssel aus. Kopieren Sie den ganzen Schlüssel erneut.",
 				"missingScopes": "Erstellen Sie in MiViA einen Schlüssel mit allen Rechten für Bilder und Jobs und verwenden Sie diesen.",
 				"offline": "MiViA ist nicht erreichbar. Prüfen Sie die Internetverbindung. Funktioniert sie im Browser, bitten Sie Ihre IT, {{host}} freizugeben.",
 				"other": "Anderen Schlüssel verwenden",
 				"otherAccount": "Dieser Schlüssel gehört zu einem anderen Konto. Die gewählten Modelle wurden zurückgesetzt.",
-				"rejected": "Dieser Zugangsschlüssel wurde nicht akzeptiert. Prüfen Sie, ob Sie den ganzen Schlüssel kopiert haben, oder fragen Sie nach einem neuen.",
-				"storeFailed": "Windows konnte den Zugangsschlüssel nicht speichern. Nach einem Neustart von MiViA Desktop müssen Sie ihn erneut eingeben.",
+				"rejected": "Dieser API-Schlüssel wurde nicht akzeptiert. Prüfen Sie, ob Sie den ganzen Schlüssel kopiert haben, oder fragen Sie nach einem neuen.",
+				"storeFailed": "Windows konnte den API-Schlüssel nicht speichern. Nach einem Neustart von MiViA Desktop müssen Sie ihn erneut eingeben.",
 				"stored": "Der Schlüssel ist sicher in Windows gespeichert. Aus Sicherheitsgründen wurde die Kopie in der Zwischenablage gelöscht.",
 				"storedOnly": "Der Schlüssel ist sicher in Windows gespeichert.",
 				"title": "Mit Ihrem MiViA-Konto verbinden"
@@ -139,9 +139,9 @@
 				"closeIt": "Altes MiViA Desktop schließen",
 				"found": "Das alte MiViA Desktop ist auf diesem PC, in <code>{{path}}</code>. Es hat diese Einstellungen:",
 				"hasFolder": "Eingangsordner: <code>{{path}}</code>",
-				"hasKey": "Zugangsschlüssel",
+				"hasKey": "API-Schlüssel",
 				"hasModels": "Modelle: {{count}}",
-				"keyOnly": "Nur den Zugangsschlüssel",
+				"keyOnly": "Nur den API-Schlüssel",
 				"none": "Ohne alte Einstellungen beginnen",
 				"notInFolder": "In diesem Ordner wurden keine Einstellungen des alten MiViA Desktop gefunden. Wählen Sie den Ordner, der „MiViA Desktop.exe“ enthält.",
 				"other": "Nicht der richtige? Ordner des alten MiViA Desktop wählen",
@@ -151,7 +151,7 @@
 				"stopNetwork": "Das alte MiViA Desktop liegt in einem Netzwerkordner. Andere PCs nutzen es vielleicht noch, deshalb wird es nicht abgeschaltet.",
 				"takeAll": "Alles übernehmen",
 				"title": "Alte Einstellungen übernehmen?",
-				"unreadable": "Die Einstellungen des alten MiViA Desktop konnten nicht gelesen werden. Geben Sie Ihren Zugangsschlüssel im nächsten Schritt ein."
+				"unreadable": "Die Einstellungen des alten MiViA Desktop konnten nicht gelesen werden. Geben Sie Ihren API-Schlüssel im nächsten Schritt ein."
 			},
 			"models": {
 				"choosePlaceholder": "Konfiguration wählen",
@@ -199,7 +199,7 @@
 			"steps": {
 				"finish": "Abschluss",
 				"folder": "Eingangsordner",
-				"key": "Zugangsschlüssel",
+				"key": "API-Schlüssel",
 				"legacy": "Alte Version",
 				"models": "Modelle",
 				"series": "Bildserien",
@@ -210,7 +210,7 @@
 				"language": "Sprache / Language",
 				"lead": "MiViA Desktop wertet Ihre Mikroskopbilder automatisch aus. Neue Bilder in einem Ordner Ihrer Wahl werden an MiViA gesendet, die Berichte werden auf diesem PC gespeichert.",
 				"legacyManual": "Ich habe bisher das alte MiViA Desktop benutzt",
-				"need": "Die Einrichtung dauert etwa 3 Minuten. Sie brauchen Ihren MiViA-Zugangsschlüssel, und dieser PC braucht eine Internetverbindung.",
+				"need": "Die Einrichtung dauert etwa 3 Minuten. Sie brauchen Ihren MiViA-API-Schlüssel, und dieser PC braucht eine Internetverbindung.",
 				"noKey": "Noch keinen Schlüssel? Sie können MiViA Desktop schließen und später weitermachen. Es geht nichts verloren.",
 				"start": "Einrichtung starten",
 				"title": "Willkommen bei MiViA Desktop"

@@ -47,7 +47,7 @@ async fn link(ready: &Ready, link: KnownLink) -> Result<(), AppError> {
         KnownLink::Support => super::support::support_link(&ready.services),
         KnownLink::Releases => RELEASES.to_owned(),
         KnownLink::License => format!("{}/dashboard", ready.services.origin.0),
-        KnownLink::AccessKeys => format!("{}/access-keys", ready.services.origin.0),
+        KnownLink::AccessKeys => format!("{}/api-keys", ready.services.origin.0),
         KnownLink::InfoMail => INFO_MAIL.to_owned(),
         KnownLink::Notices => notices()?,
     };

@@ -196,7 +196,7 @@ test.describe
 			const { page } = running;
 			await expect(page.getByRole('heading', { name: 'Welcome to MiViA Desktop' })).toBeVisible({ timeout: 30_000 });
 			await next(page, 'Start setup');
-			await page.getByLabel('Access key').fill(STUB_KEY);
+			await page.getByLabel('API key').fill(STUB_KEY);
 			await next(page);
 			await expect(page.getByText('Connected as Stub Lab')).toBeVisible({ timeout: 20_000 });
 			await next(page);

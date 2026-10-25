@@ -254,7 +254,7 @@
 		},
 		"hold": {
 			"accessKey": {
-				"title": "The access key no longer works."
+				"title": "The API key no longer works."
 			},
 			"accountBlocked": {
 				"text": "Contact MiViA support.",
@@ -268,7 +268,7 @@
 			"continues": "Images are safe and continue automatically.",
 			"copied": "Copied",
 			"copyDetails": "Copy details for IT",
-			"enterKey": "Enter new access key",
+			"enterKey": "Enter new API key",
 			"license": {
 				"text": "Images are safe and wait here. Ask the MiViA contact in your lab.",
 				"title": "Your MiViA license is not valid."
@@ -289,7 +289,7 @@
 				"title": "No connection since {{time}}."
 			},
 			"open": {
-				"accessKeys": "Open access keys in MiViA",
+				"accessKeys": "Open API keys in MiViA",
 				"infoMail": "Email info@mivia.ai",
 				"license": "Show license in MiViA"
 			},
@@ -406,7 +406,7 @@
 			"idsHelp": "Quote these IDs to request access to or deletion of your data.",
 			"idsTitle": "Your IDs",
 			"installId": "Installation ID",
-			"intro": "Each event carries only the fields listed here. File, folder and series names, search text, results, images and your access key are never sent.",
+			"intro": "Each event carries only the fields listed here. File, folder and series names, search text, results, images and your API key are never sent.",
 			"machineId": "Device ID",
 			"notRead": "not read",
 			"offNote": "While this is off, nothing is recorded or sent.",
@@ -417,7 +417,7 @@
 			"sent_other": "{{time}}, {{count}} events",
 			"serverAdds": "On receipt the server adds the time, your license type and one-way codes for your account, organization, installation and device. The account and organization codes are removed after 90 days. Nothing is kept longer than 400 days.",
 			"telemetry": "Help improve MiViA: send usage and error data to MiViA GmbH (optional)",
-			"telemetryHelp": "MiViA Desktop sends app events, errors, timings and device facts, together with a device ID. Never sent: images, file, folder and series names, results, search text, your access key. You can withdraw your consent at any time in Settings > Privacy.",
+			"telemetryHelp": "MiViA Desktop sends app events, errors, timings and device facts, together with a device ID. Never sent: images, file, folder and series names, results, search text, your API key. You can withdraw your consent at any time in Settings > Privacy.",
 			"typeChoice": "one of: {{values}}",
 			"typeFlag": "yes or no",
 			"typeId": "random ID",
@@ -529,7 +529,7 @@
 			"description": "What happened?",
 			"descriptionHint": "Optional. Do not enter confidential sample or customer names.",
 			"discard": "Discard",
-			"disclosure": "Sends the selected logs, system details and settings to MiViA GmbH support (no access key, no images, no results) and informs your MiViA contact person. Stored for 90 days. Covers all MiViA activity on this computer in the chosen period.",
+			"disclosure": "Sends the selected logs, system details and settings to MiViA GmbH support (no API key, no images, no results) and informs your MiViA contact person. Stored for 90 days. Covers all MiViA activity on this computer in the chosen period.",
 			"files_one": "1 file, {{size}}",
 			"files_other": "{{count}} files, {{size}}",
 			"firstErrors": "First errors: {{errors}}",
