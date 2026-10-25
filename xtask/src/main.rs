@@ -33,7 +33,7 @@ const USAGE: &str = "usage: cargo xtask <arch | command-size | source-rules [pat
 quality-diff --base <rev> --head <rev> | ci-integrity [--base <rev>] [--head <rev>] | \
 commit-text (--file <path> | --title <text> [--body <text>]) | floors-lower | mutation-floor <crate> <outcomes.json> [--raise] | \
 telemetry-fields [--check] | quarantine-filter | fuzz (--shard <n>/<of> --seconds <total> | --cmin) | update-sig verify <asset> <sig> <version> | \
-authenticode (verify <file>... | same-app <installed exe> <compiled exe>) | perf <scenario>>";
+authenticode (verify <file>... | sign <file> | same-app <installed exe> <compiled exe>) | perf <scenario>>";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();

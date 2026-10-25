@@ -95,7 +95,7 @@ writeFileSync(
 	overlay,
 	JSON.stringify({
 		bundle: {
-			windows: { certificateThumbprint: THUMBPRINT, digestAlgorithm: 'sha256', timestampUrl: TIMESTAMP, tsp: true },
+			windows: { signCommand: { cmd: resolve('out', 'xtask.exe'), args: ['authenticode', 'sign', '%1'] } },
 		},
 	}),
 );
@@ -105,17 +105,20 @@ copyFileSync(join('out', 'THIRD-PARTY-NOTICES.txt'), join('target', 'release', '
 copyFileSync(join('out', 'package.json'), 'package.json');
 rmSync(nsis, { recursive: true, force: true });
 
-try {
-	process.stdout.write(
-		'release-sign: the card PIN dialog appears for each signature (app, NSIS plugins, uninstaller, installer)\n',
-	);
-	run(
-		join('out', 'cargo-tauri.exe'),
-		['bundle', '--bundles', 'nsis', '--config', 'src-tauri/tauri.release.conf.json', '--config', overlay],
-		{ env: { ...process.env, TAURI_WINDOWS_SIGNTOOL_PATH: tool } },
-	);
-} finally {
-	run('git', ['checkout', '--', 'package.json']);
+process.stdout.write(
+	'release-sign: expect 4 card PIN dialogs (the app, all NSIS plugins at once, the uninstaller, the installer); cancelling one stops the run\n',
+);
+const bundled = spawnSync(
+	join('out', 'cargo-tauri.exe'),
+	['bundle', '--bundles', 'nsis', '--config', 'src-tauri/tauri.release.conf.json', '--config', overlay],
+	{
+		stdio: 'inherit',
+		env: { ...process.env, RELEASE_SIGNTOOL: tool, RELEASE_THUMBPRINT: THUMBPRINT, RELEASE_TIMESTAMP: TIMESTAMP },
+	},
+);
+run('git', ['checkout', '--', 'package.json']);
+if (bundled.status !== 0) {
+	fail('bundling or signing failed; nothing is retried, start again when the cause is fixed');
 }
 
 const installers = readdirSync(nsis).filter((name) => name.endsWith('-setup.exe'));

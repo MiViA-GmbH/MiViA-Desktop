@@ -1,3 +1,5 @@
+mod sign;
+
 use std::fmt::Write as _;
 use std::path::Path;
 
@@ -10,11 +12,12 @@ const NSIS: &[u8] = b"__TAURI_BUNDLE_TYPE_VAR_NSS";
 pub(crate) fn run(rest: &[String]) -> Result<bool> {
     match rest {
         [command, files @ ..] if command == "verify" && !files.is_empty() => verify(files),
+        [command, file] if command == "sign" => sign::run(Path::new(file)),
         [command, installed, compiled] if command == "same-app" => {
             same_app(Path::new(installed), Path::new(compiled))
         }
         _ => bail!(
-            "usage: cargo xtask authenticode (verify <file>... | same-app <installed exe> <compiled exe>)"
+            "usage: cargo xtask authenticode (verify <file>... | sign <file> | same-app <installed exe> <compiled exe>)"
         ),
     }
 }
