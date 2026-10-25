@@ -16,7 +16,7 @@ The release ships one per-user NSIS installer, built with `src-tauri/tauri.relea
 - `/S` installs silently for the signed-in user. It never starts the app; add `/R` only if you want that.
 - The updater runs the installer with `/S /UPDATE`. In that mode a running app is closed instead of returning 1618.
 - When setup has not been completed for this user (`HKCU\Software\MiViA\Desktop\SetupCompleted` is not 1), the installer writes the autostart value `HKCU\...\Run\MiViA Desktop` = `"%LOCALAPPDATA%\MiViA Desktop\mivia-desktop.exe" --minimized`, so the setup wizard appears at the next sign-in. The `Autostart` policy (HKLM first, then HKCU) set to 0 or `off` prevents it. After setup the app owns the value and the installer leaves it alone.
-- Uninstalling keeps the application data. The checkbox "Delete the application data" (off by default) asks for confirmation and then removes the data folders, the saved access keys and `HKCU\Software\MiViA\Desktop`. An update never removes data.
+- Uninstalling keeps the application data. The checkbox "Delete the application data" (off by default) asks for confirmation and then removes the data folders, the saved API keys and `HKCU\Software\MiViA\Desktop`. An update never removes data.
 - Uninstalling always removes the Send to shortcuts, the Explorer entries, the autostart value, the `inbox` folder and `instance.nonce`. When the installer itself runs the old uninstaller during an interactive upgrade, the autostart value is put back afterwards.
 
 ## Third-party notices

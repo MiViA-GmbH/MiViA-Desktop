@@ -342,7 +342,7 @@
 			],
 			"name": "account.connected",
 			"priority": "core",
-			"purpose": "Zeigt, dass ein Zugangsschlüssel akzeptiert wurde."
+			"purpose": "Zeigt, dass ein API-Schlüssel akzeptiert wurde."
 		},
 		{
 			"category": "diagnostics",

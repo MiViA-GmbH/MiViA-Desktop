@@ -109,8 +109,8 @@ fields = { duration_ms = "num", preset = { enum = ["microscope", "whole_folder",
 name = "account.connected"
 category = "diagnostics"
 priority = "core"
-purpose_en = "Shows that an access key was accepted."
-purpose_de = "Zeigt, dass ein Zugangsschlüssel akzeptiert wurde."
+purpose_en = "Shows that an API key was accepted."
+purpose_de = "Zeigt, dass ein API-Schlüssel akzeptiert wurde."
 fields = { kind = { enum = ["access_key"] }, imported_from_v1 = "flag" }
 
 [[event]]

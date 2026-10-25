@@ -2,12 +2,12 @@
 	"desktop": {
 		"account": {
 			"key": {
-				"connect": "Connect with an access key",
-				"connectLead": "No account is connected. Paste your access key to connect this PC again.",
-				"hint": "Tip for the key owner: the old key can be deleted at {{host}} › Access keys.",
-				"replace": "Replace access key",
+				"connect": "Connect with an API key",
+				"connectLead": "No account is connected. Paste your API key to connect this PC again.",
+				"hint": "Tip for the key owner: the old key can be deleted at {{host}} › API keys.",
+				"replace": "Replace API key",
 				"save": "Save key",
-				"saved": "New access key saved. Connected as {{name}}."
+				"saved": "New API key saved. Connected as {{name}}."
 			},
 			"signOut": {
 				"button": "Sign out",
@@ -117,20 +117,20 @@
 				"blocked": "Your MiViA account is blocked. Contact MiViA support.",
 				"connected": "Connected as {{name}} ({{email}})",
 				"copyForIt": "Copy details for IT",
-				"help": "Ask the person who manages MiViA in your lab, or sign in at {{host}} and open Access keys. A key starts with “mv-” and has 64 letters after it.",
-				"helpTitle": "Where do I find my access key?",
-				"imported": "The access key of the old MiViA Desktop was accepted.",
-				"importedInvalid": "The access key of the old MiViA Desktop is no longer accepted. Enter a new one.",
-				"label": "Access key",
-				"lead": "Paste or type your access key. It connects this PC to your MiViA account.",
+				"help": "Ask the person who manages MiViA in your lab, or sign in at {{host}} and open API keys. A key starts with “mv-” and has 64 letters after it.",
+				"helpTitle": "Where do I find my API key?",
+				"imported": "The API key of the old MiViA Desktop was accepted.",
+				"importedInvalid": "The API key of the old MiViA Desktop is no longer accepted. Enter a new one.",
+				"label": "API key",
+				"lead": "Paste or type your API key. It connects this PC to your MiViA account.",
 				"licenseInactive": "Your MiViA license is not active. You can finish setup now; analysis starts as soon as the license is active.",
-				"malformed": "This does not look like an access key. Copy the whole key again.",
+				"malformed": "This does not look like an API key. Copy the whole key again.",
 				"missingScopes": "Create a key with all rights for images and jobs in MiViA and use that one.",
 				"offline": "MiViA cannot be reached. Check the internet connection. If it works in the browser, ask your IT to allow {{host}}.",
 				"other": "Use a different key",
 				"otherAccount": "This key belongs to another account. The models you chose were reset.",
-				"rejected": "This access key was not accepted. Check that you copied the whole key, or ask for a new one.",
-				"storeFailed": "Windows could not store the access key. You will need to enter it again after restarting MiViA Desktop.",
+				"rejected": "This API key was not accepted. Check that you copied the whole key, or ask for a new one.",
+				"storeFailed": "Windows could not store the API key. You will need to enter it again after restarting MiViA Desktop.",
 				"stored": "The key is stored safely in Windows. For security, the copy in the clipboard was deleted.",
 				"storedOnly": "The key is stored safely in Windows.",
 				"title": "Connect to your MiViA account"
@@ -139,9 +139,9 @@
 				"closeIt": "Close old MiViA Desktop",
 				"found": "The old MiViA Desktop is on this PC, in <code>{{path}}</code>. It has these settings:",
 				"hasFolder": "Input folder: <code>{{path}}</code>",
-				"hasKey": "Access key",
+				"hasKey": "API key",
 				"hasModels": "Models: {{count}}",
-				"keyOnly": "Only the access key",
+				"keyOnly": "Only the API key",
 				"none": "Start without old settings",
 				"notInFolder": "No settings of the old MiViA Desktop were found in this folder. Choose the folder that contains “MiViA Desktop.exe”.",
 				"other": "Not the right one? Choose the folder of the old MiViA Desktop",
@@ -151,7 +151,7 @@
 				"stopNetwork": "The old MiViA Desktop is in a network folder. Other PCs may still use it, so it is not switched off.",
 				"takeAll": "Take over all",
 				"title": "Take over your old settings?",
-				"unreadable": "The settings of the old MiViA Desktop could not be read. Enter your access key in the next step."
+				"unreadable": "The settings of the old MiViA Desktop could not be read. Enter your API key in the next step."
 			},
 			"models": {
 				"choosePlaceholder": "Choose a customization",
@@ -199,7 +199,7 @@
 			"steps": {
 				"finish": "Finish",
 				"folder": "Input folder",
-				"key": "Access key",
+				"key": "API key",
 				"legacy": "Old version",
 				"models": "Models",
 				"series": "Image series",
@@ -210,7 +210,7 @@
 				"language": "Sprache / Language",
 				"lead": "MiViA Desktop analyzes your microscope images automatically. New images in a folder you choose are sent to MiViA, and the reports are saved on this PC.",
 				"legacyManual": "I used the old MiViA Desktop before",
-				"need": "Setup takes about 3 minutes. You need your MiViA access key, and this PC needs an internet connection.",
+				"need": "Setup takes about 3 minutes. You need your MiViA API key, and this PC needs an internet connection.",
 				"noKey": "No key yet? You can close MiViA Desktop and continue later. Nothing is lost.",
 				"start": "Start setup",
 				"title": "Welcome to MiViA Desktop"

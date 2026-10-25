@@ -17,10 +17,10 @@ The app never moves, renames or deletes your images. They are uploaded only to t
 ## Installation
 
 1. Download the installer from [Releases](https://github.com/MiViA-GmbH/MiViA-Desktop/releases). It installs for the current user without administrator rights.
-2. Create an access key at [app.mivia.ai/access-keys](https://app.mivia.ai/access-keys).
+2. Create an API key at [app.mivia.ai/api-keys](https://app.mivia.ai/api-keys).
 3. Start MiViA Desktop and follow the setup.
 
-Requires Windows 10 or 11 (64-bit), a MiViA account with an active license and HTTPS access to `app.mivia.ai` and `updates.mivia.ai`.
+Requires Windows 11 (64-bit), a MiViA account with an active license and HTTPS access to `app.mivia.ai` and `updates.mivia.ai`.
 
 ![Setup](docs/images/setup.png)
 
