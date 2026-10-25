@@ -5,6 +5,7 @@ use mivia_ports::auth::AuthError;
 use mivia_ports::id_gen::IdGen;
 use mivia_ports::server::CatalogueModel;
 use mivia_ports::server::ServerError;
+use mivia_ports::store::StoreExt;
 use mivia_ports::telemetry::{HoldRaised, LiftedBy, ProductEvent, SettledState};
 use mivia_testkit::id_gen::SeededIdGen;
 use mivia_testkit::server::{Fault, Licence, Op};
@@ -108,6 +109,40 @@ async fn a_rejected_access_key_holds_work_until_the_key_is_accepted_again() {
     line.server.set_down(&[Op::Upload], None);
     line.auth.set_problem(None);
     line.run_for(40 * MINUTE_MS, 30 * SECOND_MS).await;
+    assert_eq!(line.holds().await, []);
+    assert!(line.states().await.iter().all(|state| state == "done"));
+    line.finish().await;
+}
+
+#[tokio::test]
+async fn a_key_without_the_needed_scopes_holds_work_without_asking_again() {
+    let line = Line::new().await;
+    let missing = ServerError::Unauthorized(KeyProblem::MissingScopes);
+    line.server.set_down(&[Op::Submit], Some(&missing));
+    line.files(2).await;
+    line.run_for(3 * HOUR_MS, 30 * SECOND_MS).await;
+    line.pipeline.probe_now().await.unwrap();
+    line.run_for(MINUTE_MS, 30 * SECOND_MS).await;
+    let held = HoldReason::AccessKeyInvalid(KeyProblem::MissingScopes);
+    assert_eq!(line.holds().await, [held]);
+    assert_eq!(line.server.count(Op::Submit), 1);
+    assert_eq!(line.auth.checks(), 0);
+    assert!(none_failed(&line.states().await));
+    assert!(
+        line.file_states()
+            .await
+            .iter()
+            .all(|state| state == "uploaded")
+    );
+
+    line.server.set_down(&[Op::Submit], None);
+    let scope = line.world.scope;
+    line.world
+        .store
+        .write(move |tx| tx.holds(scope).release(held))
+        .await
+        .unwrap();
+    line.run_for(10 * MINUTE_MS, 30 * SECOND_MS).await;
     assert_eq!(line.holds().await, []);
     assert!(line.states().await.iter().all(|state| state == "done"));
     line.finish().await;

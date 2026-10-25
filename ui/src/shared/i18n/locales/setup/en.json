@@ -125,6 +125,7 @@
 				"lead": "Paste or type your access key. It connects this PC to your MiViA account.",
 				"licenseInactive": "Your MiViA license is not active. You can finish setup now; analysis starts as soon as the license is active.",
 				"malformed": "This does not look like an access key. Copy the whole key again.",
+				"missingScopes": "Create a key with all rights for images and jobs in MiViA and use that one.",
 				"offline": "MiViA cannot be reached. Check the internet connection. If it works in the browser, ask your IT to allow {{host}}.",
 				"other": "Use a different key",
 				"otherAccount": "This key belongs to another account. The models you chose were reset.",

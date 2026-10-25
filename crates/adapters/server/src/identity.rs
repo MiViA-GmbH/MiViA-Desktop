@@ -4,6 +4,7 @@ use std::time::Duration;
 use arc_swap::ArcSwap;
 use async_trait::async_trait;
 use mivia_api::{AccessKeyCurrent, ApiErrorBody, JSON_LIMIT, read_capped};
+use mivia_domain::access_key::missing_scopes;
 use mivia_domain::hold::KeyProblem;
 use mivia_ports::auth::{IdentifyError, Identity, IdentityApi, ServerOrigin};
 use reqwest::StatusCode;
@@ -37,6 +38,15 @@ fn rejected(body: &[u8]) -> IdentifyError {
 }
 
 fn identity(current: AccessKeyCurrent) -> Identity {
+    let missing_scopes = current
+        .key
+        .scopes
+        .as_deref()
+        .map(missing_scopes)
+        .unwrap_or_default();
+    if !missing_scopes.is_empty() {
+        tracing::warn!(missing = ?missing_scopes, "auth.missingScopes");
+    }
     Identity {
         account_id: current.account.id,
         name: current.account.name,
@@ -44,6 +54,7 @@ fn identity(current: AccessKeyCurrent) -> Identity {
         key_start: current.key.start,
         expires_at: current.key.expires_at,
         admin_scope: current.admin_scope,
+        missing_scopes,
     }
 }
 

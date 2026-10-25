@@ -51,6 +51,7 @@ fn holds() -> Vec<(HoldReason, &'static str)> {
         KeyProblem::Invalid,
         KeyProblem::AccountBlocked,
         KeyProblem::AdminScope,
+        KeyProblem::MissingScopes,
     ];
     all.extend(problems.map(|problem| (HoldReason::AccessKeyInvalid(problem), "AccessKeyInvalid")));
     all
@@ -110,6 +111,10 @@ fn probes_follow_the_cadence_table() {
         Some(RetryPolicy::LICENSE_CANARY)
     );
     assert_eq!(probe(HoldReason::ClientTooOld), None);
+    assert_eq!(
+        probe(HoldReason::AccessKeyInvalid(KeyProblem::MissingScopes)),
+        None
+    );
 }
 
 fn exhaustive_subsets() -> Vec<Vec<HoldReason>> {

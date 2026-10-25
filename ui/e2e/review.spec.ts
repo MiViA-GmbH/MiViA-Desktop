@@ -125,6 +125,7 @@ const STATES: State[] = [
 	{ id: 'h3-hold-key', path: '/?scenario=hold-accessKey' },
 	{ id: 'h4-hold-blocked', path: '/?scenario=hold-accountBlocked' },
 	{ id: 'h5-hold-admin', path: '/?scenario=hold-adminScope' },
+	{ id: 'h8-hold-scopes', path: '/?scenario=hold-missingScopes' },
 	{ id: 'h6-hold-too-old', path: '/?scenario=too-old' },
 	{ id: 'h7-hold-unsigned', path: '/?scenario=update-unsigned' },
 	{

@@ -303,7 +303,7 @@ category = "diagnostics"
 priority = "core"
 purpose_en = "Shows that work was paused by a condition such as no network, and which one."
 purpose_de = "Zeigt, dass die Arbeit durch eine Bedingung wie fehlendes Netz angehalten wurde, und welche."
-fields = { kind = { enum = ["offline", "service_unavailable", "tls", "proxy_auth", "proxy_refused", "redirect", "key_invalid", "account_blocked", "admin_scope", "license_uploads", "license_all", "client_too_old"] } }
+fields = { kind = { enum = ["offline", "service_unavailable", "tls", "proxy_auth", "proxy_refused", "redirect", "key_invalid", "account_blocked", "admin_scope", "missing_scopes", "license_uploads", "license_all", "client_too_old"] } }
 
 [[event]]
 name = "hold.lifted"
@@ -311,7 +311,7 @@ category = "diagnostics"
 priority = "core"
 purpose_en = "Shows that a pause condition ended, how long it lasted and what ended it."
 purpose_de = "Zeigt, dass eine Anhaltebedingung endete, wie lange sie dauerte und was sie beendete."
-fields = { kind = { enum = ["offline", "service_unavailable", "tls", "proxy_auth", "proxy_refused", "redirect", "key_invalid", "account_blocked", "admin_scope", "license_uploads", "license_all", "client_too_old"] }, duration_ms = "num", count = "num", by = { enum = ["probe", "canary", "user", "update"] } }
+fields = { kind = { enum = ["offline", "service_unavailable", "tls", "proxy_auth", "proxy_refused", "redirect", "key_invalid", "account_blocked", "admin_scope", "missing_scopes", "license_uploads", "license_all", "client_too_old"] }, duration_ms = "num", count = "num", by = { enum = ["probe", "canary", "user", "update"] } }
 
 [[event]]
 name = "proxy.auth_required"

@@ -12,6 +12,8 @@ export function outcomeError(outcome: ConnectOutcome | null, host: string, t: TF
 			return t('desktop.wizard.key.blocked');
 		case 'adminScope':
 			return t('desktop.wizard.key.adminScope');
+		case 'missingScopes':
+			return t('desktop.wizard.key.missingScopes');
 		case 'offline':
 			return t('desktop.wizard.key.offline', { host });
 		default:

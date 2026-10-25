@@ -89,6 +89,7 @@ pub enum ConnectOutcome {
     Rejected,
     AccountBlocked,
     AdminScope,
+    MissingScopes,
     Offline {
         details: String,
     },

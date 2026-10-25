@@ -14,6 +14,7 @@ pub enum KeyProblem {
     Invalid,
     AccountBlocked,
     AdminScope,
+    MissingScopes,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -72,9 +73,9 @@ impl HoldReason {
             Self::Offline => Some(RetryPolicy::probe(15 * SECOND_MS, 5 * MINUTE_MS)),
             Self::ServiceUnavailable => Some(RetryPolicy::probe(30 * SECOND_MS, 5 * MINUTE_MS)),
             Self::NetworkBlocked(_) => Some(RetryPolicy::probe(MINUTE_MS, 15 * MINUTE_MS)),
+            Self::AccessKeyInvalid(KeyProblem::MissingScopes) | Self::ClientTooOld => None,
             Self::AccessKeyInvalid(_) => Some(RetryPolicy::probe(30 * MINUTE_MS, 30 * MINUTE_MS)),
             Self::LicenseInvalid(_) => Some(RetryPolicy::LICENSE_CANARY),
-            Self::ClientTooOld => None,
         }
     }
 }

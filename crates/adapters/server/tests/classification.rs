@@ -235,3 +235,26 @@ async fn a_closed_port_is_unreachable() {
     let (api, _) = super::support::api_for(&uri);
     assert_eq!(api.version().await, Err(ServerError::Unreachable));
 }
+
+#[tokio::test]
+async fn a_missing_scope_is_a_key_problem_without_a_new_check() {
+    let missing = || {
+        ResponseTemplate::new(403).set_body_json(json!({
+            "statusCode": 403,
+            "code": "API_KEY_SCOPE_MISSING",
+            "message": "API key lacks scope jobs:write",
+            "scope": "jobs:write"
+        }))
+    };
+    let held = ServerError::Unauthorized(KeyProblem::MissingScopes);
+    assert_eq!(upload_error(missing()).await, held);
+    assert_eq!(submit_error(missing()).await, held);
+    let (mock, api, auth) = server().await;
+    Mock::given(method("GET"))
+        .and(path("/api/v2/jobs/status"))
+        .respond_with(missing())
+        .mount(&mock)
+        .await;
+    assert_eq!(api.job_statuses(vec![JOB.to_owned()]).await, Err(held));
+    assert_eq!(auth.checks.load(std::sync::atomic::Ordering::Relaxed), 0);
+}

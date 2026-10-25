@@ -1,4 +1,4 @@
-use mivia_domain::hold::{HoldReason, LicenseScope};
+use mivia_domain::hold::{HoldReason, KeyProblem, LicenseScope};
 use mivia_domain::source_file::SourceFileEvent;
 use mivia_ports::server::ServerError;
 
@@ -34,10 +34,12 @@ impl Pipeline {
                 server.license().await,
                 Ok(_) | Err(ServerError::LicenseInvalid)
             ),
+            HoldReason::AccessKeyInvalid(KeyProblem::MissingScopes) | HoldReason::ClientTooOld => {
+                false
+            }
             HoldReason::AccessKeyInvalid(_) => self.key_accepted().await,
             HoldReason::LicenseInvalid(LicenseScope::Uploads) => self.upload_canary().await?,
             HoldReason::LicenseInvalid(LicenseScope::All) => self.submit_canary().await?,
-            HoldReason::ClientTooOld => false,
         };
         tracing::info!(?reason, ok, "hold.probe");
         Ok(ok)

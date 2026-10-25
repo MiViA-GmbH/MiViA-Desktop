@@ -946,6 +946,7 @@
 						"key_invalid",
 						"account_blocked",
 						"admin_scope",
+						"missing_scopes",
 						"license_uploads",
 						"license_all",
 						"client_too_old"
@@ -985,6 +986,7 @@
 						"key_invalid",
 						"account_blocked",
 						"admin_scope",
+						"missing_scopes",
 						"license_uploads",
 						"license_all",
 						"client_too_old"

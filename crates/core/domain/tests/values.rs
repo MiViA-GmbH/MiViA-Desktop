@@ -104,3 +104,45 @@ fn malformed_access_keys_are_refused() {
     assert_eq!(normalise(&"a".repeat(32)).map(|key| key.len()), Some(32));
     assert_eq!(normalise(&"a".repeat(256)).map(|key| key.len()), Some(256));
 }
+
+#[test]
+fn a_key_needs_the_image_and_job_scopes_the_desktop_calls() {
+    use mivia_domain::access_key::{REQUIRED_SCOPES, missing_scopes};
+    assert_eq!(
+        REQUIRED_SCOPES,
+        [
+            "images:write",
+            "images:delete",
+            "jobs:read",
+            "jobs:write",
+            "jobs:delete"
+        ]
+    );
+    let every: Vec<String> = ["images", "jobs", "customizations"]
+        .iter()
+        .flat_map(|resource| {
+            ["read", "write", "delete"].map(|action| format!("{resource}:{action}"))
+        })
+        .collect();
+    assert_eq!(missing_scopes(&every), Vec::<&str>::new());
+    let narrowed = [
+        "images:read".to_owned(),
+        "images:write".to_owned(),
+        "jobs:read".to_owned(),
+    ];
+    assert_eq!(
+        missing_scopes(&narrowed),
+        ["images:delete", "jobs:write", "jobs:delete"]
+    );
+    assert_eq!(
+        missing_scopes(&["admin".to_owned(), "jobs:read".to_owned()]).len(),
+        4
+    );
+}
+
+#[test]
+fn keys_of_servers_without_resource_scopes_are_not_checked() {
+    use mivia_domain::access_key::missing_scopes;
+    assert_eq!(missing_scopes(&[]), Vec::<&str>::new());
+    assert_eq!(missing_scopes(&["ADMIN".to_owned()]), Vec::<&str>::new());
+}

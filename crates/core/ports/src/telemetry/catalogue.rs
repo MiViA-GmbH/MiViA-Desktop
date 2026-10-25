@@ -55,6 +55,7 @@ tag_values! {
         HoldReason::AccessKeyInvalid(KeyProblem::Invalid) => "key_invalid",
         HoldReason::AccessKeyInvalid(KeyProblem::AccountBlocked) => "account_blocked",
         HoldReason::AccessKeyInvalid(KeyProblem::AdminScope) => "admin_scope",
+        HoldReason::AccessKeyInvalid(KeyProblem::MissingScopes) => "missing_scopes",
         HoldReason::LicenseInvalid(LicenseScope::Uploads) => "license_uploads",
         HoldReason::LicenseInvalid(LicenseScope::All) => "license_all",
         HoldReason::ClientTooOld => "client_too_old",

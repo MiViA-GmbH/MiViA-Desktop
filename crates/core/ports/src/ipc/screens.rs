@@ -13,6 +13,7 @@ pub enum HoldKind {
     AccessKey,
     AccountBlocked,
     AdminScope,
+    MissingScopes,
     License,
     ClientTooOld,
 }
@@ -26,6 +27,7 @@ impl From<HoldReason> for HoldKind {
             HoldReason::AccessKeyInvalid(KeyProblem::Invalid) => Self::AccessKey,
             HoldReason::AccessKeyInvalid(KeyProblem::AccountBlocked) => Self::AccountBlocked,
             HoldReason::AccessKeyInvalid(KeyProblem::AdminScope) => Self::AdminScope,
+            HoldReason::AccessKeyInvalid(KeyProblem::MissingScopes) => Self::MissingScopes,
             HoldReason::LicenseInvalid(_) => Self::License,
             HoldReason::ClientTooOld => Self::ClientTooOld,
         }
