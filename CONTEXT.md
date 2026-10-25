@@ -49,6 +49,9 @@ _Avoid_: failure, error, pause
 **Hold (access key)**:
 The hold raised when the server confirms the access key is no longer accepted (deleted, replaced, expired, or the account blocked); lifted by a new key of the same account or a successful re-check.
 
+**Hold (access key, missing scopes)**:
+The access key hold raised when the key lacks a scope the desktop needs (images:write, images:delete, jobs:read, jobs:write, jobs:delete), seen at connect, on a re-check, or as a 403 with code API_KEY_SCOPE_MISSING; scopes of a key cannot change, so only a new key lifts it.
+
 **Hold (license)**:
 The hold raised when the server refuses new images (uploads only) or also new computations (everything) because of the license; lifted when one held item goes through again.
 
@@ -418,6 +421,7 @@ Model and Customization use the MiViA web app's words so both products speak ali
 | Hold (network blocked) | Network blocks MiViA | Netzwerk blockiert MiViA |
 | Hold (access key) | Waiting for a valid access key | Wartet auf gültigen Zugangsschlüssel |
 | Hold (access key, account blocked) | Your MiViA account is blocked. Contact MiViA support. | Ihr MiViA-Konto ist gesperrt. Wenden Sie sich an den MiViA-Support. |
+| Hold (access key, missing scopes) | This key lacks rights for images or jobs. | Diesem Schlüssel fehlen Rechte für Bilder oder Jobs. |
 | Hold (license) | Waiting for license | Wartet auf Lizenz |
 | Hold recovery action | Check connection now | Verbindung jetzt prüfen |
 | License Hold action | Ask the MiViA contact in your lab | MiViA-Ansprechperson im Labor fragen |

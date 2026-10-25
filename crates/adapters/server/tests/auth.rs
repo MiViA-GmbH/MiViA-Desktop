@@ -78,6 +78,7 @@ fn identity(account: &str, admin: bool) -> Identity {
         key_start: "mv-abc".to_owned(),
         expires_at: None,
         admin_scope: admin,
+        missing_scopes: Vec::new(),
     }
 }
 
@@ -155,6 +156,13 @@ async fn unauthorized_answers_are_confirmed_by_identify() {
         (
             Ok(identity("acc-1", true)),
             Err(AuthError::Rejected(KeyProblem::AdminScope)),
+        ),
+        (
+            Ok(Identity {
+                missing_scopes: vec!["jobs:write"],
+                ..identity("acc-1", false)
+            }),
+            Err(AuthError::Rejected(KeyProblem::MissingScopes)),
         ),
         (
             Ok(identity("acc-9", false)),
@@ -240,4 +248,70 @@ async fn identify_reads_the_account_and_tells_blocked_from_invalid_keys() {
         .identify(&origin, &SecretString::from("wrong-key"))
         .await;
     assert_eq!(wrong, Err(IdentifyError::Rejected(KeyProblem::Invalid)));
+}
+
+async fn identified(scopes: Option<serde_json::Value>) -> Result<Identity, IdentifyError> {
+    let mock = MockServer::start().await;
+    let mut key = json!({ "id": "k", "name": "Desktop", "start": "mv-abc", "createdAt": "2026-01-01T00:00:00.000Z", "expiresAt": null });
+    if let Some(scopes) = scopes {
+        key["scopes"] = scopes;
+    }
+    let body = json!({
+        "account": { "id": "acc-1", "name": "Lab", "email": "lab@example.invalid" },
+        "key": key,
+        "adminScope": false
+    });
+    Mock::given(method("GET"))
+        .and(path("/api/access-keys/info"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(body))
+        .mount(&mock)
+        .await;
+    HttpIdentityApi::new(clients())
+        .identify(&ServerOrigin(mock.uri()), &SecretString::from(KEY))
+        .await
+}
+
+#[tokio::test]
+async fn identify_names_the_scopes_a_narrowed_key_lacks() {
+    let every = json!([
+        "images:read",
+        "images:write",
+        "images:delete",
+        "jobs:read",
+        "jobs:write",
+        "jobs:delete",
+        "customizations:read",
+        "customizations:write",
+        "customizations:delete"
+    ]);
+    let narrowed = json!(["images:read", "images:write", "jobs:read"]);
+    let cases = [
+        (Some(every), Vec::new()),
+        (
+            Some(narrowed),
+            vec!["images:delete", "jobs:write", "jobs:delete"],
+        ),
+        (Some(json!(["ADMIN"])), Vec::new()),
+        (None, Vec::new()),
+    ];
+    for (scopes, missing) in cases {
+        let found = identified(scopes).await.unwrap();
+        assert_eq!(found.missing_scopes, missing);
+    }
+}
+
+#[tokio::test]
+async fn a_renamed_invalid_key_code_still_means_an_invalid_key() {
+    let mock = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/api/access-keys/info"))
+        .respond_with(ResponseTemplate::new(401).set_body_json(
+            json!({ "statusCode": 401, "code": "API_KEY_INVALID", "message": "Unauthorized" }),
+        ))
+        .mount(&mock)
+        .await;
+    let answer = HttpIdentityApi::new(clients())
+        .identify(&ServerOrigin(mock.uri()), &SecretString::from(KEY))
+        .await;
+    assert_eq!(answer, Err(IdentifyError::Rejected(KeyProblem::Invalid)));
 }

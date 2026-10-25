@@ -33,6 +33,8 @@ pub struct AccessKeyInfo {
     pub start: String,
     #[serde(default)]
     pub expires_at: Option<String>,
+    #[serde(default)]
+    pub scopes: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
@@ -56,6 +58,8 @@ pub struct ApiErrorBody {
     pub code: Option<String>,
     #[serde(default)]
     pub message: serde_json::Value,
+    #[serde(default)]
+    pub scope: Option<String>,
 }
 
 pub fn version(client: &Client, base_url: &str) -> RequestBuilder {

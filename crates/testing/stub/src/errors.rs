@@ -26,9 +26,15 @@ fn rate_limited(retry_after_ms: i64) -> Response {
 fn key_problem(problem: KeyProblem) -> Response {
     let code = match problem {
         KeyProblem::AccountBlocked => "ACCOUNT_BLOCKED",
-        KeyProblem::Invalid | KeyProblem::AdminScope => "ACCESS_KEY_INVALID",
+        KeyProblem::Invalid | KeyProblem::AdminScope => "API_KEY_INVALID",
+        KeyProblem::MissingScopes => return scope_missing(),
     };
     body(StatusCode::UNAUTHORIZED, code, "Unauthorized")
+}
+
+fn scope_missing() -> Response {
+    let payload = json!({ "statusCode": 403, "code": "API_KEY_SCOPE_MISSING", "message": "API key lacks scope jobs:write", "scope": "jobs:write" });
+    (StatusCode::FORBIDDEN, Json(payload)).into_response()
 }
 
 pub(crate) fn response(error: &ServerError) -> Response {

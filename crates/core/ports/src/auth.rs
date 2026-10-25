@@ -45,6 +45,7 @@ pub struct Identity {
     pub key_start: String,
     pub expires_at: Option<String>,
     pub admin_scope: bool,
+    pub missing_scopes: Vec<&'static str>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

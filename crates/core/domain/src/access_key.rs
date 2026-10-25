@@ -33,3 +33,22 @@ pub fn normalise(raw: &str) -> Option<String> {
     let valid = (MIN_LEN..=MAX_LEN).contains(&key.len()) && key.chars().all(allowed);
     valid.then(|| key.to_owned())
 }
+
+pub const REQUIRED_SCOPES: [&str; 5] = [
+    "images:write",
+    "images:delete",
+    "jobs:read",
+    "jobs:write",
+    "jobs:delete",
+];
+
+pub fn missing_scopes(granted: &[String]) -> Vec<&'static str> {
+    let has_resource_scopes = granted.iter().any(|scope| scope.contains(':'));
+    if !has_resource_scopes {
+        return Vec::new();
+    }
+    REQUIRED_SCOPES
+        .into_iter()
+        .filter(|scope| !granted.iter().any(|given| given == scope))
+        .collect()
+}

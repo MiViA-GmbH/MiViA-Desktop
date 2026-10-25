@@ -22,12 +22,6 @@ use super::cx::{Cx, Ready, Services, now};
 use super::telemetry;
 use super::{intake, pipeline};
 
-const KEY_PROBLEMS: [KeyProblem; 3] = [
-    KeyProblem::Invalid,
-    KeyProblem::AccountBlocked,
-    KeyProblem::AdminScope,
-];
-
 pub(crate) async fn compose(
     services: &Arc<Services>,
     minimized: bool,
@@ -88,6 +82,7 @@ pub(crate) async fn identify(
     let api = HttpIdentityApi::new(Arc::clone(&services.clients));
     match api.identify(&services.origin, key).await {
         Ok(identity) if identity.admin_scope => Err(ConnectOutcome::AdminScope),
+        Ok(identity) if !identity.missing_scopes.is_empty() => Err(ConnectOutcome::MissingScopes),
         Ok(identity) => Ok(identity),
         Err(IdentifyError::Rejected(KeyProblem::AccountBlocked)) => {
             Err(ConnectOutcome::AccountBlocked)
@@ -191,9 +186,11 @@ fn enter(tx: &mut dyn WriteTx, account: &NewAccount) -> Result<AccountScope, TxE
     }
     settings.last_account = Some(account.server_account_id.clone());
     write_global(tx, &settings)?;
-    for problem in KEY_PROBLEMS {
-        tx.holds(AccountScope(id))
-            .release(HoldReason::AccessKeyInvalid(problem))?;
+    let scope = AccountScope(id);
+    for reason in tx.holds(scope).active()? {
+        if matches!(reason, HoldReason::AccessKeyInvalid(_)) {
+            tx.holds(scope).release(reason)?;
+        }
     }
     Ok(AccountScope(id))
 }

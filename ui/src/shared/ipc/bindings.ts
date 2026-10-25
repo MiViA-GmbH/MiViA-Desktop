@@ -263,7 +263,7 @@ export type ComputationItem = {
 	reason: string | null,
 };
 
-export type ConnectOutcome = { kind: "connected"; connection: ConnectionView; otherAccount: boolean; clipboardCleared: boolean } | { kind: "malformed" } | { kind: "rejected" } | { kind: "accountBlocked" } | { kind: "adminScope" } | { kind: "offline"; details: string } | { kind: "switchAccount"; currentName: string; newName: string } | { kind: "cancelled" };
+export type ConnectOutcome = { kind: "connected"; connection: ConnectionView; otherAccount: boolean; clipboardCleared: boolean } | { kind: "malformed" } | { kind: "rejected" } | { kind: "accountBlocked" } | { kind: "adminScope" } | { kind: "missingScopes" } | { kind: "offline"; details: string } | { kind: "switchAccount"; currentName: string; newName: string } | { kind: "cancelled" };
 
 export type ConnectionNote = "licenseInactive" | "storeFailed" | "imported";
 
@@ -458,7 +458,7 @@ export type HistorySort = "finished" | "name";
 
 export type HistoryStatus = "problems" | "outOfDate" | "active";
 
-export type HoldKind = "offline" | "serviceUnavailable" | "networkBlocked" | "accessKey" | "accountBlocked" | "adminScope" | "license" | "clientTooOld";
+export type HoldKind = "offline" | "serviceUnavailable" | "networkBlocked" | "accessKey" | "accountBlocked" | "adminScope" | "missingScopes" | "license" | "clientTooOld";
 
 export type HoldView = {
 	kind: HoldKind,

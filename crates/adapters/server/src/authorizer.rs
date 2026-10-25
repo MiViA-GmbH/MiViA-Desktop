@@ -135,6 +135,9 @@ impl ConnectionAuthorizer {
             Ok(identity) if identity.admin_scope => {
                 Err(AuthError::Rejected(KeyProblem::AdminScope))
             }
+            Ok(identity) if !identity.missing_scopes.is_empty() => {
+                Err(AuthError::Rejected(KeyProblem::MissingScopes))
+            }
             Ok(identity) if identity.account_id != self.connection.server_account_id => {
                 Err(AuthError::AccountMismatch)
             }

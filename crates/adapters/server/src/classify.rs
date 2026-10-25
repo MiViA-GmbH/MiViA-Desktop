@@ -2,6 +2,7 @@ use std::error::Error as StdError;
 use std::time::SystemTime;
 
 use mivia_api::ApiErrorBody;
+use mivia_domain::hold::KeyProblem;
 use mivia_domain::retry::retry_after_ms;
 use mivia_ports::server::ServerError;
 use reqwest::StatusCode;
@@ -11,6 +12,7 @@ const LICENSE_CODE: &str = "LICENSE_INVALID";
 const LICENSE_MESSAGE: &str = "License is not valid";
 const IN_PROGRESS: &str = "IDEMPOTENCY_KEY_IN_PROGRESS";
 const UPLOAD_REJECTED: &str = "IMAGE_UPLOAD_REJECTED";
+const SCOPE_MISSING: &str = "API_KEY_SCOPE_MISSING";
 const PROXY_AUTH_TEXT: &str = "proxy authorization required";
 const PROXY_REFUSED_TEXT: &str = "unsuccessful";
 
@@ -112,6 +114,11 @@ fn retry_after(headers: &HeaderMap) -> i64 {
 fn client_error(status: StatusCode, bytes: &[u8], call: Call) -> ServerError {
     match status.as_u16() {
         403 if is_license(bytes) => ServerError::LicenseInvalid,
+        403 if code(bytes) == SCOPE_MISSING => {
+            let scope = body(bytes).and_then(|body| body.scope).unwrap_or_default();
+            tracing::warn!(scope, "auth.scopeMissing");
+            ServerError::Unauthorized(KeyProblem::MissingScopes)
+        }
         403 => ServerError::Forbidden { code: code(bytes) },
         404 if matches!(call, Call::Submit | Call::Report) => {
             ServerError::NotFound { image_id: None }

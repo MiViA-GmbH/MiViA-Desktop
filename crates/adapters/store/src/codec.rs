@@ -27,13 +27,16 @@ pub(crate) const fn hold_reason(reason: HoldReason) -> &'static str {
             "access_key_invalid.account_blocked"
         }
         HoldReason::AccessKeyInvalid(KeyProblem::AdminScope) => "access_key_invalid.admin_scope",
+        HoldReason::AccessKeyInvalid(KeyProblem::MissingScopes) => {
+            "access_key_invalid.missing_scopes"
+        }
         HoldReason::LicenseInvalid(LicenseScope::Uploads) => "license_invalid.uploads",
         HoldReason::LicenseInvalid(LicenseScope::All) => "license_invalid.all",
         HoldReason::ClientTooOld => "client_too_old",
     }
 }
 
-pub(crate) const HOLD_REASONS: [HoldReason; 12] = [
+pub(crate) const HOLD_REASONS: [HoldReason; 13] = [
     HoldReason::Offline,
     HoldReason::ServiceUnavailable,
     HoldReason::NetworkBlocked(NetworkBlock::Tls),
@@ -43,6 +46,7 @@ pub(crate) const HOLD_REASONS: [HoldReason; 12] = [
     HoldReason::AccessKeyInvalid(KeyProblem::Invalid),
     HoldReason::AccessKeyInvalid(KeyProblem::AccountBlocked),
     HoldReason::AccessKeyInvalid(KeyProblem::AdminScope),
+    HoldReason::AccessKeyInvalid(KeyProblem::MissingScopes),
     HoldReason::LicenseInvalid(LicenseScope::Uploads),
     HoldReason::LicenseInvalid(LicenseScope::All),
     HoldReason::ClientTooOld,

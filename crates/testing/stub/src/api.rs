@@ -41,7 +41,7 @@ pub(crate) fn denied(stub: &Stub, headers: &HeaderMap) -> Option<Response> {
         return None;
     }
     let payload =
-        json!({ "statusCode": 401, "code": "ACCESS_KEY_INVALID", "message": "Unauthorized" });
+        json!({ "statusCode": 401, "code": "API_KEY_INVALID", "message": "Unauthorized" });
     Some((StatusCode::UNAUTHORIZED, Json(payload)).into_response())
 }
 
@@ -69,7 +69,7 @@ async fn identify(State(stub): State<Stub>, headers: HeaderMap) -> Response {
     }
     Json(json!({
         "account": { "id": "stub-account", "name": "Stub Lab", "email": "lab@example.invalid" },
-        "key": { "id": "key-1", "name": "Desktop", "start": "mv-stub", "createdAt": "2026-01-01T00:00:00.000Z", "expiresAt": null },
+        "key": { "id": "key-1", "name": "Desktop", "start": "mv-stub", "createdAt": "2026-01-01T00:00:00.000Z", "expiresAt": null, "scopes": ["images:read", "images:write", "images:delete", "jobs:read", "jobs:write", "jobs:delete", "customizations:read", "customizations:write", "customizations:delete"] },
         "adminScope": false,
     }))
     .into_response()
