@@ -204,13 +204,13 @@ async fn identify_reads_the_account_and_tells_blocked_from_invalid_keys() {
         "adminScope": false
     });
     Mock::given(method("GET"))
-        .and(path("/api/access-keys/info"))
+        .and(path("/api/api-keys/info"))
         .and(header("authorization", KEY))
         .respond_with(ResponseTemplate::new(200).set_body_json(body))
         .mount(&mock)
         .await;
     Mock::given(method("GET"))
-        .and(path("/api/access-keys/info"))
+        .and(path("/api/api-keys/info"))
         .and(header("authorization", "blocked-key"))
         .respond_with(
             ResponseTemplate::new(401)
@@ -219,7 +219,7 @@ async fn identify_reads_the_account_and_tells_blocked_from_invalid_keys() {
         .mount(&mock)
         .await;
     Mock::given(method("GET"))
-        .and(path("/api/access-keys/info"))
+        .and(path("/api/api-keys/info"))
         .and(header("authorization", "wrong-key"))
         .respond_with(
             ResponseTemplate::new(401)
@@ -262,7 +262,7 @@ async fn identified(scopes: Option<serde_json::Value>) -> Result<Identity, Ident
         "adminScope": false
     });
     Mock::given(method("GET"))
-        .and(path("/api/access-keys/info"))
+        .and(path("/api/api-keys/info"))
         .respond_with(ResponseTemplate::new(200).set_body_json(body))
         .mount(&mock)
         .await;
@@ -304,7 +304,7 @@ async fn identify_names_the_scopes_a_narrowed_key_lacks() {
 async fn a_renamed_invalid_key_code_still_means_an_invalid_key() {
     let mock = MockServer::start().await;
     Mock::given(method("GET"))
-        .and(path("/api/access-keys/info"))
+        .and(path("/api/api-keys/info"))
         .respond_with(ResponseTemplate::new(401).set_body_json(
             json!({ "statusCode": 401, "code": "API_KEY_INVALID", "message": "Unauthorized" }),
         ))
