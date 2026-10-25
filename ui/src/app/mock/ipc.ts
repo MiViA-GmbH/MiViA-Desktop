@@ -42,7 +42,14 @@ function folders(): FolderView[] {
 
 const calm = scenario !== 'hold';
 
-const HOLD_KINDS: HoldKind[] = ['serviceUnavailable', 'accessKey', 'accountBlocked', 'adminScope', 'license'];
+const HOLD_KINDS: HoldKind[] = [
+	'serviceUnavailable',
+	'accessKey',
+	'accountBlocked',
+	'adminScope',
+	'missingScopes',
+	'license',
+];
 const held = HOLD_KINDS.find((kind) => scenario === `hold-${kind}`);
 
 const FAILURE: AppError = {

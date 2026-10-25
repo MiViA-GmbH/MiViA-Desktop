@@ -273,6 +273,10 @@
 				"text": "Die Bilder sind sicher und warten hier. Fragen Sie die MiViA-Ansprechperson im Labor.",
 				"title": "Ihre MiViA-Lizenz ist nicht gültig."
 			},
+			"missingScopes": {
+				"text": "Erstellen Sie in MiViA einen Schlüssel mit allen Rechten für Bilder und Jobs und geben Sie ihn unter Einstellungen ein.",
+				"title": "Diesem Schlüssel fehlen Rechte für Bilder oder Jobs."
+			},
 			"networkBlocked": {
 				"proxyAuth": "Der Proxy verlangt eine Anmeldung, die MiViA Desktop nicht unterstützt. Die Bilder sind sicher.",
 				"proxyRefused": "Der Proxy lässt keine Verbindung zu {{host}} zu. Die Bilder sind sicher.",

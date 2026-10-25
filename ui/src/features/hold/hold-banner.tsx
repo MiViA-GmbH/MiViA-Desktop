@@ -32,39 +32,46 @@ const LOOK = {
 		title: 'desktop.hold.adminScope.title',
 		text: 'desktop.hold.adminScope.text',
 	},
-	accessKey: { icon: KeyIcon, color: 'red', rank: 2, title: 'desktop.hold.accessKey.title', text: 'desktop.hold.safe' },
+	missingScopes: {
+		icon: KeyIcon,
+		color: 'red',
+		rank: 2,
+		title: 'desktop.hold.missingScopes.title',
+		text: 'desktop.hold.missingScopes.text',
+	},
+	accessKey: { icon: KeyIcon, color: 'red', rank: 3, title: 'desktop.hold.accessKey.title', text: 'desktop.hold.safe' },
 	license: {
 		icon: LicenseIcon,
 		color: 'red',
-		rank: 3,
+		rank: 4,
 		title: 'desktop.hold.license.title',
 		text: 'desktop.hold.license.text',
 	},
 	clientTooOld: {
 		icon: TooOldIcon,
 		color: 'red',
-		rank: 4,
+		rank: 5,
 		title: 'desktop.hold.updateRequired',
 		text: 'desktop.hold.safe',
 	},
 	networkBlocked: {
 		icon: OfflineIcon,
 		color: 'orange',
-		rank: 5,
+		rank: 6,
 		title: 'desktop.hold.networkBlocked.title',
 		text: 'desktop.hold.continues',
 	},
 	offline: {
 		icon: OfflineIcon,
 		color: 'orange',
-		rank: 6,
+		rank: 7,
 		title: 'desktop.hold.offline.title',
 		text: 'desktop.hold.continues',
 	},
 	serviceUnavailable: {
 		icon: OfflineIcon,
 		color: 'orange',
-		rank: 7,
+		rank: 8,
 		title: 'desktop.hold.serviceUnavailable.title',
 		text: 'desktop.hold.continues',
 	},
@@ -73,8 +80,13 @@ const LOOK = {
 const WEB = {
 	license: { link: 'license', label: 'desktop.hold.open.license' },
 	adminScope: { link: 'accessKeys', label: 'desktop.hold.open.accessKeys' },
+	missingScopes: { link: 'accessKeys', label: 'desktop.hold.open.accessKeys' },
 	accountBlocked: { link: 'infoMail', label: 'desktop.hold.open.infoMail' },
 } as const satisfies Partial<Record<HoldKind, { link: KnownLink; label: string }>>;
+
+function opensWeb(kind: HoldKind): kind is keyof typeof WEB {
+	return kind in WEB;
+}
 
 function strongest(holds: HoldView[]): HoldView | undefined {
 	return [...holds].sort((a, b) => LOOK[a.kind].rank - LOOK[b.kind].rank)[0];
@@ -145,7 +157,7 @@ function HoldAction({ kind }: { kind: HoldKind }) {
 			</Button>
 		);
 	}
-	if (kind === 'license' || kind === 'adminScope' || kind === 'accountBlocked') {
+	if (opensWeb(kind)) {
 		const link = WEB[kind];
 		return (
 			<Button flex="none" onClick={() => open.mutate(link.link)} size="xs" variant="default">

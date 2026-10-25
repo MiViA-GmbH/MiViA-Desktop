@@ -125,6 +125,7 @@
 				"lead": "Fügen Sie Ihren Zugangsschlüssel ein oder tippen Sie ihn ab. Er verbindet diesen PC mit Ihrem MiViA-Konto.",
 				"licenseInactive": "Ihre MiViA-Lizenz ist nicht aktiv. Sie können die Einrichtung jetzt abschließen; die Auswertung beginnt, sobald die Lizenz aktiv ist.",
 				"malformed": "Das sieht nicht wie ein Zugangsschlüssel aus. Kopieren Sie den ganzen Schlüssel erneut.",
+				"missingScopes": "Erstellen Sie in MiViA einen Schlüssel mit allen Rechten für Bilder und Jobs und verwenden Sie diesen.",
 				"offline": "MiViA ist nicht erreichbar. Prüfen Sie die Internetverbindung. Funktioniert sie im Browser, bitten Sie Ihre IT, {{host}} freizugeben.",
 				"other": "Anderen Schlüssel verwenden",
 				"otherAccount": "Dieser Schlüssel gehört zu einem anderen Konto. Die gewählten Modelle wurden zurückgesetzt.",

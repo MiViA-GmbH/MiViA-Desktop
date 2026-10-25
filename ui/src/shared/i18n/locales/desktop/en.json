@@ -273,6 +273,10 @@
 				"text": "Images are safe and wait here. Ask the MiViA contact in your lab.",
 				"title": "Your MiViA license is not valid."
 			},
+			"missingScopes": {
+				"text": "Create a key with all rights for images and jobs in MiViA and enter it under Settings.",
+				"title": "This key lacks rights for images or jobs."
+			},
 			"networkBlocked": {
 				"proxyAuth": "The proxy asks for a sign-in that MiViA Desktop does not support. Images are safe.",
 				"proxyRefused": "The proxy refuses connections to {{host}}. Images are safe.",
