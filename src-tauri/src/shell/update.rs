@@ -26,31 +26,19 @@ use super::cx::{Cx, Services};
 use super::pipeline::{SystemIds, server_api};
 use super::shutdown::Shutdown;
 use notifier::ShellNotifier;
-use plugin::{Endpoints, Keys, Limits, Parts, PluginUpdater, SignerCheck};
+use plugin::{Endpoints, Keys, Limits, Parts, PluginUpdater};
 
 pub(crate) const STABLE: &str = "https://updates.mivia.ai/stable/latest.json";
 pub(crate) const BETA: &str = "https://updates.mivia.ai/beta/latest.json";
 pub(crate) const RELEASES: &str = "https://github.com/MiViA-GmbH/MiViA-Desktop/releases/download/";
-pub(crate) const SIGNER_EKU: &str = "1.3.6.1.4.1.311.97.0";
-pub(crate) const SIGNER_EKU_IS_PLACEHOLDER: bool = true;
-pub(crate) const AUTHENTICODE: bool = false;
-pub(crate) const SIGNER_ROOT: &str =
-    "Microsoft Identity Verification Root Certificate Authority 2020";
-
-fn signer() -> Box<SignerCheck> {
-    if AUTHENTICODE {
-        Box::new(authenticode)
-    } else {
-        Box::new(|_, _| Ok(()))
-    }
-}
+pub(crate) const SIGNER: SignerPin<'static> = SignerPin {
+    organization: mivia_update_sig::SIGNER_ORGANIZATION,
+    common_name: mivia_update_sig::SIGNER_COMMON_NAME,
+    intermediate_key: mivia_update_sig::SIGNER_INTERMEDIATE_KEY,
+};
 
 fn authenticode(file: &File, path: &Path) -> Result<(), Refusal> {
-    let pin = SignerPin {
-        eku: SIGNER_EKU,
-        root: SIGNER_ROOT,
-    };
-    mivia_os::verify_authenticode(file, path, &pin).map_err(|error| {
+    mivia_os::verify_authenticode(file, path, &SIGNER).map_err(|error| {
         tracing::error!(?error, "update.authenticodeRefused");
         Refusal::Authenticode
     })
@@ -134,7 +122,7 @@ fn parts(app: &AppHandle, services: &Services, shutdown: Arc<Shutdown>) -> Parts
             max_bytes: MAX_DOWNLOAD_BYTES,
             timeout: Duration::from_millis(u64::try_from(DOWNLOAD_TIMEOUT_MS).unwrap_or(0)),
         },
-        signer: signer(),
+        signer: Box::new(authenticode),
         before_exit: Arc::new(move || {
             exiting.cleanup_before_exit();
             shutdown.finish();
@@ -145,9 +133,6 @@ fn parts(app: &AppHandle, services: &Services, shutdown: Arc<Shutdown>) -> Parts
 pub(super) async fn start(app: &AppHandle, services: &Arc<Services>, shutdown: Arc<Shutdown>) {
     if mivia_update_sig::TEST_KEYS {
         tracing::warn!("update.testTrust");
-    }
-    if !AUTHENTICODE {
-        tracing::info!("update.authenticodeOff");
     }
     notifier::register(&services.data_dir);
     let ports = UpdatePorts {

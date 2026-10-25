@@ -3,20 +3,25 @@ use std::fs::File;
 use std::os::windows::ffi::OsStrExt;
 use std::os::windows::io::AsRawHandle;
 use std::path::Path;
-use std::ptr::{null, null_mut};
+use std::ptr::null_mut;
 use std::slice;
 
+use mivia_domain::ids::Fingerprint;
+use sha2::{Digest, Sha256};
 use windows_sys::Win32::Foundation::HANDLE;
 use windows_sys::Win32::Security::Cryptography::{
-    CERT_CHAIN_CONTEXT, CERT_CONTEXT, CERT_NAME_SIMPLE_DISPLAY_TYPE, CTL_USAGE,
-    CertGetEnhancedKeyUsage, CertGetNameStringW,
+    CERT_CONTEXT, CERT_NAME_ATTR_TYPE, CTL_USAGE, CertGetEnhancedKeyUsage, CertGetNameStringW,
+    CryptEncodeObject, X509_ASN_ENCODING, X509_PUBLIC_KEY_INFO, szOID_COMMON_NAME,
+    szOID_ORGANIZATION_NAME,
 };
+use windows_sys::Win32::Security::WinTrust::CRYPT_PROVIDER_SGNR;
 use windows_sys::Win32::Security::WinTrust::{
     WINTRUST_ACTION_GENERIC_VERIFY_V2, WINTRUST_DATA, WINTRUST_DATA_0, WINTRUST_FILE_INFO,
     WTD_CHOICE_FILE, WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT, WTD_REVOKE_WHOLECHAIN,
     WTD_STATEACTION_CLOSE, WTD_STATEACTION_VERIFY, WTD_UI_NONE, WTHelperGetProvCertFromChain,
     WTHelperGetProvSignerFromChain, WTHelperProvDataFromStateData, WinVerifyTrust,
 };
+use windows_sys::core::PCSTR;
 
 use super::check;
 use crate::trust::{AuthenticodeError, SignerFacts};
@@ -69,14 +74,27 @@ fn read_facts(state: HANDLE) -> Result<SignerFacts, AuthenticodeError> {
     let signer_ptr = unsafe { WTHelperGetProvSignerFromChain(provider, 0, 0, 0) };
     // SAFETY: a non-null signer lives as long as the open state.
     let signer = unsafe { signer_ptr.as_ref() }.ok_or(AuthenticodeError::Io)?;
-    // SAFETY: the signer is non-null; a non-null certificate lives as long as the open state.
-    let leaf = unsafe { WTHelperGetProvCertFromChain(signer_ptr, 0).as_ref() }
-        .ok_or(AuthenticodeError::Io)?;
+    let leaf = cert_at(signer_ptr, 0)?;
     Ok(SignerFacts {
         timestamped: signer.csCounterSigners > 0,
-        ekus: ekus(leaf.pCert)?,
-        root: root_name(signer.pChainContext)?,
+        ekus: ekus(leaf)?,
+        organization: name_attribute(leaf, szOID_ORGANIZATION_NAME),
+        common_name: name_attribute(leaf, szOID_COMMON_NAME),
+        intermediate_key: key_hash(cert_at(signer_ptr, 1)?)?,
     })
+}
+
+fn cert_at(
+    signer: *mut CRYPT_PROVIDER_SGNR,
+    index: u32,
+) -> Result<*const CERT_CONTEXT, AuthenticodeError> {
+    // SAFETY: the signer is non-null and owned by the open state; out-of-range indexes return null.
+    let entry = unsafe { WTHelperGetProvCertFromChain(signer, index).as_ref() }
+        .ok_or(AuthenticodeError::Io)?;
+    if entry.pCert.is_null() {
+        return Err(AuthenticodeError::Io);
+    }
+    Ok(entry.pCert)
 }
 
 fn ekus(cert: *const CERT_CONTEXT) -> Result<Vec<String>, AuthenticodeError> {
@@ -104,47 +122,51 @@ fn ekus(cert: *const CERT_CONTEXT) -> Result<Vec<String>, AuthenticodeError> {
         .collect())
 }
 
-fn root_name(chain: *const CERT_CHAIN_CONTEXT) -> Result<String, AuthenticodeError> {
-    // SAFETY: a non-null chain lives as long as the open state.
-    let chain = unsafe { chain.as_ref() }.ok_or(AuthenticodeError::Io)?;
-    // SAFETY: the chain array has `cChain` entries; each non-null entry is live.
-    let simple = unsafe { items(chain.rgpChain, chain.cChain) }
-        .first()
-        // SAFETY: a non-null simple chain lives as long as the open state.
-        .and_then(|&simple| unsafe { simple.as_ref() })
+fn key_hash(cert: *const CERT_CONTEXT) -> Result<String, AuthenticodeError> {
+    // SAFETY: a non-null certificate and its info live as long as the open state.
+    let info = unsafe { cert.as_ref().and_then(|cert| cert.pCertInfo.as_ref()) }
         .ok_or(AuthenticodeError::Io)?;
-    // SAFETY: the element array has `cElement` entries; each non-null entry is live.
-    let root = unsafe { items(simple.rgpElement, simple.cElement) }
-        .last()
-        // SAFETY: a non-null element lives as long as the open state.
-        .and_then(|&element| unsafe { element.as_ref() })
-        .ok_or(AuthenticodeError::Io)?;
-    if root.pCertContext.is_null() {
-        return Err(AuthenticodeError::Io);
-    }
-    Ok(simple_name(root.pCertContext))
+    let key = (&raw const info.SubjectPublicKeyInfo).cast();
+    let mut size = 0_u32;
+    // SAFETY: a size query with a null buffer on the live public key info.
+    check(unsafe {
+        CryptEncodeObject(
+            X509_ASN_ENCODING,
+            X509_PUBLIC_KEY_INFO,
+            key,
+            null_mut(),
+            &raw mut size,
+        )
+    })
+    .map_err(|_| AuthenticodeError::Io)?;
+    let mut der = vec![0_u8; usize::try_from(size).unwrap_or_default()];
+    // SAFETY: the buffer holds `size` bytes.
+    check(unsafe {
+        CryptEncodeObject(
+            X509_ASN_ENCODING,
+            X509_PUBLIC_KEY_INFO,
+            key,
+            der.as_mut_ptr(),
+            &raw mut size,
+        )
+    })
+    .map_err(|_| AuthenticodeError::Io)?;
+    der.truncate(usize::try_from(size).unwrap_or_default());
+    Ok(Fingerprint(Sha256::digest(&der).into()).to_string())
 }
 
-fn simple_name(cert: *const CERT_CONTEXT) -> String {
+fn name_attribute(cert: *const CERT_CONTEXT, oid: PCSTR) -> String {
     // SAFETY: a length query with a null buffer on a live certificate.
-    let len = unsafe {
-        CertGetNameStringW(
-            cert,
-            CERT_NAME_SIMPLE_DISPLAY_TYPE,
-            0,
-            null(),
-            null_mut(),
-            0,
-        )
-    };
+    let len =
+        unsafe { CertGetNameStringW(cert, CERT_NAME_ATTR_TYPE, 0, oid.cast(), null_mut(), 0) };
     let mut buffer = vec![0_u16; usize::try_from(len).unwrap_or_default()];
     // SAFETY: the buffer holds `len` UTF-16 units.
     let written = unsafe {
         CertGetNameStringW(
             cert,
-            CERT_NAME_SIMPLE_DISPLAY_TYPE,
+            CERT_NAME_ATTR_TYPE,
             0,
-            null(),
+            oid.cast(),
             buffer.as_mut_ptr(),
             len,
         )

@@ -47,5 +47,7 @@ pub use policy::{machine_guid, read_policies};
 pub use proxy::{WinHttpProxyResolver, static_entries};
 pub use taskbar::taskbar_is_light;
 pub use toast::{APP_ID, Toast, show_toast, withdraw_toasts};
-pub use trust::{AuthenticodeError, SignerFacts, SignerPin, verify_authenticode};
+pub use trust::{
+    AuthenticodeError, CODE_SIGNING, SignerFacts, SignerPin, signer_facts, verify_authenticode,
+};
 pub use watch::NotifyWatcher;

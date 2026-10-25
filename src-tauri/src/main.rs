@@ -10,8 +10,8 @@ const _: () = assert!(
 );
 
 const _: () = assert!(
-    !shell::update::AUTHENTICODE || !shell::update::SIGNER_EKU_IS_PLACEHOLDER,
-    "the Authenticode check needs the real signer EKU"
+    shell::update::SIGNER.is_complete(),
+    "the Authenticode check needs the real signer pin"
 );
 
 mod commands;
