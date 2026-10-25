@@ -33,6 +33,7 @@ const CACHE_ACTIONS: &[&str] = &[
 const UNTRUSTED: &[&str] = &["github.event.", "github.head_ref", "inputs."];
 const SIGNING_KEY: &str = "TAURI_SIGNING_";
 const BUILD_RELEASE: &str = "./.github/workflows/build-release.yml";
+const SIGNERS: &[&str] = &["build-release.yml", "signed-release.yml"];
 
 fn jobs(value: &Value) -> Vec<(String, &Value)> {
     value
@@ -239,7 +240,7 @@ fn secret_refs(value: &Value, pointer: &str) -> usize {
 }
 
 fn signing_mentions_allowed(workflow: &Workflow) -> Option<usize> {
-    if workflow.name != "build-release.yml" {
+    if !SIGNERS.contains(&workflow.name.as_str()) {
         let passed: usize = jobs(&workflow.value)
             .into_iter()
             .filter(|(_, job)| job.get("uses").and_then(Value::as_str) == Some(BUILD_RELEASE))
@@ -271,6 +272,6 @@ pub(crate) fn signing_key(workflow: &Workflow) -> Option<String> {
         return None;
     }
     Some(
-        "TAURI_SIGNING_* may appear only as a secret in the env of one step of the package job under environment release, declared by build-release.yml and passed by its callers".to_owned(),
+        "TAURI_SIGNING_* may appear only as a secret in the env of one step of the package job under environment release, in build-release.yml (declared and passed by its callers) or signed-release.yml".to_owned(),
     )
 }
