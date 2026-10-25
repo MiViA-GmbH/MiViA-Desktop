@@ -142,11 +142,15 @@ run(join('out', 'xtask.exe'), [
 	join(extract, 'mivia-desktop.exe'),
 	join('out', 'mivia-desktop.exe'),
 ]);
-run('powershell', [
-	'-NoProfile',
-	'-Command',
-	`Get-AuthenticodeSignature -LiteralPath '${resolve(installer)}','${resolve(extract, 'mivia-desktop.exe')}' | Format-Table Status,@{n='Signer';e={$_.SignerCertificate.Subject}},Path -AutoSize -Wrap`,
-]);
+run(
+	'powershell',
+	[
+		'-NoProfile',
+		'-Command',
+		`Get-AuthenticodeSignature -LiteralPath '${resolve(installer)}','${resolve(extract, 'mivia-desktop.exe')}' | Format-Table Status,@{n='Signer';e={$_.SignerCertificate.Subject}},Path -AutoSize -Wrap`,
+	],
+	{ env: Object.fromEntries(Object.entries(process.env).filter(([name]) => name.toLowerCase() !== 'psmodulepath')) },
+);
 
 if (dryRun) {
 	process.stdout.write(`release-sign: dry run, ${installer} stays local\n`);
