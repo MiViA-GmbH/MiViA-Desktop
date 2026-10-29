@@ -18,7 +18,7 @@ out/xtask.exe authenticode same-app extract/mivia-desktop.exe out/mivia-desktop.
 out/xtask.exe authenticode verify "$installer" extract/mivia-desktop.exe
 
 target="$RUNNER_TEMP\\installed"
-"$installer" /S "/D=$target"
+MSYS_NO_PATHCONV=1 "$installer" /S "/D=$target"
 out/xtask.exe authenticode verify "$target\\mivia-desktop.exe" "$target\\uninstall.exe"
 cmp "$target\\mivia-desktop.exe" extract/mivia-desktop.exe
 
