@@ -48,7 +48,7 @@ test.describe
 			await rm(CODE_RUN, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 });
 		});
 
-		test('scenario 10: typing the code on the device page connects the wizard', async () => {
+		test('scenario 11: typing the code on the device page connects the wizard', async () => {
 			const { page, origin } = running;
 			await expect(page.getByRole('heading', { name: 'Welcome to MiViA Desktop' })).toBeVisible({ timeout: 30_000 });
 			await next(page, 'Start setup');
