@@ -37,7 +37,7 @@ pub(crate) fn denied(stub: &Stub, headers: &HeaderMap) -> Option<Response> {
     let given = headers
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok());
-    if given == Some(stub.key.as_str()) {
+    if given == Some(stub.current_key().as_str()) {
         return None;
     }
     let payload =

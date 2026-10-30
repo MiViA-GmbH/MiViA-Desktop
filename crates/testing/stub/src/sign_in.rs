@@ -24,6 +24,14 @@ pub(crate) struct SignInState {
     tokens: Vec<String>,
     issued: Vec<String>,
     counter: u64,
+    replaced_key: Option<String>,
+}
+
+impl Stub {
+    pub(crate) fn current_key(&self) -> String {
+        let replaced = self.sign_in.lock().replaced_key.clone();
+        replaced.unwrap_or_else(|| self.key.clone())
+    }
 }
 
 impl SignInState {
@@ -46,6 +54,12 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/api/auth/oauth2/userinfo", get(userinfo))
         .route("/api/api-keys/issue", post(issue))
         .route("/__stub/issued", get(issued))
+        .route("/__stub/revoke-key", post(revoke_key))
+}
+
+async fn revoke_key(State(stub): State<Stub>) -> StatusCode {
+    stub.sign_in.lock().replaced_key = Some(format!("{}-reissued", stub.key));
+    StatusCode::NO_CONTENT
 }
 
 fn oauth_error(code: &str) -> Response {
@@ -187,7 +201,7 @@ async fn issue(
         "enabled": true,
         "generatedBy": "oauth",
         "scopes": ["images:write", "images:delete", "jobs:read", "jobs:write", "jobs:delete"],
-        "code": stub.key,
+        "code": stub.current_key(),
     });
     (StatusCode::CREATED, Json(payload)).into_response()
 }

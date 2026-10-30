@@ -16,6 +16,7 @@ use mivia_ports::auth::{
     CredentialStore, CredentialStoreError, Identity, ServerOrigin, StoredCredential,
 };
 use mivia_ports::ipc::screens::AccountView;
+use mivia_ports::telemetry::AccountKind;
 use parking_lot::Mutex;
 use secrecy::SecretString;
 use tauri::{AppHandle, Manager};
@@ -34,7 +35,7 @@ pub(crate) use wizard::{connect, connect_issued, import_legacy, pick, save, view
 const PICK_LIFETIME: Duration = Duration::from_secs(600);
 const REFUSAL: Duration = Duration::from_secs(60);
 
-type Switch = (AccountView, Identity, SecretString);
+type Switch = (AccountView, Identity, SecretString, AccountKind);
 
 #[derive(Default)]
 pub(crate) struct Session {
@@ -71,8 +72,8 @@ impl Session {
         *self.switch.lock() = None;
     }
 
-    pub(crate) fn hold_switch(&self, previous: AccountView, identity: Identity, key: SecretString) {
-        *self.switch.lock() = Some((previous, identity, key));
+    pub(crate) fn hold_switch(&self, switch: Switch) {
+        *self.switch.lock() = Some(switch);
     }
 
     pub(crate) fn take_switch(&self) -> Option<Switch> {

@@ -12,6 +12,7 @@ use mivia_ports::ipc::setup::{
     ConnectOutcome, ConnectionNote, LegacyTake, SetupInput, SetupLocks, SetupOption, SetupView,
 };
 use mivia_ports::store::{StoreError, StoreExt};
+use mivia_ports::telemetry::AccountKind;
 use tauri::AppHandle;
 
 use super::super::account::{self, clear_clipboard_if, identify, key_from, store_key};
@@ -269,7 +270,7 @@ pub(crate) async fn connect(cx: &Cx, key: Option<String>) -> Result<ConnectOutco
         return Ok(ConnectOutcome::Malformed);
     };
     if cx.completed() {
-        return account::replace_key(cx, key).await;
+        return account::replace_key(cx, key, AccountKind::AccessKey).await;
     }
     connect_key(cx, key, None).await
 }
@@ -279,7 +280,7 @@ pub(crate) async fn connect_issued(
     key: secrecy::SecretString,
 ) -> Result<ConnectOutcome, AppError> {
     if cx.completed() {
-        return account::replace_key(cx, key).await;
+        return account::replace_key(cx, key, AccountKind::Browser).await;
     }
     connect_key(cx, key, Some(ConnectionNote::Browser)).await
 }
