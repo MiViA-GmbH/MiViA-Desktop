@@ -150,6 +150,21 @@ test('the account step signs in through the browser and links to the API keys pa
 	await expect(button(page, 'Next')).toBeEnabled();
 });
 
+test('the code tab shows the code, a copy button and the link to the device page', async ({ page }) => {
+	await open(page, 'scenario=setup');
+	await page.getByRole('button', { name: 'Start setup' }).click();
+	await heading(page, 'Connect your MiViA account');
+	await page.getByRole('tab', { name: 'Code' }).click();
+	await expect(page.getByText('WDJB-MJHT')).toBeVisible();
+	await expect(button(page, 'Copy code')).toBeVisible();
+	await expect(page.getByText('Waiting for approval.')).toBeVisible();
+	await expect(button(page, 'app.mivia.ai/device')).toBeVisible();
+	await expect(button(page, 'Next')).toBeDisabled();
+	await structure(page);
+	await page.getByRole('tab', { name: 'Browser' }).click();
+	await expect(button(page, 'Open the browser')).toBeVisible();
+});
+
 test('the old version step offers to take over the old settings', async ({ page }) => {
 	await open(page, 'scenario=setup-legacy');
 	await page.getByRole('button', { name: 'Start setup' }).click();
