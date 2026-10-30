@@ -97,6 +97,7 @@ pub enum ConnectOutcome {
     SwitchAccount {
         current_name: String,
         new_name: String,
+        signed_in: bool,
     },
     Cancelled,
     SignInUnavailable,

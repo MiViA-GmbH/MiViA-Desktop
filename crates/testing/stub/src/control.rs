@@ -64,6 +64,9 @@ struct FaultBody {
 }
 
 async fn fault(State(stub): State<Stub>, Json(body): Json<FaultBody>) -> Response {
+    if body.op == "signIn" {
+        return stub.fail_sign_in(&body.kind).into_response();
+    }
     let Some(op) = op(&body.op) else {
         return StatusCode::BAD_REQUEST.into_response();
     };

@@ -113,6 +113,7 @@ fn form(request: &Request) -> BTreeMap<String, String> {
 async fn a_valid_return_exchanges_the_code_and_issues_a_named_key() {
     let mock = MockServer::start().await;
     serve_token_side(&mock).await;
+    let issuing = api(&mock);
     let api = api(&mock);
     let sign_in = api
         .start_browser(Language::En, "MiViA Desktop on LAB".to_owned())
@@ -122,7 +123,17 @@ async fn a_valid_return_exchanges_the_code_and_issues_a_named_key() {
     let back = Return::of(&sign_in);
     let finish = tokio::spawn(async move { sign_in.finish(&api).await });
     let answer = back.send(back.valid().as_bytes()).await;
-    let issued = finish.await.unwrap().unwrap();
+    let signed_in = finish.await.unwrap().unwrap();
+
+    assert_eq!(signed_in.account_id, "account-1");
+    let before_issue = mock.received_requests().await.unwrap();
+    assert!(
+        before_issue
+            .iter()
+            .all(|request| request.url.path() != "/api/api-keys/issue"),
+        "no key before the account is known"
+    );
+    let issued = issuing.issue_key(signed_in).await.unwrap();
 
     assert_eq!(issued.key.expose_secret(), ISSUED_KEY);
     assert_eq!(issued.id, "key-1");
@@ -147,6 +158,25 @@ async fn a_valid_return_exchanges_the_code_and_issues_a_named_key() {
         .unwrap();
     let body: serde_json::Value = serde_json::from_slice(&issue.body).unwrap();
     assert_eq!(body, json!({ "name": "MiViA Desktop on LAB" }));
+}
+
+#[tokio::test]
+async fn only_the_different_account_action_asks_for_a_login() {
+    let mock = MockServer::start().await;
+    serve_client(&mock).await;
+    let api = api(&mock);
+    let plain = api
+        .start_browser(Language::En, String::new())
+        .await
+        .unwrap();
+    assert!(!query(plain.url()).contains_key("prompt"));
+
+    let different = api
+        .start_browser(Language::En, String::new())
+        .await
+        .unwrap()
+        .with_login_prompt();
+    assert_eq!(query(different.url())["prompt"], "login");
 }
 
 #[tokio::test]
@@ -282,8 +312,7 @@ async fn requests_that_are_not_the_expected_return_get_an_error_and_do_not_end_t
     }
     let answer = back.send(back.valid().as_bytes()).await;
     assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
-    let issued = finish.await.unwrap().unwrap();
-    assert_eq!(issued.key.expose_secret(), ISSUED_KEY);
+    assert_eq!(finish.await.unwrap().unwrap().account_id, "account-1");
 }
 
 #[tokio::test]

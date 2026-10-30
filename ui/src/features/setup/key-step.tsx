@@ -191,7 +191,9 @@ export function KeyStep({ view }: { view: SetupView }) {
 				<>
 					<Connected connection={connection} outcome={outcome} />
 					<Anchor component="button" ta="left" w="fit-content" onClick={() => setEditing(true)} size="sm" type="button">
-						{t('desktop.wizard.key.other')}
+						{connection.notes.includes('browser')
+							? t('desktop.wizard.key.differentAccount')
+							: t('desktop.wizard.key.other')}
 					</Anchor>
 				</>
 			) : (

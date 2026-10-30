@@ -17,6 +17,7 @@ use mivia_ports::auth::{
 };
 use mivia_ports::ipc::screens::AccountView;
 use mivia_ports::telemetry::AccountKind;
+use mivia_server::SignedIn;
 use parking_lot::Mutex;
 use secrecy::SecretString;
 use tauri::{AppHandle, Manager};
@@ -35,7 +36,19 @@ pub(crate) use wizard::{connect, connect_issued, import_legacy, pick, save, view
 const PICK_LIFETIME: Duration = Duration::from_secs(600);
 const REFUSAL: Duration = Duration::from_secs(60);
 
-type Switch = (AccountView, Identity, SecretString, AccountKind);
+pub(crate) enum Switch {
+    Key {
+        previous: AccountView,
+        identity: Identity,
+        key: SecretString,
+        kind: AccountKind,
+    },
+    SignedIn {
+        previous: AccountView,
+        signed_in: SignedIn,
+        kind: AccountKind,
+    },
+}
 
 #[derive(Default)]
 pub(crate) struct Session {
@@ -90,6 +103,7 @@ impl Session {
     }
 
     pub(crate) fn stop_sign_in(&self) {
+        *self.switch.lock() = None;
         let current = self.sign_in.lock().take();
         if let Some(current) = current {
             current.notify_one();
@@ -191,40 +205,57 @@ pub(crate) fn owner(app: &AppHandle) -> isize {
         .map_or(0, |hwnd| hwnd.0 as isize)
 }
 
-fn switch_text(
+pub(crate) fn key_switch_text(
     language: Language,
     previous: &AccountView,
     next: &Identity,
-) -> (String, [&'static str; 2]) {
+) -> String {
     match language {
-        Language::En => (
-            format!(
-                "This key belongs to a different MiViA account than {}. New account: {} ({}). Switch account?",
-                previous.email, next.name, next.email
-            ),
-            ["Switch account", "Cancel"],
+        Language::En => format!(
+            "This key belongs to a different MiViA account than {}. New account: {} ({}). Switch account?",
+            previous.email, next.name, next.email
         ),
-        Language::De => (
-            format!(
-                "Dieser Schl\u{fc}ssel geh\u{f6}rt zu einem anderen MiViA-Konto als {}. Neues Konto: {} ({}). Konto wechseln?",
-                previous.email, next.name, next.email
-            ),
-            ["Konto wechseln", "Abbrechen"],
+        Language::De => format!(
+            "Dieser Schl\u{fc}ssel geh\u{f6}rt zu einem anderen MiViA-Konto als {}. Neues Konto: {} ({}). Konto wechseln?",
+            previous.email, next.name, next.email
         ),
+    }
+}
+
+pub(crate) fn sign_in_switch_text(
+    language: Language,
+    current_email: &str,
+    name: &str,
+    email: &str,
+) -> String {
+    match language {
+        Language::En => {
+            format!("You signed in as {name} ({email}), not {current_email}. Switch account?")
+        }
+        Language::De => format!(
+            "Sie haben sich als {name} ({email}) angemeldet, nicht als {current_email}. Konto wechseln?"
+        ),
+    }
+}
+
+fn switch_buttons(language: Language) -> [&'static str; 2] {
+    match language {
+        Language::En => ["Switch account", "Cancel"],
+        Language::De => ["Konto wechseln", "Abbrechen"],
     }
 }
 
 pub(crate) async fn confirm_switch(
     cx: &Cx,
     app: &AppHandle,
-    previous: &AccountView,
-    next: &Identity,
+    text: impl FnOnce(Language) -> String,
 ) -> bool {
     if cx.setup.refused() {
         return false;
     }
     let language = language(&*cx.ready().await).await;
-    let (text, buttons) = switch_text(language, previous, next);
+    let text = text(language);
+    let buttons = switch_buttons(language);
     let owner = owner(app);
     let confirmed = tokio::task::spawn_blocking(move || {
         mivia_os::confirm(owner, "MiViA Desktop", &text, buttons)

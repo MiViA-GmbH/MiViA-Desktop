@@ -13,4 +13,6 @@ pub use clients::{
 };
 pub use identity::HttpIdentityApi;
 pub use labels::{LabelsError, ModelLabels};
-pub use sign_in::{BrowserSignIn, IssuedKey, SignInApi, SignInError, key_name, safe_to_open};
+pub use sign_in::{
+    BrowserSignIn, IssuedKey, SignInApi, SignInError, SignedIn, key_name, safe_to_open,
+};

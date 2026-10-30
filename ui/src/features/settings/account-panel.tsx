@@ -22,6 +22,10 @@ function SwitchModal({ outcome, onDone, onCancel }: SwitchProps) {
 	const confirm = useMutation({ mutationFn: () => commands.switchAccount(), onSuccess: onDone });
 	const opened = outcome?.kind === 'switchAccount';
 	const names = opened ? { current: outcome.currentName, next: outcome.newName } : { current: '', next: '' };
+	const text =
+		opened && outcome.signedIn
+			? `${t('desktop.account.switch.signInText', names)} ${t('desktop.account.switch.signInEffect', names)}`
+			: t('desktop.account.switch.text', names);
 	return (
 		<Modal
 			centered
@@ -31,7 +35,7 @@ function SwitchModal({ outcome, onDone, onCancel }: SwitchProps) {
 			title={t('desktop.account.switch.title')}
 		>
 			<Text c="stone.8" size="sm">
-				{t('desktop.account.switch.text', names)}
+				{text}
 			</Text>
 			<Group justify="flex-end" mt="lg">
 				<Button data-autofocus onClick={onCancel} variant="default">
@@ -93,6 +97,10 @@ function SignInForm({ host, lead }: { host: string; lead: string }) {
 		}
 	};
 	const save = useMutation({ mutationFn: () => commands.connectAccessKey(key), onSuccess: settle });
+	const dismiss = () => {
+		setOutcome(null);
+		commands.cancelSignIn();
+	};
 	const error = outcomeError(outcome, host, t);
 	return (
 		<Stack gap="sm">
@@ -120,7 +128,7 @@ function SignInForm({ host, lead }: { host: string; lead: string }) {
 					{t('desktop.account.key.saved', { name: outcome.connection.name })} {t('desktop.account.key.hint', { host })}
 				</Notice>
 			)}
-			<SwitchModal onCancel={() => setOutcome(null)} onDone={settle} outcome={outcome} />
+			<SwitchModal onCancel={dismiss} onDone={settle} outcome={outcome} />
 		</Stack>
 	);
 }

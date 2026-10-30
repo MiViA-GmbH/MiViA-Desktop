@@ -25,12 +25,29 @@ pub(crate) struct SignInState {
     issued: Vec<String>,
     counter: u64,
     replaced_key: Option<String>,
+    different_account: bool,
 }
 
 impl Stub {
     pub(crate) fn current_key(&self) -> String {
         let replaced = self.sign_in.lock().replaced_key.clone();
         replaced.unwrap_or_else(|| self.key.clone())
+    }
+
+    pub(crate) fn account(&self) -> (&'static str, &'static str, &'static str) {
+        if self.sign_in.lock().different_account {
+            ("stub-other-account", "Other Lab", "other@example.invalid")
+        } else {
+            ("stub-account", "Stub Lab", "lab@example.invalid")
+        }
+    }
+
+    pub(crate) fn fail_sign_in(&self, kind: &str) -> StatusCode {
+        if kind != "differentAccount" {
+            return StatusCode::BAD_REQUEST;
+        }
+        self.sign_in.lock().different_account = true;
+        StatusCode::NO_CONTENT
     }
 }
 
@@ -170,8 +187,8 @@ async fn userinfo(State(stub): State<Stub>, headers: HeaderMap) -> Response {
     if !signed_in(&stub, &headers) {
         return token_invalid();
     }
-    Json(json!({ "sub": "stub-account", "name": "Stub Lab", "email": "lab@example.invalid" }))
-        .into_response()
+    let (id, name, email) = stub.account();
+    Json(json!({ "sub": id, "name": name, "email": email })).into_response()
 }
 
 #[derive(Deserialize)]

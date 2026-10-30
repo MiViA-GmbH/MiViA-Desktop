@@ -24,6 +24,7 @@ mod shutdown;
 pub(crate) mod sign_in;
 mod start;
 pub(crate) mod support;
+pub(crate) mod switch;
 pub(crate) mod telemetry;
 mod text;
 mod tray;

@@ -34,6 +34,14 @@ pub struct IssuedKey {
     pub key: SecretString,
 }
 
+pub struct SignedIn {
+    pub account_id: String,
+    pub name: String,
+    pub email: String,
+    token: SecretString,
+    key_name: String,
+}
+
 pub struct SignInApi {
     clients: Arc<ArcSwap<HttpClients>>,
     base: String,
@@ -170,10 +178,24 @@ impl SignInApi {
         })
     }
 
-    async fn key_for(&self, form: &[(&str, &str)], name: &str) -> Result<IssuedKey, SignInError> {
+    async fn signed_in(
+        &self,
+        form: &[(&str, &str)],
+        key_name: String,
+    ) -> Result<SignedIn, SignInError> {
         let token = self.exchange(form).await?;
-        self.account(&token).await?;
-        self.issue(&token, name).await
+        let account = self.account(&token).await?;
+        Ok(SignedIn {
+            account_id: account.sub,
+            name: account.name,
+            email: account.email,
+            token,
+            key_name,
+        })
+    }
+
+    pub async fn issue_key(&self, signed_in: SignedIn) -> Result<IssuedKey, SignInError> {
+        self.issue(&signed_in.token, &signed_in.key_name).await
     }
 }
 
@@ -182,7 +204,13 @@ impl BrowserSignIn {
         &self.url
     }
 
-    pub async fn finish(self, api: &SignInApi) -> Result<IssuedKey, SignInError> {
+    #[must_use]
+    pub fn with_login_prompt(mut self) -> Self {
+        self.url.push_str("&prompt=login");
+        self
+    }
+
+    pub async fn finish(self, api: &SignInApi) -> Result<SignedIn, SignInError> {
         let redirect_uri = self.listener.redirect_uri();
         let Returned::Code(code) = self.listener.wait().await else {
             return Err(SignInError::Unavailable);
@@ -194,6 +222,6 @@ impl BrowserSignIn {
             ("code_verifier", self.verifier.expose_secret()),
             ("redirect_uri", redirect_uri.as_str()),
         ];
-        api.key_for(&form, &self.key_name).await
+        api.signed_in(&form, self.key_name).await
     }
 }

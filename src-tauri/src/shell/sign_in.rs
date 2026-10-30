@@ -3,12 +3,14 @@ use std::time::Duration;
 
 use mivia_ports::ipc::error::AppError;
 use mivia_ports::ipc::setup::ConnectOutcome;
-use mivia_server::{SignInApi, SignInError, key_name, safe_to_open};
+use mivia_ports::telemetry::AccountKind;
+use mivia_server::{SignInApi, SignInError, SignedIn, key_name, safe_to_open};
+use secrecy::SecretString;
 use tauri::AppHandle;
 
-use super::account::offline_details;
-use super::cx::Cx;
-use super::setup;
+use super::account::{self, offline_details};
+use super::cx::{Cx, Services};
+use super::setup::{self, Switch};
 use super::window;
 
 const WAIT_LIMIT: Duration = Duration::from_secs(600);
@@ -29,7 +31,73 @@ async fn open_browser(url: &str) -> Result<(), SignInError> {
     }
 }
 
-pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, AppError> {
+fn failed(services: &Services, error: SignInError) -> ConnectOutcome {
+    match error {
+        SignInError::Unavailable => ConnectOutcome::SignInUnavailable,
+        SignInError::Offline => ConnectOutcome::Offline {
+            details: offline_details(services, "connect"),
+        },
+    }
+}
+
+async fn issue(services: &Services, signed_in: SignedIn) -> Result<SecretString, SignInError> {
+    let api = SignInApi::new(Arc::clone(&services.clients), &services.origin);
+    Ok(api.issue_key(signed_in).await?.key)
+}
+
+async fn connect_signed_in(
+    cx: &Cx,
+    signed_in: SignedIn,
+    kind: AccountKind,
+) -> Result<ConnectOutcome, AppError> {
+    let ready = cx.ready().await;
+    let previous = if cx.completed() {
+        account::previous_account(&ready).await
+    } else {
+        None
+    };
+    if let Some(previous) =
+        previous.filter(|account| account.server_account_id != signed_in.account_id)
+    {
+        let outcome = ConnectOutcome::SwitchAccount {
+            current_name: previous.display_name.clone(),
+            new_name: signed_in.name.clone(),
+            signed_in: true,
+        };
+        cx.setup.hold_switch(Switch::SignedIn {
+            previous,
+            signed_in,
+            kind,
+        });
+        return Ok(outcome);
+    }
+    match issue(&ready.services, signed_in).await {
+        Ok(key) => setup::connect_issued(cx, key).await,
+        Err(error) => Ok(failed(&ready.services, error)),
+    }
+}
+
+pub(crate) async fn enter_signed_in(
+    cx: &Cx,
+    signed_in: SignedIn,
+    kind: AccountKind,
+) -> Result<ConnectOutcome, AppError> {
+    let services = Arc::clone(&cx.ready().await.services);
+    let key = match issue(&services, signed_in).await {
+        Ok(key) => key,
+        Err(error) => return Ok(failed(&services, error)),
+    };
+    match account::identify(&services, &key).await {
+        Ok(identity) => account::enter_account(cx, identity, key, kind).await,
+        Err(outcome) => Ok(outcome),
+    }
+}
+
+pub(crate) async fn browser(
+    cx: &Cx,
+    app: &AppHandle,
+    different_account: bool,
+) -> Result<ConnectOutcome, AppError> {
     let stop = cx.setup.begin_sign_in();
     let ready = cx.ready().await;
     let services = &ready.services;
@@ -37,7 +105,12 @@ pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, 
     let language = setup::language(&ready).await;
     let name = key_name(std::env::var("COMPUTERNAME").ok().as_deref());
     let attempt = async {
-        let sign_in = api.start_browser(language, name).await?;
+        let started = api.start_browser(language, name).await?;
+        let sign_in = if different_account {
+            started.with_login_prompt()
+        } else {
+            started
+        };
         open_browser(sign_in.url()).await?;
         sign_in.finish(&api).await
     };
@@ -50,17 +123,15 @@ pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, 
         return Ok(ConnectOutcome::SignInTimedOut);
     };
     match result {
-        Ok(issued) => {
+        Ok(signed_in) => {
             window::reveal(app);
-            setup::connect_issued(cx, issued.key).await
+            connect_signed_in(cx, signed_in, AccountKind::Browser).await
         }
         Err(SignInError::Unavailable) => {
             window::reveal(app);
             Ok(ConnectOutcome::SignInUnavailable)
         }
-        Err(SignInError::Offline) => Ok(ConnectOutcome::Offline {
-            details: offline_details(services, "connect"),
-        }),
+        Err(error) => Ok(failed(services, error)),
     }
 }
 
@@ -68,7 +139,13 @@ pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, 
 mod tests {
     use std::time::Duration;
 
-    use crate::shell::setup::Session;
+    use mivia_domain::naming::Language;
+    use mivia_ports::auth::Identity;
+    use mivia_ports::ipc::screens::AccountView;
+    use mivia_ports::telemetry::AccountKind;
+    use secrecy::SecretString;
+
+    use crate::shell::setup::{Session, Switch, sign_in_switch_text};
 
     const SOON: Duration = Duration::from_secs(5);
 
@@ -80,5 +157,43 @@ mod tests {
         tokio::time::timeout(SOON, first.notified()).await.unwrap();
         session.stop_sign_in();
         tokio::time::timeout(SOON, second.notified()).await.unwrap();
+    }
+
+    #[test]
+    fn stopping_drops_a_switch_that_waits_for_an_answer() {
+        let session = Session::default();
+        session.hold_switch(Switch::Key {
+            previous: AccountView {
+                display_name: String::new(),
+                server_url: String::new(),
+                server_account_id: String::new(),
+                email: String::new(),
+            },
+            identity: Identity {
+                account_id: String::new(),
+                name: String::new(),
+                email: String::new(),
+                key_start: String::new(),
+                expires_at: None,
+                admin_scope: false,
+                missing_scopes: Vec::new(),
+            },
+            key: SecretString::from("key"),
+            kind: AccountKind::AccessKey,
+        });
+        session.stop_sign_in();
+        assert!(session.take_switch().is_none());
+    }
+
+    #[test]
+    fn the_native_dialog_words_a_sign_in_in_both_languages() {
+        assert_eq!(
+            sign_in_switch_text(Language::En, "a@x.invalid", "Bea", "b@x.invalid"),
+            "You signed in as Bea (b@x.invalid), not a@x.invalid. Switch account?"
+        );
+        assert_eq!(
+            sign_in_switch_text(Language::De, "a@x.invalid", "Bea", "b@x.invalid"),
+            "Sie haben sich als Bea (b@x.invalid) angemeldet, nicht als a@x.invalid. Konto wechseln?"
+        );
     }
 }

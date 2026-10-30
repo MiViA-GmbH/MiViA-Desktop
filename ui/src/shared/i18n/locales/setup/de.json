@@ -17,6 +17,8 @@
 			"switch": {
 				"cancel": "Abbrechen",
 				"confirm": "Konto wechseln",
+				"signInEffect": "Wenn Sie fortfahren, werden die Eingangsordner von {{current}} nicht mehr überwacht. Berichte und Verlauf bleiben auf diesem PC.",
+				"signInText": "Sie haben sich als {{next}} angemeldet, nicht als {{current}}.",
 				"text": "Dieser Schlüssel gehört zu {{next}}, nicht zu {{current}}. Wenn Sie fortfahren, werden die Eingangsordner von {{current}} nicht mehr überwacht. Berichte und Verlauf bleiben auf diesem PC.",
 				"title": "Konto wechseln?"
 			}
@@ -119,6 +121,7 @@
 				"browserWaiting": "Schließen Sie die Anmeldung im Browser ab.",
 				"connected": "Verbunden als {{name}} ({{email}})",
 				"copyForIt": "Details für die IT kopieren",
+				"differentAccount": "Anderes Konto verwenden",
 				"help": "Fragen Sie die Person, die MiViA in Ihrem Labor verwaltet, oder melden Sie sich bei {{host}} an und öffnen Sie API-Schlüssel. Ein Schlüssel beginnt mit „mv-“, danach folgen 64 Buchstaben.",
 				"helpTitle": "Wo finde ich meinen API-Schlüssel?",
 				"imported": "Der API-Schlüssel des alten MiViA Desktop wurde akzeptiert.",

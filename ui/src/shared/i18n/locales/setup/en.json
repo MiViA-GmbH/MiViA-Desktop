@@ -17,6 +17,8 @@
 			"switch": {
 				"cancel": "Cancel",
 				"confirm": "Switch account",
+				"signInEffect": "If you continue, the input folders of {{current}} are no longer watched. Their reports and history stay on this PC.",
+				"signInText": "You signed in as {{next}}, not {{current}}.",
 				"text": "This key belongs to {{next}}, not {{current}}. If you continue, the input folders of {{current}} are no longer watched. Their reports and history stay on this PC.",
 				"title": "Switch account?"
 			}
@@ -119,6 +121,7 @@
 				"browserWaiting": "Finish signing in in your browser.",
 				"connected": "Connected as {{name}} ({{email}})",
 				"copyForIt": "Copy details for IT",
+				"differentAccount": "Use a different account",
 				"help": "Ask the person who manages MiViA in your lab, or sign in at {{host}} and open API keys. A key starts with “mv-” and has 64 letters after it.",
 				"helpTitle": "Where do I find my API key?",
 				"imported": "The API key of the old MiViA Desktop was accepted.",

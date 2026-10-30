@@ -58,7 +58,7 @@ export const commands = {
 	saveSetup: (input: SetupInput) => __TAURI_INVOKE<SetupView>("save_setup", { input }),
 	pickSetupFolder: (purpose: PickPurpose) => __TAURI_INVOKE<SetupView>("pick_setup_folder", { purpose }),
 	connectAccessKey: (key: string | null) => __TAURI_INVOKE<ConnectOutcome>("connect_access_key", { key }),
-	startBrowserSignIn: () => __TAURI_INVOKE<ConnectOutcome>("start_browser_sign_in"),
+	startBrowserSignIn: (differentAccount: boolean) => __TAURI_INVOKE<ConnectOutcome>("start_browser_sign_in", { differentAccount }),
 	cancelSignIn: () => __TAURI_INVOKE<null>("cancel_sign_in"),
 	importLegacyKey: () => __TAURI_INVOKE<ConnectOutcome>("import_legacy_key"),
 	closeLegacyApp: () => __TAURI_INVOKE<SetupView>("close_legacy_app"),
@@ -265,7 +265,7 @@ export type ComputationItem = {
 	reason: string | null,
 };
 
-export type ConnectOutcome = { kind: "connected"; connection: ConnectionView; otherAccount: boolean; clipboardCleared: boolean } | { kind: "malformed" } | { kind: "rejected" } | { kind: "accountBlocked" } | { kind: "adminScope" } | { kind: "missingScopes" } | { kind: "offline"; details: string } | { kind: "switchAccount"; currentName: string; newName: string } | { kind: "cancelled" } | { kind: "signInUnavailable" } | { kind: "signInTimedOut" };
+export type ConnectOutcome = { kind: "connected"; connection: ConnectionView; otherAccount: boolean; clipboardCleared: boolean } | { kind: "malformed" } | { kind: "rejected" } | { kind: "accountBlocked" } | { kind: "adminScope" } | { kind: "missingScopes" } | { kind: "offline"; details: string } | { kind: "switchAccount"; currentName: string; newName: string; signedIn: boolean } | { kind: "cancelled" } | { kind: "signInUnavailable" } | { kind: "signInTimedOut" };
 
 export type ConnectionNote = "licenseInactive" | "storeFailed" | "imported" | "browser";
 

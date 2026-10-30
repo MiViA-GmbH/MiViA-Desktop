@@ -67,8 +67,9 @@ async fn identify(State(stub): State<Stub>, headers: HeaderMap) -> Response {
     if let Some(denied) = denied(&stub, &headers) {
         return denied;
     }
+    let (id, name, email) = stub.account();
     Json(json!({
-        "account": { "id": "stub-account", "name": "Stub Lab", "email": "lab@example.invalid" },
+        "account": { "id": id, "name": name, "email": email },
         "key": { "id": "key-1", "name": "Desktop", "start": "mv-stub", "createdAt": "2026-01-01T00:00:00.000Z", "expiresAt": null, "scopes": ["images:read", "images:write", "images:delete", "jobs:read", "jobs:write", "jobs:delete", "customizations:read", "customizations:write", "customizations:delete"] },
         "adminScope": false,
     }))

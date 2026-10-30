@@ -32,15 +32,26 @@ function KeyLink({ host }: { host: string }) {
 	);
 }
 
-type BrowserPanelProps = { error: string | null; pending: boolean; onCancel: () => void; onStart: () => void };
+type BrowserPanelProps = {
+	error: string | null;
+	pending: boolean;
+	onCancel: () => void;
+	onStart: () => void;
+	onDifferentAccount: () => void;
+};
 
-function BrowserPanel({ error, pending, onCancel, onStart }: BrowserPanelProps) {
+function BrowserPanel({ error, pending, onCancel, onStart, onDifferentAccount }: BrowserPanelProps) {
 	const { t } = useTranslation();
 	return (
 		<Stack align="flex-start" gap="sm">
 			<Button onClick={pending ? onCancel : onStart} type="button" variant={pending ? 'default' : 'light'}>
 				{pending ? t('desktop.wizard.key.browserCancel') : t('desktop.wizard.key.browserOpen')}
 			</Button>
+			{!pending && (
+				<Anchor component="button" onClick={onDifferentAccount} size="sm" type="button">
+					{t('desktop.wizard.key.differentAccount')}
+				</Anchor>
+			)}
 			<Text c="stone.8" role="status" size="sm">
 				{pending && t('desktop.wizard.key.browserWaiting')}
 			</Text>
@@ -52,7 +63,10 @@ function BrowserPanel({ error, pending, onCancel, onStart }: BrowserPanelProps) 
 export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: SignInTabsProps) {
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<string | null>('browser');
-	const browser = useMutation({ mutationFn: () => commands.startBrowserSignIn(), onSuccess: onOutcome });
+	const browser = useMutation({
+		mutationFn: (differentAccount: boolean) => commands.startBrowserSignIn(differentAccount),
+		onSuccess: onOutcome,
+	});
 	const cancel = () => commands.cancelSignIn();
 	useEffect(() => () => void commands.cancelSignIn(), []);
 	const change = (next: string | null) => {
@@ -72,7 +86,13 @@ export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: Si
 				<Tabs.Tab value="key">{t('desktop.wizard.key.label')}</Tabs.Tab>
 			</Tabs.List>
 			<Tabs.Panel pt="md" value="browser">
-				<BrowserPanel error={error} onCancel={cancel} onStart={() => browser.mutate()} pending={browser.isPending} />
+				<BrowserPanel
+					error={error}
+					onCancel={cancel}
+					onDifferentAccount={() => browser.mutate(true)}
+					onStart={() => browser.mutate(false)}
+					pending={browser.isPending}
+				/>
 			</Tabs.Panel>
 			<Tabs.Panel pt="md" value="key">
 				<Stack gap="md">
