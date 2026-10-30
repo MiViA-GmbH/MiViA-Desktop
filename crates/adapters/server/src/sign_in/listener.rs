@@ -97,6 +97,10 @@ impl Listener {
         format!("http://{}/callback", self.host)
     }
 
+    pub(super) fn state(&self) -> &str {
+        self.state.expose_secret()
+    }
+
     pub(super) async fn wait(self) -> Returned {
         loop {
             match self.socket.accept().await {

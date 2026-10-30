@@ -22,7 +22,7 @@ const TOKEN_PATH: &str = "/api/auth/oauth2/token";
 const ISSUED_KEY: &str = "mv-issued-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
 fn api(mock: &MockServer) -> SignInApi {
-    SignInApi::new(clients(), ServerOrigin(mock.uri()))
+    SignInApi::new(clients(), &ServerOrigin(mock.uri()))
 }
 
 async fn serve_client(mock: &MockServer) {
@@ -221,7 +221,7 @@ async fn a_server_that_cannot_be_reached_is_offline() {
     let free = TcpListener::bind(("127.0.0.1", 0)).await.unwrap();
     let closed = format!("http://{}", free.local_addr().unwrap());
     drop(free);
-    let result = SignInApi::new(clients(), ServerOrigin(closed))
+    let result = SignInApi::new(clients(), &ServerOrigin(closed))
         .start_browser(Language::En, String::new())
         .await;
     assert!(matches!(result, Err(SignInError::Offline)));
@@ -241,12 +241,10 @@ async fn requests_that_are_not_the_expected_return_get_an_error_and_do_not_end_t
     let state = &back.state;
     let port = back.port;
     let flipped = if state.starts_with('A') { "B" } else { "A" };
+    let tail: String = state.chars().skip(1).collect();
     let bad: Vec<Vec<u8>> = vec![
-        back.head(&format!(
-            "/callback?code=abc&state={flipped}{}",
-            &state[1..]
-        ))
-        .into_bytes(),
+        back.head(&format!("/callback?code=abc&state={flipped}{tail}"))
+            .into_bytes(),
         back.head(&format!("/callback?code=abc&state={state}x"))
             .into_bytes(),
         back.head("/callback?code=abc").into_bytes(),

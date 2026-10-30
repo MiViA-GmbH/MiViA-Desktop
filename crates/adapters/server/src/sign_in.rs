@@ -90,7 +90,7 @@ async fn answer<T: DeserializeOwned>(
 }
 
 impl SignInApi {
-    pub fn new(clients: Arc<ArcSwap<HttpClients>>, origin: ServerOrigin) -> Self {
+    pub fn new(clients: Arc<ArcSwap<HttpClients>>, origin: &ServerOrigin) -> Self {
         Self {
             clients,
             base: origin.0.trim_end_matches('/').to_owned(),
@@ -112,8 +112,7 @@ impl SignInApi {
     fn authorize_url(
         &self,
         client_id: &str,
-        redirect_uri: &str,
-        state: &SecretString,
+        listener: &Listener,
         verifier: &SecretString,
     ) -> Result<String, SignInError> {
         let challenge = URL_SAFE_NO_PAD.encode(Sha256::digest(verifier.expose_secret()));
@@ -122,9 +121,9 @@ impl SignInApi {
         url.query_pairs_mut()
             .append_pair("response_type", "code")
             .append_pair("client_id", client_id)
-            .append_pair("redirect_uri", redirect_uri)
+            .append_pair("redirect_uri", &listener.redirect_uri())
             .append_pair("scope", SCOPES)
-            .append_pair("state", state.expose_secret())
+            .append_pair("state", listener.state())
             .append_pair("code_challenge", &challenge)
             .append_pair("code_challenge_method", "S256");
         Ok(url.into())
@@ -138,12 +137,10 @@ impl SignInApi {
         let client_id = self.client_id().await?;
         let state = random_token()?;
         let verifier = random_token()?;
-        let url_state = state.clone();
         let listener = Listener::bind(state, language)
             .await
             .map_err(|_| SignInError::Unavailable)?;
-        let url =
-            self.authorize_url(&client_id, &listener.redirect_uri(), &url_state, &verifier)?;
+        let url = self.authorize_url(&client_id, &listener, &verifier)?;
         Ok(BrowserSignIn {
             url,
             client_id,
