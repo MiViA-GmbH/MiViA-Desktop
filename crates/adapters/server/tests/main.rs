@@ -4,6 +4,7 @@ mod labels;
 mod proxy;
 mod reports;
 mod results;
+mod sign_in;
 mod support;
 mod tls;
 mod transport;

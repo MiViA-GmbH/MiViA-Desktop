@@ -12,9 +12,10 @@ use reqwest::header::{AUTHORIZATION, HeaderValue};
 
 pub use generated::api::{Client, types};
 pub use hand::{
-    AccessKeyAccount, AccessKeyCurrent, AccessKeyInfo, ApiErrorBody, IssueReport, ReportCreated,
-    Version, access_key_current, create_report, issue_report, job_detail, languages, result_image,
-    telemetry_batch, upload_image, version,
+    AccessKeyAccount, AccessKeyCurrent, AccessKeyInfo, ApiErrorBody, IssueReport, IssuedAccessKey,
+    OauthAccount, OauthClient, OauthToken, ReportCreated, Version, access_key_current,
+    create_report, issue_access_key, issue_report, job_detail, languages, oauth_client,
+    oauth_token, oauth_userinfo, result_image, telemetry_batch, upload_image, version,
 };
 pub use progenitor_client::{Error, ResponseValue};
 

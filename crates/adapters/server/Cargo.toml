@@ -12,7 +12,10 @@ workspace = true
 [dependencies]
 arc-swap = "=1.9.2"
 async-trait = "=0.1.92"
+base64 = "=0.22.1"
 futures-util = { version = "=0.3.34", default-features = false, features = ["std"] }
+getrandom = "=0.4.3"
+httparse = "=1.10.1"
 httpdate = "=1.0.3"
 mivia-api.workspace = true
 mivia-domain.workspace = true
@@ -24,8 +27,11 @@ rustls-platform-verifier = "=0.7.1"
 secrecy = "=0.10.3"
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.150"
-tokio = { version = "=1.53.3", features = ["macros", "sync", "time"] }
+sha2 = "=0.11.0"
+subtle = "=2.6.1"
+tokio = { version = "=1.53.3", features = ["io-util", "macros", "net", "sync", "time"] }
 tracing = { version = "=0.1.44", default-features = false, features = ["std"] }
+url = "=2.5.8"
 uuid = { version = "=1.26.1", default-features = false }
 
 [dev-dependencies]

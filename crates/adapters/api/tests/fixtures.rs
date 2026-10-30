@@ -7,7 +7,10 @@ use mivia_api::types::{
     ReportingControllerGetReportResponse, UploadRejectedBody, UploadRejectedBodyErrorsItem,
     UserJobDto,
 };
-use mivia_api::{AccessKeyCurrent, ApiErrorBody, ReportCreated, Version};
+use mivia_api::{
+    AccessKeyCurrent, ApiErrorBody, IssuedAccessKey, OauthAccount, OauthClient, OauthToken,
+    ReportCreated, Version,
+};
 use serde::de::DeserializeOwned;
 
 type Decode = fn(&[u8]) -> Result<(), String>;
@@ -30,6 +33,10 @@ fn decoder(operation: &str, status: &str) -> Option<Decode> {
         ("ImageController_uploadImages", "400") => parses::<UploadRejectedBody>,
         ("version", "200") => parses::<Version>,
         ("accessKeysInfo", "200") => parses::<AccessKeyCurrent>,
+        ("oauthClientByApp", "200") => parses::<OauthClient>,
+        ("oauthToken", "200") => parses::<OauthToken>,
+        ("oauthUserinfo", "200") => parses::<OauthAccount>,
+        ("accessKeyIssue", "201") => parses::<IssuedAccessKey>,
         ("JobsV2Controller_getJobResults", "200") => parses::<JobV2Detail>,
         ("ReportingController_createPdf", "202") => parses::<ReportCreated>,
         ("ReportingController_getReport", "200") => parses::<ReportingControllerGetReportResponse>,
