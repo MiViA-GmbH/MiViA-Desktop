@@ -78,8 +78,10 @@ function CodePanel({ code, error, host, onRetry, pending }: CodePanelProps) {
 function useCodeSignIn(onOutcome: (outcome: ConnectOutcome) => void) {
 	const [code, setCode] = useState<string | null>(null);
 	useEffect(() => {
-		const listening = events.signInCode.listen(({ payload }) => setCode(payload.userCode));
-		return () => void listening.then((stop) => stop());
+		const unlisten = events.signInCode.listen(({ payload }) => setCode(payload.userCode));
+		return () => {
+			unlisten.then((stop) => stop());
+		};
 	}, []);
 	const start = useMutation({
 		mutationFn: () => commands.startCodeSignIn(),
@@ -110,9 +112,13 @@ export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: Si
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<string | null>('browser');
 	const settle = (outcome: ConnectOutcome) => {
-		if (outcome.kind !== 'cancelled') {
-			onOutcome(outcome);
+		if (outcome.kind === 'cancelled') {
+			return;
 		}
+		if (outcome.kind === 'signInUnavailable') {
+			setTab('key');
+		}
+		onOutcome(outcome);
 	};
 	const browser = useMutation({ mutationFn: () => commands.startBrowserSignIn(), onSuccess: settle });
 	const { code, start } = useCodeSignIn(settle);

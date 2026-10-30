@@ -15,4 +15,5 @@ pub use identity::HttpIdentityApi;
 pub use labels::{LabelsError, ModelLabels};
 pub use sign_in::{
     BrowserSignIn, DeviceSignIn, IssuedKey, SignInApi, SignInError, key_name, safe_to_open,
+    until_stopped,
 };

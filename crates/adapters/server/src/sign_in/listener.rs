@@ -19,6 +19,7 @@ const MAX_HEADERS: usize = 32;
 
 pub(super) enum Returned {
     Code(SecretString),
+    Denied,
     Failed,
 }
 
@@ -122,7 +123,7 @@ impl Listener {
         let returned = head.as_deref().and_then(|head| self.judge(head));
         let answer = match &returned {
             Some(Returned::Code(_)) => page(self.language, true),
-            Some(Returned::Failed) => page(self.language, false),
+            Some(Returned::Denied | Returned::Failed) => page(self.language, false),
             None => response("400 Bad Request", "text/plain", "Bad request"),
         };
         let write = async {
@@ -160,12 +161,12 @@ impl Listener {
     fn returned(&self, query: &str) -> Option<Returned> {
         let mut state: Option<Cow<'_, str>> = None;
         let mut code = None;
-        let mut failed = false;
+        let mut error = None;
         for (name, value) in form_urlencoded::parse(query.as_bytes()) {
             match name.as_ref() {
                 "state" => state = Some(value),
                 "code" => code = Some(value),
-                "error" => failed = true,
+                "error" => error = Some(value),
                 _ => {}
             }
         }
@@ -173,8 +174,12 @@ impl Listener {
         if !bool::from(expected.ct_eq(state?.as_bytes())) {
             return None;
         }
-        if failed {
-            return Some(Returned::Failed);
+        if let Some(error) = error {
+            return Some(if error == "access_denied" {
+                Returned::Denied
+            } else {
+                Returned::Failed
+            });
         }
         code.filter(|code| !code.is_empty())
             .map(|code| Returned::Code(SecretString::from(code.into_owned())))
