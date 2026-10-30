@@ -62,6 +62,7 @@ pub(crate) fn account(tx: &mut dyn WriteTx, name: &str) -> AccountScope {
             server_account_id: name.to_owned(),
             display_name: name.to_owned(),
             email: String::new(),
+            issued_key_id: None,
         })
         .unwrap();
     AccountScope(id)

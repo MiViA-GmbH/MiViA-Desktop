@@ -14,9 +14,10 @@ impl AccountRepo for SqlTx<'_> {
     fn upsert(&mut self, account: &NewAccount) -> Result<AccountId, TxError> {
         self.tx
             .prepare_cached(
-                "INSERT INTO account (server_url, server_account_id, display_name, email) \
-                 VALUES (?1, ?2, ?3, ?4) ON CONFLICT (server_url, server_account_id) \
-                 DO UPDATE SET display_name = excluded.display_name, email = excluded.email \
+                "INSERT INTO account (server_url, server_account_id, display_name, email, issued_key_id) \
+                 VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (server_url, server_account_id) \
+                 DO UPDATE SET display_name = excluded.display_name, email = excluded.email, \
+                 issued_key_id = excluded.issued_key_id \
                  RETURNING id",
             )
             .and_then(|mut statement| {
@@ -25,7 +26,8 @@ impl AccountRepo for SqlTx<'_> {
                         account.server_url,
                         account.server_account_id,
                         account.display_name,
-                        account.email
+                        account.email,
+                        account.issued_key_id
                     ],
                     |row| row.get(0),
                 )
@@ -69,6 +71,18 @@ impl AccountRepo for SqlTx<'_> {
             params![server_url, server_account_id],
         )?;
         Ok(ids.first().copied().map(AccountId))
+    }
+
+    fn issued_key_id(
+        &mut self,
+        server_url: &str,
+        server_account_id: &str,
+    ) -> Result<Option<String>, TxError> {
+        let ids: Vec<Option<String>> = self.column(
+            "SELECT issued_key_id FROM account WHERE server_url = ?1 AND server_account_id = ?2",
+            params![server_url, server_account_id],
+        )?;
+        Ok(ids.into_iter().next().flatten())
     }
 }
 

@@ -203,6 +203,7 @@ pub struct AccountView {
     pub server_url: String,
     pub server_account_id: String,
     pub email: String,
+    pub issued_key: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

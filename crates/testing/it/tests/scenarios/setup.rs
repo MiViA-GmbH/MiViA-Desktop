@@ -1,7 +1,9 @@
 use mivia_application::intake::{AddFolder, PreparedFolder};
 use mivia_application::report_settings::ReportSettings;
 use mivia_application::settings::{GlobalSettings, Integration};
-use mivia_application::setup::{Completion, SetupDraft, complete, read_draft, write_draft};
+use mivia_application::setup::{
+    Completion, DraftConnection, SetupDraft, complete, earlier_issued_key, read_draft, write_draft,
+};
 use mivia_domain::label::LabelRule;
 use mivia_domain::output::ReportFolder;
 use mivia_ports::ipc::setup::SetupStep;
@@ -33,6 +35,7 @@ fn completion(folder: PreparedFolder) -> Completion {
             server_account_id: "new".to_owned(),
             display_name: "New Lab".to_owned(),
             email: "lab@example.invalid".to_owned(),
+            issued_key_id: None,
         },
         folder: Some(folder),
         telemetry: true,
@@ -58,6 +61,60 @@ async fn write_step(world: &World, step: SetupStep) {
 async fn global(world: &World) -> GlobalSettings {
     let json = world.store.settings(SettingsScope::Global).await.unwrap();
     GlobalSettings::parse(json.as_deref())
+}
+
+const SERVER: &str = "https://app.mivia.ai";
+
+async fn earlier(world: &World, account: &'static str) -> Option<String> {
+    world
+        .store
+        .write(move |tx| earlier_issued_key(tx, SERVER, account))
+        .await
+        .unwrap()
+}
+
+#[tokio::test]
+async fn the_issued_key_id_waits_in_the_draft_until_the_account_exists() {
+    let world = World::new().await;
+    let draft = SetupDraft {
+        connection: Some(DraftConnection {
+            origin: SERVER.to_owned(),
+            account_id: "new".to_owned(),
+            name: "New Lab".to_owned(),
+            email: String::new(),
+            notes: Vec::new(),
+            remaining_uploads: None,
+            issued_key_id: Some("key-1".to_owned()),
+        }),
+        ..SetupDraft::default()
+    };
+    world
+        .store
+        .write(move |tx| write_draft(tx, &draft))
+        .await
+        .unwrap();
+    assert_eq!(earlier(&world, "new").await.as_deref(), Some("key-1"));
+    assert_eq!(earlier(&world, "other").await, None);
+
+    let mut completion = completion(prepared(&world).await);
+    completion.account.issued_key_id = Some("key-1".to_owned());
+    world
+        .store
+        .write(move |tx| complete(tx, &completion))
+        .await
+        .unwrap();
+    assert_eq!(earlier(&world, "new").await.as_deref(), Some("key-1"));
+    let draft = world.store.write(read_draft).await.unwrap();
+    assert_eq!(draft.connection, None);
+    world.finish().await;
+}
+
+#[test]
+fn a_draft_saved_before_issued_keys_keeps_its_connection() {
+    let saved = r#"{"connection":{"origin":"o","accountId":"a","name":"n","email":"e","notes":[],"remainingUploads":null}}"#;
+    let connection = SetupDraft::parse(Some(saved)).unwrap().connection.unwrap();
+    assert_eq!(connection.account_id, "a");
+    assert_eq!(connection.issued_key_id, None);
 }
 
 #[tokio::test]

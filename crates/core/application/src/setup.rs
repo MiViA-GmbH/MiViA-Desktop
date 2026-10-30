@@ -24,6 +24,7 @@ pub struct DraftConnection {
     pub email: String,
     pub notes: Vec<ConnectionNote>,
     pub remaining_uploads: Option<u32>,
+    pub issued_key_id: Option<String>,
 }
 
 impl DraftConnection {
@@ -158,6 +159,21 @@ pub fn read_draft(tx: &mut dyn WriteTx) -> Result<SetupDraft, TxError> {
 pub fn write_draft(tx: &mut dyn WriteTx, draft: &SetupDraft) -> Result<(), TxError> {
     let json = serde_json::to_string(draft).map_err(|error| TxError::Sql(error.to_string()))?;
     tx.set_settings(SettingsScope::SetupDraft, DRAFT_VERSION, &json)
+}
+
+pub fn earlier_issued_key(
+    tx: &mut dyn WriteTx,
+    origin: &str,
+    account: &str,
+) -> Result<Option<String>, TxError> {
+    let drafted = read_draft(tx)?
+        .connection
+        .filter(|connection| connection.origin == origin && connection.account_id == account)
+        .and_then(|connection| connection.issued_key_id);
+    match drafted {
+        Some(id) => Ok(Some(id)),
+        None => tx.accounts().issued_key_id(origin, account),
+    }
 }
 
 pub struct Completion {

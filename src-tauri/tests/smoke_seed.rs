@@ -32,6 +32,7 @@ async fn a_finished_setup_is_seeded_for_the_release_smoke() {
         server_account_id: "stub-account".to_owned(),
         display_name: "Stub Lab".to_owned(),
         email: "lab@example.invalid".to_owned(),
+        issued_key_id: None,
     };
     let model = format!("{}:", var("MIVIA_SMOKE_MODEL"));
     let at = i64::try_from(

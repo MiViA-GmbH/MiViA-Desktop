@@ -98,6 +98,7 @@ async fn account(store: &SqliteStore, seed: &Seed) -> Result<AccountScope, Strin
         server_account_id: identity.account_id,
         display_name: identity.name,
         email: identity.email,
+        issued_key_id: None,
     };
     store
         .write(move |tx| {
