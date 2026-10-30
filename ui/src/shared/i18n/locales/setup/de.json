@@ -11,6 +11,7 @@
 			"signOut": {
 				"button": "Abmelden",
 				"cancel": "Abbrechen",
+				"issued": "Dieser Schlüssel bleibt bis zu 90 Tage gültig, sofern Sie ihn nicht auf der Website entfernen.",
 				"text": "Eingangsordner werden nicht mehr überwacht. Bilder in den Ordnern werden nicht gelöscht. Bildserien, die noch gesammelt werden, werden abgeschlossen; Auswertungen und Berichte werden fortgesetzt, wenn Sie sich wieder als {{name}} anmelden.",
 				"title": "Von {{name}} abmelden?"
 			},

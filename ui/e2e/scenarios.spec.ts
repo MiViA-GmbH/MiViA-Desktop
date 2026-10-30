@@ -303,6 +303,13 @@ test.describe
 			await page.getByRole('link', { name: 'Privacy' }).click();
 			await page.getByRole('switch').click({ force: true });
 			await expect(page.getByRole('switch')).toBeChecked();
+			await page.getByRole('link', { name: 'Account', exact: true }).click();
+			await page.getByRole('button', { name: 'Sign out' }).click();
+			await expect(
+				page.getByRole('dialog').getByText('Input folders are no longer watched.', { exact: false }),
+			).toBeVisible();
+			await expect(page.getByText('keeps working for up to 90 days', { exact: false })).toBeHidden();
+			await page.keyboard.press('Escape');
 			await page.getByRole('link', { name: 'Overview', exact: true }).click();
 
 			await fetch(`${origin}/__stub/revoke-key`, { method: 'POST' });

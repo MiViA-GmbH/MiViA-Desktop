@@ -97,7 +97,7 @@ async fn an_approved_code_issues_a_named_key_after_waiting_at_the_announced_inte
     let signed_in = sign_in.finish(&api).await.unwrap();
     assert_eq!(signed_in.account_id, "account-1");
     assert_eq!(keys_issued(&mock).await, 0);
-    let issued = api.issue_key(signed_in).await.unwrap();
+    let issued = api.issue_key(signed_in, None).await.unwrap();
     assert_eq!(issued.key.expose_secret(), ISSUED_KEY);
 
     let at = at.lock().clone();

@@ -1,3 +1,5 @@
+mod device;
+
 use std::collections::BTreeMap;
 
 use axum::extract::{Form, Path, Query, State};
@@ -13,13 +15,14 @@ use sha2::{Digest, Sha256};
 use url::Url;
 
 use crate::Stub;
+use device::{device_approve, device_code, device_polls, device_token};
+
+pub(crate) use device::device_fault;
 
 const APP_ID: &str = "mivia-desktop";
 const CLIENT_ID: &str = "stub-client";
 const ISSUE_SCOPE: &str = "api-keys:issue";
 const DEVICE_GRANT: &str = "urn:ietf:params:oauth:grant-type:device_code";
-const USER_CODE: &str = "WDJB-MJHT";
-const DEVICE_INTERVAL_SECS: u64 = 1;
 
 #[derive(Clone, Copy, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -36,6 +39,7 @@ pub(crate) struct SignInState {
     codes: BTreeMap<String, Pending>,
     tokens: Vec<String>,
     issued: Vec<String>,
+    issued_keys: Vec<serde_json::Value>,
     counter: u64,
     device_code: Option<String>,
     device_approved: bool,
@@ -91,6 +95,7 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/api/auth/oauth2/userinfo", get(userinfo))
         .route("/api/api-keys/issue", post(issue))
         .route("/__stub/issued", get(issued))
+        .route("/__stub/issued-keys", get(issued_keys))
         .route("/__stub/by-app", post(set_by_app))
         .route("/__stub/revoke-key", post(revoke_key))
 }
@@ -167,69 +172,11 @@ async fn authorize(State(stub): State<Stub>, Query(asked): Query<Authorize>) -> 
     Redirect::to(target.as_str()).into_response()
 }
 
-#[derive(Deserialize)]
-struct DeviceForm {
-    client_id: String,
-    scope: String,
-}
-
-async fn device_code(State(stub): State<Stub>, Form(form): Form<DeviceForm>) -> Response {
-    if form.client_id != CLIENT_ID {
-        return oauth_error("invalid_client");
-    }
-    if !form.scope.split(' ').any(|scope| scope == ISSUE_SCOPE) {
-        return oauth_error("invalid_scope");
-    }
-    let mut state = stub.sign_in.lock();
-    let device_code = state.next("device");
-    state.device_code = Some(device_code.clone());
-    state.device_approved = false;
-    Json(json!({
-        "device_code": device_code,
-        "user_code": USER_CODE,
-        "verification_uri": "https://not-to-be-used.example.invalid/device",
-        "expires_in": 600,
-        "interval": DEVICE_INTERVAL_SECS,
-    }))
-    .into_response()
-}
-
-pub(crate) fn device_fault(stub: &Stub, kind: String) {
-    stub.sign_in.lock().device_fault = Some(kind);
-}
-
-async fn device_approve(State(stub): State<Stub>) -> StatusCode {
-    stub.sign_in.lock().device_approved = true;
-    StatusCode::NO_CONTENT
-}
-
-async fn device_polls(State(stub): State<Stub>) -> Response {
-    Json(stub.sign_in.lock().device_polls).into_response()
-}
-
 fn token_answer(state: &mut SignInState) -> Response {
     let token = state.next("token");
     state.tokens.push(token.clone());
     Json(json!({ "access_token": token, "expires_in": 3600, "token_type": "Bearer" }))
         .into_response()
-}
-
-fn device_token(state: &mut SignInState, device_code: &str) -> Response {
-    state.device_polls += 1;
-    if state.device_code.as_deref() != Some(device_code) {
-        return oauth_error("invalid_grant");
-    }
-    if let Some(fault) = state.device_fault.take() {
-        if fault != "slow_down" {
-            state.device_code = None;
-        }
-        return oauth_error(&fault);
-    }
-    if !state.device_approved {
-        return oauth_error("authorization_pending");
-    }
-    state.device_code = None;
-    token_answer(state)
 }
 
 #[derive(Deserialize)]
@@ -298,6 +245,7 @@ async fn userinfo(State(stub): State<Stub>, headers: HeaderMap) -> Response {
 #[derive(Deserialize)]
 struct IssueBody {
     name: String,
+    replaces: Option<String>,
 }
 
 async fn issue(
@@ -311,7 +259,11 @@ async fn issue(
     let id = {
         let mut state = stub.sign_in.lock();
         state.issued.push(body.name.clone());
-        state.next("key")
+        let id = state.next("key");
+        state
+            .issued_keys
+            .push(json!({ "id": id, "replaces": body.replaces }));
+        id
     };
     let payload = json!({
         "id": id,
@@ -325,6 +277,10 @@ async fn issue(
         "code": stub.current_key(),
     });
     (StatusCode::CREATED, Json(payload)).into_response()
+}
+
+async fn issued_keys(State(stub): State<Stub>) -> Response {
+    Json(stub.sign_in.lock().issued_keys.clone()).into_response()
 }
 
 async fn issued(State(stub): State<Stub>) -> Response {

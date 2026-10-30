@@ -4,7 +4,7 @@ use reqwest::header::{
 };
 use reqwest::multipart::{Form, Part};
 use reqwest::{Body, Client, RequestBuilder};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 const JSON: &str = "application/json";
 
@@ -79,6 +79,13 @@ pub struct OauthAccount {
     pub email: String,
 }
 
+#[derive(Serialize)]
+pub struct IssueAccessKey<'a> {
+    pub name: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replaces: Option<&'a str>,
+}
+
 #[derive(Deserialize)]
 pub struct IssuedAccessKey {
     pub id: String,
@@ -149,13 +156,13 @@ pub fn issue_access_key(
     client: &Client,
     base_url: &str,
     bearer: HeaderValue,
-    name: &str,
+    body: &IssueAccessKey<'_>,
 ) -> RequestBuilder {
     client
         .post(format!("{base_url}/api/api-keys/issue"))
         .header(ACCEPT, JSON)
         .header(AUTHORIZATION, bearer)
-        .json(&serde_json::json!({ "name": name }))
+        .json(body)
 }
 
 pub fn languages(

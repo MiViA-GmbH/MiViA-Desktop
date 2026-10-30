@@ -28,11 +28,8 @@ pub(crate) async fn switch(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, A
     }
     let entered = match held {
         Switch::Key {
-            identity,
-            key,
-            kind,
-            ..
-        } => enter_account(cx, identity, key, kind).await?,
+            identity, new_key, ..
+        } => enter_account(cx, identity, new_key).await?,
         Switch::SignedIn {
             signed_in, note, ..
         } => sign_in::enter_signed_in(cx, app, signed_in, note).await?,

@@ -14,12 +14,11 @@ use mivia_ports::ipc::setup::{ConnectOutcome, ConnectionNote, ConnectionView};
 use mivia_ports::queries::Queries;
 use mivia_ports::server::{License, ServerApi, ServerError};
 use mivia_ports::store::{AccountScope, NewAccount, SettingsScope, StoreExt, TxError, WriteTx};
-use mivia_ports::telemetry::AccountKind;
 use mivia_server::HttpIdentityApi;
 use secrecy::{ExposeSecret, SecretString};
 
 use super::cx::{Cx, Ready, Services, now};
-use super::setup::Switch;
+use super::setup::{NewKey, Switch};
 use super::telemetry;
 use super::{intake, pipeline};
 
@@ -154,8 +153,9 @@ fn connected(identity: &Identity, stored: Stored) -> ConnectionView {
     }
 }
 
-fn new_account(services: &Services, identity: &Identity) -> NewAccount {
+fn new_account(services: &Services, identity: &Identity, issued_id: Option<String>) -> NewAccount {
     NewAccount {
+        issued_key_id: issued_id,
         server_url: services.origin.0.clone(),
         server_account_id: identity.account_id.clone(),
         display_name: identity.name.clone(),
@@ -219,13 +219,9 @@ pub(crate) async fn previous_account(ready: &Ready) -> Option<AccountView> {
         .flatten()
 }
 
-pub(crate) async fn replace_key(
-    cx: &Cx,
-    key: SecretString,
-    kind: AccountKind,
-) -> Result<ConnectOutcome, AppError> {
+pub(crate) async fn replace_key(cx: &Cx, new_key: NewKey) -> Result<ConnectOutcome, AppError> {
     let ready = cx.ready().await;
-    let identity = match identify(&ready.services, &key).await {
+    let identity = match identify(&ready.services, &new_key.key).await {
         Ok(identity) => identity,
         Err(outcome) => return Ok(outcome),
     };
@@ -241,27 +237,30 @@ pub(crate) async fn replace_key(
         cx.setup.hold_switch(Switch::Key {
             previous,
             identity,
-            key,
-            kind,
+            new_key,
         });
         return Ok(outcome);
     }
-    enter_account(cx, identity, key, kind).await
+    enter_account(cx, identity, new_key).await
 }
 
 pub(crate) async fn enter_account(
     cx: &Cx,
     identity: Identity,
-    key: SecretString,
-    kind: AccountKind,
+    new_key: NewKey,
 ) -> Result<ConnectOutcome, AppError> {
+    let NewKey {
+        key,
+        source,
+        issued_id,
+    } = new_key;
     let services = &Arc::clone(&cx.ready().await.services);
-    let stored = store_key(services, &identity, &key).await;
+    let mut stored = store_key(services, &identity, &key).await;
     if stored.notes.contains(&ConnectionNote::StoreFailed) {
         cx.setup.keep_session_key(key.clone());
     }
     super::support::outbox(services).clear();
-    let account = new_account(services, &identity);
+    let account = new_account(services, &identity, issued_id);
     services
         .store
         .write(move |tx| enter(tx, &account).map(drop))
@@ -269,7 +268,8 @@ pub(crate) async fn enter_account(
         .map_err(|error| app_error(&error, "connect_access_key"))?;
     let cleared = clear_clipboard_if(&key);
     rebuild(cx, false).await;
-    telemetry::account_connected(services, kind, false);
+    stored.notes.extend(source);
+    telemetry::account_connected(services, telemetry::kind_of(&stored.notes), false);
     Ok(ConnectOutcome::Connected {
         connection: connected(&identity, stored),
         other_account: false,

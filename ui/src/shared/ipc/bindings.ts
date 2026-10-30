@@ -11,6 +11,7 @@ export const commands = {
 	serverUrl: string,
 	serverAccountId: string,
 	email: string,
+	issuedKey: boolean,
 } | null>("get_account"),
 	listFolders: () => __TAURI_INVOKE<FoldersView>("list_folders"),
 	listHolds: () => __TAURI_INVOKE<HoldsView>("list_holds"),
@@ -147,6 +148,7 @@ export type AccountView = {
 	serverUrl: string,
 	serverAccountId: string,
 	email: string,
+	issuedKey: boolean,
 };
 
 export type AnalysisView = {

@@ -1,18 +1,21 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use mivia_application::setup::earlier_issued_key;
 use mivia_ports::ipc::error::AppError;
 use mivia_ports::ipc::setup::{ConnectOutcome, ConnectionNote};
+use mivia_ports::store::StoreExt;
 use mivia_ports::telemetry::{SignInMethod, SignInReason};
-use mivia_server::{SignInApi, SignInError, SignedIn, key_name, safe_to_open, until_stopped};
-use secrecy::SecretString;
+use mivia_server::{
+    IssuedKey, SignInApi, SignInError, SignedIn, key_name, safe_to_open, until_stopped,
+};
 use tauri::AppHandle;
 use tauri_specta::Event;
 
 use super::account::{self, offline_details};
-use super::cx::{Cx, Services};
+use super::cx::{Cx, Ready};
 use super::events::SignInCode;
-use super::setup::{self, Switch};
+use super::setup::{self, NewKey, Switch};
 use super::telemetry;
 use super::window;
 
@@ -32,6 +35,18 @@ async fn open_browser(url: &str) -> Result<(), SignInError> {
         Ok(Ok(())) => Ok(()),
         _ => Err(SignInError::Unavailable),
     }
+}
+
+async fn earlier_key(ready: &Ready, account: String) -> Option<String> {
+    let origin = ready.services.origin.0.clone();
+    let found = ready
+        .store
+        .write(move |tx| earlier_issued_key(tx, &origin, &account))
+        .await;
+    found.unwrap_or_else(|error| {
+        tracing::warn!(?error, "store.issuedKeyUnreadable");
+        None
+    })
 }
 
 pub(crate) async fn open_device_page(origin: &str) -> Result<(), SignInError> {
@@ -73,9 +88,11 @@ async fn ended(
     })
 }
 
-async fn issue(services: &Services, signed_in: SignedIn) -> Result<SecretString, SignInError> {
+async fn issue(ready: &Ready, signed_in: SignedIn) -> Result<IssuedKey, SignInError> {
+    let replaces = earlier_key(ready, signed_in.account_id.clone()).await;
+    let services = &ready.services;
     let api = SignInApi::new(Arc::clone(&services.clients), &services.origin);
-    Ok(api.issue_key(signed_in).await?.key)
+    api.issue_key(signed_in, replaces).await
 }
 
 async fn connect_signed_in(
@@ -105,8 +122,8 @@ async fn connect_signed_in(
         });
         return Ok(outcome);
     }
-    match issue(&ready.services, signed_in).await {
-        Ok(key) => setup::connect_issued(cx, key, note).await,
+    match issue(&ready, signed_in).await {
+        Ok(issued) => setup::connect_issued(cx, issued, note).await,
         Err(error) => ended(cx, app, error, note).await,
     }
 }
@@ -117,13 +134,13 @@ pub(crate) async fn enter_signed_in(
     signed_in: SignedIn,
     note: ConnectionNote,
 ) -> Result<ConnectOutcome, AppError> {
-    let services = Arc::clone(&cx.ready().await.services);
-    let key = match issue(&services, signed_in).await {
-        Ok(key) => key,
+    let ready = cx.ready().await;
+    let new_key = match issue(&ready, signed_in).await {
+        Ok(issued) => NewKey::issued(issued, note),
         Err(error) => return ended(cx, app, error, note).await,
     };
-    match account::identify(&services, &key).await {
-        Ok(identity) => account::enter_account(cx, identity, key, setup::issued_kind(note)).await,
+    match account::identify(&ready.services, &new_key.key).await {
+        Ok(identity) => account::enter_account(cx, identity, new_key).await,
         Err(outcome) => Ok(outcome),
     }
 }
@@ -211,12 +228,12 @@ mod tests {
     use mivia_domain::naming::Language;
     use mivia_ports::auth::Identity;
     use mivia_ports::ipc::screens::AccountView;
-    use mivia_ports::telemetry::{AccountKind, SignInReason};
+    use mivia_ports::telemetry::SignInReason;
     use mivia_server::SignInError;
     use secrecy::SecretString;
 
     use super::reason;
-    use crate::shell::setup::{Session, Switch, sign_in_switch_text};
+    use crate::shell::setup::{NewKey, Session, Switch, sign_in_switch_text};
 
     const SOON: Duration = Duration::from_secs(5);
 
@@ -249,6 +266,7 @@ mod tests {
                 server_url: String::new(),
                 server_account_id: String::new(),
                 email: String::new(),
+                issued_key: false,
             },
             identity: Identity {
                 account_id: String::new(),
@@ -259,8 +277,7 @@ mod tests {
                 admin_scope: false,
                 missing_scopes: Vec::new(),
             },
-            key: SecretString::from("key"),
-            kind: AccountKind::AccessKey,
+            new_key: NewKey::from_source(SecretString::from("key"), None),
         });
         session.stop_sign_in();
         assert!(session.take_switch().is_none());

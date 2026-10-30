@@ -65,7 +65,7 @@ fn existing(folder: Option<FolderId>, draft: &SetupDraft) -> ExistingImages {
     }
 }
 
-fn kind_of(notes: &[ConnectionNote]) -> AccountKind {
+pub(crate) fn kind_of(notes: &[ConnectionNote]) -> AccountKind {
     if notes.contains(&ConnectionNote::Browser) {
         return AccountKind::Browser;
     }

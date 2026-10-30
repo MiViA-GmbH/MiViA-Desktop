@@ -40,7 +40,7 @@ test.describe
 			await rm(RUN, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 });
 		});
 
-		test('scenario 15: cancelling the switch issues no key and keeps the account and the hold', async () => {
+		test('scenario 16: cancelling the switch issues no key and keeps the account and the hold', async () => {
 			const { page, origin } = running;
 			const issued = async () => (await fetch(`${origin}/__stub/issued`)).json();
 			await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible({ timeout: 30_000 });

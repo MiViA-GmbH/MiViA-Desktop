@@ -150,4 +150,35 @@ test.describe
 				expect(sent).not.toContain(secret);
 			}
 		});
+
+		test('scenario 15: signing in again replaces the issued key, also after signing out', async () => {
+			const { page, origin } = running;
+			const issuedKeys = async (): Promise<{ id: string; replaces: string | null }[]> =>
+				(await fetch(`${origin}/__stub/issued-keys`)).json();
+			const [first, inWizard] = await issuedKeys();
+			expect(first?.replaces).toBeNull();
+			expect(inWizard?.replaces).toBe(first?.id);
+
+			await page.getByRole('button', { name: 'Go to overview', exact: true }).click();
+			await page
+				.getByRole('link', { name: /Settings/ })
+				.first()
+				.click();
+			await page.getByRole('link', { name: 'Account', exact: true }).click();
+			await page.getByRole('button', { name: 'Sign out' }).click();
+			const dialog = page.getByRole('dialog');
+			await expect(
+				dialog.getByText('This key keeps working for up to 90 days unless you remove it on the website.', {
+					exact: false,
+				}),
+			).toBeVisible();
+			await dialog.getByRole('button', { name: 'Sign out' }).click();
+			await expect(page.getByRole('button', { name: 'Sign out' })).toHaveCount(0, { timeout: 20_000 });
+
+			await fetch(await waitInBrowser(page));
+			await expect(page.getByText('New API key saved.')).toBeVisible({ timeout: 20_000 });
+			await expect(page.getByText('the old key can be deleted', { exact: false })).toBeHidden();
+			expect((await issuedKeys()).at(-1)?.replaces).toBe(inWizard?.id);
+			await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
+		});
 	});

@@ -17,8 +17,7 @@ use mivia_ports::auth::{
 };
 use mivia_ports::ipc::screens::AccountView;
 use mivia_ports::ipc::setup::ConnectionNote;
-use mivia_ports::telemetry::AccountKind;
-use mivia_server::SignedIn;
+use mivia_server::{IssuedKey, SignedIn};
 use parking_lot::Mutex;
 use secrecy::SecretString;
 use tauri::{AppHandle, Manager};
@@ -32,7 +31,7 @@ use super::window::LABEL;
 pub(crate) use catalogue::catalogue;
 pub(crate) use complete::complete;
 pub(crate) use legacy::{close_legacy, retry_legacy_stop};
-pub(crate) use wizard::{connect, connect_issued, import_legacy, issued_kind, pick, save, view};
+pub(crate) use wizard::{connect, connect_issued, import_legacy, pick, save, view};
 
 const PICK_LIFETIME: Duration = Duration::from_secs(600);
 const REFUSAL: Duration = Duration::from_secs(60);
@@ -41,8 +40,7 @@ pub(crate) enum Switch {
     Key {
         previous: AccountView,
         identity: Identity,
-        key: SecretString,
-        kind: AccountKind,
+        new_key: NewKey,
     },
     SignedIn {
         previous: AccountView,
@@ -51,9 +49,34 @@ pub(crate) enum Switch {
     },
 }
 
+#[derive(Clone)]
+pub(crate) struct NewKey {
+    pub(crate) key: SecretString,
+    pub(crate) source: Option<ConnectionNote>,
+    pub(crate) issued_id: Option<String>,
+}
+
+impl NewKey {
+    pub(crate) fn from_source(key: SecretString, source: Option<ConnectionNote>) -> Self {
+        Self {
+            key,
+            source,
+            issued_id: None,
+        }
+    }
+
+    pub(crate) fn issued(issued: IssuedKey, note: ConnectionNote) -> Self {
+        Self {
+            key: issued.key,
+            source: Some(note),
+            issued_id: Some(issued.id),
+        }
+    }
+}
+
 #[derive(Default)]
 pub(crate) struct Session {
-    retry_key: Mutex<Option<SecretString>>,
+    retry_key: Mutex<Option<NewKey>>,
     memory_key: Mutex<Option<SecretString>>,
     switch: Mutex<Option<Switch>>,
     sign_in: Mutex<Option<Arc<Notify>>>,
@@ -72,11 +95,11 @@ impl Session {
         *self.memory_key.lock() = Some(key);
     }
 
-    pub(crate) fn hold_pending(&self, key: SecretString) {
+    pub(crate) fn hold_pending(&self, key: NewKey) {
         *self.retry_key.lock() = Some(key);
     }
 
-    pub(crate) fn pending(&self) -> Option<SecretString> {
+    pub(crate) fn pending(&self) -> Option<NewKey> {
         self.retry_key.lock().clone()
     }
 

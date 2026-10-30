@@ -34,6 +34,7 @@ fn seed_account(tx: &mut dyn WriteTx, name: &str) -> Result<Seeded, TxError> {
         server_account_id: name.to_owned(),
         display_name: name.to_owned(),
         email: String::new(),
+        issued_key_id: None,
     })?;
     let scope = AccountScope(id);
     let folder = tx.folders(scope).add(&NewFolder {

@@ -1,13 +1,16 @@
 mod device;
 mod listener;
 
+use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
 
 use arc_swap::ArcSwap;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use mivia_api::{IssuedAccessKey, JSON_LIMIT, OauthAccount, OauthClient, OauthToken, read_capped};
+use mivia_api::{
+    IssueAccessKey, IssuedAccessKey, JSON_LIMIT, OauthAccount, OauthClient, OauthToken, read_capped,
+};
 use mivia_domain::naming::Language;
 use mivia_ports::auth::ServerOrigin;
 use reqwest::header::HeaderValue;
@@ -190,8 +193,12 @@ impl SignInApi {
         answer(request, StatusCode::OK).await
     }
 
-    async fn issue(&self, token: &SecretString, name: &str) -> Result<IssuedKey, SignInError> {
-        let request = mivia_api::issue_access_key(&self.client(), &self.base, bearer(token)?, name);
+    async fn issue(
+        &self,
+        token: &SecretString,
+        body: &IssueAccessKey<'_>,
+    ) -> Result<IssuedKey, SignInError> {
+        let request = mivia_api::issue_access_key(&self.client(), &self.base, bearer(token)?, body);
         let issued: IssuedAccessKey = answer(request, StatusCode::CREATED).await?;
         Ok(IssuedKey {
             id: issued.id,
@@ -214,8 +221,16 @@ impl SignInApi {
         })
     }
 
-    pub async fn issue_key(&self, signed_in: SignedIn) -> Result<IssuedKey, SignInError> {
-        self.issue(&signed_in.token, &signed_in.key_name).await
+    pub async fn issue_key(
+        &self,
+        signed_in: SignedIn,
+        replaces: Option<String>,
+    ) -> Result<IssuedKey, SignInError> {
+        let body = IssueAccessKey {
+            name: &signed_in.key_name,
+            replaces: replaces.as_deref(),
+        };
+        self.issue(&signed_in.token, &body).await
     }
 }
 

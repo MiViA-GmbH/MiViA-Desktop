@@ -133,6 +133,7 @@ async fn check(
         server_account_id: connection.account_id,
         display_name: connection.name,
         email: connection.email,
+        issued_key_id: connection.issued_key_id,
     };
     Ok(Checked {
         language,

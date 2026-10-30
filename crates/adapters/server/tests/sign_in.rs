@@ -20,6 +20,7 @@ use wiremock::{Mock, MockServer, Request, ResponseTemplate};
 use super::support::clients;
 
 mod device;
+mod replaces;
 
 const CLIENT_PATH: &str = "/api/oauth-clients/by-app/mivia-desktop";
 const TOKEN_PATH: &str = "/api/auth/oauth2/token";
@@ -137,7 +138,7 @@ async fn a_valid_return_exchanges_the_code_and_issues_a_named_key() {
             .all(|request| request.url.path() != "/api/api-keys/issue"),
         "no key before the account is known"
     );
-    let issued = issuing.issue_key(signed_in).await.unwrap();
+    let issued = issuing.issue_key(signed_in, None).await.unwrap();
 
     assert_eq!(issued.key.expose_secret(), ISSUED_KEY);
     assert_eq!(issued.id, "key-1");
