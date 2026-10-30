@@ -63,6 +63,7 @@ function SignOut({ account }: { account: AccountView }) {
 			>
 				<Text c="stone.8" size="sm">
 					{t('desktop.account.signOut.text', { name: account.displayName })}
+					{account.issuedKey && ` ${t('desktop.account.signOut.issued')}`}
 				</Text>
 				<Group justify="flex-end" mt="lg">
 					<Button data-autofocus onClick={close} variant="default">
@@ -117,7 +118,8 @@ function SignInForm({ host, lead }: { host: string; lead: string }) {
 			/>
 			{outcome?.kind === 'connected' && (
 				<Notice tone="success">
-					{t('desktop.account.key.saved', { name: outcome.connection.name })} {t('desktop.account.key.hint', { host })}
+					{t('desktop.account.key.saved', { name: outcome.connection.name })}
+					{!outcome.connection.notes.includes('browser') && ` ${t('desktop.account.key.hint', { host })}`}
 				</Notice>
 			)}
 			<SwitchModal onCancel={() => setOutcome(null)} onDone={settle} outcome={outcome} />

@@ -11,6 +11,7 @@
 			"signOut": {
 				"button": "Sign out",
 				"cancel": "Cancel",
+				"issued": "This key keeps working for up to 90 days unless you remove it on the website.",
 				"text": "Input folders are no longer watched. Images in the folders are not deleted. Image series that are still collecting are closed; their analyses and reports continue when you sign in to {{name}} again.",
 				"title": "Sign out of {{name}}?"
 			},
