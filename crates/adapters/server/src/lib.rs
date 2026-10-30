@@ -14,6 +14,6 @@ pub use clients::{
 pub use identity::HttpIdentityApi;
 pub use labels::{LabelsError, ModelLabels};
 pub use sign_in::{
-    BrowserSignIn, DeviceSignIn, IssuedKey, SignInApi, SignInError, SignedIn, key_name,
-    safe_to_open, until_stopped,
+    APP_ID as SIGN_IN_APP_ID, BrowserSignIn, DeviceSignIn, IssuedKey, SCOPES as SIGN_IN_SCOPES,
+    SignInApi, SignInError, SignedIn, key_name, safe_to_open, until_stopped,
 };
