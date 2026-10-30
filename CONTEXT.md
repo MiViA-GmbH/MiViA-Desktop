@@ -20,8 +20,12 @@ The MiViA user on a server on whose behalf the app works; it owns everything the
 _Avoid_: user (ambiguous with the person at the PC), profile, connection
 
 **Access key**:
-The secret that lets the app act for an account; the server and the UI call it API key.
+The secret that lets the app act for an account, pasted by the user or issued to the app by a browser sign-in; the server and the UI call it API key.
 _Avoid_: token, password
+
+**Browser sign-in**:
+Connecting the app by signing in on the MiViA website, in a browser on this PC or by typing a code shown by the app on any device; it ends with an access key the app keeps.
+_Avoid_: login, OAuth (in UI), device flow (in UI)
 
 **Credential store**:
 Where the app keeps the access key: Windows Credential Manager, local to this PC, never a file.
