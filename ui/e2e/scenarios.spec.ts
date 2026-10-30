@@ -3,9 +3,11 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
-import { expect, test } from '@playwright/test';
-import { launch, next, RUN, type Running, STUB_KEY, shutdown, stop, TARGET } from './desktop-app';
+import { expect, type Page, test } from '@playwright/test';
 
+import { launch, REPO, type Running, STUB_KEY, shutdown, stop, TARGET } from './stub-app';
+
+const RUN = join(REPO, 'target', 'e2e-run', String(Date.now()));
 const WATCHED = join(RUN, 'Mikroskop');
 const REPORTS = join(WATCHED, 'MiViA reports');
 const SENT = join(RUN, 'Gesendet');
@@ -96,6 +98,10 @@ function sendTo(paths: string[]): number | null {
 	return spawnSync(join(TARGET, 'mivia-desktop.exe'), args, { env, timeout: 30_000 }).status;
 }
 
+async function next(page: Page, name = 'Next'): Promise<void> {
+	await page.getByRole('button', { name, exact: true }).click();
+}
+
 test.describe
 	.serial('first start against the stub', () => {
 		let running: Running;
@@ -178,9 +184,9 @@ const BROWSER_WATCHED = join(BROWSER, 'Labor');
 const SIGN_IN_URL_FILE = join(BROWSER, 'sign-in-url.txt');
 const COMPUTER = 'LAB-PC-7';
 
-function signInUrl(): string {
+function signInUrl(file = SIGN_IN_URL_FILE): string {
 	try {
-		return readFileSync(SIGN_IN_URL_FILE, 'utf8');
+		return readFileSync(file, 'utf8');
 	} catch {
 		return '';
 	}
@@ -262,6 +268,64 @@ test.describe
 			for (const secret of [STUB_KEY, state, 'stub-code-', 'stub-token-']) {
 				expect(logs).not.toContain(secret);
 			}
+		});
+	});
+
+const HELD = join(RUN, 'held');
+const HELD_WATCHED = join(HELD, 'Labor');
+const HELD_URL_FILE = join(HELD, 'sign-in-url.txt');
+
+test.describe
+	.serial('signing in again against the stub', () => {
+		let running: Running;
+
+		test.beforeAll(async () => {
+			mkdirSync(HELD_WATCHED, { recursive: true });
+			running = await launch({
+				...seeded(),
+				LOCALAPPDATA: join(HELD, 'appdata'),
+				MIVIA_E2E_FOLDER: HELD_WATCHED,
+				MIVIA_E2E_SIGN_IN_URL_FILE: HELD_URL_FILE,
+			});
+		});
+
+		test.afterAll(async () => {
+			await shutdown(running);
+		});
+
+		test('scenario 10: a stopped key holds the work and signing in again resumes it', async () => {
+			const { page, origin } = running;
+			await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible({ timeout: 30_000 });
+			await page
+				.getByRole('link', { name: /Settings/ })
+				.first()
+				.click();
+			await page.getByRole('link', { name: 'Privacy' }).click();
+			await page.getByRole('switch').click({ force: true });
+			await expect(page.getByRole('switch')).toBeChecked();
+			await page.getByRole('link', { name: 'Overview', exact: true }).click();
+
+			await fetch(`${origin}/__stub/revoke-key`, { method: 'POST' });
+			writeFileSync(join(HELD_WATCHED, 'probe_001.jpg'), jpeg(30));
+			const again = page.getByRole('button', { name: 'Sign in again' });
+			await expect(again).toBeVisible({ timeout: 60_000 });
+
+			await again.click();
+			await expect(page.getByRole('tab', { name: 'Browser' })).toHaveAttribute('aria-selected', 'true');
+			await page.getByRole('button', { name: 'Open the browser' }).click();
+			await expect.poll(() => signInUrl(HELD_URL_FILE), { timeout: 20_000, intervals: [250] }).toContain('authorize?');
+			expect((await fetch(signInUrl(HELD_URL_FILE))).status).toBe(200);
+
+			await expect(page.getByText('New API key saved.')).toBeVisible({ timeout: 20_000 });
+			await expect(again).toBeHidden();
+			await page.getByRole('link', { name: 'Overview', exact: true }).click();
+			await expect(page.getByText(/: 1 of 1 done/)).toBeVisible({ timeout: 60_000 });
+
+			const connected = async () => {
+				const batches: { events: { name: string }[] }[] = await (await fetch(`${origin}/__stub/telemetry`)).json();
+				return JSON.stringify(batches.flatMap((batch) => batch.events).find((e) => e.name === 'account.connected'));
+			};
+			await expect.poll(connected, { timeout: 60_000, intervals: [1000] }).toContain('"browser"');
 		});
 	});
 

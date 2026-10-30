@@ -2,7 +2,6 @@
 	"desktop": {
 		"account": {
 			"key": {
-				"connect": "Connect with an API key",
 				"connectLead": "No account is connected. Paste your API key to connect this PC again.",
 				"hint": "Tip for the key owner: the old key can be deleted at {{host}} › API keys.",
 				"replace": "Replace API key",

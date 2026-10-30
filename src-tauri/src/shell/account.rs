@@ -219,7 +219,11 @@ async fn previous_account(ready: &Ready) -> Option<AccountView> {
         .flatten()
 }
 
-pub(crate) async fn replace_key(cx: &Cx, key: SecretString) -> Result<ConnectOutcome, AppError> {
+pub(crate) async fn replace_key(
+    cx: &Cx,
+    key: SecretString,
+    kind: AccountKind,
+) -> Result<ConnectOutcome, AppError> {
     let ready = cx.ready().await;
     let identity = match identify(&ready.services, &key).await {
         Ok(identity) => identity,
@@ -233,18 +237,19 @@ pub(crate) async fn replace_key(cx: &Cx, key: SecretString) -> Result<ConnectOut
             current_name: previous.display_name.clone(),
             new_name: identity.name.clone(),
         };
-        cx.setup.hold_switch(previous, identity, key);
+        cx.setup.hold_switch((previous, identity, key, kind));
         return Ok(outcome);
     }
-    enter_account(cx, &ready.services, identity, key).await
+    enter_account(cx, identity, key, kind).await
 }
 
-pub(crate) async fn enter_account(
+async fn enter_account(
     cx: &Cx,
-    services: &Arc<Services>,
     identity: Identity,
     key: SecretString,
+    kind: AccountKind,
 ) -> Result<ConnectOutcome, AppError> {
+    let services = &Arc::clone(&cx.ready().await.services);
     let stored = store_key(services, &identity, &key).await;
     if stored.notes.contains(&ConnectionNote::StoreFailed) {
         cx.setup.keep_session_key(key.clone());
@@ -258,7 +263,7 @@ pub(crate) async fn enter_account(
         .map_err(|error| app_error(&error, "connect_access_key"))?;
     let cleared = clear_clipboard_if(&key);
     rebuild(cx, false).await;
-    telemetry::account_connected(services, AccountKind::AccessKey, false);
+    telemetry::account_connected(services, kind, false);
     Ok(ConnectOutcome::Connected {
         connection: connected(&identity, stored),
         other_account: false,
@@ -268,14 +273,14 @@ pub(crate) async fn enter_account(
 
 pub(crate) async fn switch(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, AppError> {
     let ready = cx.ready().await;
-    let Some((previous, identity, key)) = cx.setup.take_switch() else {
+    let Some((previous, identity, key, kind)) = cx.setup.take_switch() else {
         return Ok(ConnectOutcome::Cancelled);
     };
     let confirmed = super::setup::confirm_switch(cx, app, &previous, &identity).await;
     if !confirmed {
         return Ok(ConnectOutcome::Cancelled);
     }
-    let entered = enter_account(cx, &ready.services, identity, key).await?;
+    let entered = enter_account(cx, identity, key, kind).await?;
     telemetry::account_switched(&ready.services);
     Ok(entered)
 }

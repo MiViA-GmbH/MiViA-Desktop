@@ -268,7 +268,6 @@
 			"continues": "Images are safe and continue automatically.",
 			"copied": "Copied",
 			"copyDetails": "Copy details for IT",
-			"enterKey": "Enter new API key",
 			"license": {
 				"text": "Images are safe and wait here. Ask the MiViA contact in your lab.",
 				"title": "Your MiViA license is not valid."
@@ -297,6 +296,7 @@
 			"serviceUnavailable": {
 				"title": "MiViA has a service problem since {{time}}, not your PC or network."
 			},
+			"signInAgain": "Sign in again",
 			"updateRequired": "Update required."
 		},
 		"native": {

@@ -2,7 +2,6 @@
 	"desktop": {
 		"account": {
 			"key": {
-				"connect": "Mit einem API-Schlüssel verbinden",
 				"connectLead": "Es ist kein Konto verbunden. Fügen Sie Ihren API-Schlüssel ein, um diesen PC wieder zu verbinden.",
 				"hint": "Tipp für die Person, der der Schlüssel gehört: Der alte Schlüssel kann unter {{host}} › API-Schlüssel gelöscht werden.",
 				"replace": "API-Schlüssel ersetzen",

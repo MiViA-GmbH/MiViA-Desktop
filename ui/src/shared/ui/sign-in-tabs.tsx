@@ -77,16 +77,13 @@ function CodePanel({ code, error, host, onRetry, pending }: CodePanelProps) {
 
 function useCodeSignIn(onOutcome: (outcome: ConnectOutcome) => void) {
 	const [code, setCode] = useState<string | null>(null);
+	useEffect(() => {
+		const listening = events.signInCode.listen(({ payload }) => setCode(payload.userCode));
+		return () => void listening.then((stop) => stop());
+	}, []);
 	const start = useMutation({
-		mutationFn: async () => {
-			setCode(null);
-			const stop = await events.signInCode.listen(({ payload }) => setCode(payload.userCode));
-			try {
-				return await commands.startCodeSignIn();
-			} finally {
-				stop();
-			}
-		},
+		mutationFn: () => commands.startCodeSignIn(),
+		onMutate: () => setCode(null),
 		onSuccess: onOutcome,
 	});
 	return { code, start };
@@ -112,9 +109,17 @@ function BrowserPanel({ error, pending, onCancel, onStart }: BrowserPanelProps) 
 export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: SignInTabsProps) {
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<string | null>('browser');
-	const browser = useMutation({ mutationFn: () => commands.startBrowserSignIn(), onSuccess: onOutcome });
-	const { code, start } = useCodeSignIn(onOutcome);
-	const cancel = () => commands.cancelSignIn();
+	const settle = (outcome: ConnectOutcome) => {
+		if (outcome.kind !== 'cancelled') {
+			onOutcome(outcome);
+		}
+	};
+	const browser = useMutation({ mutationFn: () => commands.startBrowserSignIn(), onSuccess: settle });
+	const { code, start } = useCodeSignIn(settle);
+	const cancel = () => {
+		commands.cancelSignIn();
+		onTabChange();
+	};
 	useEffect(() => () => void commands.cancelSignIn(), []);
 	const change = (next: string | null) => {
 		if (next === tab) {
@@ -124,8 +129,8 @@ export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: Si
 		onTabChange();
 		if (next === 'code') {
 			start.mutate();
-		} else if (browser.isPending || start.isPending) {
-			cancel();
+		} else {
+			commands.cancelSignIn();
 		}
 	};
 	return (

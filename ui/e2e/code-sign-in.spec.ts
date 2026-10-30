@@ -1,11 +1,17 @@
 import { mkdirSync, readFileSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { expect, test } from '@playwright/test';
-import { launch, next, RUN, type Running, shutdown } from './desktop-app';
+import { expect, type Page, test } from '@playwright/test';
+
+import { launch, REPO, type Running, shutdown } from './stub-app';
 
 const COMPUTER = 'LAB-PC-8';
-const CODE_RUN = join(RUN, 'code');
+const CODE_RUN = join(REPO, 'target', 'e2e-run', `code-${Date.now()}`);
 const CODE_URL_FILE = join(CODE_RUN, 'opened-url.txt');
+
+function next(page: Page, name = 'Next'): Promise<void> {
+	return page.getByRole('button', { name, exact: true }).click();
+}
 
 function openedUrl(): string {
 	try {
@@ -39,6 +45,7 @@ test.describe
 
 		test.afterAll(async () => {
 			await shutdown(running);
+			await rm(CODE_RUN, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 });
 		});
 
 		test('scenario 10: typing the code on the device page connects the wizard', async () => {
