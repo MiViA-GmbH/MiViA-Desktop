@@ -197,7 +197,8 @@ test.describe
 			const { page } = running;
 			await expect(page.getByRole('heading', { name: 'Welcome to MiViA Desktop' })).toBeVisible({ timeout: 30_000 });
 			await next(page, 'Start setup');
-			await page.getByLabel('API key').fill(STUB_KEY);
+			await page.getByRole('tab', { name: 'API key' }).click();
+			await page.getByRole('tabpanel').getByLabel('API key').fill(STUB_KEY);
 			await next(page);
 			await expect(page.getByText('Connected as Stub Lab')).toBeVisible({ timeout: 20_000 });
 			await next(page);
@@ -253,6 +254,98 @@ test.describe
 			await sw.click({ force: true });
 			await expect(sw).not.toBeChecked();
 			await expect(page.getByText('nothing is recorded or sent', { exact: false })).toBeVisible();
+		});
+	});
+
+const BROWSER = join(RUN, 'browser');
+const BROWSER_WATCHED = join(BROWSER, 'Labor');
+const SIGN_IN_URL_FILE = join(BROWSER, 'sign-in-url.txt');
+const COMPUTER = 'LAB-PC-7';
+
+function signInUrl(): string {
+	try {
+		return readFileSync(SIGN_IN_URL_FILE, 'utf8');
+	} catch {
+		return '';
+	}
+}
+
+function browserLogs(): string {
+	const appdata = join(BROWSER, 'appdata');
+	return readdirSync(appdata, { recursive: true, encoding: 'utf8' })
+		.filter((name) => /^[^\\/]+[\\/]logs[\\/][^\\/]+\.\w+$/.test(name))
+		.map((name) => readFileSync(join(appdata, name), 'utf8'))
+		.join('\n');
+}
+
+test.describe
+	.serial('browser sign-in against the stub', () => {
+		let running: Running;
+
+		test.beforeAll(async () => {
+			mkdirSync(BROWSER_WATCHED, { recursive: true });
+			running = await launch({
+				LOCALAPPDATA: join(BROWSER, 'appdata'),
+				MIVIA_E2E_PICK_FOLDER: BROWSER_WATCHED,
+				MIVIA_E2E_SIGN_IN_URL_FILE: SIGN_IN_URL_FILE,
+				COMPUTERNAME: COMPUTER,
+			});
+		});
+
+		test.afterAll(async () => {
+			await shutdown(running);
+		});
+
+		test('scenario 9: signing in through the browser connects the wizard and names the key', async () => {
+			const { page, origin } = running;
+			await expect(page.getByRole('heading', { name: 'Welcome to MiViA Desktop' })).toBeVisible({ timeout: 30_000 });
+			await next(page, 'Start setup');
+			await expect(page.getByRole('heading', { name: 'Connect your MiViA account' })).toBeVisible();
+			await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+			await page.getByRole('button', { name: 'Open the browser' }).click();
+			await expect(page.getByText('Finish signing in in your browser.')).toBeVisible();
+			await expect.poll(signInUrl, { timeout: 20_000, intervals: [250] }).toContain('/api/auth/oauth2/authorize?');
+
+			const answer = await fetch(signInUrl());
+			expect(answer.status).toBe(200);
+			expect(answer.headers.get('content-security-policy')).toBe("default-src 'none'");
+			expect(answer.headers.get('referrer-policy')).toBe('no-referrer');
+			expect(await answer.text()).toContain('Sign-in finished. Return to MiViA Desktop.');
+
+			await expect(page.getByText('Connected as Stub Lab')).toBeVisible({ timeout: 20_000 });
+			expect(await (await fetch(`${origin}/__stub/issued`)).json()).toEqual([`MiViA Desktop on ${COMPUTER}`]);
+
+			await next(page);
+			await page.getByRole('button', { name: 'Choose folder…' }).click();
+			await expect(page.getByText(BROWSER_WATCHED)).toBeVisible();
+			await next(page);
+			await expect(page.getByRole('heading', { name: 'How do images arrive in this folder?' })).toBeVisible();
+			await next(page);
+			await expect(page.getByRole('checkbox', { name: 'Grain size' })).toBeChecked({ timeout: 20_000 });
+			await next(page);
+			const consent = page.getByRole('checkbox', { name: /Help improve MiViA/ });
+			await consent.click();
+			await expect(consent).toBeChecked();
+			await next(page, 'Finish setup');
+			await expect(page.getByRole('heading', { name: 'MiViA Desktop is ready' })).toBeVisible({ timeout: 30_000 });
+
+			const connected = async () => {
+				const batches: { events: { name: string }[] }[] = await (await fetch(`${origin}/__stub/telemetry`)).json();
+				return JSON.stringify(batches.flatMap((batch) => batch.events).find((e) => e.name === 'account.connected'));
+			};
+			await expect.poll(connected, { timeout: 60_000, intervals: [1000] }).toContain('"browser"');
+			const sent = JSON.stringify(await (await fetch(`${origin}/__stub/telemetry`)).json());
+			const params = new URL(signInUrl()).searchParams;
+			const state = params.get('state') ?? 'missing';
+			for (const secret of [COMPUTER, STUB_KEY, state]) {
+				expect(sent).not.toContain(secret);
+			}
+			await stop(running.app);
+			const logs = browserLogs();
+			expect(logs).not.toBe('');
+			for (const secret of [STUB_KEY, state, 'stub-code-', 'stub-token-']) {
+				expect(logs).not.toContain(secret);
+			}
 		});
 	});
 

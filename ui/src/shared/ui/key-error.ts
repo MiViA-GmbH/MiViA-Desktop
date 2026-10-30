@@ -16,6 +16,10 @@ export function outcomeError(outcome: ConnectOutcome | null, host: string, t: TF
 			return t('desktop.wizard.key.missingScopes');
 		case 'offline':
 			return t('desktop.wizard.key.offline', { host });
+		case 'signInUnavailable':
+			return t('desktop.wizard.key.signInUnavailable');
+		case 'signInTimedOut':
+			return t('desktop.wizard.key.signInTimedOut');
 		default:
 			return null;
 	}

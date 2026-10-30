@@ -139,6 +139,8 @@ export function setupResponses(state: SetupView): Record<string, (args: Args) =>
 		},
 		pick_setup_folder: () => Object.assign(state, { folder: FOLDER, report: REPORT }),
 		connect_access_key: (args) => connected(state, String(args.key ?? '')),
+		start_browser_sign_in: () => connected(state, 'browser', ['browser']),
+		cancel_sign_in: () => null,
 		import_legacy_key: () => connected(state, 'imported', ['imported']),
 		complete_setup: () => {
 			state.completed = true;

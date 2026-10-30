@@ -10,6 +10,7 @@ import type { ConnectionView, ConnectOutcome, SetupView } from '../../shared/ipc
 import { outcomeError } from '../../shared/ui/key-error';
 import { KeyField } from '../../shared/ui/key-field';
 import { Notice } from '../../shared/ui/notice';
+import { SignInTabs } from '../../shared/ui/sign-in-tabs';
 import { previousStep } from './steps';
 import { IMPORT_KEY, useAdvance } from './use-advance';
 import { useGo } from './use-setup';
@@ -57,16 +58,13 @@ function Offline({ details, host }: { details: string; host: string }) {
 	);
 }
 
-function useConnect(onOutcome: (outcome: ConnectOutcome) => void) {
+function useSettle(onOutcome: (outcome: ConnectOutcome) => void) {
 	const client = useQueryClient();
-	return useMutation({
-		mutationFn: (key: string | null) => commands.connectAccessKey(key),
-		onSuccess: async (outcome) => {
-			onOutcome(outcome);
-			await client.invalidateQueries({ queryKey: setupQuery.queryKey });
-			await client.invalidateQueries({ queryKey: catalogueQuery.queryKey });
-		},
-	});
+	return async (outcome: ConnectOutcome) => {
+		onOutcome(outcome);
+		await client.invalidateQueries({ queryKey: setupQuery.queryKey });
+		await client.invalidateQueries({ queryKey: catalogueQuery.queryKey });
+	};
 }
 
 function useRetry(outcome: ConnectOutcome | null, retry: () => void) {
@@ -106,16 +104,12 @@ function KeyHelp({ host }: { host: string }) {
 	);
 }
 
-export function KeyStep({ view }: { view: SetupView }) {
-	const { t } = useTranslation();
-	const go = useGo(view);
-	const { label, loading, advance } = useAdvance(view, 'key');
-	const imported = useQuery<ConnectOutcome | null>({ queryKey: IMPORT_KEY, queryFn: () => null, enabled: false }).data;
+function useKeyEntry() {
 	const [outcome, setOutcome] = useState<ConnectOutcome | null>(null);
 	const [key, setKey] = useState('');
 	const [editing, setEditing] = useState(false);
 	const input = useRef<HTMLInputElement>(null);
-	const connect = useConnect((next) => {
+	const settle = useSettle((next) => {
 		setOutcome(next);
 		setEditing(next.kind !== 'connected');
 		setKey(next.kind === 'connected' ? '' : key);
@@ -123,20 +117,76 @@ export function KeyStep({ view }: { view: SetupView }) {
 			input.current?.focus();
 		}
 	});
-	useRetry(outcome, () => connect.mutate(null));
+	const connect = useMutation({
+		mutationFn: (typed: string | null) => commands.connectAccessKey(typed),
+		onSuccess: settle,
+	});
+	useRetry(connect.data ?? null, () => connect.mutate(null));
+	const clear = () => {
+		connect.reset();
+		setOutcome(null);
+	};
+	return { outcome, key, setKey, editing, setEditing, input, settle, connect, clear };
+}
+
+function NotConnected({ view, entry }: { view: SetupView; entry: ReturnType<typeof useKeyEntry> }) {
+	const { t } = useTranslation();
+	const imported = useQuery<ConnectOutcome | null>({ queryKey: IMPORT_KEY, queryFn: () => null, enabled: false }).data;
+	const { outcome, key, setKey, input, settle, connect, clear } = entry;
+	const error = connect.data?.kind === 'offline' ? null : outcomeError(outcome, view.host, t);
+	return (
+		<>
+			{imported?.kind === 'rejected' && <Notice tone="warn">{t('desktop.wizard.key.importedInvalid')}</Notice>}
+			<SignInTabs
+				error={error}
+				host={view.host}
+				keyPanel={
+					<>
+						<Text c="stone.8" size="sm">
+							{t('desktop.wizard.key.lead')}
+						</Text>
+						<KeyField
+							error={error}
+							inputRef={input}
+							onChange={setKey}
+							onPaste={(text) => text.trim().length >= 32 && connect.mutate(text)}
+							value={key}
+						/>
+						{connect.data?.kind === 'offline' && <Offline details={connect.data.details} host={view.host} />}
+						<KeyHelp host={view.host} />
+					</>
+				}
+				onOutcome={settle}
+				onTabChange={clear}
+			/>
+			<Text c="stone.7" size="xs">
+				{t('desktop.wizard.common.help', { contact: view.supportContact })}
+			</Text>
+		</>
+	);
+}
+
+export function KeyStep({ view }: { view: SetupView }) {
+	const { t } = useTranslation();
+	const go = useGo(view);
+	const { label, loading, advance } = useAdvance(view, 'key');
+	const entry = useKeyEntry();
+	const { outcome, key, editing, setEditing, connect } = entry;
 	const connection = editing ? null : view.connection;
 	const next = () => (connection ? advance() : connect.mutate(key));
 	return (
 		<WizardFrame
 			onBack={() => go(previousStep(view, 'key'))}
-			primary={{ label, onClick: next, loading: loading || connect.isPending }}
+			primary={{
+				label,
+				onClick: next,
+				loading: loading || connect.isPending,
+				disabled: !connection && key.trim() === '',
+			}}
 			step="key"
 			title={t('desktop.wizard.key.title')}
 			view={view}
 		>
-			<Text c="stone.8" size="sm">
-				{t('desktop.wizard.key.lead')}
-			</Text>
 			{connection ? (
 				<>
 					<Connected connection={connection} outcome={outcome} />
@@ -145,21 +195,7 @@ export function KeyStep({ view }: { view: SetupView }) {
 					</Anchor>
 				</>
 			) : (
-				<>
-					{imported?.kind === 'rejected' && <Notice tone="warn">{t('desktop.wizard.key.importedInvalid')}</Notice>}
-					<KeyField
-						error={outcome?.kind === 'offline' ? null : outcomeError(outcome, view.host, t)}
-						inputRef={input}
-						onChange={setKey}
-						onPaste={(text) => text.trim().length >= 32 && connect.mutate(text)}
-						value={key}
-					/>
-					{outcome?.kind === 'offline' && <Offline details={outcome.details} host={view.host} />}
-					<KeyHelp host={view.host} />
-					<Text c="stone.7" size="xs">
-						{t('desktop.wizard.common.help', { contact: view.supportContact })}
-					</Text>
-				</>
+				<NotConnected entry={entry} view={view} />
 			)}
 		</WizardFrame>
 	);
