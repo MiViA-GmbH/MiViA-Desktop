@@ -63,6 +63,15 @@ pub(crate) async fn start_browser_sign_in(
 
 #[tauri::command]
 #[specta::specta]
+pub(crate) async fn start_code_sign_in(
+    app: AppHandle,
+    cx: State<'_, Cx>,
+) -> Result<ConnectOutcome, AppError> {
+    sign_in::code(&cx, &app).await
+}
+
+#[tauri::command]
+#[specta::specta]
 pub(crate) async fn cancel_sign_in(cx: State<'_, Cx>) -> Result<(), AppError> {
     cx.setup.stop_sign_in();
     Ok(())

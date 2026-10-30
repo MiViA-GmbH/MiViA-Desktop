@@ -28,6 +28,7 @@ const COMMANDS: &[&str] = &[
     "pick_setup_folder",
     "connect_access_key",
     "start_browser_sign_in",
+    "start_code_sign_in",
     "cancel_sign_in",
     "import_legacy_key",
     "close_legacy_app",

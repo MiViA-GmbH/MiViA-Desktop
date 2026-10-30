@@ -337,7 +337,7 @@
 				{
 					"name": "kind",
 					"type": "choice",
-					"values": ["access_key", "browser"]
+					"values": ["access_key", "browser", "code"]
 				}
 			],
 			"name": "account.connected",

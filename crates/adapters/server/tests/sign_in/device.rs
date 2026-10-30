@@ -1,8 +1,9 @@
 use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use mivia_server::SignInError;
+use parking_lot::Mutex;
 use secrecy::ExposeSecret;
 use serde_json::json;
 use wiremock::matchers::{method, path};
@@ -19,8 +20,8 @@ struct Polls {
 
 impl Respond for Polls {
     fn respond(&self, _: &Request) -> ResponseTemplate {
-        self.at.lock().unwrap().push(Instant::now());
-        self.answers.lock().unwrap().pop_front().unwrap()
+        self.at.lock().push(Instant::now());
+        self.answers.lock().pop_front().unwrap()
     }
 }
 
@@ -96,7 +97,7 @@ async fn an_approved_code_issues_a_named_key_after_waiting_at_the_announced_inte
     let issued = sign_in.finish(&api).await.unwrap();
     assert_eq!(issued.key.expose_secret(), ISSUED_KEY);
 
-    let at = at.lock().unwrap().clone();
+    let at = at.lock().clone();
     assert_eq!(at.len(), 2);
     assert!(at[0] - started >= Duration::from_secs(1));
     assert!(at[1] - at[0] >= Duration::from_secs(1));
@@ -146,7 +147,7 @@ async fn slow_down_and_too_many_requests_each_lengthen_the_wait() {
     let api = api(&mock);
     let sign_in = api.start_device(String::new()).await.unwrap();
     sign_in.finish(&api).await.unwrap();
-    let at = at.lock().unwrap().clone();
+    let at = at.lock().clone();
     assert!(at[1] - at[0] >= Duration::from_secs(6));
     assert!(at[2] - at[1] >= Duration::from_secs(11));
 }

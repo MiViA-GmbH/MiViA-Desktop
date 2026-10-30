@@ -2,12 +2,14 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use mivia_ports::ipc::error::AppError;
-use mivia_ports::ipc::setup::ConnectOutcome;
-use mivia_server::{SignInApi, SignInError, key_name, safe_to_open};
+use mivia_ports::ipc::setup::{ConnectOutcome, ConnectionNote};
+use mivia_server::{IssuedKey, SignInApi, SignInError, key_name, safe_to_open};
 use tauri::AppHandle;
+use tauri_specta::Event;
 
 use super::account::offline_details;
 use super::cx::Cx;
+use super::events::SignInCode;
 use super::setup;
 use super::window;
 
@@ -29,13 +31,69 @@ async fn open_browser(url: &str) -> Result<(), SignInError> {
     }
 }
 
+pub(crate) async fn open_device_page(origin: &str) -> Result<(), SignInError> {
+    open_browser(&format!("{origin}/device")).await
+}
+
+fn computer_key_name() -> String {
+    key_name(std::env::var("COMPUTERNAME").ok().as_deref())
+}
+
+async fn settled(
+    cx: &Cx,
+    app: &AppHandle,
+    result: Result<IssuedKey, SignInError>,
+    note: ConnectionNote,
+) -> Result<ConnectOutcome, AppError> {
+    match result {
+        Ok(issued) => {
+            window::reveal(app);
+            setup::connect_issued(cx, issued.key, note).await
+        }
+        Err(SignInError::Unavailable) => {
+            window::reveal(app);
+            Ok(ConnectOutcome::SignInUnavailable)
+        }
+        Err(SignInError::Denied) => {
+            window::reveal(app);
+            Ok(ConnectOutcome::SignInDenied)
+        }
+        Err(SignInError::Expired) => Ok(ConnectOutcome::SignInExpired),
+        Err(SignInError::Offline) => Ok(ConnectOutcome::Offline {
+            details: offline_details(&cx.ready().await.services, "connect"),
+        }),
+    }
+}
+
+pub(crate) async fn code(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, AppError> {
+    let stop = cx.setup.begin_sign_in();
+    let ready = cx.ready().await;
+    let services = &ready.services;
+    let api = SignInApi::new(Arc::clone(&services.clients), &services.origin);
+    let attempt = async {
+        let sign_in = api.start_device(computer_key_name()).await?;
+        SignInCode {
+            user_code: sign_in.user_code().to_owned(),
+        }
+        .emit(app)
+        .map_err(|_| SignInError::Unavailable)?;
+        sign_in.finish(&api).await
+    };
+    let result = tokio::select! {
+        biased;
+        () = stop.notified() => return Ok(ConnectOutcome::Cancelled),
+        result = tokio::time::timeout(WAIT_LIMIT, attempt) => result.unwrap_or(Err(SignInError::Expired)),
+    };
+    settled(cx, app, result, ConnectionNote::Code).await
+}
+
 pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, AppError> {
     let stop = cx.setup.begin_sign_in();
     let ready = cx.ready().await;
     let services = &ready.services;
     let api = SignInApi::new(Arc::clone(&services.clients), &services.origin);
     let language = setup::language(&ready).await;
-    let name = key_name(std::env::var("COMPUTERNAME").ok().as_deref());
+    let name = computer_key_name();
     let attempt = async {
         let sign_in = api.start_browser(language, name).await?;
         open_browser(sign_in.url()).await?;
@@ -49,19 +107,7 @@ pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, 
     let Ok(result) = result else {
         return Ok(ConnectOutcome::SignInTimedOut);
     };
-    match result {
-        Ok(issued) => {
-            window::reveal(app);
-            setup::connect_issued(cx, issued.key).await
-        }
-        Err(SignInError::Unavailable) => {
-            window::reveal(app);
-            Ok(ConnectOutcome::SignInUnavailable)
-        }
-        Err(SignInError::Offline) => Ok(ConnectOutcome::Offline {
-            details: offline_details(services, "connect"),
-        }),
-    }
+    settled(cx, app, result, ConnectionNote::Browser).await
 }
 
 #[cfg(test)]

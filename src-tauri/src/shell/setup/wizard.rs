@@ -277,11 +277,12 @@ pub(crate) async fn connect(cx: &Cx, key: Option<String>) -> Result<ConnectOutco
 pub(crate) async fn connect_issued(
     cx: &Cx,
     key: secrecy::SecretString,
+    note: ConnectionNote,
 ) -> Result<ConnectOutcome, AppError> {
     if cx.completed() {
         return account::replace_key(cx, key).await;
     }
-    connect_key(cx, key, Some(ConnectionNote::Browser)).await
+    connect_key(cx, key, Some(note)).await
 }
 
 pub(crate) async fn import_legacy(cx: &Cx) -> Result<ConnectOutcome, AppError> {

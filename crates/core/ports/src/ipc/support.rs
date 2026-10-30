@@ -144,6 +144,7 @@ pub enum KnownLink {
     Releases,
     License,
     AccessKeys,
+    DevicePage,
     InfoMail,
     Notices,
 }

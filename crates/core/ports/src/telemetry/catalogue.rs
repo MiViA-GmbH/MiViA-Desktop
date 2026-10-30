@@ -71,7 +71,7 @@ tags! {
     FinishPreset { Microscope "microscope", WholeFolder "whole_folder", ByHand "by_hand", None "none" }
     FinishReportMode { Subfolder "subfolder", Beside "beside", Custom "custom", None "none" }
     ExistingImages { OnlyNew "only_new", AlsoExisting "also_existing", None "none" }
-    AccountKind { AccessKey "access_key", Browser "browser" }
+    AccountKind { AccessKey "access_key", Browser "browser", Code "code" }
     AccountState { User "user", KeyInvalid "key_invalid", KeyRemoved "key_removed" }
     MigrationState { Done "done", Pending "pending", Failed "failed" }
     FolderVia { Wizard "wizard", Settings "settings", EmptyState "empty_state" }

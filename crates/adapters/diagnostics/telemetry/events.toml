@@ -111,7 +111,7 @@ category = "diagnostics"
 priority = "core"
 purpose_en = "Shows that an API key was accepted."
 purpose_de = "Zeigt, dass ein API-Schlüssel akzeptiert wurde."
-fields = { kind = { enum = ["access_key", "browser"] }, imported_from_v1 = "flag" }
+fields = { kind = { enum = ["access_key", "browser", "code"] }, imported_from_v1 = "flag" }
 
 [[event]]
 name = "account.switched"
