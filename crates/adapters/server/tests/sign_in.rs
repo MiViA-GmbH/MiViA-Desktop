@@ -1,16 +1,18 @@
 use std::collections::BTreeMap;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use mivia_domain::naming::Language;
 use mivia_ports::auth::ServerOrigin;
-use mivia_server::{BrowserSignIn, SignInApi, SignInError, key_name, safe_to_open};
+use mivia_server::{BrowserSignIn, SignInApi, SignInError, key_name, safe_to_open, until_stopped};
 use secrecy::ExposeSecret;
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::Notify;
 use url::Url;
 use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, Request, ResponseTemplate};
@@ -351,6 +353,82 @@ async fn a_return_with_an_error_ends_the_sign_in_with_the_failure_page() {
         finish.await.unwrap(),
         Err(SignInError::Unavailable)
     ));
+}
+
+#[tokio::test]
+async fn a_denied_return_ends_the_sign_in_as_denied_with_the_failure_page() {
+    let mock = MockServer::start().await;
+    serve_token_side(&mock).await;
+    let api = api(&mock);
+    let sign_in = api
+        .start_browser(Language::En, String::new())
+        .await
+        .unwrap();
+    let back = Return::of(&sign_in);
+    let finish = tokio::spawn(async move { sign_in.finish(&api).await });
+    let target = format!("/callback?error=access_denied&state={}", back.state);
+    let answer = back.send(back.head(&target).as_bytes()).await;
+    assert!(answer.contains("Sign-in failed. Return to MiViA Desktop."));
+    assert!(matches!(finish.await.unwrap(), Err(SignInError::Denied)));
+}
+
+#[tokio::test]
+async fn the_wait_ends_at_the_limit_and_closes_the_listener() {
+    let mock = MockServer::start().await;
+    serve_token_side(&mock).await;
+    let api = api(&mock);
+    let sign_in = api
+        .start_browser(Language::En, String::new())
+        .await
+        .unwrap();
+    let back = Return::of(&sign_in);
+    assert!(TcpStream::connect(("127.0.0.1", back.port)).await.is_ok());
+    let stop = Notify::new();
+    let ended = until_stopped(&stop, Duration::from_millis(200), sign_in.finish(&api)).await;
+    assert!(matches!(ended, Err(SignInError::TimedOut)));
+    assert!(TcpStream::connect(("127.0.0.1", back.port)).await.is_err());
+}
+
+#[tokio::test]
+async fn stopping_ends_the_wait_and_closes_the_listener() {
+    let mock = MockServer::start().await;
+    serve_token_side(&mock).await;
+    let api = api(&mock);
+    let sign_in = api
+        .start_browser(Language::En, String::new())
+        .await
+        .unwrap();
+    let back = Return::of(&sign_in);
+    let stop = Arc::new(Notify::new());
+    let stopper = Arc::clone(&stop);
+    let wait = tokio::spawn(async move {
+        until_stopped(&stopper, Duration::from_secs(60), sign_in.finish(&api)).await
+    });
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    assert!(!wait.is_finished());
+    stop.notify_one();
+    assert!(matches!(wait.await.unwrap(), Err(SignInError::Cancelled)));
+    assert!(TcpStream::connect(("127.0.0.1", back.port)).await.is_err());
+}
+
+#[tokio::test]
+async fn a_stop_that_comes_before_the_wait_still_ends_it() {
+    let stop = Notify::new();
+    stop.notify_one();
+    let attempt = std::future::ready(Ok::<(), SignInError>(()));
+    let ended = until_stopped(&stop, Duration::from_secs(60), attempt).await;
+    assert!(matches!(ended, Err(SignInError::Cancelled)));
+}
+
+#[tokio::test]
+async fn a_finished_attempt_gives_its_own_result() {
+    let stop = Notify::new();
+    let limit = Duration::from_secs(60);
+    let done = until_stopped(&stop, limit, std::future::ready(Ok::<u8, SignInError>(7))).await;
+    assert!(matches!(done, Ok(7)));
+    let failed = std::future::ready(Err::<u8, SignInError>(SignInError::Offline));
+    let failed = until_stopped(&stop, limit, failed).await;
+    assert!(matches!(failed, Err(SignInError::Offline)));
 }
 
 #[tokio::test]

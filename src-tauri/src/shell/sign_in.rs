@@ -3,12 +3,14 @@ use std::time::Duration;
 
 use mivia_ports::ipc::error::AppError;
 use mivia_ports::ipc::setup::ConnectOutcome;
-use mivia_server::{SignInApi, SignInError, key_name, safe_to_open};
+use mivia_ports::telemetry::{SignInMethod, SignInReason};
+use mivia_server::{SignInApi, SignInError, key_name, safe_to_open, until_stopped};
 use tauri::AppHandle;
 
 use super::account::offline_details;
 use super::cx::Cx;
 use super::setup;
+use super::telemetry;
 use super::window;
 
 const WAIT_LIMIT: Duration = Duration::from_secs(600);
@@ -41,26 +43,35 @@ pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, 
         open_browser(sign_in.url()).await?;
         sign_in.finish(&api).await
     };
-    let result = tokio::select! {
-        biased;
-        () = stop.notified() => return Ok(ConnectOutcome::Cancelled),
-        result = tokio::time::timeout(WAIT_LIMIT, attempt) => result,
-    };
-    let Ok(result) = result else {
-        return Ok(ConnectOutcome::SignInTimedOut);
-    };
-    match result {
+    match until_stopped(&stop, WAIT_LIMIT, attempt).await {
         Ok(issued) => {
             window::reveal(app);
             setup::connect_issued(cx, issued.key).await
         }
-        Err(SignInError::Unavailable) => {
-            window::reveal(app);
-            Ok(ConnectOutcome::SignInUnavailable)
+        Err(error) => {
+            telemetry::sign_in_failed(services, SignInMethod::Browser, reason(error));
+            if matches!(error, SignInError::Unavailable | SignInError::Denied) {
+                window::reveal(app);
+            }
+            Ok(match error {
+                SignInError::Unavailable => ConnectOutcome::SignInUnavailable,
+                SignInError::TimedOut => ConnectOutcome::SignInTimedOut,
+                SignInError::Denied | SignInError::Cancelled => ConnectOutcome::Cancelled,
+                SignInError::Offline => ConnectOutcome::Offline {
+                    details: offline_details(services, "connect"),
+                },
+            })
         }
-        Err(SignInError::Offline) => Ok(ConnectOutcome::Offline {
-            details: offline_details(services, "connect"),
-        }),
+    }
+}
+
+const fn reason(error: SignInError) -> SignInReason {
+    match error {
+        SignInError::Unavailable => SignInReason::Unavailable,
+        SignInError::Offline => SignInReason::Offline,
+        SignInError::Denied => SignInReason::Denied,
+        SignInError::TimedOut => SignInReason::Timeout,
+        SignInError::Cancelled => SignInReason::Cancelled,
     }
 }
 
@@ -68,9 +79,22 @@ pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, 
 mod tests {
     use std::time::Duration;
 
+    use mivia_ports::telemetry::SignInReason;
+    use mivia_server::SignInError;
+
+    use super::reason;
     use crate::shell::setup::Session;
 
     const SOON: Duration = Duration::from_secs(5);
+
+    #[test]
+    fn every_ending_has_its_own_reason() {
+        assert_eq!(reason(SignInError::Unavailable), SignInReason::Unavailable);
+        assert_eq!(reason(SignInError::Offline), SignInReason::Offline);
+        assert_eq!(reason(SignInError::Denied), SignInReason::Denied);
+        assert_eq!(reason(SignInError::TimedOut), SignInReason::Timeout);
+        assert_eq!(reason(SignInError::Cancelled), SignInReason::Cancelled);
+    }
 
     #[tokio::test]
     async fn stopping_ends_the_attempt_and_a_new_attempt_ends_the_earlier_one() {
