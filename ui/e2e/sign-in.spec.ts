@@ -119,7 +119,7 @@ test.describe
 			await move('Back', 'How do images arrive in this folder?');
 			await move('Back', 'Where does your microscope save images?');
 			await move('Back', 'Connect your MiViA account');
-			await page.getByRole('button', { name: 'Use a different key' }).click();
+			await page.getByRole('button', { name: 'Use a different account' }).click();
 			const stopped = await waitInBrowser(page);
 			await page.getByRole('button', { name: 'Cancel' }).click();
 			await expect(openBrowser(page)).toBeVisible();
