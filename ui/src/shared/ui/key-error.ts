@@ -20,6 +20,10 @@ export function outcomeError(outcome: ConnectOutcome | null, host: string, t: TF
 			return t('desktop.wizard.key.signInUnavailable');
 		case 'signInTimedOut':
 			return t('desktop.wizard.key.signInTimedOut');
+		case 'signInDenied':
+			return t('desktop.wizard.key.signInDenied');
+		case 'signInExpired':
+			return t('desktop.wizard.key.signInExpired');
 		default:
 			return null;
 	}
