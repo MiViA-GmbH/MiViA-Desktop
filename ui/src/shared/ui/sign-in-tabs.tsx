@@ -6,13 +6,16 @@ import { useTranslation } from 'react-i18next';
 import { commands, events } from '../ipc';
 import type { ConnectOutcome, KnownLink } from '../ipc/bindings';
 import { Notice } from './notice';
+import { OfflineNotice } from './offline-notice';
 
 const LINK_MARK = '\u0001';
 
 type SignInTabsProps = {
+	differentAccount?: boolean;
 	error: string | null;
 	host: string;
 	keyPanel: ReactNode;
+	offlineDetails: string | null;
 	onOutcome: (outcome: ConnectOutcome) => void;
 	onTabChange: () => void;
 };
@@ -35,13 +38,13 @@ function LinkLine({ text, link, path }: LinkLineProps) {
 
 type CodePanelProps = {
 	code: string | null;
-	error: string | null;
 	host: string;
 	onRetry: () => void;
 	pending: boolean;
+	problem: ReactNode;
 };
 
-function CodePanel({ code, error, host, onRetry, pending }: CodePanelProps) {
+function CodePanel({ code, host, onRetry, pending, problem }: CodePanelProps) {
 	const { t } = useTranslation();
 	return (
 		<Stack align="flex-start" gap="sm">
@@ -63,9 +66,9 @@ function CodePanel({ code, error, host, onRetry, pending }: CodePanelProps) {
 			<Text c="stone.8" role="status" size="sm">
 				{pending && code && t('desktop.wizard.key.codeWaiting')}
 			</Text>
-			{error && !pending && (
+			{problem && !pending && (
 				<>
-					<Notice tone="warn">{error}</Notice>
+					{problem}
 					<Button onClick={onRetry} type="button" variant="light">
 						{t('desktop.wizard.common.tryAgain')}
 					</Button>
@@ -92,21 +95,29 @@ function useCodeSignIn(onOutcome: (outcome: ConnectOutcome) => void) {
 }
 
 type BrowserPanelProps = {
-	error: string | null;
+	offerDifferentAccount: boolean;
 	pending: boolean;
+	problem: ReactNode;
 	onCancel: () => void;
 	onStart: () => void;
 	onDifferentAccount: () => void;
 };
 
-function BrowserPanel({ error, pending, onCancel, onStart, onDifferentAccount }: BrowserPanelProps) {
+function BrowserPanel({
+	offerDifferentAccount,
+	pending,
+	problem,
+	onCancel,
+	onStart,
+	onDifferentAccount,
+}: BrowserPanelProps) {
 	const { t } = useTranslation();
 	return (
 		<Stack align="flex-start" gap="sm">
 			<Button onClick={pending ? onCancel : onStart} type="button" variant={pending ? 'default' : 'light'}>
 				{pending ? t('desktop.wizard.key.browserCancel') : t('desktop.wizard.key.browserOpen')}
 			</Button>
-			{!pending && (
+			{!pending && offerDifferentAccount && (
 				<Anchor component="button" onClick={onDifferentAccount} size="sm" type="button">
 					{t('desktop.wizard.key.differentAccount')}
 				</Anchor>
@@ -114,13 +125,19 @@ function BrowserPanel({ error, pending, onCancel, onStart, onDifferentAccount }:
 			<Text c="stone.8" role="status" size="sm">
 				{pending && t('desktop.wizard.key.browserWaiting')}
 			</Text>
-			{error && !pending && <Notice tone="warn">{error}</Notice>}
+			{!pending && problem}
 		</Stack>
 	);
 }
 
-export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: SignInTabsProps) {
-	const { t } = useTranslation();
+function problemNotice(offlineDetails: string | null, error: string | null, host: string): ReactNode {
+	if (offlineDetails) {
+		return <OfflineNotice details={offlineDetails} host={host} />;
+	}
+	return error && <Notice tone="warn">{error}</Notice>;
+}
+
+function useSignInAttempts(onOutcome: (outcome: ConnectOutcome) => void, onTabChange: () => void) {
 	const [tab, setTab] = useState<string | null>('browser');
 	const settle = (outcome: ConnectOutcome) => {
 		if (outcome.kind === 'cancelled') {
@@ -156,6 +173,21 @@ export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: Si
 			commands.cancelSignIn();
 		}
 	};
+	return { tab, browser, code, start, cancel, change };
+}
+
+export function SignInTabs({
+	differentAccount = false,
+	error,
+	host,
+	keyPanel,
+	offlineDetails,
+	onOutcome,
+	onTabChange,
+}: SignInTabsProps) {
+	const { t } = useTranslation();
+	const { tab, browser, code, start, cancel, change } = useSignInAttempts(onOutcome, onTabChange);
+	const problem = problemNotice(offlineDetails, error, host);
 	return (
 		<Tabs keepMounted={false} onChange={change} value={tab}>
 			<Tabs.List grow>
@@ -165,15 +197,16 @@ export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: Si
 			</Tabs.List>
 			<Tabs.Panel pt="md" value="browser">
 				<BrowserPanel
-					error={error}
+					offerDifferentAccount={!differentAccount}
 					onCancel={cancel}
 					onDifferentAccount={() => browser.mutate(true)}
-					onStart={() => browser.mutate(false)}
+					onStart={() => browser.mutate(differentAccount)}
 					pending={browser.isPending}
+					problem={problem}
 				/>
 			</Tabs.Panel>
 			<Tabs.Panel pt="md" value="code">
-				<CodePanel code={code} error={error} host={host} onRetry={() => start.mutate()} pending={start.isPending} />
+				<CodePanel code={code} host={host} onRetry={() => start.mutate()} pending={start.isPending} problem={problem} />
 			</Tabs.Panel>
 			<Tabs.Panel pt="md" value="key">
 				<Stack gap="md">

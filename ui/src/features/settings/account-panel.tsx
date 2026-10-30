@@ -24,7 +24,7 @@ function SwitchModal({ outcome, onDone, onCancel }: SwitchProps) {
 	const names = opened ? { current: outcome.currentName, next: outcome.newName } : { current: '', next: '' };
 	const text =
 		opened && outcome.signedIn
-			? `${t('desktop.account.switch.signInText', names)} ${t('desktop.account.switch.signInEffect', names)}`
+			? `${t('desktop.account.switch.signInText', names)} ${t('desktop.account.switch.signInEffect')}`
 			: t('desktop.account.switch.text', names);
 	return (
 		<Modal
@@ -108,6 +108,7 @@ function SignInForm({ host, lead }: { host: string; lead: string }) {
 			<SignInTabs
 				error={error}
 				host={host}
+				offlineDetails={outcome?.kind === 'offline' ? outcome.details : null}
 				keyPanel={
 					<>
 						<Text c="stone.8" size="sm">
@@ -160,7 +161,7 @@ export function AccountPanel() {
 			</Text>
 			<SignInForm
 				host={host}
-				lead={account ? t('desktop.account.key.replace') : t('desktop.account.key.connectLead')}
+				lead={account ? t('desktop.account.key.replaceLead') : t('desktop.account.key.connectLead')}
 			/>
 		</Stack>
 	);

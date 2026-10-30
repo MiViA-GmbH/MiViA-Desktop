@@ -22,7 +22,7 @@ test.describe
 	.serial('browser sign-in that does not finish', () => {
 		let running: Running;
 
-		const answerClientLookup = (answer: 'normal' | 'missing' | 'html') =>
+		const answerClientLookup = (answer: 'normal' | 'missing' | 'html' | 'proxyauth') =>
 			fetch(`${running.origin}/__stub/by-app`, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
@@ -80,6 +80,24 @@ test.describe
 			expect(existsSync(UNFINISHED_URL_FILE)).toBe(false);
 		});
 
+		test('scenario 17: offline shows the notice with the details for IT on both sign-in tabs', async () => {
+			const { page } = running;
+			const expectOffline = async () => {
+				await expect(page.getByText('MiViA cannot be reached.', { exact: false })).toBeVisible({ timeout: 20_000 });
+				await expect(page.getByRole('button', { name: 'Copy details for IT' })).toBeVisible();
+				await expect(page.getByText('MiViA tries again every 30 seconds.', { exact: false })).toBeHidden();
+			};
+			await answerClientLookup('proxyauth');
+			await page.getByRole('tab', { name: 'Browser' }).click();
+			await openBrowser(page).click();
+			await expectOffline();
+			await page.getByRole('tab', { name: 'Code' }).click();
+			await expectOffline();
+			await page.getByRole('tab', { name: 'Browser' }).click();
+			await expect(page.getByRole('button', { name: 'Copy details for IT' })).toBeHidden();
+			await answerClientLookup('normal');
+		});
+
 		test('scenario 12: cancel and a tab change close the listener', async () => {
 			const { page } = running;
 			await answerClientLookup('normal');
@@ -97,9 +115,29 @@ test.describe
 			await expectListenerClosed(left);
 		});
 
+		test('scenario 18: cancelling while the key is issued does not connect', async () => {
+			const { page, origin } = running;
+			await fetch(`${origin}/__stub/fault`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ op: 'signIn', kind: 'slowIssue' }),
+			});
+			await fetch(await waitInBrowser(page));
+			await expect
+				.poll(async () => (await fetch(`${origin}/__stub/issue-waiting`)).json(), { timeout: 20_000, intervals: [100] })
+				.toBe(true);
+			await page.getByRole('button', { name: 'Cancel' }).click();
+			await expect(openBrowser(page)).toBeVisible();
+			await new Promise((done) => setTimeout(done, 7000));
+			await expect(page.getByText('Connected as Stub Lab')).toBeHidden();
+			await expect(openBrowser(page)).toBeVisible();
+		});
+
 		test('scenario 13: a sign-in that did not finish is recorded without anything identifying', async () => {
 			const { page, origin } = running;
-			await fetch(await waitInBrowser(page));
+			const first = await waitInBrowser(page);
+			expect(new URL(first).searchParams.get('prompt')).toBeNull();
+			await fetch(first);
 			await expect(page.getByText('Connected as Stub Lab')).toBeVisible({ timeout: 20_000 });
 			const move = async (button: string, heading: string) => {
 				await page.getByRole('button', { name: button, exact: true }).click();
@@ -121,8 +159,17 @@ test.describe
 			await move('Back', 'Connect your MiViA account');
 			await page.getByRole('button', { name: 'Use a different account' }).click();
 			const stopped = await waitInBrowser(page);
+			expect(new URL(stopped).searchParams.get('prompt')).toBe('login');
 			await page.getByRole('button', { name: 'Cancel' }).click();
 			await expect(openBrowser(page)).toBeVisible();
+
+			const refused = new URL(await waitInBrowser(page));
+			expect(refused.searchParams.get('prompt')).toBe('login');
+			const denied = new URL(refused.searchParams.get('redirect_uri') ?? '');
+			denied.searchParams.set('error', 'access_denied');
+			denied.searchParams.set('state', refused.searchParams.get('state') ?? '');
+			await fetch(denied);
+			await expect(page.getByText('The sign-in was denied.')).toBeVisible({ timeout: 20_000 });
 
 			await fetch(await waitInBrowser(page));
 			await expect(page.getByText('Connected as Stub Lab')).toBeVisible({ timeout: 20_000 });
@@ -141,9 +188,10 @@ test.describe
 					.filter((event) => event.name === 'sign_in.failed')
 					.map((event) => event.fields);
 			};
-			await expect
-				.poll(failures, { timeout: 60_000, intervals: [1000] })
-				.toEqual([{ method: 'browser', reason: 'cancelled' }]);
+			await expect.poll(failures, { timeout: 60_000, intervals: [1000] }).toEqual([
+				{ method: 'browser', reason: 'cancelled' },
+				{ method: 'browser', reason: 'denied' },
+			]);
 			const sent = JSON.stringify(await (await fetch(`${origin}/__stub/telemetry`)).json());
 			const state = new URL(stopped).searchParams.get('state') ?? 'missing';
 			for (const secret of [COMPUTER, state, 'lab@example.invalid']) {

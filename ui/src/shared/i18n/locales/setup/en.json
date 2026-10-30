@@ -4,7 +4,7 @@
 			"key": {
 				"connectLead": "No account is connected. Paste your API key to connect this PC again.",
 				"hint": "Tip for the key owner: the old key can be deleted at {{host}} › API keys.",
-				"replace": "Replace API key",
+				"replaceLead": "Paste a new API key to replace the current one.",
 				"save": "Save key",
 				"saved": "New API key saved. Connected as {{name}}."
 			},
@@ -18,7 +18,7 @@
 			"switch": {
 				"cancel": "Cancel",
 				"confirm": "Switch account",
-				"signInEffect": "If you continue, the input folders of {{current}} are no longer watched. Their reports and history stay on this PC.",
+				"signInEffect": "If you switch, input folders are no longer watched.",
 				"signInText": "You signed in as {{next}}, not {{current}}.",
 				"text": "This key belongs to {{next}}, not {{current}}. If you continue, the input folders of {{current}} are no longer watched. Their reports and history stay on this PC.",
 				"title": "Switch account?"

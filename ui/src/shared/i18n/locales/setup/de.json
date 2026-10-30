@@ -4,7 +4,7 @@
 			"key": {
 				"connectLead": "Es ist kein Konto verbunden. Fügen Sie Ihren API-Schlüssel ein, um diesen PC wieder zu verbinden.",
 				"hint": "Tipp für die Person, der der Schlüssel gehört: Der alte Schlüssel kann unter {{host}} › API-Schlüssel gelöscht werden.",
-				"replace": "API-Schlüssel ersetzen",
+				"replaceLead": "Fügen Sie einen neuen API-Schlüssel ein, um den aktuellen zu ersetzen.",
 				"save": "Schlüssel speichern",
 				"saved": "Neuer API-Schlüssel gespeichert. Verbunden als {{name}}."
 			},
@@ -18,7 +18,7 @@
 			"switch": {
 				"cancel": "Abbrechen",
 				"confirm": "Konto wechseln",
-				"signInEffect": "Wenn Sie fortfahren, werden die Eingangsordner von {{current}} nicht mehr überwacht. Berichte und Verlauf bleiben auf diesem PC.",
+				"signInEffect": "Beim Wechsel werden Eingangsordner nicht mehr überwacht.",
 				"signInText": "Sie haben sich als {{next}} angemeldet, nicht als {{current}}.",
 				"text": "Dieser Schlüssel gehört zu {{next}}, nicht zu {{current}}. Wenn Sie fortfahren, werden die Eingangsordner von {{current}} nicht mehr überwacht. Berichte und Verlauf bleiben auf diesem PC.",
 				"title": "Konto wechseln?"

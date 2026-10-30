@@ -1,4 +1,4 @@
-import { Anchor, Button, Collapse, Stack, Text } from '@mantine/core';
+import { Anchor, Collapse, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
@@ -10,6 +10,7 @@ import type { ConnectionView, ConnectOutcome, SetupView } from '../../shared/ipc
 import { outcomeError } from '../../shared/ui/key-error';
 import { KeyField } from '../../shared/ui/key-field';
 import { Notice } from '../../shared/ui/notice';
+import { OfflineNotice } from '../../shared/ui/offline-notice';
 import { SignInTabs } from '../../shared/ui/sign-in-tabs';
 import { previousStep } from './steps';
 import { IMPORT_KEY, useAdvance } from './use-advance';
@@ -39,22 +40,6 @@ function Connected({ connection, outcome }: { connection: ConnectionView; outcom
 				<Notice tone="warn">{t('desktop.wizard.key.licenseInactive')}</Notice>
 			)}
 		</>
-	);
-}
-
-function Offline({ details, host }: { details: string; host: string }) {
-	const { t } = useTranslation();
-	return (
-		<Notice tone="warn">
-			<Stack align="flex-start" gap="xs">
-				<Text inherit>
-					{t('desktop.wizard.key.offline', { host })} {t('desktop.wizard.key.autoRetry')}
-				</Text>
-				<Button onClick={() => navigator.clipboard.writeText(details)} size="xs" variant="default">
-					{t('desktop.wizard.key.copyForIt')}
-				</Button>
-			</Stack>
-		</Notice>
 	);
 }
 
@@ -129,7 +114,9 @@ function useKeyEntry() {
 	return { outcome, key, setKey, editing, setEditing, input, settle, connect, clear };
 }
 
-function NotConnected({ view, entry }: { view: SetupView; entry: ReturnType<typeof useKeyEntry> }) {
+type NotConnectedProps = { view: SetupView; entry: ReturnType<typeof useKeyEntry>; differentAccount: boolean };
+
+function NotConnected({ view, entry, differentAccount }: NotConnectedProps) {
 	const { t } = useTranslation();
 	const imported = useQuery<ConnectOutcome | null>({ queryKey: IMPORT_KEY, queryFn: () => null, enabled: false }).data;
 	const { outcome, key, setKey, input, settle, connect, clear } = entry;
@@ -138,6 +125,7 @@ function NotConnected({ view, entry }: { view: SetupView; entry: ReturnType<type
 		<>
 			{imported?.kind === 'rejected' && <Notice tone="warn">{t('desktop.wizard.key.importedInvalid')}</Notice>}
 			<SignInTabs
+				differentAccount={differentAccount}
 				error={error}
 				host={view.host}
 				keyPanel={
@@ -152,10 +140,13 @@ function NotConnected({ view, entry }: { view: SetupView; entry: ReturnType<type
 							onPaste={(text) => text.trim().length >= 32 && connect.mutate(text)}
 							value={key}
 						/>
-						{connect.data?.kind === 'offline' && <Offline details={connect.data.details} host={view.host} />}
+						{connect.data?.kind === 'offline' && (
+							<OfflineNotice autoRetry details={connect.data.details} host={view.host} />
+						)}
 						<KeyHelp host={view.host} />
 					</>
 				}
+				offlineDetails={outcome?.kind === 'offline' ? outcome.details : null}
 				onOutcome={settle}
 				onTabChange={clear}
 			/>
@@ -171,6 +162,7 @@ export function KeyStep({ view }: { view: SetupView }) {
 	const go = useGo(view);
 	const { label, loading, advance } = useAdvance(view, 'key');
 	const entry = useKeyEntry();
+	const [differentAccount, setDifferentAccount] = useState(false);
 	const { outcome, key, editing, setEditing, connect } = entry;
 	const connection = editing ? null : view.connection;
 	const next = () => (connection ? advance() : connect.mutate(key));
@@ -190,14 +182,24 @@ export function KeyStep({ view }: { view: SetupView }) {
 			{connection ? (
 				<>
 					<Connected connection={connection} outcome={outcome} />
-					<Anchor component="button" ta="left" w="fit-content" onClick={() => setEditing(true)} size="sm" type="button">
+					<Anchor
+						component="button"
+						ta="left"
+						w="fit-content"
+						onClick={() => {
+							setDifferentAccount(connection.notes.includes('browser'));
+							setEditing(true);
+						}}
+						size="sm"
+						type="button"
+					>
 						{connection.notes.includes('browser')
 							? t('desktop.wizard.key.differentAccount')
 							: t('desktop.wizard.key.other')}
 					</Anchor>
 				</>
 			) : (
-				<NotConnected entry={entry} view={view} />
+				<NotConnected differentAccount={differentAccount} entry={entry} view={view} />
 			)}
 		</WizardFrame>
 	);
