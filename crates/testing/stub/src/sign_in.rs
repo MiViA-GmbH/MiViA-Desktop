@@ -23,6 +23,7 @@ pub(crate) struct SignInState {
     codes: BTreeMap<String, Pending>,
     tokens: Vec<String>,
     issued: Vec<String>,
+    issued_keys: Vec<serde_json::Value>,
     counter: u64,
     replaced_key: Option<String>,
 }
@@ -54,6 +55,7 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/api/auth/oauth2/userinfo", get(userinfo))
         .route("/api/api-keys/issue", post(issue))
         .route("/__stub/issued", get(issued))
+        .route("/__stub/issued-keys", get(issued_keys))
         .route("/__stub/revoke-key", post(revoke_key))
 }
 
@@ -177,6 +179,7 @@ async fn userinfo(State(stub): State<Stub>, headers: HeaderMap) -> Response {
 #[derive(Deserialize)]
 struct IssueBody {
     name: String,
+    replaces: Option<String>,
 }
 
 async fn issue(
@@ -190,7 +193,11 @@ async fn issue(
     let id = {
         let mut state = stub.sign_in.lock();
         state.issued.push(body.name.clone());
-        state.next("key")
+        let id = state.next("key");
+        state
+            .issued_keys
+            .push(json!({ "id": id, "replaces": body.replaces }));
+        id
     };
     let payload = json!({
         "id": id,
@@ -204,6 +211,10 @@ async fn issue(
         "code": stub.current_key(),
     });
     (StatusCode::CREATED, Json(payload)).into_response()
+}
+
+async fn issued_keys(State(stub): State<Stub>) -> Response {
+    Json(stub.sign_in.lock().issued_keys.clone()).into_response()
 }
 
 async fn issued(State(stub): State<Stub>) -> Response {
