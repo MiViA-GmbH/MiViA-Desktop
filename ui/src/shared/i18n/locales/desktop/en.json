@@ -293,10 +293,10 @@
 				"license": "Show license in MiViA"
 			},
 			"safe": "Images are safe and wait here.",
-			"signInAgain": "Sign in again",
 			"serviceUnavailable": {
 				"title": "MiViA has a service problem since {{time}}, not your PC or network."
 			},
+			"signInAgain": "Sign in again",
 			"updateRequired": "Update required."
 		},
 		"native": {

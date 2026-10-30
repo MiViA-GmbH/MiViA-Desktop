@@ -293,10 +293,10 @@
 				"license": "Lizenz in MiViA anzeigen"
 			},
 			"safe": "Die Bilder sind sicher und warten hier.",
-			"signInAgain": "Erneut anmelden",
 			"serviceUnavailable": {
 				"title": "Störung bei MiViA seit {{time}}, nicht an Ihrem PC oder Netzwerk."
 			},
+			"signInAgain": "Erneut anmelden",
 			"updateRequired": "Update erforderlich."
 		},
 		"native": {

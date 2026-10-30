@@ -240,16 +240,16 @@ pub(crate) async fn replace_key(
         cx.setup.hold_switch((previous, identity, key, kind));
         return Ok(outcome);
     }
-    enter_account(cx, &ready.services, identity, key, kind).await
+    enter_account(cx, identity, key, kind).await
 }
 
 async fn enter_account(
     cx: &Cx,
-    services: &Arc<Services>,
     identity: Identity,
     key: SecretString,
     kind: AccountKind,
 ) -> Result<ConnectOutcome, AppError> {
+    let services = &Arc::clone(&cx.ready().await.services);
     let stored = store_key(services, &identity, &key).await;
     if stored.notes.contains(&ConnectionNote::StoreFailed) {
         cx.setup.keep_session_key(key.clone());
@@ -280,7 +280,7 @@ pub(crate) async fn switch(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, A
     if !confirmed {
         return Ok(ConnectOutcome::Cancelled);
     }
-    let entered = enter_account(cx, &ready.services, identity, key, kind).await?;
+    let entered = enter_account(cx, identity, key, kind).await?;
     telemetry::account_switched(&ready.services);
     Ok(entered)
 }
