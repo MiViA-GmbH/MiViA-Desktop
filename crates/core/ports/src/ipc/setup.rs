@@ -61,6 +61,7 @@ pub enum ConnectionNote {
     StoreFailed,
     Imported,
     Browser,
+    Code,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -101,6 +102,8 @@ pub enum ConnectOutcome {
     Cancelled,
     SignInUnavailable,
     SignInTimedOut,
+    SignInDenied,
+    SignInExpired,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

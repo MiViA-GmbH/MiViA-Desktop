@@ -1,3 +1,4 @@
+mod device;
 mod listener;
 
 use std::future::Future;
@@ -22,6 +23,7 @@ use tokio::time::timeout;
 use url::Url;
 
 use crate::clients::HttpClients;
+pub use device::DeviceSignIn;
 use listener::{Listener, Returned};
 
 const APP_ID: &str = "mivia-desktop";
@@ -34,6 +36,7 @@ pub enum SignInError {
     Unavailable,
     Offline,
     Denied,
+    Expired,
     TimedOut,
     Cancelled,
 }
@@ -197,7 +200,7 @@ impl SignInApi {
 
     async fn key_for<F, Earlier>(
         &self,
-        form: &[(&str, &str)],
+        token: &SecretString,
         name: &str,
         earlier_key: F,
     ) -> Result<IssuedKey, SignInError>
@@ -205,14 +208,13 @@ impl SignInApi {
         F: FnOnce(String) -> Earlier,
         Earlier: Future<Output = Option<String>>,
     {
-        let token = self.exchange(form).await?;
-        let account = self.account(&token).await?;
+        let account = self.account(token).await?;
         let replaces = earlier_key(account.sub).await;
         let body = IssueAccessKey {
             name,
             replaces: replaces.as_deref(),
         };
-        self.issue(&token, &body).await
+        self.issue(token, &body).await
     }
 }
 
@@ -243,6 +245,7 @@ impl BrowserSignIn {
             ("code_verifier", self.verifier.expose_secret()),
             ("redirect_uri", redirect_uri.as_str()),
         ];
-        api.key_for(&form, &self.key_name, earlier_key).await
+        let token = api.exchange(&form).await?;
+        api.key_for(&token, &self.key_name, earlier_key).await
     }
 }

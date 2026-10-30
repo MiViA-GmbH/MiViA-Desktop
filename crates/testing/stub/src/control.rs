@@ -64,6 +64,10 @@ struct FaultBody {
 }
 
 async fn fault(State(stub): State<Stub>, Json(body): Json<FaultBody>) -> Response {
+    if body.op == "deviceToken" {
+        crate::sign_in::device_fault(&stub, body.kind);
+        return StatusCode::NO_CONTENT.into_response();
+    }
     let Some(op) = op(&body.op) else {
         return StatusCode::BAD_REQUEST.into_response();
     };

@@ -281,10 +281,14 @@ async fn connect_new(cx: &Cx, new_key: NewKey) -> Result<ConnectOutcome, AppErro
     connect_key(cx, new_key).await
 }
 
-pub(crate) async fn connect_issued(cx: &Cx, issued: IssuedKey) -> Result<ConnectOutcome, AppError> {
+pub(crate) async fn connect_issued(
+    cx: &Cx,
+    issued: IssuedKey,
+    note: ConnectionNote,
+) -> Result<ConnectOutcome, AppError> {
     let new_key = NewKey {
         key: issued.key,
-        source: Some(ConnectionNote::Browser),
+        source: Some(note),
         issued_id: Some(issued.id),
     };
     connect_new(cx, new_key).await

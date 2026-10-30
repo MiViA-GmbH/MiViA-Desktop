@@ -119,7 +119,8 @@ function SignInForm({ host, lead }: { host: string; lead: string }) {
 			{outcome?.kind === 'connected' && (
 				<Notice tone="success">
 					{t('desktop.account.key.saved', { name: outcome.connection.name })}
-					{!outcome.connection.notes.includes('browser') && ` ${t('desktop.account.key.hint', { host })}`}
+					{!outcome.connection.notes.some((note) => note === 'browser' || note === 'code') &&
+						` ${t('desktop.account.key.hint', { host })}`}
 				</Notice>
 			)}
 			<SwitchModal onCancel={() => setOutcome(null)} onDone={settle} outcome={outcome} />

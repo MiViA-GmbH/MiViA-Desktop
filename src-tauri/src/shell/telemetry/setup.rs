@@ -67,10 +67,12 @@ fn existing(folder: Option<FolderId>, draft: &SetupDraft) -> ExistingImages {
 
 pub(crate) fn kind_of(notes: &[ConnectionNote]) -> AccountKind {
     if notes.contains(&ConnectionNote::Browser) {
-        AccountKind::Browser
-    } else {
-        AccountKind::AccessKey
+        return AccountKind::Browser;
     }
+    if notes.contains(&ConnectionNote::Code) {
+        return AccountKind::Code;
+    }
+    AccountKind::AccessKey
 }
 
 fn account_connected(services: &Services, draft: &SetupDraft) {

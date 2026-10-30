@@ -3,8 +3,8 @@ import { useMutation } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { commands } from '../ipc';
-import type { ConnectOutcome } from '../ipc/bindings';
+import { commands, events } from '../ipc';
+import type { ConnectOutcome, KnownLink } from '../ipc/bindings';
 import { Notice } from './notice';
 
 const LINK_MARK = '\u0001';
@@ -17,19 +17,78 @@ type SignInTabsProps = {
 	onTabChange: () => void;
 };
 
-function KeyLink({ host }: { host: string }) {
-	const { t } = useTranslation();
-	const open = useMutation({ mutationFn: () => commands.openTarget({ kind: 'link', link: 'accessKeys' }) });
-	const [before, after] = t('desktop.wizard.key.keyLink', { link: LINK_MARK }).split(LINK_MARK);
+type LinkLineProps = { text: string; link: KnownLink; path: string };
+
+function LinkLine({ text, link, path }: LinkLineProps) {
+	const open = useMutation({ mutationFn: () => commands.openTarget({ kind: 'link', link }) });
+	const [before, after] = text.split(LINK_MARK);
 	return (
 		<Text c="stone.7" size="sm">
 			{before}
 			<Anchor component="button" inherit onClick={() => open.mutate()} type="button">
-				{host}/api-keys
+				{path}
 			</Anchor>
 			{after}
 		</Text>
 	);
+}
+
+type CodePanelProps = {
+	code: string | null;
+	error: string | null;
+	host: string;
+	onRetry: () => void;
+	pending: boolean;
+};
+
+function CodePanel({ code, error, host, onRetry, pending }: CodePanelProps) {
+	const { t } = useTranslation();
+	return (
+		<Stack align="flex-start" gap="sm">
+			{pending && code && (
+				<>
+					<LinkLine
+						link="devicePage"
+						path={`${host}/device`}
+						text={t('desktop.wizard.key.codeLink', { link: LINK_MARK })}
+					/>
+					<Text ff="monospace" fw={600} size="xl">
+						{code}
+					</Text>
+					<Button onClick={() => navigator.clipboard.writeText(code)} type="button" variant="default">
+						{t('desktop.wizard.key.codeCopy')}
+					</Button>
+				</>
+			)}
+			<Text c="stone.8" role="status" size="sm">
+				{pending && code && t('desktop.wizard.key.codeWaiting')}
+			</Text>
+			{error && !pending && (
+				<>
+					<Notice tone="warn">{error}</Notice>
+					<Button onClick={onRetry} type="button" variant="light">
+						{t('desktop.wizard.common.tryAgain')}
+					</Button>
+				</>
+			)}
+		</Stack>
+	);
+}
+
+function useCodeSignIn(onOutcome: (outcome: ConnectOutcome) => void) {
+	const [code, setCode] = useState<string | null>(null);
+	useEffect(() => {
+		const unlisten = events.signInCode.listen(({ payload }) => setCode(payload.userCode));
+		return () => {
+			unlisten.then((stop) => stop());
+		};
+	}, []);
+	const start = useMutation({
+		mutationFn: () => commands.startCodeSignIn(),
+		onMutate: () => setCode(null),
+		onSuccess: onOutcome,
+	});
+	return { code, start };
 }
 
 type BrowserPanelProps = { error: string | null; pending: boolean; onCancel: () => void; onStart: () => void };
@@ -52,40 +111,55 @@ function BrowserPanel({ error, pending, onCancel, onStart }: BrowserPanelProps) 
 export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: SignInTabsProps) {
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<string | null>('browser');
-	const browser = useMutation({
-		mutationFn: () => commands.startBrowserSignIn(),
-		onSuccess: (outcome) => {
-			if (outcome.kind === 'signInUnavailable') {
-				setTab('key');
-			}
-			onOutcome(outcome);
-		},
-	});
-	const cancel = () => commands.cancelSignIn();
+	const settle = (outcome: ConnectOutcome) => {
+		if (outcome.kind === 'cancelled') {
+			return;
+		}
+		if (outcome.kind === 'signInUnavailable') {
+			setTab('key');
+		}
+		onOutcome(outcome);
+	};
+	const browser = useMutation({ mutationFn: () => commands.startBrowserSignIn(), onSuccess: settle });
+	const { code, start } = useCodeSignIn(settle);
+	const cancel = () => {
+		commands.cancelSignIn();
+		onTabChange();
+	};
 	useEffect(() => () => void commands.cancelSignIn(), []);
 	const change = (next: string | null) => {
-		if (browser.isPending) {
-			cancel();
+		if (next === tab) {
+			return;
 		}
 		setTab(next);
 		onTabChange();
+		if (next === 'code') {
+			start.mutate();
+		} else {
+			commands.cancelSignIn();
+		}
 	};
 	return (
 		<Tabs keepMounted={false} onChange={change} value={tab}>
 			<Tabs.List grow>
 				<Tabs.Tab value="browser">{t('desktop.wizard.key.tabBrowser')}</Tabs.Tab>
-				<Tabs.Tab disabled value="code">
-					{t('desktop.wizard.key.tabCode')}
-				</Tabs.Tab>
+				<Tabs.Tab value="code">{t('desktop.wizard.key.tabCode')}</Tabs.Tab>
 				<Tabs.Tab value="key">{t('desktop.wizard.key.label')}</Tabs.Tab>
 			</Tabs.List>
 			<Tabs.Panel pt="md" value="browser">
 				<BrowserPanel error={error} onCancel={cancel} onStart={() => browser.mutate()} pending={browser.isPending} />
 			</Tabs.Panel>
+			<Tabs.Panel pt="md" value="code">
+				<CodePanel code={code} error={error} host={host} onRetry={() => start.mutate()} pending={start.isPending} />
+			</Tabs.Panel>
 			<Tabs.Panel pt="md" value="key">
 				<Stack gap="md">
 					{keyPanel}
-					<KeyLink host={host} />
+					<LinkLine
+						link="accessKeys"
+						path={`${host}/api-keys`}
+						text={t('desktop.wizard.key.keyLink', { link: LINK_MARK })}
+					/>
 				</Stack>
 			</Tabs.Panel>
 		</Tabs>

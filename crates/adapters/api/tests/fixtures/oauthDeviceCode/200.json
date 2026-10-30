@@ -1,0 +1,7 @@
+{
+	"device_code": "fixture-device-code",
+	"user_code": "WDJB-MJHT",
+	"verification_uri": "https://app.mivia.ai/device",
+	"expires_in": 600,
+	"interval": 5
+}

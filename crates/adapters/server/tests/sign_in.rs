@@ -19,6 +19,7 @@ use wiremock::{Mock, MockServer, Request, ResponseTemplate};
 
 use super::support::clients;
 
+mod device;
 mod replaces;
 
 const CLIENT_PATH: &str = "/api/oauth-clients/by-app/mivia-desktop";
