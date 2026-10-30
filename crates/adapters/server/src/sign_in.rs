@@ -23,7 +23,7 @@ use tokio::time::timeout;
 use url::Url;
 
 use crate::clients::HttpClients;
-pub use device::DeviceSignIn;
+pub use device::{DEFAULT_INTERVAL_SECS, DEVICE_GRANT, DeviceSignIn, SLOW_DOWN};
 use listener::{Listener, Returned};
 
 pub const APP_ID: &str = "mivia-desktop";
@@ -60,7 +60,7 @@ pub struct SignInApi {
 }
 
 pub struct BrowserSignIn {
-    url: String,
+    url: SecretString,
     client_id: String,
     verifier: SecretString,
     key_name: String,
@@ -115,6 +115,9 @@ async fn answer<T: DeserializeOwned>(
     let capped = read_capped(response, JSON_LIMIT)
         .await
         .map_err(|_| SignInError::Offline)?;
+    if capped.status == StatusCode::PROXY_AUTHENTICATION_REQUIRED {
+        return Err(SignInError::Offline);
+    }
     if capped.status != expected {
         return Err(SignInError::Unavailable);
     }
@@ -146,7 +149,7 @@ impl SignInApi {
         client_id: &str,
         listener: &Listener,
         verifier: &SecretString,
-    ) -> Result<String, SignInError> {
+    ) -> Result<SecretString, SignInError> {
         let challenge = URL_SAFE_NO_PAD.encode(Sha256::digest(verifier.expose_secret()));
         let mut url = Url::parse(&format!("{}/api/auth/oauth2/authorize", self.base))
             .map_err(|_| SignInError::Unavailable)?;
@@ -158,7 +161,7 @@ impl SignInApi {
             .append_pair("state", listener.state())
             .append_pair("code_challenge", &challenge)
             .append_pair("code_challenge_method", "S256");
-        Ok(url.into())
+        Ok(SecretString::from(String::from(url)))
     }
 
     pub async fn start_browser(
@@ -236,12 +239,12 @@ impl SignInApi {
 
 impl BrowserSignIn {
     pub fn url(&self) -> &str {
-        &self.url
+        self.url.expose_secret()
     }
 
     #[must_use]
-    pub fn with_login_prompt(mut self) -> Self {
-        self.url.push_str("&prompt=login");
+    pub fn with_sign_in_prompt(mut self) -> Self {
+        self.url = SecretString::from(format!("{}&prompt=login", self.url.expose_secret()));
         self
     }
 

@@ -9,11 +9,12 @@ use mivia_ports::telemetry::{SignInMethod, SignInReason};
 use mivia_server::{
     IssuedKey, SignInApi, SignInError, SignedIn, key_name, safe_to_open, until_stopped,
 };
+use secrecy::{ExposeSecret, SecretString};
 use tauri::AppHandle;
 use tauri_specta::Event;
 
 use super::account::{self, offline_details};
-use super::cx::{Cx, Ready};
+use super::cx::{Cx, Ready, Services};
 use super::events::SignInCode;
 use super::setup::{self, NewKey, Switch};
 use super::telemetry;
@@ -21,6 +22,22 @@ use super::window;
 
 const WAIT_LIMIT: Duration = Duration::from_secs(600);
 const ALLOW_LOOPBACK: bool = cfg!(any(debug_assertions, feature = "e2e"));
+
+enum Reached {
+    Key(IssuedKey),
+    Switch(ConnectOutcome),
+}
+
+fn sign_in_api(services: &Services) -> SignInApi {
+    SignInApi::new(Arc::clone(&services.clients), &services.origin)
+}
+
+const fn connection_note(method: SignInMethod) -> ConnectionNote {
+    match method {
+        SignInMethod::Browser => ConnectionNote::Browser,
+        SignInMethod::Code => ConnectionNote::Code,
+    }
+}
 
 async fn open_browser(url: &str) -> Result<(), SignInError> {
     if !safe_to_open(url, ALLOW_LOOPBACK) {
@@ -30,8 +47,8 @@ async fn open_browser(url: &str) -> Result<(), SignInError> {
     if let Some(path) = super::e2e::sign_in_url_file() {
         return std::fs::write(path, url).map_err(|_| SignInError::Unavailable);
     }
-    let target = url.to_owned();
-    match tokio::task::spawn_blocking(move || mivia_os::open_file(&target)).await {
+    let target = SecretString::from(url);
+    match tokio::task::spawn_blocking(move || mivia_os::open_file(target.expose_secret())).await {
         Ok(Ok(())) => Ok(()),
         _ => Err(SignInError::Unavailable),
     }
@@ -57,31 +74,23 @@ fn computer_key_name() -> String {
     key_name(std::env::var("COMPUTERNAME").ok().as_deref())
 }
 
-async fn ended(
+async fn report_failure(
     cx: &Cx,
     app: &AppHandle,
     error: SignInError,
-    note: ConnectionNote,
+    method: SignInMethod,
 ) -> Result<ConnectOutcome, AppError> {
-    let by_code = note == ConnectionNote::Code;
-    let method = if by_code {
-        SignInMethod::Code
-    } else {
-        SignInMethod::Browser
-    };
     let ready = cx.ready().await;
     telemetry::sign_in_failed(&ready.services, method, reason(error));
     if matches!(error, SignInError::Unavailable | SignInError::Denied) {
         window::reveal(app);
     }
-    if by_code && error == SignInError::Denied {
-        return Ok(ConnectOutcome::SignInDenied);
-    }
     Ok(match error {
         SignInError::Unavailable => ConnectOutcome::SignInUnavailable,
         SignInError::TimedOut => ConnectOutcome::SignInTimedOut,
         SignInError::Expired => ConnectOutcome::SignInExpired,
-        SignInError::Denied | SignInError::Cancelled => ConnectOutcome::Cancelled,
+        SignInError::Denied => ConnectOutcome::SignInDenied,
+        SignInError::Cancelled => ConnectOutcome::Cancelled,
         SignInError::Offline => ConnectOutcome::Offline {
             details: offline_details(&ready.services, "connect"),
         },
@@ -90,17 +99,18 @@ async fn ended(
 
 async fn issue(ready: &Ready, signed_in: SignedIn) -> Result<IssuedKey, SignInError> {
     let replaces = earlier_key(ready, signed_in.account_id.clone()).await;
-    let services = &ready.services;
-    let api = SignInApi::new(Arc::clone(&services.clients), &services.origin);
-    api.issue_key(signed_in, replaces).await
+    sign_in_api(&ready.services)
+        .issue_key(signed_in, replaces)
+        .await
 }
 
-async fn connect_signed_in(
+async fn issue_or_hold_switch(
     cx: &Cx,
     app: &AppHandle,
     signed_in: SignedIn,
-    note: ConnectionNote,
-) -> Result<ConnectOutcome, AppError> {
+    method: SignInMethod,
+) -> Result<Reached, SignInError> {
+    window::reveal(app);
     let ready = cx.ready().await;
     let previous = if cx.completed() {
         account::previous_account(&ready).await
@@ -118,26 +128,23 @@ async fn connect_signed_in(
         cx.setup.hold_switch(Switch::SignedIn {
             previous,
             signed_in,
-            note,
+            method,
         });
-        return Ok(outcome);
+        return Ok(Reached::Switch(outcome));
     }
-    match issue(&ready, signed_in).await {
-        Ok(issued) => setup::connect_issued(cx, issued, note).await,
-        Err(error) => ended(cx, app, error, note).await,
-    }
+    issue(&ready, signed_in).await.map(Reached::Key)
 }
 
 pub(crate) async fn enter_signed_in(
     cx: &Cx,
     app: &AppHandle,
     signed_in: SignedIn,
-    note: ConnectionNote,
+    method: SignInMethod,
 ) -> Result<ConnectOutcome, AppError> {
     let ready = cx.ready().await;
     let new_key = match issue(&ready, signed_in).await {
-        Ok(issued) => NewKey::issued(issued, note),
-        Err(error) => return ended(cx, app, error, note).await,
+        Ok(issued) => NewKey::issued(issued, connection_note(method)),
+        Err(error) => return report_failure(cx, app, error, method).await,
     };
     match account::identify(&ready.services, &new_key.key).await {
         Ok(identity) => account::enter_account(cx, identity, new_key).await,
@@ -145,26 +152,25 @@ pub(crate) async fn enter_signed_in(
     }
 }
 
-async fn settled(
+async fn connect_or_report(
     cx: &Cx,
     app: &AppHandle,
-    result: Result<SignedIn, SignInError>,
-    note: ConnectionNote,
+    result: Result<Reached, SignInError>,
+    method: SignInMethod,
 ) -> Result<ConnectOutcome, AppError> {
     match result {
-        Ok(signed_in) => {
-            window::reveal(app);
-            connect_signed_in(cx, app, signed_in, note).await
+        Ok(Reached::Key(issued)) => {
+            setup::connect_new(cx, NewKey::issued(issued, connection_note(method))).await
         }
-        Err(error) => ended(cx, app, error, note).await,
+        Ok(Reached::Switch(outcome)) => Ok(outcome),
+        Err(error) => report_failure(cx, app, error, method).await,
     }
 }
 
 pub(crate) async fn code(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, AppError> {
     let stop = cx.setup.begin_sign_in();
     let ready = cx.ready().await;
-    let services = &ready.services;
-    let api = SignInApi::new(Arc::clone(&services.clients), &services.origin);
+    let api = sign_in_api(&ready.services);
     let attempt = async {
         let sign_in = api.start_device(computer_key_name()).await?;
         SignInCode {
@@ -172,7 +178,8 @@ pub(crate) async fn code(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, App
         }
         .emit(app)
         .map_err(|_| SignInError::Unavailable)?;
-        sign_in.finish(&api).await
+        let signed_in = sign_in.finish(&api).await?;
+        issue_or_hold_switch(cx, app, signed_in, SignInMethod::Code).await
     };
     let result = until_stopped(&stop, WAIT_LIMIT, attempt)
         .await
@@ -183,7 +190,7 @@ pub(crate) async fn code(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, App
                 error
             }
         });
-    settled(cx, app, result, ConnectionNote::Code).await
+    connect_or_report(cx, app, result, SignInMethod::Code).await
 }
 
 pub(crate) async fn browser(
@@ -193,22 +200,22 @@ pub(crate) async fn browser(
 ) -> Result<ConnectOutcome, AppError> {
     let stop = cx.setup.begin_sign_in();
     let ready = cx.ready().await;
-    let services = &ready.services;
-    let api = SignInApi::new(Arc::clone(&services.clients), &services.origin);
+    let api = sign_in_api(&ready.services);
     let language = setup::language(&ready).await;
     let name = computer_key_name();
     let attempt = async {
         let started = api.start_browser(language, name).await?;
         let sign_in = if different_account {
-            started.with_login_prompt()
+            started.with_sign_in_prompt()
         } else {
             started
         };
         open_browser(sign_in.url()).await?;
-        sign_in.finish(&api).await
+        let signed_in = sign_in.finish(&api).await?;
+        issue_or_hold_switch(cx, app, signed_in, SignInMethod::Browser).await
     };
     let result = until_stopped(&stop, WAIT_LIMIT, attempt).await;
-    settled(cx, app, result, ConnectionNote::Browser).await
+    connect_or_report(cx, app, result, SignInMethod::Browser).await
 }
 
 const fn reason(error: SignInError) -> SignInReason {
@@ -287,11 +294,11 @@ mod tests {
     fn the_native_dialog_words_a_sign_in_in_both_languages() {
         assert_eq!(
             sign_in_switch_text(Language::En, "a@x.invalid", "Bea", "b@x.invalid"),
-            "You signed in as Bea (b@x.invalid), not a@x.invalid. Switch account?"
+            "You signed in as Bea (b@x.invalid), not a@x.invalid. If you switch, input folders are no longer watched. Switch account?"
         );
         assert_eq!(
             sign_in_switch_text(Language::De, "a@x.invalid", "Bea", "b@x.invalid"),
-            "Sie haben sich als Bea (b@x.invalid) angemeldet, nicht als a@x.invalid. Konto wechseln?"
+            "Sie haben sich als Bea (b@x.invalid) angemeldet, nicht als a@x.invalid. Beim Wechsel werden Eingangsordner nicht mehr \u{fc}berwacht. Konto wechseln?"
         );
     }
 }

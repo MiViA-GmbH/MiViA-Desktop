@@ -12,7 +12,6 @@ use mivia_ports::ipc::setup::{
     ConnectOutcome, ConnectionNote, LegacyTake, SetupInput, SetupLocks, SetupOption, SetupView,
 };
 use mivia_ports::store::{StoreError, StoreExt};
-use mivia_server::IssuedKey;
 use tauri::AppHandle;
 
 use super::super::account::{self, clear_clipboard_if, identify, key_from, store_key};
@@ -274,19 +273,11 @@ pub(crate) async fn connect(cx: &Cx, key: Option<String>) -> Result<ConnectOutco
     connect_new(cx, new_key).await
 }
 
-async fn connect_new(cx: &Cx, new_key: NewKey) -> Result<ConnectOutcome, AppError> {
+pub(crate) async fn connect_new(cx: &Cx, new_key: NewKey) -> Result<ConnectOutcome, AppError> {
     if cx.completed() {
         return account::replace_key(cx, new_key).await;
     }
     connect_key(cx, new_key).await
-}
-
-pub(crate) async fn connect_issued(
-    cx: &Cx,
-    issued: IssuedKey,
-    note: ConnectionNote,
-) -> Result<ConnectOutcome, AppError> {
-    connect_new(cx, NewKey::issued(issued, note)).await
 }
 
 pub(crate) async fn import_legacy(cx: &Cx) -> Result<ConnectOutcome, AppError> {

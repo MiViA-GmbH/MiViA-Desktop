@@ -3,9 +3,14 @@ use std::sync::Arc;
 use crate::tls::{LEAF, test_ca_verifier, tls_front};
 use arc_swap::ArcSwap;
 use mivia_domain::ids::AccountId;
+use mivia_domain::naming::Language;
+use mivia_ports::auth::ServerOrigin;
 use mivia_ports::network::{HttpRoute, ProxyEntry};
 use mivia_ports::server::{ServerApi, ServerError};
-use mivia_server::{ClientRoute, HttpClients, HttpServerApi, build_clients, build_clients_with};
+use mivia_server::{
+    ClientRoute, HttpClients, HttpServerApi, SignInApi, SignInError, build_clients,
+    build_clients_with,
+};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use wiremock::matchers::{method, path};
@@ -122,6 +127,22 @@ async fn the_same_entries_keep_the_working_entry_unless_rebuilt_with_new_ones() 
         false,
     );
     assert_eq!(route.active(), Some(dead));
+}
+
+#[tokio::test]
+async fn sign_in_reports_a_proxy_problem_as_offline_like_a_pasted_key() {
+    let (_mock, uri) = origin().await;
+    let shared = Arc::new(ArcSwap::from_pointee(trusted()));
+    let route = ClientRoute(Arc::clone(&shared));
+    let api = SignInApi::new(shared, &ServerOrigin(uri));
+    for entry in [
+        ProxyEntry::Http(answering_proxy(AUTH_REQUIRED).await),
+        ProxyEntry::Http(dead_address().await),
+    ] {
+        route.use_entries(&[entry], false);
+        let started = api.start_browser(Language::En, String::new()).await;
+        assert_eq!(started.err(), Some(SignInError::Offline));
+    }
 }
 
 #[tokio::test]

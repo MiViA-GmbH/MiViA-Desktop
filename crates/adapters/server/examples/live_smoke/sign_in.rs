@@ -6,7 +6,10 @@ use std::path::Path;
 use std::time::{Duration, Instant};
 
 use mivia_api::{DeviceCode, IssuedAccessKey, OauthAccount, OauthClient, OauthError, OauthToken};
-use mivia_server::{SIGN_IN_APP_ID, SIGN_IN_SCOPES};
+use mivia_server::{
+    SIGN_IN_APP_ID, SIGN_IN_DEFAULT_INTERVAL_SECS, SIGN_IN_DEVICE_GRANT, SIGN_IN_SCOPES,
+    SIGN_IN_SLOW_DOWN,
+};
 use reqwest::header::{ACCEPT, AUTHORIZATION, HeaderValue};
 use reqwest::{Client, RequestBuilder};
 use secrecy::{ExposeSecret, SecretString};
@@ -19,9 +22,6 @@ use scrub::SignInRecorder;
 
 pub(crate) const KEY_ID_FILE: &str = "target/live-smoke-sign-in-key-id";
 const KEY_NAME: &str = "MiViA Desktop live smoke";
-const DEVICE_GRANT: &str = "urn:ietf:params:oauth:grant-type:device_code";
-const DEFAULT_INTERVAL_SECS: u64 = 5;
-const SLOW_DOWN: Duration = Duration::from_secs(5);
 
 async fn send(request: RequestBuilder) -> Outcome<(u16, Vec<u8>)> {
     let response = request.send().await?;
@@ -46,7 +46,7 @@ async fn call<T: DeserializeOwned>(
 fn after_refusal(error: &str, wait: Duration) -> Outcome<Duration> {
     match error {
         "authorization_pending" => Ok(wait),
-        "slow_down" => Ok(wait + SLOW_DOWN),
+        "slow_down" => Ok(wait + SIGN_IN_SLOW_DOWN),
         other => Err(format!("oauthToken refused the code: {other}").into()),
     }
 }
@@ -69,7 +69,7 @@ async fn wait_for_token(
             return Ok(SecretString::from(token.access_token));
         }
         if status == 429 {
-            wait += SLOW_DOWN;
+            wait += SIGN_IN_SLOW_DOWN;
             continue;
         }
         let refusal: OauthError =
@@ -152,11 +152,14 @@ pub(crate) async fn run(
         device.user_code
     ));
     let form = [
-        ("grant_type", DEVICE_GRANT),
+        ("grant_type", SIGN_IN_DEVICE_GRANT),
         ("client_id", client_id.as_str()),
         ("device_code", device.device_code.as_str()),
     ];
-    let interval = device.interval.unwrap_or(DEFAULT_INTERVAL_SECS).max(1);
+    let interval = device
+        .interval
+        .unwrap_or(SIGN_IN_DEFAULT_INTERVAL_SECS)
+        .max(1);
     let token = wait_for_token(
         || mivia_api::oauth_token(client, base, &form),
         Duration::from_secs(interval),

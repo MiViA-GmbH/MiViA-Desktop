@@ -180,7 +180,7 @@ async fn only_the_different_account_action_asks_for_a_login() {
         .start_browser(Language::En, String::new())
         .await
         .unwrap()
-        .with_login_prompt();
+        .with_sign_in_prompt();
     assert_eq!(query(different.url())["prompt"], "login");
 }
 

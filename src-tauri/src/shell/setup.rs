@@ -17,6 +17,7 @@ use mivia_ports::auth::{
 };
 use mivia_ports::ipc::screens::AccountView;
 use mivia_ports::ipc::setup::ConnectionNote;
+use mivia_ports::telemetry::SignInMethod;
 use mivia_server::{IssuedKey, SignedIn};
 use parking_lot::Mutex;
 use secrecy::SecretString;
@@ -31,7 +32,7 @@ use super::window::LABEL;
 pub(crate) use catalogue::catalogue;
 pub(crate) use complete::complete;
 pub(crate) use legacy::{close_legacy, retry_legacy_stop};
-pub(crate) use wizard::{connect, connect_issued, import_legacy, pick, save, view};
+pub(crate) use wizard::{connect, connect_new, import_legacy, pick, save, view};
 
 const PICK_LIFETIME: Duration = Duration::from_secs(600);
 const REFUSAL: Duration = Duration::from_secs(60);
@@ -45,7 +46,7 @@ pub(crate) enum Switch {
     SignedIn {
         previous: AccountView,
         signed_in: SignedIn,
-        note: ConnectionNote,
+        method: SignInMethod,
     },
 }
 
@@ -254,10 +255,12 @@ pub(crate) fn sign_in_switch_text(
 ) -> String {
     match language {
         Language::En => {
-            format!("You signed in as {name} ({email}), not {current_email}. Switch account?")
+            format!(
+                "You signed in as {name} ({email}), not {current_email}. If you switch, input folders are no longer watched. Switch account?"
+            )
         }
         Language::De => format!(
-            "Sie haben sich als {name} ({email}) angemeldet, nicht als {current_email}. Konto wechseln?"
+            "Sie haben sich als {name} ({email}) angemeldet, nicht als {current_email}. Beim Wechsel werden Eingangsordner nicht mehr \u{fc}berwacht. Konto wechseln?"
         ),
     }
 }

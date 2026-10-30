@@ -31,8 +31,8 @@ pub(crate) async fn switch(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, A
             identity, new_key, ..
         } => enter_account(cx, identity, new_key).await?,
         Switch::SignedIn {
-            signed_in, note, ..
-        } => sign_in::enter_signed_in(cx, app, signed_in, note).await?,
+            signed_in, method, ..
+        } => sign_in::enter_signed_in(cx, app, signed_in, method).await?,
     };
     if matches!(entered, ConnectOutcome::Connected { .. }) {
         telemetry::account_switched(&ready.services);

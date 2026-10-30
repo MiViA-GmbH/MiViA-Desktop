@@ -6,9 +6,10 @@ use secrecy::{ExposeSecret, SecretString};
 
 use super::{SCOPES, SignInApi, SignInError, SignedIn, answer};
 
-const DEVICE_GRANT: &str = "urn:ietf:params:oauth:grant-type:device_code";
-const DEFAULT_INTERVAL_SECS: u64 = 5;
-const SLOW_DOWN: Duration = Duration::from_secs(5);
+pub const DEVICE_GRANT: &str = "urn:ietf:params:oauth:grant-type:device_code";
+pub const DEFAULT_INTERVAL_SECS: u64 = 5;
+pub const SLOW_DOWN: Duration = Duration::from_secs(5);
+const FAILED_POLLS_LIMIT: u8 = 3;
 
 pub struct DeviceSignIn {
     user_code: String,
@@ -22,6 +23,7 @@ enum Poll {
     Token(SecretString),
     Waiting,
     SlowDown,
+    Failed,
 }
 
 fn poll_refused(body: &[u8]) -> Result<Poll, SignInError> {
@@ -57,16 +59,17 @@ impl SignInApi {
     async fn poll(&self, form: &[(&str, &str)]) -> Result<Poll, SignInError> {
         let request = mivia_api::oauth_token(&self.client(), &self.base, form);
         let Ok(response) = request.send().await else {
-            return Ok(Poll::Waiting);
+            return Ok(Poll::Failed);
         };
         let Ok(capped) = read_capped(response, JSON_LIMIT).await else {
-            return Ok(Poll::Waiting);
+            return Ok(Poll::Failed);
         };
         match capped.status {
             StatusCode::OK => serde_json::from_slice::<OauthToken>(&capped.body)
                 .map(|token| Poll::Token(SecretString::from(token.access_token)))
                 .map_err(|_| SignInError::Unavailable),
             StatusCode::TOO_MANY_REQUESTS => Ok(Poll::SlowDown),
+            StatusCode::PROXY_AUTHENTICATION_REQUIRED => Ok(Poll::Failed),
             status if status.is_server_error() => Ok(Poll::Waiting),
             _ => poll_refused(&capped.body),
         }
@@ -85,12 +88,22 @@ impl DeviceSignIn {
             ("device_code", self.device_code.expose_secret()),
         ];
         let mut wait = self.interval;
+        let mut failed = 0;
         loop {
             tokio::time::sleep(wait).await;
             match api.poll(&form).await? {
                 Poll::Token(token) => return api.signed_in(token, self.key_name).await,
-                Poll::Waiting => {}
-                Poll::SlowDown => wait += SLOW_DOWN,
+                Poll::Waiting => failed = 0,
+                Poll::SlowDown => {
+                    failed = 0;
+                    wait += SLOW_DOWN;
+                }
+                Poll::Failed => {
+                    failed += 1;
+                    if failed == FAILED_POLLS_LIMIT {
+                        return Err(SignInError::Offline);
+                    }
+                }
             }
         }
     }

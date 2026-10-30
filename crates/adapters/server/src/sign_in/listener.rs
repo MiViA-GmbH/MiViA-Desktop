@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use httparse::{EMPTY_HEADER, Request, Status};
 use mivia_domain::naming::Language;
-use secrecy::{ExposeSecret, SecretString};
+use secrecy::{ExposeSecret, ExposeSecretMut, SecretBox, SecretString};
 use subtle::ConstantTimeEq;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
@@ -60,20 +60,14 @@ fn response(status: &str, content_type: &str, body: &str) -> String {
     )
 }
 
-async fn read_head(stream: &mut TcpStream) -> Option<Vec<u8>> {
-    let mut head = Vec::new();
-    let mut chunk = [0_u8; 1024];
-    while head.len() < REQUEST_LIMIT {
-        let read = stream.read(&mut chunk).await.ok()?;
-        if read == 0 {
-            return None;
-        }
-        head.extend_from_slice(chunk.get(..read)?);
-        if head.len() > REQUEST_LIMIT {
+async fn read_head(stream: &mut TcpStream) -> Option<SecretBox<Vec<u8>>> {
+    let mut head = SecretBox::new(Box::new(Vec::with_capacity(REQUEST_LIMIT)));
+    while head.expose_secret().len() < REQUEST_LIMIT {
+        if stream.read_buf(head.expose_secret_mut()).await.ok()? == 0 {
             return None;
         }
         let mut headers = [EMPTY_HEADER; MAX_HEADERS];
-        match Request::new(&mut headers).parse(&head) {
+        match Request::new(&mut headers).parse(head.expose_secret()) {
             Ok(Status::Complete(_)) => return Some(head),
             Ok(Status::Partial) => {}
             Err(_) => return None,
@@ -120,7 +114,9 @@ impl Listener {
             .await
             .ok()
             .flatten();
-        let returned = head.as_deref().and_then(|head| self.judge(head));
+        let returned = head
+            .as_ref()
+            .and_then(|head| self.judge(head.expose_secret()));
         let answer = match &returned {
             Some(Returned::Code(_)) => page(self.language, true),
             Some(Returned::Denied | Returned::Failed) => page(self.language, false),

@@ -66,7 +66,6 @@ pub struct OauthError {
 pub struct DeviceCode {
     pub device_code: String,
     pub user_code: String,
-    #[serde(default)]
     pub interval: Option<u64>,
 }
 

@@ -1,6 +1,7 @@
 mod device;
 
 use std::collections::BTreeMap;
+use std::time::Duration;
 
 use axum::extract::{Form, Path, Query, State};
 use axum::http::{HeaderMap, StatusCode, header};
@@ -23,6 +24,7 @@ const APP_ID: &str = "mivia-desktop";
 const CLIENT_ID: &str = "stub-client";
 const ISSUE_SCOPE: &str = "api-keys:issue";
 const DEVICE_GRANT: &str = "urn:ietf:params:oauth:grant-type:device_code";
+const SLOW_ISSUE: Duration = Duration::from_secs(5);
 
 #[derive(Clone, Copy, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -31,6 +33,15 @@ enum ByApp {
     Normal,
     Missing,
     Html,
+    ProxyAuth,
+}
+
+#[derive(Clone, Copy, Default, PartialEq, Eq)]
+enum SlowIssue {
+    #[default]
+    Off,
+    Armed,
+    Reached,
 }
 
 #[derive(Default)]
@@ -47,6 +58,7 @@ pub(crate) struct SignInState {
     device_polls: u64,
     replaced_key: Option<String>,
     different_account: bool,
+    slow_issue: SlowIssue,
 }
 
 impl Stub {
@@ -64,10 +76,12 @@ impl Stub {
     }
 
     pub(crate) fn fail_sign_in(&self, kind: &str) -> StatusCode {
-        if kind != "differentAccount" {
-            return StatusCode::BAD_REQUEST;
+        let mut state = self.sign_in.lock();
+        match kind {
+            "differentAccount" => state.different_account = true,
+            "slowIssue" => state.slow_issue = SlowIssue::Armed,
+            _ => return StatusCode::BAD_REQUEST,
         }
-        self.sign_in.lock().different_account = true;
         StatusCode::NO_CONTENT
     }
 }
@@ -96,6 +110,7 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/api/api-keys/issue", post(issue))
         .route("/__stub/issued", get(issued))
         .route("/__stub/issued-keys", get(issued_keys))
+        .route("/__stub/issue-waiting", get(issue_waiting))
         .route("/__stub/by-app", post(set_by_app))
         .route("/__stub/revoke-key", post(revoke_key))
 }
@@ -118,6 +133,7 @@ async fn by_app(State(stub): State<Stub>, Path(app_id): Path<String>) -> Respons
         ByApp::Normal => Json(json!({ "clientId": CLIENT_ID })).into_response(),
         ByApp::Missing => StatusCode::NOT_FOUND.into_response(),
         ByApp::Html => Html("<!doctype html><title>MiViA</title>").into_response(),
+        ByApp::ProxyAuth => StatusCode::PROXY_AUTHENTICATION_REQUIRED.into_response(),
     }
 }
 
@@ -256,6 +272,11 @@ async fn issue(
     if !signed_in(&stub, &headers) {
         return token_invalid();
     }
+    let armed = stub.sign_in.lock().slow_issue == SlowIssue::Armed;
+    if armed {
+        stub.sign_in.lock().slow_issue = SlowIssue::Reached;
+        tokio::time::sleep(SLOW_ISSUE).await;
+    }
     let id = {
         let mut state = stub.sign_in.lock();
         state.issued.push(body.name.clone());
@@ -277,6 +298,10 @@ async fn issue(
         "code": stub.current_key(),
     });
     (StatusCode::CREATED, Json(payload)).into_response()
+}
+
+async fn issue_waiting(State(stub): State<Stub>) -> Response {
+    Json(stub.sign_in.lock().slow_issue == SlowIssue::Reached).into_response()
 }
 
 async fn issued_keys(State(stub): State<Stub>) -> Response {
