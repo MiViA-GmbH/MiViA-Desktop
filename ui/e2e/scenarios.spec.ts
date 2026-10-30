@@ -1,5 +1,6 @@
 import { type ChildProcess, spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
 import { type Browser, chromium, expect, type Page, test } from '@playwright/test';
@@ -266,7 +267,7 @@ test.describe
 
 		test.afterAll(async () => {
 			await shutdown(running);
-			rmSync(RUN, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 });
+			await rm(RUN, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 });
 		});
 
 		test('scenario 2: a watched folder series ends with a saved PDF report', async () => {
