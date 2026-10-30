@@ -2,9 +2,9 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { crc32, deflateSync } from 'node:zlib';
 import { expect, type Page, test } from '@playwright/test';
 
+import { jpeg, png } from './images';
 import { launch, REPO, type Running, STUB_KEY, shutdown, stop, TARGET } from './stub-app';
 
 const RUN = join(REPO, 'target', 'e2e-run', String(Date.now()));
@@ -23,37 +23,6 @@ function seeded(): Record<string, string> {
 		MIVIA_E2E_MODEL: MODEL,
 		MIVIA_E2E_QUIET_SECS: '10',
 	};
-}
-
-function jpeg(seed: number): Buffer {
-	return Buffer.from([0xff, 0xd8, 0xff, 0xe0, seed, 0x00, 0x10, seed, 0xff, 0xd9]);
-}
-
-function png(width: number, height: number): Buffer {
-	const raw = Buffer.alloc(height * (1 + width * 3));
-	for (let y = 0; y < height; y += 1) {
-		for (let x = 0; x < width; x += 1) {
-			raw.set([Math.floor((x * 255) / width), Math.floor((y * 255) / height), 96], y * (1 + width * 3) + 1 + x * 3);
-		}
-	}
-	const chunk = (type: string, body: Buffer) => {
-		const named = Buffer.concat([Buffer.from(type), body]);
-		const length = Buffer.alloc(4);
-		length.writeUInt32BE(body.length);
-		const check = Buffer.alloc(4);
-		check.writeUInt32BE(crc32(named));
-		return Buffer.concat([length, named, check]);
-	};
-	const header = Buffer.alloc(13);
-	header.writeUInt32BE(width, 0);
-	header.writeUInt32BE(height, 4);
-	header.set([8, 2, 0, 0, 0], 8);
-	return Buffer.concat([
-		Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-		chunk('IHDR', header),
-		chunk('IDAT', deflateSync(raw)),
-		chunk('IEND', Buffer.alloc(0)),
-	]);
 }
 
 async function publishResults(origin: string): Promise<number> {
@@ -274,6 +243,9 @@ test.describe
 const HELD = join(RUN, 'held');
 const HELD_WATCHED = join(HELD, 'Labor');
 const HELD_URL_FILE = join(HELD, 'sign-in-url.txt');
+const OTHER = join(RUN, 'other');
+const OTHER_WATCHED = join(OTHER, 'Labor');
+const OTHER_URL_FILE = join(OTHER, 'sign-in-url.txt');
 
 test.describe
 	.serial('signing in again against the stub', () => {
@@ -326,6 +298,62 @@ test.describe
 				return JSON.stringify(batches.flatMap((batch) => batch.events).find((e) => e.name === 'account.connected'));
 			};
 			await expect.poll(connected, { timeout: 60_000, intervals: [1000] }).toContain('"browser"');
+		});
+	});
+
+test.describe
+	.serial('signing in to a different account against the stub', () => {
+		let running: Running;
+
+		test.beforeAll(async () => {
+			mkdirSync(OTHER_WATCHED, { recursive: true });
+			running = await launch({
+				...seeded(),
+				LOCALAPPDATA: join(OTHER, 'appdata'),
+				MIVIA_E2E_FOLDER: OTHER_WATCHED,
+				MIVIA_E2E_SIGN_IN_URL_FILE: OTHER_URL_FILE,
+			});
+		});
+
+		test.afterAll(async () => {
+			await shutdown(running);
+		});
+
+		test('scenario 11: cancelling the switch issues no key and keeps the account and the hold', async () => {
+			const { page, origin } = running;
+			await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible({ timeout: 30_000 });
+
+			await fetch(`${origin}/__stub/revoke-key`, { method: 'POST' });
+			writeFileSync(join(OTHER_WATCHED, 'probe_001.jpg'), jpeg(30));
+			const again = page.getByRole('button', { name: 'Sign in again' });
+			await expect(again).toBeVisible({ timeout: 60_000 });
+			await fetch(`${origin}/__stub/fault`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ op: 'signIn', kind: 'differentAccount' }),
+			});
+
+			await again.click();
+			await page.getByRole('button', { name: 'Use a different account' }).click();
+			await expect.poll(() => signInUrl(OTHER_URL_FILE), { timeout: 20_000, intervals: [250] }).toContain('authorize?');
+			expect(new URL(signInUrl(OTHER_URL_FILE)).searchParams.get('prompt')).toBe('login');
+			expect((await fetch(signInUrl(OTHER_URL_FILE))).status).toBe(200);
+
+			const dialog = page.getByRole('dialog', { name: 'Switch account?' });
+			await expect(dialog).toContainText('You signed in as Other Lab, not Stub Lab.', { timeout: 20_000 });
+			await expect(dialog).toContainText('are no longer watched');
+			expect(await (await fetch(`${origin}/__stub/issued`)).json()).toEqual([]);
+
+			await dialog.getByRole('button', { name: 'Cancel' }).first().click();
+			await expect(dialog).toBeHidden();
+			expect(await (await fetch(`${origin}/__stub/issued`)).json()).toEqual([]);
+			await expect(page.getByText('lab@example.invalid')).toBeVisible();
+			await expect(again).toBeVisible();
+
+			writeFileSync(OTHER_URL_FILE, '');
+			await page.getByRole('button', { name: 'Open the browser' }).click();
+			await expect.poll(() => signInUrl(OTHER_URL_FILE), { timeout: 20_000, intervals: [250] }).toContain('authorize?');
+			expect(new URL(signInUrl(OTHER_URL_FILE)).searchParams.get('prompt')).toBeNull();
 		});
 	});
 
