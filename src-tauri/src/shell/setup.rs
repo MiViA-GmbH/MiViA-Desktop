@@ -4,6 +4,7 @@ mod legacy;
 mod wizard;
 
 use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
@@ -18,6 +19,7 @@ use mivia_ports::ipc::screens::AccountView;
 use parking_lot::Mutex;
 use secrecy::SecretString;
 use tauri::{AppHandle, Manager};
+use tokio::sync::Notify;
 use uuid::Uuid;
 
 use super::cx::{Cx, Ready};
@@ -27,7 +29,7 @@ use super::window::LABEL;
 pub(crate) use catalogue::catalogue;
 pub(crate) use complete::complete;
 pub(crate) use legacy::{close_legacy, retry_legacy_stop};
-pub(crate) use wizard::{connect, import_legacy, pick, save, view};
+pub(crate) use wizard::{connect, connect_issued, import_legacy, pick, save, view};
 
 const PICK_LIFETIME: Duration = Duration::from_secs(600);
 const REFUSAL: Duration = Duration::from_secs(60);
@@ -39,6 +41,7 @@ pub(crate) struct Session {
     retry_key: Mutex<Option<SecretString>>,
     memory_key: Mutex<Option<SecretString>>,
     switch: Mutex<Option<Switch>>,
+    sign_in: Mutex<Option<Arc<Notify>>>,
     refused_until: Mutex<Option<Instant>>,
     legacy: Mutex<Option<LegacyInstall>>,
     picks: Mutex<HashMap<String, (WinPath, Instant)>>,
@@ -74,6 +77,22 @@ impl Session {
 
     pub(crate) fn take_switch(&self) -> Option<Switch> {
         self.switch.lock().take()
+    }
+
+    pub(crate) fn begin_sign_in(&self) -> Arc<Notify> {
+        let stop = Arc::new(Notify::new());
+        let earlier = self.sign_in.lock().replace(Arc::clone(&stop));
+        if let Some(earlier) = earlier {
+            earlier.notify_one();
+        }
+        stop
+    }
+
+    pub(crate) fn stop_sign_in(&self) {
+        let current = self.sign_in.lock().take();
+        if let Some(current) = current {
+            current.notify_one();
+        }
     }
 
     pub(crate) fn found_legacy(&self, install: Option<LegacyInstall>) {

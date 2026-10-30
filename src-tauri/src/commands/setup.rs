@@ -4,7 +4,7 @@ use mivia_ports::ipc::setup::{ConnectOutcome, DoneView, IntegrationView, SetupIn
 use tauri::{AppHandle, State};
 
 use crate::shell::cx::Cx;
-use crate::shell::{account, folders, integration, setup};
+use crate::shell::{account, folders, integration, setup, sign_in};
 
 #[tauri::command]
 #[specta::specta]
@@ -50,6 +50,22 @@ pub(crate) async fn connect_access_key(
     key: Option<String>,
 ) -> Result<ConnectOutcome, AppError> {
     setup::connect(&cx, key).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn start_browser_sign_in(
+    app: AppHandle,
+    cx: State<'_, Cx>,
+) -> Result<ConnectOutcome, AppError> {
+    sign_in::browser(&cx, &app).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn cancel_sign_in(cx: State<'_, Cx>) -> Result<(), AppError> {
+    cx.setup.stop_sign_in();
+    Ok(())
 }
 
 #[tauri::command]

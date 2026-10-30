@@ -14,6 +14,7 @@ use mivia_ports::ipc::setup::{ConnectOutcome, ConnectionNote, ConnectionView};
 use mivia_ports::queries::Queries;
 use mivia_ports::server::{License, ServerApi, ServerError};
 use mivia_ports::store::{AccountScope, NewAccount, SettingsScope, StoreExt, TxError, WriteTx};
+use mivia_ports::telemetry::AccountKind;
 use mivia_server::HttpIdentityApi;
 use secrecy::{ExposeSecret, SecretString};
 use tauri::AppHandle;
@@ -257,7 +258,7 @@ pub(crate) async fn enter_account(
         .map_err(|error| app_error(&error, "connect_access_key"))?;
     let cleared = clear_clipboard_if(&key);
     rebuild(cx, false).await;
-    telemetry::account_connected(services, false);
+    telemetry::account_connected(services, AccountKind::AccessKey, false);
     Ok(ConnectOutcome::Connected {
         connection: connected(&identity, stored),
         other_account: false,

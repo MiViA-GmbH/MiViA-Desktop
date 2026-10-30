@@ -226,7 +226,7 @@ pub(crate) async fn pick(
 async fn connect_key(
     cx: &Cx,
     key: secrecy::SecretString,
-    imported: bool,
+    source: Option<ConnectionNote>,
 ) -> Result<ConnectOutcome, AppError> {
     let ready = cx.ready().await;
     let identity = match identify(&ready.services, &key).await {
@@ -242,9 +242,7 @@ async fn connect_key(
     if stored.notes.contains(&ConnectionNote::StoreFailed) {
         cx.setup.keep_session_key(key.clone());
     }
-    if imported {
-        stored.notes.push(ConnectionNote::Imported);
-    }
+    stored.notes.extend(source);
     let connection = DraftConnection {
         origin: ready.services.origin.0.clone(),
         account_id: identity.account_id,
@@ -273,7 +271,17 @@ pub(crate) async fn connect(cx: &Cx, key: Option<String>) -> Result<ConnectOutco
     if cx.completed() {
         return account::replace_key(cx, key).await;
     }
-    connect_key(cx, key, false).await
+    connect_key(cx, key, None).await
+}
+
+pub(crate) async fn connect_issued(
+    cx: &Cx,
+    key: secrecy::SecretString,
+) -> Result<ConnectOutcome, AppError> {
+    if cx.completed() {
+        return account::replace_key(cx, key).await;
+    }
+    connect_key(cx, key, Some(ConnectionNote::Browser)).await
 }
 
 pub(crate) async fn import_legacy(cx: &Cx) -> Result<ConnectOutcome, AppError> {
@@ -288,7 +296,7 @@ pub(crate) async fn import_legacy(cx: &Cx) -> Result<ConnectOutcome, AppError> {
         .and_then(|config| config.access_token)
         .and_then(|token| key_from(&token));
     match token {
-        Some(key) => connect_key(cx, key, true).await,
+        Some(key) => connect_key(cx, key, Some(ConnectionNote::Imported)).await,
         None => Ok(ConnectOutcome::Rejected),
     }
 }

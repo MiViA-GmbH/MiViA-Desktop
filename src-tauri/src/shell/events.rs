@@ -73,6 +73,8 @@ macro_rules! app_commands {
             setup::save_setup,
             setup::pick_setup_folder,
             setup::connect_access_key,
+            setup::start_browser_sign_in,
+            setup::cancel_sign_in,
             setup::import_legacy_key,
             setup::close_legacy_app,
             setup::complete_setup,

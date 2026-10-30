@@ -21,6 +21,7 @@ pub(crate) mod privacy;
 pub(crate) mod series_actions;
 pub(crate) mod setup;
 mod shutdown;
+pub(crate) mod sign_in;
 mod start;
 pub(crate) mod support;
 pub(crate) mod telemetry;

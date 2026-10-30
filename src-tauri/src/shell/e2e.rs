@@ -67,6 +67,10 @@ pub(crate) fn picked_folder() -> Option<String> {
     var("MIVIA_E2E_PICK_FOLDER")
 }
 
+pub(crate) fn sign_in_url_file() -> Option<String> {
+    var("MIVIA_E2E_SIGN_IN_URL_FILE")
+}
+
 pub(crate) fn credentials() -> Arc<dyn CredentialStore> {
     let seeded = origin()
         .zip(var("MIVIA_E2E_ACCESS_KEY"))

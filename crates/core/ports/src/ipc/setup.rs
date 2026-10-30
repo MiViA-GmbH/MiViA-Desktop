@@ -60,6 +60,7 @@ pub enum ConnectionNote {
     LicenseInactive,
     StoreFailed,
     Imported,
+    Browser,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -98,6 +99,8 @@ pub enum ConnectOutcome {
         new_name: String,
     },
     Cancelled,
+    SignInUnavailable,
+    SignInTimedOut,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

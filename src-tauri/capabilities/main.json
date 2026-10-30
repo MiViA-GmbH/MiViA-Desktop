@@ -39,6 +39,8 @@
 		"allow-save-setup",
 		"allow-pick-setup-folder",
 		"allow-connect-access-key",
+		"allow-start-browser-sign-in",
+		"allow-cancel-sign-in",
 		"allow-import-legacy-key",
 		"allow-close-legacy-app",
 		"allow-complete-setup",

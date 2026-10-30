@@ -3,8 +3,8 @@ use mivia_application::setup::SetupDraft;
 use mivia_domain::ids::FolderId;
 use mivia_ports::ipc::setup::{ArrivalPreset, ConnectionNote, ReportMode, SetupOption, SetupStep};
 use mivia_ports::telemetry::{
-    ExistingImages, FinishPreset, FinishReportMode, FolderAdded, FolderVia, WizardBack,
-    WizardFinished, WizardRestarted, WizardStepCompleted, WizardStepShown,
+    AccountKind, ExistingImages, FinishPreset, FinishReportMode, FolderAdded, FolderVia,
+    WizardBack, WizardFinished, WizardRestarted, WizardStepCompleted, WizardStepShown,
 };
 
 use super::refresh_gate;
@@ -66,11 +66,16 @@ fn existing(folder: Option<FolderId>, draft: &SetupDraft) -> ExistingImages {
 }
 
 fn account_connected(services: &Services, draft: &SetupDraft) {
-    let imported = draft
+    let notes = draft
         .connection
         .as_ref()
-        .is_some_and(|connection| connection.notes.contains(&ConnectionNote::Imported));
-    super::account_connected(services, imported);
+        .map_or(&[][..], |connection| connection.notes.as_slice());
+    let kind = if notes.contains(&ConnectionNote::Browser) {
+        AccountKind::Browser
+    } else {
+        AccountKind::AccessKey
+    };
+    super::account_connected(services, kind, notes.contains(&ConnectionNote::Imported));
 }
 
 fn folder_added(services: &Services, draft: &SetupDraft, id: FolderId) {
