@@ -52,7 +52,15 @@ function BrowserPanel({ error, pending, onCancel, onStart }: BrowserPanelProps) 
 export function SignInTabs({ error, host, keyPanel, onOutcome, onTabChange }: SignInTabsProps) {
 	const { t } = useTranslation();
 	const [tab, setTab] = useState<string | null>('browser');
-	const browser = useMutation({ mutationFn: () => commands.startBrowserSignIn(), onSuccess: onOutcome });
+	const browser = useMutation({
+		mutationFn: () => commands.startBrowserSignIn(),
+		onSuccess: (outcome) => {
+			if (outcome.kind === 'signInUnavailable') {
+				setTab('key');
+			}
+			onOutcome(outcome);
+		},
+	});
 	const cancel = () => commands.cancelSignIn();
 	useEffect(() => () => void commands.cancelSignIn(), []);
 	const change = (next: string | null) => {

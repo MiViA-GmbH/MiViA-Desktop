@@ -114,6 +114,14 @@ purpose_de = "Zeigt, dass ein API-Schlüssel akzeptiert wurde."
 fields = { kind = { enum = ["access_key", "browser"] }, imported_from_v1 = "flag" }
 
 [[event]]
+name = "sign_in.failed"
+category = "diagnostics"
+priority = "core"
+purpose_en = "Shows which sign-in method did not finish and why."
+purpose_de = "Zeigt, welches Anmeldeverfahren nicht abgeschlossen wurde und warum."
+fields = { method = { enum = ["browser", "code"] }, reason = { enum = ["timeout", "unavailable", "denied", "offline", "cancelled"] } }
+
+[[event]]
 name = "account.switched"
 category = "diagnostics"
 priority = "core"

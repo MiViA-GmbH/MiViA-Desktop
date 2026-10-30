@@ -19,7 +19,7 @@ export default defineConfig({
 			testMatch: ['smoke.spec.ts', 'wizard.spec.ts', 'history.spec.ts', 'preview.spec.ts', 'review.spec.ts'],
 			use: { baseURL: 'http://127.0.0.1:4319' },
 		},
-		{ name: 'e2e', testMatch: 'scenarios.spec.ts', timeout: 240_000 },
+		{ name: 'e2e', testMatch: ['scenarios.spec.ts', 'sign-in.spec.ts'], timeout: 240_000 },
 	],
 	webServer: {
 		command:

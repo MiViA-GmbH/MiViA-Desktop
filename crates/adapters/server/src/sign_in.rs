@@ -2,6 +2,7 @@ mod listener;
 
 use std::future::Future;
 use std::sync::Arc;
+use std::time::Duration;
 
 use arc_swap::ArcSwap;
 use base64::Engine;
@@ -16,6 +17,8 @@ use reqwest::{RequestBuilder, StatusCode};
 use secrecy::{ExposeSecret, SecretString};
 use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
+use tokio::sync::Notify;
+use tokio::time::timeout;
 use url::Url;
 
 use crate::clients::HttpClients;
@@ -30,6 +33,9 @@ const KEY_NAME_LIMIT: usize = 128;
 pub enum SignInError {
     Unavailable,
     Offline,
+    Denied,
+    TimedOut,
+    Cancelled,
 }
 
 pub struct IssuedKey {
@@ -63,6 +69,18 @@ pub fn key_name(computer: Option<&str>) -> String {
 pub fn safe_to_open(url: &str, allow_loopback: bool) -> bool {
     let loopback = url.starts_with("http://127.0.0.1:") || url.starts_with("http://127.0.0.1/");
     url.starts_with("https://") || (allow_loopback && loopback)
+}
+
+pub async fn until_stopped<T>(
+    stop: &Notify,
+    limit: Duration,
+    attempt: impl Future<Output = Result<T, SignInError>>,
+) -> Result<T, SignInError> {
+    tokio::select! {
+        biased;
+        () = stop.notified() => Err(SignInError::Cancelled),
+        ended = timeout(limit, attempt) => ended.unwrap_or(Err(SignInError::TimedOut)),
+    }
 }
 
 fn random_token() -> Result<SecretString, SignInError> {
@@ -213,8 +231,10 @@ impl BrowserSignIn {
         Earlier: Future<Output = Option<String>>,
     {
         let redirect_uri = self.listener.redirect_uri();
-        let Returned::Code(code) = self.listener.wait().await else {
-            return Err(SignInError::Unavailable);
+        let code = match self.listener.wait().await {
+            Returned::Code(code) => code,
+            Returned::Denied => return Err(SignInError::Denied),
+            Returned::Failed => return Err(SignInError::Unavailable),
         };
         let form = [
             ("grant_type", "authorization_code"),

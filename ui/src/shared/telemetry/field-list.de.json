@@ -348,6 +348,24 @@
 			"category": "diagnostics",
 			"fields": [
 				{
+					"name": "method",
+					"type": "choice",
+					"values": ["browser", "code"]
+				},
+				{
+					"name": "reason",
+					"type": "choice",
+					"values": ["timeout", "unavailable", "denied", "offline", "cancelled"]
+				}
+			],
+			"name": "sign_in.failed",
+			"priority": "core",
+			"purpose": "Zeigt, welches Anmeldeverfahren nicht abgeschlossen wurde und warum."
+		},
+		{
+			"category": "diagnostics",
+			"fields": [
+				{
 					"name": "state",
 					"type": "choice",
 					"values": ["user", "key_invalid", "key_removed"]
