@@ -268,7 +268,6 @@
 			"continues": "Die Bilder sind sicher, es geht automatisch weiter.",
 			"copied": "Kopiert",
 			"copyDetails": "Details für die IT kopieren",
-			"enterKey": "Neuen API-Schlüssel eingeben",
 			"license": {
 				"text": "Die Bilder sind sicher und warten hier. Fragen Sie die MiViA-Ansprechperson im Labor.",
 				"title": "Ihre MiViA-Lizenz ist nicht gültig."
@@ -294,6 +293,7 @@
 				"license": "Lizenz in MiViA anzeigen"
 			},
 			"safe": "Die Bilder sind sicher und warten hier.",
+			"signInAgain": "Erneut anmelden",
 			"serviceUnavailable": {
 				"title": "Störung bei MiViA seit {{time}}, nicht an Ihrem PC oder Netzwerk."
 			},
