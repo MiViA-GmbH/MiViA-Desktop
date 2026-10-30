@@ -1,13 +1,15 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use mivia_application::setup::earlier_issued_key;
 use mivia_ports::ipc::error::AppError;
 use mivia_ports::ipc::setup::ConnectOutcome;
+use mivia_ports::store::StoreExt;
 use mivia_server::{SignInApi, SignInError, key_name, safe_to_open};
 use tauri::AppHandle;
 
 use super::account::offline_details;
-use super::cx::Cx;
+use super::cx::{Cx, Ready};
 use super::setup;
 use super::window;
 
@@ -29,6 +31,18 @@ async fn open_browser(url: &str) -> Result<(), SignInError> {
     }
 }
 
+async fn earlier_key(ready: &Ready, account: String) -> Option<String> {
+    let origin = ready.services.origin.0.clone();
+    let found = ready
+        .store
+        .write(move |tx| earlier_issued_key(tx, &origin, &account))
+        .await;
+    found.unwrap_or_else(|error| {
+        tracing::warn!(?error, "store.issuedKeyUnreadable");
+        None
+    })
+}
+
 pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, AppError> {
     let stop = cx.setup.begin_sign_in();
     let ready = cx.ready().await;
@@ -39,7 +53,9 @@ pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, 
     let attempt = async {
         let sign_in = api.start_browser(language, name).await?;
         open_browser(sign_in.url()).await?;
-        sign_in.finish(&api).await
+        sign_in
+            .finish(&api, |account| earlier_key(&ready, account))
+            .await
     };
     let result = tokio::select! {
         biased;
@@ -52,7 +68,7 @@ pub(crate) async fn browser(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, 
     match result {
         Ok(issued) => {
             window::reveal(app);
-            setup::connect_issued(cx, issued.key).await
+            setup::connect_issued(cx, issued).await
         }
         Err(SignInError::Unavailable) => {
             window::reveal(app);

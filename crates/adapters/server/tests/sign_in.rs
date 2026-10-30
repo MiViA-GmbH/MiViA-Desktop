@@ -56,6 +56,10 @@ async fn serve_token_side(mock: &MockServer) {
         .await;
 }
 
+async fn no_issued_key(_account: String) -> Option<String> {
+    None
+}
+
 fn query(url: &str) -> BTreeMap<String, String> {
     Url::parse(url)
         .unwrap()
@@ -120,7 +124,7 @@ async fn a_valid_return_exchanges_the_code_and_issues_a_named_key() {
         .unwrap();
     let url = sign_in.url().to_owned();
     let back = Return::of(&sign_in);
-    let finish = tokio::spawn(async move { sign_in.finish(&api).await });
+    let finish = tokio::spawn(async move { sign_in.finish(&api, no_issued_key).await });
     let answer = back.send(back.valid().as_bytes()).await;
     let issued = finish.await.unwrap().unwrap();
 
@@ -147,6 +151,38 @@ async fn a_valid_return_exchanges_the_code_and_issues_a_named_key() {
         .unwrap();
     let body: serde_json::Value = serde_json::from_slice(&issue.body).unwrap();
     assert_eq!(body, json!({ "name": "MiViA Desktop on LAB" }));
+}
+
+#[tokio::test]
+async fn a_later_sign_in_replaces_the_key_issued_to_that_account() {
+    let mock = MockServer::start().await;
+    serve_token_side(&mock).await;
+    let api = api(&mock);
+    let sign_in = api
+        .start_browser(Language::En, "MiViA Desktop on LAB".to_owned())
+        .await
+        .unwrap();
+    let back = Return::of(&sign_in);
+    let finish = tokio::spawn(async move {
+        sign_in
+            .finish(&api, async |account: String| {
+                (account == "account-1").then(|| "key-0".to_owned())
+            })
+            .await
+    });
+    back.send(back.valid().as_bytes()).await;
+    assert_eq!(finish.await.unwrap().unwrap().id, "key-1");
+
+    let requests = mock.received_requests().await.unwrap();
+    let issue = requests
+        .iter()
+        .find(|request| request.url.path() == "/api/api-keys/issue")
+        .unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&issue.body).unwrap();
+    assert_eq!(
+        body,
+        json!({ "name": "MiViA Desktop on LAB", "replaces": "key-0" })
+    );
 }
 
 #[tokio::test]
@@ -237,7 +273,7 @@ async fn requests_that_are_not_the_expected_return_get_an_error_and_do_not_end_t
         .await
         .unwrap();
     let back = Return::of(&sign_in);
-    let finish = tokio::spawn(async move { sign_in.finish(&api).await });
+    let finish = tokio::spawn(async move { sign_in.finish(&api, no_issued_key).await });
     let state = &back.state;
     let port = back.port;
     let flipped = if state.starts_with('A') { "B" } else { "A" };
@@ -296,7 +332,7 @@ async fn a_silent_connection_is_dropped_after_the_read_limit() {
         .await
         .unwrap();
     let back = Return::of(&sign_in);
-    let finish = tokio::spawn(async move { sign_in.finish(&api).await });
+    let finish = tokio::spawn(async move { sign_in.finish(&api, no_issued_key).await });
     let _silent = TcpStream::connect(("127.0.0.1", back.port)).await.unwrap();
     tokio::time::sleep(Duration::from_millis(100)).await;
     let started = Instant::now();
@@ -320,7 +356,7 @@ async fn the_page_is_static_in_the_language_of_the_app() {
         .await
         .unwrap();
     let back = Return::of(&sign_in);
-    let finish = tokio::spawn(async move { sign_in.finish(&api).await });
+    let finish = tokio::spawn(async move { sign_in.finish(&api, no_issued_key).await });
     let answer = back.send(back.valid().as_bytes()).await;
     finish.await.unwrap().unwrap();
     let lower = answer.to_ascii_lowercase();
@@ -343,7 +379,7 @@ async fn a_return_with_an_error_ends_the_sign_in_with_the_failure_page() {
         .await
         .unwrap();
     let back = Return::of(&sign_in);
-    let finish = tokio::spawn(async move { sign_in.finish(&api).await });
+    let finish = tokio::spawn(async move { sign_in.finish(&api, no_issued_key).await });
     let target = format!("/callback?error=invalid_scope&state={}", back.state);
     let answer = back.send(back.head(&target).as_bytes()).await;
     assert!(answer.contains("Sign-in failed. Return to MiViA Desktop."));
@@ -373,7 +409,7 @@ async fn a_refused_exchange_issues_no_key() {
         .await
         .unwrap();
     let back = Return::of(&sign_in);
-    let finish = tokio::spawn(async move { sign_in.finish(&api).await });
+    let finish = tokio::spawn(async move { sign_in.finish(&api, no_issued_key).await });
     back.send(back.valid().as_bytes()).await;
     assert!(matches!(
         finish.await.unwrap(),

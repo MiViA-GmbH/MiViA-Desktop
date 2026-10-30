@@ -16,7 +16,7 @@ use mivia_ports::auth::{
     CredentialStore, CredentialStoreError, Identity, ServerOrigin, StoredCredential,
 };
 use mivia_ports::ipc::screens::AccountView;
-use mivia_ports::telemetry::AccountKind;
+use mivia_ports::ipc::setup::ConnectionNote;
 use parking_lot::Mutex;
 use secrecy::SecretString;
 use tauri::{AppHandle, Manager};
@@ -35,11 +35,28 @@ pub(crate) use wizard::{connect, connect_issued, import_legacy, pick, save, view
 const PICK_LIFETIME: Duration = Duration::from_secs(600);
 const REFUSAL: Duration = Duration::from_secs(60);
 
-type Switch = (AccountView, Identity, SecretString, AccountKind);
+type Switch = (AccountView, Identity, NewKey);
+
+#[derive(Clone)]
+pub(crate) struct NewKey {
+    pub(crate) key: SecretString,
+    pub(crate) source: Option<ConnectionNote>,
+    pub(crate) issued_id: Option<String>,
+}
+
+impl NewKey {
+    pub(crate) fn from_source(key: SecretString, source: Option<ConnectionNote>) -> Self {
+        Self {
+            key,
+            source,
+            issued_id: None,
+        }
+    }
+}
 
 #[derive(Default)]
 pub(crate) struct Session {
-    retry_key: Mutex<Option<SecretString>>,
+    retry_key: Mutex<Option<NewKey>>,
     memory_key: Mutex<Option<SecretString>>,
     switch: Mutex<Option<Switch>>,
     sign_in: Mutex<Option<Arc<Notify>>>,
@@ -58,11 +75,11 @@ impl Session {
         *self.memory_key.lock() = Some(key);
     }
 
-    pub(crate) fn hold_pending(&self, key: SecretString) {
+    pub(crate) fn hold_pending(&self, key: NewKey) {
         *self.retry_key.lock() = Some(key);
     }
 
-    pub(crate) fn pending(&self) -> Option<SecretString> {
+    pub(crate) fn pending(&self) -> Option<NewKey> {
         self.retry_key.lock().clone()
     }
 

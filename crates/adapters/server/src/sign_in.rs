@@ -1,11 +1,14 @@
 mod listener;
 
+use std::future::Future;
 use std::sync::Arc;
 
 use arc_swap::ArcSwap;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use mivia_api::{IssuedAccessKey, JSON_LIMIT, OauthAccount, OauthClient, OauthToken, read_capped};
+use mivia_api::{
+    IssueAccessKey, IssuedAccessKey, JSON_LIMIT, OauthAccount, OauthClient, OauthToken, read_capped,
+};
 use mivia_domain::naming::Language;
 use mivia_ports::auth::ServerOrigin;
 use reqwest::header::HeaderValue;
@@ -161,8 +164,12 @@ impl SignInApi {
         answer(request, StatusCode::OK).await
     }
 
-    async fn issue(&self, token: &SecretString, name: &str) -> Result<IssuedKey, SignInError> {
-        let request = mivia_api::issue_access_key(&self.client(), &self.base, bearer(token)?, name);
+    async fn issue(
+        &self,
+        token: &SecretString,
+        body: &IssueAccessKey<'_>,
+    ) -> Result<IssuedKey, SignInError> {
+        let request = mivia_api::issue_access_key(&self.client(), &self.base, bearer(token)?, body);
         let issued: IssuedAccessKey = answer(request, StatusCode::CREATED).await?;
         Ok(IssuedKey {
             id: issued.id,
@@ -170,10 +177,24 @@ impl SignInApi {
         })
     }
 
-    async fn key_for(&self, form: &[(&str, &str)], name: &str) -> Result<IssuedKey, SignInError> {
+    async fn key_for<F, Earlier>(
+        &self,
+        form: &[(&str, &str)],
+        name: &str,
+        earlier_key: F,
+    ) -> Result<IssuedKey, SignInError>
+    where
+        F: FnOnce(String) -> Earlier,
+        Earlier: Future<Output = Option<String>>,
+    {
         let token = self.exchange(form).await?;
-        self.account(&token).await?;
-        self.issue(&token, name).await
+        let account = self.account(&token).await?;
+        let replaces = earlier_key(account.sub).await;
+        let body = IssueAccessKey {
+            name,
+            replaces: replaces.as_deref(),
+        };
+        self.issue(&token, &body).await
     }
 }
 
@@ -182,7 +203,15 @@ impl BrowserSignIn {
         &self.url
     }
 
-    pub async fn finish(self, api: &SignInApi) -> Result<IssuedKey, SignInError> {
+    pub async fn finish<F, Earlier>(
+        self,
+        api: &SignInApi,
+        earlier_key: F,
+    ) -> Result<IssuedKey, SignInError>
+    where
+        F: FnOnce(String) -> Earlier,
+        Earlier: Future<Output = Option<String>>,
+    {
         let redirect_uri = self.listener.redirect_uri();
         let Returned::Code(code) = self.listener.wait().await else {
             return Err(SignInError::Unavailable);
@@ -194,6 +223,6 @@ impl BrowserSignIn {
             ("code_verifier", self.verifier.expose_secret()),
             ("redirect_uri", redirect_uri.as_str()),
         ];
-        api.key_for(&form, &self.key_name).await
+        api.key_for(&form, &self.key_name, earlier_key).await
     }
 }

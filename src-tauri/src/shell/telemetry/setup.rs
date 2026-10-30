@@ -65,17 +65,24 @@ fn existing(folder: Option<FolderId>, draft: &SetupDraft) -> ExistingImages {
     }
 }
 
+pub(crate) fn kind_of(notes: &[ConnectionNote]) -> AccountKind {
+    if notes.contains(&ConnectionNote::Browser) {
+        AccountKind::Browser
+    } else {
+        AccountKind::AccessKey
+    }
+}
+
 fn account_connected(services: &Services, draft: &SetupDraft) {
     let notes = draft
         .connection
         .as_ref()
         .map_or(&[][..], |connection| connection.notes.as_slice());
-    let kind = if notes.contains(&ConnectionNote::Browser) {
-        AccountKind::Browser
-    } else {
-        AccountKind::AccessKey
-    };
-    super::account_connected(services, kind, notes.contains(&ConnectionNote::Imported));
+    super::account_connected(
+        services,
+        kind_of(notes),
+        notes.contains(&ConnectionNote::Imported),
+    );
 }
 
 fn folder_added(services: &Services, draft: &SetupDraft, id: FolderId) {
