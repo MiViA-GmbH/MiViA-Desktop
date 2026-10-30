@@ -2,11 +2,10 @@ import { type ChildProcess, spawn, spawnSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { type Browser, chromium, expect, type Page } from '@playwright/test';
 
-const REPO = resolve(import.meta.dirname, '../..');
+export const REPO = resolve(import.meta.dirname, '../..');
 export const TARGET = join(REPO, 'target', 'e2e');
-export const RUN = join(REPO, 'target', 'e2e-run', String(Date.now()));
-const CDP_PORT = 9333;
 export const STUB_KEY = 'stub-access-key-0123456789-abcdefghijkl';
+const CDP_PORT = 9333;
 
 export type Running = { stub: ChildProcess; app: ChildProcess; origin: string; browser: Browser; page: Page };
 
@@ -82,8 +81,4 @@ export function stop(child: ChildProcess | undefined): Promise<void> {
 	const exited = new Promise<void>((done) => child.once('exit', () => done()));
 	spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f']);
 	return exited;
-}
-
-export async function next(page: Page, name = 'Next'): Promise<void> {
-	await page.getByRole('button', { name, exact: true }).click();
 }

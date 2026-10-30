@@ -2,8 +2,9 @@ import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, type Page, test } from '@playwright/test';
-import { launch, next, RUN, type Running, shutdown } from './harness';
+import { launch, REPO, type Running, shutdown } from './stub-app';
 
+const RUN = join(REPO, 'target', 'e2e-run', `sign-in-${Date.now()}`);
 const COMPUTER = 'LAB-PC-7';
 const UNFINISHED = join(RUN, 'unfinished');
 const UNFINISHED_WATCHED = join(UNFINISHED, 'Labor');
@@ -64,10 +65,10 @@ test.describe
 			await rm(RUN, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 });
 		});
 
-		test('scenario 10: a server without sign-in shows the message and the API key tab', async () => {
+		test('scenario 11: a server without sign-in shows the message and the API key tab', async () => {
 			const { page } = running;
 			await expect(page.getByRole('heading', { name: 'Welcome to MiViA Desktop' })).toBeVisible({ timeout: 30_000 });
-			await next(page, 'Start setup');
+			await page.getByRole('button', { name: 'Start setup', exact: true }).click();
 			await answerClientLookup('missing');
 			await expectUnavailable(page);
 
@@ -79,7 +80,7 @@ test.describe
 			expect(existsSync(UNFINISHED_URL_FILE)).toBe(false);
 		});
 
-		test('scenario 11: cancel and a tab change close the listener', async () => {
+		test('scenario 12: cancel and a tab change close the listener', async () => {
 			const { page } = running;
 			await answerClientLookup('normal');
 			await page.getByRole('tab', { name: 'Browser' }).click();
@@ -96,7 +97,7 @@ test.describe
 			await expectListenerClosed(left);
 		});
 
-		test('scenario 12: a sign-in that did not finish is recorded without anything identifying', async () => {
+		test('scenario 13: a sign-in that did not finish is recorded without anything identifying', async () => {
 			const { page, origin } = running;
 			await fetch(await waitInBrowser(page));
 			await expect(page.getByText('Connected as Stub Lab')).toBeVisible({ timeout: 20_000 });
@@ -129,7 +130,7 @@ test.describe
 			await move('Next', 'How do images arrive in this folder?');
 			await move('Next', 'Which models should analyze the images?');
 			await move('Next', 'Windows and privacy');
-			await next(page, 'Finish setup');
+			await page.getByRole('button', { name: 'Finish setup', exact: true }).click();
 			await expect(page.getByRole('heading', { name: 'MiViA Desktop is ready' })).toBeVisible({ timeout: 30_000 });
 
 			type Sent = { name: string; fields: unknown };

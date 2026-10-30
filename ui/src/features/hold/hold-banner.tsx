@@ -153,7 +153,7 @@ function HoldAction({ kind }: { kind: HoldKind }) {
 				onClick={() => navigate({ to: '/settings/$section', params: { section: 'account' } })}
 				size="xs"
 			>
-				{t('desktop.hold.enterKey')}
+				{t('desktop.hold.signInAgain')}
 			</Button>
 		);
 	}
