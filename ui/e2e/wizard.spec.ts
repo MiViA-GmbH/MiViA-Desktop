@@ -58,6 +58,8 @@ test('the setup can be finished with the keyboard alone', async ({ page }) => {
 	await expect(button(page, 'Next')).toBeDisabled();
 	await page.keyboard.press('Tab');
 	await page.keyboard.press('ArrowRight');
+	await expect(page.getByRole('tab', { name: 'Code' })).toHaveAttribute('aria-selected', 'true');
+	await page.keyboard.press('ArrowRight');
 	await expect(page.getByRole('tab', { name: 'API key' })).toHaveAttribute('aria-selected', 'true');
 	await page.keyboard.press('Tab');
 	await page.keyboard.type('mv-bad-key-0123456789-0123456789-0123456789');
