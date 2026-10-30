@@ -4,6 +4,7 @@ mod diagnostics;
 mod errors;
 mod reports;
 mod results;
+mod sign_in;
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -20,6 +21,7 @@ pub struct Stub {
     pub scheme: &'static str,
     files: Arc<Mutex<BTreeMap<String, Vec<u8>>>>,
     served: Arc<Mutex<Vec<Vec<u8>>>>,
+    sign_in: Arc<Mutex<sign_in::SignInState>>,
 }
 
 impl Stub {
@@ -30,6 +32,7 @@ impl Stub {
             scheme: "http",
             files: Arc::default(),
             served: Arc::default(),
+            sign_in: Arc::default(),
         }
     }
 
@@ -39,6 +42,7 @@ impl Stub {
             .merge(reports::routes())
             .merge(results::routes())
             .merge(diagnostics::routes())
+            .merge(sign_in::routes())
             .with_state(self.clone())
     }
 
