@@ -151,7 +151,7 @@ test.describe
 			}
 		});
 
-		test('scenario 14: signing in again replaces the issued key, also after signing out', async () => {
+		test('scenario 15: signing in again replaces the issued key, also after signing out', async () => {
 			const { page, origin } = running;
 			const issuedKeys = async (): Promise<{ id: string; replaces: string | null }[]> =>
 				(await fetch(`${origin}/__stub/issued-keys`)).json();
