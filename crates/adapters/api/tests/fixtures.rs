@@ -8,8 +8,8 @@ use mivia_api::types::{
     UserJobDto,
 };
 use mivia_api::{
-    AccessKeyCurrent, ApiErrorBody, IssuedAccessKey, OauthAccount, OauthClient, OauthToken,
-    ReportCreated, Version,
+    AccessKeyCurrent, ApiErrorBody, DeviceCode, IssuedAccessKey, OauthAccount, OauthClient,
+    OauthError, OauthToken, ReportCreated, Version,
 };
 use serde::de::DeserializeOwned;
 
@@ -35,6 +35,8 @@ fn decoder(operation: &str, status: &str) -> Option<Decode> {
         ("accessKeysInfo", "200") => parses::<AccessKeyCurrent>,
         ("oauthClientByApp", "200") => parses::<OauthClient>,
         ("oauthToken", "200") => parses::<OauthToken>,
+        ("oauthToken", "400") => parses::<OauthError>,
+        ("oauthDeviceCode", "200") => parses::<DeviceCode>,
         ("oauthUserinfo", "200") => parses::<OauthAccount>,
         ("accessKeyIssue", "201") => parses::<IssuedAccessKey>,
         ("JobsV2Controller_getJobResults", "200") => parses::<JobV2Detail>,

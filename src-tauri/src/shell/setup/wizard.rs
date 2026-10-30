@@ -275,14 +275,23 @@ pub(crate) async fn connect(cx: &Cx, key: Option<String>) -> Result<ConnectOutco
     connect_key(cx, key, None).await
 }
 
+pub(crate) fn issued_kind(note: ConnectionNote) -> AccountKind {
+    if note == ConnectionNote::Code {
+        AccountKind::Code
+    } else {
+        AccountKind::Browser
+    }
+}
+
 pub(crate) async fn connect_issued(
     cx: &Cx,
     key: secrecy::SecretString,
+    note: ConnectionNote,
 ) -> Result<ConnectOutcome, AppError> {
     if cx.completed() {
-        return account::replace_key(cx, key, AccountKind::Browser).await;
+        return account::replace_key(cx, key, issued_kind(note)).await;
     }
-    connect_key(cx, key, Some(ConnectionNote::Browser)).await
+    connect_key(cx, key, Some(note)).await
 }
 
 pub(crate) async fn import_legacy(cx: &Cx) -> Result<ConnectOutcome, AppError> {

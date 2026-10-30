@@ -71,7 +71,9 @@ tags! {
     FinishPreset { Microscope "microscope", WholeFolder "whole_folder", ByHand "by_hand", None "none" }
     FinishReportMode { Subfolder "subfolder", Beside "beside", Custom "custom", None "none" }
     ExistingImages { OnlyNew "only_new", AlsoExisting "also_existing", None "none" }
-    AccountKind { AccessKey "access_key", Browser "browser" }
+    AccountKind { AccessKey "access_key", Browser "browser", Code "code" }
+    SignInMethod { Browser "browser", Code "code" }
+    SignInReason { Timeout "timeout", Unavailable "unavailable", Denied "denied", Offline "offline", Cancelled "cancelled" }
     AccountState { User "user", KeyInvalid "key_invalid", KeyRemoved "key_removed" }
     MigrationState { Done "done", Pending "pending", Failed "failed" }
     FolderVia { Wizard "wizard", Settings "settings", EmptyState "empty_state" }
@@ -129,6 +131,7 @@ events! {
     WizardRestarted "wizard.restarted" { state: SetupStep, previous_duration_ms: u64 }
     WizardFinished "wizard.finished" { duration_ms: u64, preset: FinishPreset, report_mode: FinishReportMode, autostart: bool, explorer: bool, existing_images: ExistingImages, skipped_steps: u64, model_choices: u64 }
     AccountConnected "account.connected" { kind: AccountKind, imported_from_v1: bool }
+    SignInFailed "sign_in.failed" { method: SignInMethod, reason: SignInReason }
     AccountSwitched "account.switched" { state: AccountState }
     AccountDisconnected "account.disconnected" { state: AccountState }
     LegacyMigrated "legacy.migrated" { count: u64, state: MigrationState }

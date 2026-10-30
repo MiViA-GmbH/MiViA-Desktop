@@ -16,6 +16,7 @@ use mivia_ports::auth::{
     CredentialStore, CredentialStoreError, Identity, ServerOrigin, StoredCredential,
 };
 use mivia_ports::ipc::screens::AccountView;
+use mivia_ports::ipc::setup::ConnectionNote;
 use mivia_ports::telemetry::AccountKind;
 use mivia_server::SignedIn;
 use parking_lot::Mutex;
@@ -31,7 +32,7 @@ use super::window::LABEL;
 pub(crate) use catalogue::catalogue;
 pub(crate) use complete::complete;
 pub(crate) use legacy::{close_legacy, retry_legacy_stop};
-pub(crate) use wizard::{connect, connect_issued, import_legacy, pick, save, view};
+pub(crate) use wizard::{connect, connect_issued, import_legacy, issued_kind, pick, save, view};
 
 const PICK_LIFETIME: Duration = Duration::from_secs(600);
 const REFUSAL: Duration = Duration::from_secs(60);
@@ -46,7 +47,7 @@ pub(crate) enum Switch {
     SignedIn {
         previous: AccountView,
         signed_in: SignedIn,
-        kind: AccountKind,
+        note: ConnectionNote,
     },
 }
 

@@ -58,6 +58,8 @@ test('the setup can be finished with the keyboard alone', async ({ page }) => {
 	await expect(button(page, 'Next')).toBeDisabled();
 	await page.keyboard.press('Tab');
 	await page.keyboard.press('ArrowRight');
+	await expect(page.getByRole('tab', { name: 'Code' })).toHaveAttribute('aria-selected', 'true');
+	await page.keyboard.press('ArrowRight');
 	await expect(page.getByRole('tab', { name: 'API key' })).toHaveAttribute('aria-selected', 'true');
 	await page.keyboard.press('Tab');
 	await page.keyboard.type('mv-bad-key-0123456789-0123456789-0123456789');
@@ -148,6 +150,21 @@ test('the account step signs in through the browser and links to the API keys pa
 	await button(page, 'Open the browser').click();
 	await expect(page.getByText('Connected as Dr. Katrin Möller')).toBeVisible();
 	await expect(button(page, 'Next')).toBeEnabled();
+});
+
+test('the code tab shows the code, a copy button and the link to the device page', async ({ page }) => {
+	await open(page, 'scenario=setup');
+	await page.getByRole('button', { name: 'Start setup' }).click();
+	await heading(page, 'Connect your MiViA account');
+	await page.getByRole('tab', { name: 'Code' }).click();
+	await expect(page.getByText('WDJB-MJHT')).toBeVisible();
+	await expect(button(page, 'Copy code')).toBeVisible();
+	await expect(page.getByText('Waiting for approval.')).toBeVisible();
+	await expect(button(page, 'app.mivia.ai/device')).toBeVisible();
+	await expect(button(page, 'Next')).toBeDisabled();
+	await structure(page);
+	await page.getByRole('tab', { name: 'Browser' }).click();
+	await expect(button(page, 'Open the browser')).toBeVisible();
 });
 
 test('the old version step offers to take over the old settings', async ({ page }) => {

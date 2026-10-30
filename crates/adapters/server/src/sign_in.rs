@@ -1,6 +1,8 @@
+mod device;
 mod listener;
 
 use std::sync::Arc;
+use std::time::Duration;
 
 use arc_swap::ArcSwap;
 use base64::Engine;
@@ -13,9 +15,12 @@ use reqwest::{RequestBuilder, StatusCode};
 use secrecy::{ExposeSecret, SecretString};
 use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
+use tokio::sync::Notify;
+use tokio::time::timeout;
 use url::Url;
 
 use crate::clients::HttpClients;
+pub use device::DeviceSignIn;
 use listener::{Listener, Returned};
 
 const APP_ID: &str = "mivia-desktop";
@@ -27,6 +32,10 @@ const KEY_NAME_LIMIT: usize = 128;
 pub enum SignInError {
     Unavailable,
     Offline,
+    Denied,
+    Expired,
+    TimedOut,
+    Cancelled,
 }
 
 pub struct IssuedKey {
@@ -68,6 +77,18 @@ pub fn key_name(computer: Option<&str>) -> String {
 pub fn safe_to_open(url: &str, allow_loopback: bool) -> bool {
     let loopback = url.starts_with("http://127.0.0.1:") || url.starts_with("http://127.0.0.1/");
     url.starts_with("https://") || (allow_loopback && loopback)
+}
+
+pub async fn until_stopped<T>(
+    stop: &Notify,
+    limit: Duration,
+    attempt: impl Future<Output = Result<T, SignInError>>,
+) -> Result<T, SignInError> {
+    tokio::select! {
+        biased;
+        () = stop.notified() => Err(SignInError::Cancelled),
+        ended = timeout(limit, attempt) => ended.unwrap_or(Err(SignInError::TimedOut)),
+    }
 }
 
 fn random_token() -> Result<SecretString, SignInError> {
@@ -180,10 +201,9 @@ impl SignInApi {
 
     async fn signed_in(
         &self,
-        form: &[(&str, &str)],
+        token: SecretString,
         key_name: String,
     ) -> Result<SignedIn, SignInError> {
-        let token = self.exchange(form).await?;
         let account = self.account(&token).await?;
         Ok(SignedIn {
             account_id: account.sub,
@@ -212,8 +232,10 @@ impl BrowserSignIn {
 
     pub async fn finish(self, api: &SignInApi) -> Result<SignedIn, SignInError> {
         let redirect_uri = self.listener.redirect_uri();
-        let Returned::Code(code) = self.listener.wait().await else {
-            return Err(SignInError::Unavailable);
+        let code = match self.listener.wait().await {
+            Returned::Code(code) => code,
+            Returned::Denied => return Err(SignInError::Denied),
+            Returned::Failed => return Err(SignInError::Unavailable),
         };
         let form = [
             ("grant_type", "authorization_code"),
@@ -222,6 +244,7 @@ impl BrowserSignIn {
             ("code_verifier", self.verifier.expose_secret()),
             ("redirect_uri", redirect_uri.as_str()),
         ];
-        api.signed_in(&form, self.key_name).await
+        let token = api.exchange(&form).await?;
+        api.signed_in(token, self.key_name).await
     }
 }

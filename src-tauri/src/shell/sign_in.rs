@@ -2,15 +2,18 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use mivia_ports::ipc::error::AppError;
-use mivia_ports::ipc::setup::ConnectOutcome;
-use mivia_ports::telemetry::AccountKind;
-use mivia_server::{SignInApi, SignInError, SignedIn, key_name, safe_to_open};
+use mivia_ports::ipc::setup::{ConnectOutcome, ConnectionNote};
+use mivia_ports::telemetry::{SignInMethod, SignInReason};
+use mivia_server::{SignInApi, SignInError, SignedIn, key_name, safe_to_open, until_stopped};
 use secrecy::SecretString;
 use tauri::AppHandle;
+use tauri_specta::Event;
 
 use super::account::{self, offline_details};
 use super::cx::{Cx, Services};
+use super::events::SignInCode;
 use super::setup::{self, Switch};
+use super::telemetry;
 use super::window;
 
 const WAIT_LIMIT: Duration = Duration::from_secs(600);
@@ -31,13 +34,43 @@ async fn open_browser(url: &str) -> Result<(), SignInError> {
     }
 }
 
-fn failed(services: &Services, error: SignInError) -> ConnectOutcome {
-    match error {
-        SignInError::Unavailable => ConnectOutcome::SignInUnavailable,
-        SignInError::Offline => ConnectOutcome::Offline {
-            details: offline_details(services, "connect"),
-        },
+pub(crate) async fn open_device_page(origin: &str) -> Result<(), SignInError> {
+    open_browser(&format!("{origin}/device")).await
+}
+
+fn computer_key_name() -> String {
+    key_name(std::env::var("COMPUTERNAME").ok().as_deref())
+}
+
+async fn ended(
+    cx: &Cx,
+    app: &AppHandle,
+    error: SignInError,
+    note: ConnectionNote,
+) -> Result<ConnectOutcome, AppError> {
+    let by_code = note == ConnectionNote::Code;
+    let method = if by_code {
+        SignInMethod::Code
+    } else {
+        SignInMethod::Browser
+    };
+    let ready = cx.ready().await;
+    telemetry::sign_in_failed(&ready.services, method, reason(error));
+    if matches!(error, SignInError::Unavailable | SignInError::Denied) {
+        window::reveal(app);
     }
+    if by_code && error == SignInError::Denied {
+        return Ok(ConnectOutcome::SignInDenied);
+    }
+    Ok(match error {
+        SignInError::Unavailable => ConnectOutcome::SignInUnavailable,
+        SignInError::TimedOut => ConnectOutcome::SignInTimedOut,
+        SignInError::Expired => ConnectOutcome::SignInExpired,
+        SignInError::Denied | SignInError::Cancelled => ConnectOutcome::Cancelled,
+        SignInError::Offline => ConnectOutcome::Offline {
+            details: offline_details(&ready.services, "connect"),
+        },
+    })
 }
 
 async fn issue(services: &Services, signed_in: SignedIn) -> Result<SecretString, SignInError> {
@@ -47,8 +80,9 @@ async fn issue(services: &Services, signed_in: SignedIn) -> Result<SecretString,
 
 async fn connect_signed_in(
     cx: &Cx,
+    app: &AppHandle,
     signed_in: SignedIn,
-    kind: AccountKind,
+    note: ConnectionNote,
 ) -> Result<ConnectOutcome, AppError> {
     let ready = cx.ready().await;
     let previous = if cx.completed() {
@@ -67,30 +101,72 @@ async fn connect_signed_in(
         cx.setup.hold_switch(Switch::SignedIn {
             previous,
             signed_in,
-            kind,
+            note,
         });
         return Ok(outcome);
     }
     match issue(&ready.services, signed_in).await {
-        Ok(key) => setup::connect_issued(cx, key).await,
-        Err(error) => Ok(failed(&ready.services, error)),
+        Ok(key) => setup::connect_issued(cx, key, note).await,
+        Err(error) => ended(cx, app, error, note).await,
     }
 }
 
 pub(crate) async fn enter_signed_in(
     cx: &Cx,
+    app: &AppHandle,
     signed_in: SignedIn,
-    kind: AccountKind,
+    note: ConnectionNote,
 ) -> Result<ConnectOutcome, AppError> {
     let services = Arc::clone(&cx.ready().await.services);
     let key = match issue(&services, signed_in).await {
         Ok(key) => key,
-        Err(error) => return Ok(failed(&services, error)),
+        Err(error) => return ended(cx, app, error, note).await,
     };
     match account::identify(&services, &key).await {
-        Ok(identity) => account::enter_account(cx, identity, key, kind).await,
+        Ok(identity) => account::enter_account(cx, identity, key, setup::issued_kind(note)).await,
         Err(outcome) => Ok(outcome),
     }
+}
+
+async fn settled(
+    cx: &Cx,
+    app: &AppHandle,
+    result: Result<SignedIn, SignInError>,
+    note: ConnectionNote,
+) -> Result<ConnectOutcome, AppError> {
+    match result {
+        Ok(signed_in) => {
+            window::reveal(app);
+            connect_signed_in(cx, app, signed_in, note).await
+        }
+        Err(error) => ended(cx, app, error, note).await,
+    }
+}
+
+pub(crate) async fn code(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, AppError> {
+    let stop = cx.setup.begin_sign_in();
+    let ready = cx.ready().await;
+    let services = &ready.services;
+    let api = SignInApi::new(Arc::clone(&services.clients), &services.origin);
+    let attempt = async {
+        let sign_in = api.start_device(computer_key_name()).await?;
+        SignInCode {
+            user_code: sign_in.user_code().to_owned(),
+        }
+        .emit(app)
+        .map_err(|_| SignInError::Unavailable)?;
+        sign_in.finish(&api).await
+    };
+    let result = until_stopped(&stop, WAIT_LIMIT, attempt)
+        .await
+        .map_err(|error| {
+            if error == SignInError::TimedOut {
+                SignInError::Expired
+            } else {
+                error
+            }
+        });
+    settled(cx, app, result, ConnectionNote::Code).await
 }
 
 pub(crate) async fn browser(
@@ -103,7 +179,7 @@ pub(crate) async fn browser(
     let services = &ready.services;
     let api = SignInApi::new(Arc::clone(&services.clients), &services.origin);
     let language = setup::language(&ready).await;
-    let name = key_name(std::env::var("COMPUTERNAME").ok().as_deref());
+    let name = computer_key_name();
     let attempt = async {
         let started = api.start_browser(language, name).await?;
         let sign_in = if different_account {
@@ -114,24 +190,17 @@ pub(crate) async fn browser(
         open_browser(sign_in.url()).await?;
         sign_in.finish(&api).await
     };
-    let result = tokio::select! {
-        biased;
-        () = stop.notified() => return Ok(ConnectOutcome::Cancelled),
-        result = tokio::time::timeout(WAIT_LIMIT, attempt) => result,
-    };
-    let Ok(result) = result else {
-        return Ok(ConnectOutcome::SignInTimedOut);
-    };
-    match result {
-        Ok(signed_in) => {
-            window::reveal(app);
-            connect_signed_in(cx, signed_in, AccountKind::Browser).await
-        }
-        Err(SignInError::Unavailable) => {
-            window::reveal(app);
-            Ok(ConnectOutcome::SignInUnavailable)
-        }
-        Err(error) => Ok(failed(services, error)),
+    let result = until_stopped(&stop, WAIT_LIMIT, attempt).await;
+    settled(cx, app, result, ConnectionNote::Browser).await
+}
+
+const fn reason(error: SignInError) -> SignInReason {
+    match error {
+        SignInError::Unavailable => SignInReason::Unavailable,
+        SignInError::Offline => SignInReason::Offline,
+        SignInError::Denied => SignInReason::Denied,
+        SignInError::TimedOut | SignInError::Expired => SignInReason::Timeout,
+        SignInError::Cancelled => SignInReason::Cancelled,
     }
 }
 
@@ -142,12 +211,24 @@ mod tests {
     use mivia_domain::naming::Language;
     use mivia_ports::auth::Identity;
     use mivia_ports::ipc::screens::AccountView;
-    use mivia_ports::telemetry::AccountKind;
+    use mivia_ports::telemetry::{AccountKind, SignInReason};
+    use mivia_server::SignInError;
     use secrecy::SecretString;
 
+    use super::reason;
     use crate::shell::setup::{Session, Switch, sign_in_switch_text};
 
     const SOON: Duration = Duration::from_secs(5);
+
+    #[test]
+    fn every_ending_has_its_own_reason() {
+        assert_eq!(reason(SignInError::Unavailable), SignInReason::Unavailable);
+        assert_eq!(reason(SignInError::Offline), SignInReason::Offline);
+        assert_eq!(reason(SignInError::Denied), SignInReason::Denied);
+        assert_eq!(reason(SignInError::TimedOut), SignInReason::Timeout);
+        assert_eq!(reason(SignInError::Expired), SignInReason::Timeout);
+        assert_eq!(reason(SignInError::Cancelled), SignInReason::Cancelled);
+    }
 
     #[tokio::test]
     async fn stopping_ends_the_attempt_and_a_new_attempt_ends_the_earlier_one() {
