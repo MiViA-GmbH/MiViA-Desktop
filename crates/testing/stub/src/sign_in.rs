@@ -17,6 +17,9 @@ use crate::Stub;
 const APP_ID: &str = "mivia-desktop";
 const CLIENT_ID: &str = "stub-client";
 const ISSUE_SCOPE: &str = "api-keys:issue";
+const DEVICE_GRANT: &str = "urn:ietf:params:oauth:grant-type:device_code";
+const USER_CODE: &str = "WDJB-MJHT";
+const DEVICE_INTERVAL_SECS: u64 = 1;
 
 #[derive(Default)]
 pub(crate) struct SignInState {
@@ -24,6 +27,10 @@ pub(crate) struct SignInState {
     tokens: Vec<String>,
     issued: Vec<String>,
     counter: u64,
+    device_code: Option<String>,
+    device_approved: bool,
+    device_fault: Option<String>,
+    device_polls: u64,
 }
 
 impl SignInState {
@@ -43,6 +50,9 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/api/oauth-clients/by-app/{app_id}", get(by_app))
         .route("/api/auth/oauth2/authorize", get(authorize))
         .route("/api/auth/oauth2/token", post(token))
+        .route("/api/auth/device/code", post(device_code))
+        .route("/__stub/device/approve", post(device_approve))
+        .route("/__stub/device/polls", get(device_polls))
         .route("/api/auth/oauth2/userinfo", get(userinfo))
         .route("/api/api-keys/issue", post(issue))
         .route("/__stub/issued", get(issued))
@@ -106,19 +116,95 @@ async fn authorize(State(stub): State<Stub>, Query(asked): Query<Authorize>) -> 
 }
 
 #[derive(Deserialize)]
+struct DeviceForm {
+    client_id: String,
+    scope: String,
+}
+
+async fn device_code(State(stub): State<Stub>, Form(form): Form<DeviceForm>) -> Response {
+    if form.client_id != CLIENT_ID {
+        return oauth_error("invalid_client");
+    }
+    if !form.scope.split(' ').any(|scope| scope == ISSUE_SCOPE) {
+        return oauth_error("invalid_scope");
+    }
+    let mut state = stub.sign_in.lock();
+    let device_code = state.next("device");
+    state.device_code = Some(device_code.clone());
+    state.device_approved = false;
+    Json(json!({
+        "device_code": device_code,
+        "user_code": USER_CODE,
+        "verification_uri": "https://not-to-be-used.example.invalid/device",
+        "expires_in": 600,
+        "interval": DEVICE_INTERVAL_SECS,
+    }))
+    .into_response()
+}
+
+pub(crate) fn device_fault(stub: &Stub, kind: String) {
+    stub.sign_in.lock().device_fault = Some(kind);
+}
+
+async fn device_approve(State(stub): State<Stub>) -> StatusCode {
+    stub.sign_in.lock().device_approved = true;
+    StatusCode::NO_CONTENT
+}
+
+async fn device_polls(State(stub): State<Stub>) -> Response {
+    Json(stub.sign_in.lock().device_polls).into_response()
+}
+
+fn token_answer(state: &mut SignInState) -> Response {
+    let token = state.next("token");
+    state.tokens.push(token.clone());
+    Json(json!({ "access_token": token, "expires_in": 3600, "token_type": "Bearer" }))
+        .into_response()
+}
+
+fn device_token(state: &mut SignInState, device_code: &str) -> Response {
+    state.device_polls += 1;
+    if state.device_code.as_deref() != Some(device_code) {
+        return oauth_error("invalid_grant");
+    }
+    if let Some(fault) = state.device_fault.take() {
+        if fault != "slow_down" {
+            state.device_code = None;
+        }
+        return oauth_error(&fault);
+    }
+    if !state.device_approved {
+        return oauth_error("authorization_pending");
+    }
+    state.device_code = None;
+    token_answer(state)
+}
+
+#[derive(Deserialize)]
 struct TokenForm {
     grant_type: String,
     client_id: String,
+    #[serde(default)]
     code: String,
+    #[serde(default)]
     code_verifier: String,
+    #[serde(default)]
     redirect_uri: String,
+    #[serde(default)]
+    device_code: String,
 }
 
 async fn token(State(stub): State<Stub>, Form(form): Form<TokenForm>) -> Response {
-    if form.grant_type != "authorization_code" || form.client_id != CLIENT_ID {
+    if form.client_id != CLIENT_ID {
         return oauth_error("invalid_request");
     }
     let mut state = stub.sign_in.lock();
+    if form.grant_type == DEVICE_GRANT {
+        return device_token(&mut state, &form.device_code);
+    }
+    if form.grant_type != "authorization_code" {
+        return oauth_error("invalid_request");
+    }
     let Some(pending) = state.codes.remove(&form.code) else {
         return oauth_error("invalid_grant");
     };
@@ -126,10 +212,7 @@ async fn token(State(stub): State<Stub>, Form(form): Form<TokenForm>) -> Respons
     if challenge != pending.challenge || form.redirect_uri != pending.redirect_uri {
         return oauth_error("invalid_grant");
     }
-    let token = state.next("token");
-    state.tokens.push(token.clone());
-    Json(json!({ "access_token": token, "expires_in": 3600, "token_type": "Bearer" }))
-        .into_response()
+    token_answer(&mut state)
 }
 
 fn signed_in(stub: &Stub, headers: &HeaderMap) -> bool {
