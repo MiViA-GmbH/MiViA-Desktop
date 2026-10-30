@@ -57,6 +57,19 @@ pub struct OauthToken {
     pub access_token: String,
 }
 
+#[derive(Deserialize)]
+pub struct OauthError {
+    pub error: String,
+}
+
+#[derive(Deserialize)]
+pub struct DeviceCode {
+    pub device_code: String,
+    pub user_code: String,
+    #[serde(default)]
+    pub interval: Option<u64>,
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct OauthAccount {
     pub sub: String,
@@ -114,6 +127,13 @@ pub fn oauth_client(client: &Client, base_url: &str, app_id: &str) -> RequestBui
 pub fn oauth_token(client: &Client, base_url: &str, form: &[(&str, &str)]) -> RequestBuilder {
     client
         .post(format!("{base_url}/api/auth/oauth2/token"))
+        .header(ACCEPT, JSON)
+        .form(form)
+}
+
+pub fn device_code(client: &Client, base_url: &str, form: &[(&str, &str)]) -> RequestBuilder {
+    client
+        .post(format!("{base_url}/api/auth/device/code"))
         .header(ACCEPT, JSON)
         .form(form)
 }

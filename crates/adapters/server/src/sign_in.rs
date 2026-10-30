@@ -1,11 +1,15 @@
 mod listener;
 
 use std::sync::Arc;
+use std::time::Duration;
 
 use arc_swap::ArcSwap;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use mivia_api::{IssuedAccessKey, JSON_LIMIT, OauthAccount, OauthClient, OauthToken, read_capped};
+use mivia_api::{
+    DeviceCode, IssuedAccessKey, JSON_LIMIT, OauthAccount, OauthClient, OauthError, OauthToken,
+    read_capped,
+};
 use mivia_domain::naming::Language;
 use mivia_ports::auth::ServerOrigin;
 use reqwest::header::HeaderValue;
@@ -22,11 +26,16 @@ const APP_ID: &str = "mivia-desktop";
 const SCOPES: &str = "images:write images:delete jobs:read jobs:write jobs:delete api-keys:issue openid profile email";
 const KEY_NAME: &str = "MiViA Desktop";
 const KEY_NAME_LIMIT: usize = 128;
+const DEVICE_GRANT: &str = "urn:ietf:params:oauth:grant-type:device_code";
+const DEFAULT_INTERVAL_SECS: u64 = 5;
+const SLOW_DOWN: Duration = Duration::from_secs(5);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SignInError {
     Unavailable,
     Offline,
+    Denied,
+    Expired,
 }
 
 pub struct IssuedKey {
@@ -45,6 +54,20 @@ pub struct BrowserSignIn {
     verifier: SecretString,
     key_name: String,
     listener: Listener,
+}
+
+pub struct DeviceSignIn {
+    user_code: String,
+    device_code: SecretString,
+    client_id: String,
+    interval: Duration,
+    key_name: String,
+}
+
+enum Poll {
+    Token(SecretString),
+    Waiting,
+    SlowDown,
 }
 
 pub fn key_name(computer: Option<&str>) -> String {
@@ -87,6 +110,17 @@ async fn answer<T: DeserializeOwned>(
         return Err(SignInError::Unavailable);
     }
     serde_json::from_slice(&capped.body).map_err(|_| SignInError::Unavailable)
+}
+
+fn poll_refused(body: &[u8]) -> Result<Poll, SignInError> {
+    let refusal: OauthError = serde_json::from_slice(body).map_err(|_| SignInError::Unavailable)?;
+    match refusal.error.as_str() {
+        "authorization_pending" => Ok(Poll::Waiting),
+        "slow_down" => Ok(Poll::SlowDown),
+        "access_denied" => Err(SignInError::Denied),
+        "expired_token" | "invalid_grant" => Err(SignInError::Expired),
+        _ => Err(SignInError::Unavailable),
+    }
 }
 
 impl SignInApi {
@@ -150,6 +184,42 @@ impl SignInApi {
         })
     }
 
+    pub async fn start_device(&self, key_name: String) -> Result<DeviceSignIn, SignInError> {
+        let client_id = self.client_id().await?;
+        let form = [("client_id", client_id.as_str()), ("scope", SCOPES)];
+        let request = mivia_api::device_code(&self.client(), &self.base, &form);
+        let device: DeviceCode = answer(request, StatusCode::OK).await?;
+        if device.user_code.is_empty() {
+            return Err(SignInError::Unavailable);
+        }
+        let interval = device.interval.unwrap_or(DEFAULT_INTERVAL_SECS).max(1);
+        Ok(DeviceSignIn {
+            user_code: device.user_code,
+            device_code: SecretString::from(device.device_code),
+            client_id,
+            interval: Duration::from_secs(interval),
+            key_name,
+        })
+    }
+
+    async fn poll(&self, form: &[(&str, &str)]) -> Result<Poll, SignInError> {
+        let request = mivia_api::oauth_token(&self.client(), &self.base, form);
+        let Ok(response) = request.send().await else {
+            return Ok(Poll::Waiting);
+        };
+        let Ok(capped) = read_capped(response, JSON_LIMIT).await else {
+            return Ok(Poll::Waiting);
+        };
+        match capped.status {
+            StatusCode::OK => serde_json::from_slice::<OauthToken>(&capped.body)
+                .map(|token| Poll::Token(SecretString::from(token.access_token)))
+                .map_err(|_| SignInError::Unavailable),
+            StatusCode::TOO_MANY_REQUESTS => Ok(Poll::SlowDown),
+            status if status.is_server_error() => Ok(Poll::Waiting),
+            _ => poll_refused(&capped.body),
+        }
+    }
+
     async fn exchange(&self, form: &[(&str, &str)]) -> Result<SecretString, SignInError> {
         let request = mivia_api::oauth_token(&self.client(), &self.base, form);
         let token: OauthToken = answer(request, StatusCode::OK).await?;
@@ -170,10 +240,9 @@ impl SignInApi {
         })
     }
 
-    async fn key_for(&self, form: &[(&str, &str)], name: &str) -> Result<IssuedKey, SignInError> {
-        let token = self.exchange(form).await?;
-        self.account(&token).await?;
-        self.issue(&token, name).await
+    async fn key_for(&self, token: &SecretString, name: &str) -> Result<IssuedKey, SignInError> {
+        self.account(token).await?;
+        self.issue(token, name).await
     }
 }
 
@@ -194,6 +263,30 @@ impl BrowserSignIn {
             ("code_verifier", self.verifier.expose_secret()),
             ("redirect_uri", redirect_uri.as_str()),
         ];
-        api.key_for(&form, &self.key_name).await
+        let token = api.exchange(&form).await?;
+        api.key_for(&token, &self.key_name).await
+    }
+}
+
+impl DeviceSignIn {
+    pub fn user_code(&self) -> &str {
+        &self.user_code
+    }
+
+    pub async fn finish(self, api: &SignInApi) -> Result<IssuedKey, SignInError> {
+        let form = [
+            ("grant_type", DEVICE_GRANT),
+            ("client_id", self.client_id.as_str()),
+            ("device_code", self.device_code.expose_secret()),
+        ];
+        let mut wait = self.interval;
+        loop {
+            tokio::time::sleep(wait).await;
+            match api.poll(&form).await? {
+                Poll::Token(token) => return api.key_for(&token, &self.key_name).await,
+                Poll::Waiting => {}
+                Poll::SlowDown => wait += SLOW_DOWN,
+            }
+        }
     }
 }
