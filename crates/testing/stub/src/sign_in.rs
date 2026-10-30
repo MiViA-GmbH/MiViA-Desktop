@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use axum::extract::{Form, Path, Query, State};
 use axum::http::{HeaderMap, StatusCode, header};
-use axum::response::{IntoResponse, Redirect, Response};
+use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use base64::Engine;
@@ -18,8 +18,18 @@ const APP_ID: &str = "mivia-desktop";
 const CLIENT_ID: &str = "stub-client";
 const ISSUE_SCOPE: &str = "api-keys:issue";
 
+#[derive(Clone, Copy, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ByApp {
+    #[default]
+    Normal,
+    Missing,
+    Html,
+}
+
 #[derive(Default)]
 pub(crate) struct SignInState {
+    by_app: ByApp,
     codes: BTreeMap<String, Pending>,
     tokens: Vec<String>,
     issued: Vec<String>,
@@ -46,17 +56,28 @@ pub(crate) fn routes() -> Router<Stub> {
         .route("/api/auth/oauth2/userinfo", get(userinfo))
         .route("/api/api-keys/issue", post(issue))
         .route("/__stub/issued", get(issued))
+        .route("/__stub/by-app", post(set_by_app))
 }
 
 fn oauth_error(code: &str) -> Response {
     (StatusCode::BAD_REQUEST, Json(json!({ "error": code }))).into_response()
 }
 
-async fn by_app(Path(app_id): Path<String>) -> Response {
+async fn by_app(State(stub): State<Stub>, Path(app_id): Path<String>) -> Response {
     if app_id != APP_ID {
         return StatusCode::NOT_FOUND.into_response();
     }
-    Json(json!({ "clientId": CLIENT_ID })).into_response()
+    let answer = stub.sign_in.lock().by_app;
+    match answer {
+        ByApp::Normal => Json(json!({ "clientId": CLIENT_ID })).into_response(),
+        ByApp::Missing => StatusCode::NOT_FOUND.into_response(),
+        ByApp::Html => Html("<!doctype html><title>MiViA</title>").into_response(),
+    }
+}
+
+async fn set_by_app(State(stub): State<Stub>, Json(answer): Json<ByApp>) -> StatusCode {
+    stub.sign_in.lock().by_app = answer;
+    StatusCode::NO_CONTENT
 }
 
 #[derive(Deserialize)]
