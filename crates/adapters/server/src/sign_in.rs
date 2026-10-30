@@ -26,8 +26,8 @@ use crate::clients::HttpClients;
 pub use device::DeviceSignIn;
 use listener::{Listener, Returned};
 
-const APP_ID: &str = "mivia-desktop";
-const SCOPES: &str = "images:write images:delete jobs:read jobs:write jobs:delete api-keys:issue openid profile email";
+pub const APP_ID: &str = "mivia-desktop";
+pub const SCOPES: &str = "images:write images:delete jobs:read jobs:write jobs:delete api-keys:issue openid profile email";
 const KEY_NAME: &str = "MiViA Desktop";
 const KEY_NAME_LIMIT: usize = 128;
 
