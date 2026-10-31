@@ -133,7 +133,7 @@
 				"storeFailed": "Windows konnte den API-Schlüssel nicht speichern. Nach einem Neustart von MiViA Desktop müssen Sie ihn erneut eingeben.",
 				"stored": "Der Schlüssel ist sicher in Windows gespeichert. Aus Sicherheitsgründen wurde die Kopie in der Zwischenablage gelöscht.",
 				"storedOnly": "Der Schlüssel ist sicher in Windows gespeichert.",
-				"title": "Mit Ihrem MiViA-Konto verbinden"
+				"title": "MiViA-Konto verbinden"
 			},
 			"legacy": {
 				"closeIt": "Altes MiViA Desktop schließen",
@@ -199,7 +199,7 @@
 			"steps": {
 				"finish": "Abschluss",
 				"folder": "Eingangsordner",
-				"key": "API-Schlüssel",
+				"key": "Konto",
 				"legacy": "Alte Version",
 				"models": "Modelle",
 				"series": "Bildserien",
