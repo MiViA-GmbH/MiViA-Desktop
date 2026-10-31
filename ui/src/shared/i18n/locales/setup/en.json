@@ -133,7 +133,7 @@
 				"storeFailed": "Windows could not store the API key. You will need to enter it again after restarting MiViA Desktop.",
 				"stored": "The key is stored safely in Windows. For security, the copy in the clipboard was deleted.",
 				"storedOnly": "The key is stored safely in Windows.",
-				"title": "Connect to your MiViA account"
+				"title": "Connect your MiViA account"
 			},
 			"legacy": {
 				"closeIt": "Close old MiViA Desktop",
@@ -199,7 +199,7 @@
 			"steps": {
 				"finish": "Finish",
 				"folder": "Input folder",
-				"key": "API key",
+				"key": "Account",
 				"legacy": "Old version",
 				"models": "Models",
 				"series": "Image series",
