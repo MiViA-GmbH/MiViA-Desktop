@@ -1,6 +1,6 @@
 {
-	"sub": "018f2c6e-0000-7000-8000-000000000001",
+	"email": "ci@example.invalid",
+	"email_verified": true,
 	"name": "Lab User",
-	"email": "lab@example.invalid",
-	"email_verified": true
+	"sub": "3caca709-f269-4335-8418-ea3e0c1688dc"
 }
