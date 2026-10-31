@@ -7,7 +7,8 @@ use crate::record::{personal, scrub, write_fixture};
 
 const KEY: &str = "mv-fixtureAccessKeyAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const KEY_START: &str = "mv-fix";
-const SECRETS: [(&str, &str); 7] = [
+const SECRETS: [(&str, &str); 8] = [
+    ("clientId", "dgVNLqgQfTzZkAEzGUIljVHnKhyTBlYS"),
     ("device_code", "fixture-device-code"),
     ("user_code", "WDJB-MJHT"),
     ("verification_uri_complete", "https://app.mivia.ai/device"),

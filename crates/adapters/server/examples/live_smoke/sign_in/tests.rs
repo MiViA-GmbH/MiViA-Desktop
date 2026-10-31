@@ -155,7 +155,7 @@ async fn a_run_records_every_call_and_the_files_decode_into_their_types() {
     drive(&server).await.unwrap();
     let dir = &server.fixtures;
     let client: OauthClient = decode(dir, "oauthClientByApp", "200");
-    assert_eq!(client.client_id, "client-1");
+    assert_eq!(client.client_id, "dgVNLqgQfTzZkAEzGUIljVHnKhyTBlYS");
     let device: DeviceCode = decode(dir, "oauthDeviceCode", "200");
     assert_eq!(device.device_code, "fixture-device-code");
     let pending: OauthError = decode(dir, "oauthToken", "400-pending");

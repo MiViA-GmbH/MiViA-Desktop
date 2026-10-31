@@ -293,7 +293,7 @@ async fn issue(
         "createdAt": "2026-01-01T00:00:00.000Z",
         "lastUsed": null,
         "enabled": true,
-        "generatedBy": "oauth",
+        "generatedBy": "MiViA Desktop",
         "scopes": ["images:write", "images:delete", "jobs:read", "jobs:write", "jobs:delete"],
         "code": stub.current_key(),
     });
