@@ -53,12 +53,19 @@ test('the setup can be finished with the keyboard alone', async ({ page }) => {
 	await tabTo(page, button(page, 'Start setup'));
 	await page.keyboard.press('Enter');
 
-	await heading(page, 'Connect to your MiViA account');
+	await heading(page, 'Connect your MiViA account');
+	await expect(page.getByRole('tab', { name: 'Browser' })).toHaveAttribute('aria-selected', 'true');
+	await expect(button(page, 'Next')).toBeDisabled();
+	await page.keyboard.press('Tab');
+	await page.keyboard.press('ArrowRight');
+	await expect(page.getByRole('tab', { name: 'Code' })).toHaveAttribute('aria-selected', 'true');
+	await page.keyboard.press('ArrowRight');
+	await expect(page.getByRole('tab', { name: 'API key' })).toHaveAttribute('aria-selected', 'true');
 	await page.keyboard.press('Tab');
 	await page.keyboard.type('mv-bad-key-0123456789-0123456789-0123456789');
 	await page.keyboard.press('Enter');
 	await expect(page.getByText('This API key was not accepted.')).toBeVisible();
-	await expect(page.getByLabel('API key')).toBeFocused();
+	await expect(page.getByRole('tabpanel').getByLabel('API key')).toBeFocused();
 	await structure(page);
 	await page.screenshot({ path: `${SHOTS}/w03-key-rejected-en.png` });
 	await page.keyboard.press('Control+A');
@@ -130,6 +137,36 @@ test('the setup can be finished with the keyboard alone', async ({ page }) => {
 	await expect(page.getByRole('heading', { name: 'Overview', level: 2 })).toBeVisible();
 });
 
+test('the account step signs in through the browser and links to the API keys page', async ({ page }) => {
+	await open(page, 'scenario=setup');
+	await page.getByRole('button', { name: 'Start setup' }).click();
+	await heading(page, 'Connect your MiViA account');
+	await expect(page.getByRole('tab', { name: 'Code' })).toBeVisible();
+	await page.getByRole('tab', { name: 'API key' }).click();
+	await expect(page.getByRole('button', { name: 'app.mivia.ai/api-keys' })).toBeVisible();
+	await structure(page);
+	await page.getByRole('tab', { name: 'Browser' }).click();
+	await structure(page);
+	await button(page, 'Open the browser').click();
+	await expect(page.getByText('Connected as Dr. Katrin Möller')).toBeVisible();
+	await expect(button(page, 'Next')).toBeEnabled();
+});
+
+test('the code tab shows the code, a copy button and the link to the device page', async ({ page }) => {
+	await open(page, 'scenario=setup');
+	await page.getByRole('button', { name: 'Start setup' }).click();
+	await heading(page, 'Connect your MiViA account');
+	await page.getByRole('tab', { name: 'Code' }).click();
+	await expect(page.getByText('WDJB-MJHT')).toBeVisible();
+	await expect(button(page, 'Copy code')).toBeVisible();
+	await expect(page.getByText('Waiting for approval.')).toBeVisible();
+	await expect(button(page, 'app.mivia.ai/device')).toBeVisible();
+	await expect(button(page, 'Next')).toBeDisabled();
+	await structure(page);
+	await page.getByRole('tab', { name: 'Browser' }).click();
+	await expect(button(page, 'Open the browser')).toBeVisible();
+});
+
 test('the old version step offers to take over the old settings', async ({ page }) => {
 	await open(page, 'scenario=setup-legacy');
 	await page.getByRole('button', { name: 'Start setup' }).click();
@@ -161,7 +198,8 @@ test('closing the window during setup asks before quitting', async ({ page }) =>
 test('the German setup fits and the window minimum hides the step list', async ({ page }) => {
 	await open(page, 'scenario=setup&lang=de');
 	await page.getByRole('button', { name: 'Einrichtung starten' }).click();
-	await page.getByLabel('API-Schlüssel').fill(KEY);
+	await page.getByRole('tab', { name: 'API-Schlüssel' }).click();
+	await page.getByRole('tabpanel').getByLabel('API-Schlüssel').fill(KEY);
 	await page.getByRole('button', { name: 'Weiter' }).click();
 	await page.getByRole('button', { name: 'Weiter' }).click();
 	await page.getByRole('button', { name: 'Ordner wählen…' }).click();

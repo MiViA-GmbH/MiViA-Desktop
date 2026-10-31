@@ -337,12 +337,30 @@
 				{
 					"name": "kind",
 					"type": "choice",
-					"values": ["access_key"]
+					"values": ["access_key", "browser", "code"]
 				}
 			],
 			"name": "account.connected",
 			"priority": "core",
 			"purpose": "Zeigt, dass ein API-Schlüssel akzeptiert wurde."
+		},
+		{
+			"category": "diagnostics",
+			"fields": [
+				{
+					"name": "method",
+					"type": "choice",
+					"values": ["browser", "code"]
+				},
+				{
+					"name": "reason",
+					"type": "choice",
+					"values": ["timeout", "unavailable", "denied", "offline", "cancelled"]
+				}
+			],
+			"name": "sign_in.failed",
+			"priority": "core",
+			"purpose": "Zeigt, welches Anmeldeverfahren nicht abgeschlossen wurde und warum."
 		},
 		{
 			"category": "diagnostics",

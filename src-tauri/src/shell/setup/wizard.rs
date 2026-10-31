@@ -18,8 +18,8 @@ use super::super::account::{self, clear_clipboard_if, identify, key_from, store_
 use super::super::cx::{Cx, Ready};
 use super::super::folders::{self, folder_view, report_folder, report_view};
 use super::super::telemetry;
-use super::language;
 use super::legacy::{legacy_install, legacy_view, read_config};
+use super::{NewKey, language};
 
 const SITE: &str = "setup";
 
@@ -223,28 +223,27 @@ pub(crate) async fn pick(
     view(cx).await
 }
 
-async fn connect_key(
-    cx: &Cx,
-    key: secrecy::SecretString,
-    imported: bool,
-) -> Result<ConnectOutcome, AppError> {
+async fn connect_key(cx: &Cx, new_key: NewKey) -> Result<ConnectOutcome, AppError> {
     let ready = cx.ready().await;
-    let identity = match identify(&ready.services, &key).await {
+    let identity = match identify(&ready.services, &new_key.key).await {
         Ok(identity) => identity,
         Err(outcome @ ConnectOutcome::Offline { .. }) => {
-            cx.setup.hold_pending(key);
+            cx.setup.hold_pending(new_key);
             return Ok(outcome);
         }
         Err(outcome) => return Ok(outcome),
     };
+    let NewKey {
+        key,
+        source,
+        issued_id,
+    } = new_key;
     cx.setup.forget_keys();
     let mut stored = store_key(&ready.services, &identity, &key).await;
     if stored.notes.contains(&ConnectionNote::StoreFailed) {
         cx.setup.keep_session_key(key.clone());
     }
-    if imported {
-        stored.notes.push(ConnectionNote::Imported);
-    }
+    stored.notes.extend(source);
     let connection = DraftConnection {
         origin: ready.services.origin.0.clone(),
         account_id: identity.account_id,
@@ -252,6 +251,7 @@ async fn connect_key(
         email: identity.email,
         notes: stored.notes,
         remaining_uploads: stored.remaining_uploads,
+        issued_key_id: issued_id,
     };
     let view = connection.view();
     let other_account = update(&ready, move |draft| draft.connect(connection)).await?;
@@ -263,17 +263,21 @@ async fn connect_key(
 }
 
 pub(crate) async fn connect(cx: &Cx, key: Option<String>) -> Result<ConnectOutcome, AppError> {
-    let key = match key {
-        Some(raw) => key_from(&raw),
+    let new_key = match key {
+        Some(raw) => key_from(&raw).map(|key| NewKey::from_source(key, None)),
         None => cx.setup.pending(),
     };
-    let Some(key) = key else {
+    let Some(new_key) = new_key else {
         return Ok(ConnectOutcome::Malformed);
     };
+    connect_new(cx, new_key).await
+}
+
+pub(crate) async fn connect_new(cx: &Cx, new_key: NewKey) -> Result<ConnectOutcome, AppError> {
     if cx.completed() {
-        return account::replace_key(cx, key).await;
+        return account::replace_key(cx, new_key).await;
     }
-    connect_key(cx, key, false).await
+    connect_key(cx, new_key).await
 }
 
 pub(crate) async fn import_legacy(cx: &Cx) -> Result<ConnectOutcome, AppError> {
@@ -288,7 +292,9 @@ pub(crate) async fn import_legacy(cx: &Cx) -> Result<ConnectOutcome, AppError> {
         .and_then(|config| config.access_token)
         .and_then(|token| key_from(&token));
     match token {
-        Some(key) => connect_key(cx, key, true).await,
+        Some(key) => {
+            connect_key(cx, NewKey::from_source(key, Some(ConnectionNote::Imported))).await
+        }
         None => Ok(ConnectOutcome::Rejected),
     }
 }

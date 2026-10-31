@@ -39,8 +39,7 @@ pub(crate) const BATCH_ANALYSES: &str = "SELECT m.model_choice_key, m.model_id, 
      AND k.model_id = m.model_id AND k.customization_id = ifnull(m.customization_id, '')), \
      m.names) FROM batch_model_choice m WHERE m.batch_id = ?1 ORDER BY m.model_choice_key";
 
-pub(crate) const ACCOUNT: &str =
-    "SELECT display_name, server_url, server_account_id, email FROM account WHERE id = ?1";
+pub(crate) const ACCOUNT: &str = "SELECT display_name, server_url, server_account_id, email, issued_key_id IS NOT NULL FROM account WHERE id = ?1";
 
 pub(crate) const SETTINGS: &str =
     "SELECT json FROM settings WHERE scope = ?1 AND ifnull(account_id, 0) = 0";

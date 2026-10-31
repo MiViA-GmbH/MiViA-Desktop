@@ -4,6 +4,7 @@ mod classify;
 mod clients;
 mod identity;
 mod labels;
+mod sign_in;
 
 pub use api::HttpServerApi;
 pub use authorizer::{Connection, ConnectionAuthorizer};
@@ -12,3 +13,9 @@ pub use clients::{
 };
 pub use identity::HttpIdentityApi;
 pub use labels::{LabelsError, ModelLabels};
+pub use sign_in::{
+    APP_ID as SIGN_IN_APP_ID, BrowserSignIn,
+    DEFAULT_INTERVAL_SECS as SIGN_IN_DEFAULT_INTERVAL_SECS, DEVICE_GRANT as SIGN_IN_DEVICE_GRANT,
+    DeviceSignIn, IssuedKey, SCOPES as SIGN_IN_SCOPES, SLOW_DOWN as SIGN_IN_SLOW_DOWN, SignInApi,
+    SignInError, SignedIn, key_name, safe_to_open, until_stopped,
+};

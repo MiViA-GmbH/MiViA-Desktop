@@ -1,0 +1,8 @@
+{
+	"access_token": "fixture-access-token",
+	"expires_at": 1793437323,
+	"expires_in": 3600,
+	"id_token": "fixture-id-token",
+	"scope": "images:write images:delete jobs:read jobs:write jobs:delete api-keys:issue openid profile email",
+	"token_type": "Bearer"
+}

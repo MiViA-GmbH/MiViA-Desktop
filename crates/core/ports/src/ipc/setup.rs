@@ -60,6 +60,8 @@ pub enum ConnectionNote {
     LicenseInactive,
     StoreFailed,
     Imported,
+    Browser,
+    Code,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -96,8 +98,13 @@ pub enum ConnectOutcome {
     SwitchAccount {
         current_name: String,
         new_name: String,
+        signed_in: bool,
     },
     Cancelled,
+    SignInUnavailable,
+    SignInTimedOut,
+    SignInDenied,
+    SignInExpired,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -4,7 +4,7 @@ use reqwest::header::{
 };
 use reqwest::multipart::{Form, Part};
 use reqwest::{Body, Client, RequestBuilder};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 const JSON: &str = "application/json";
 
@@ -46,6 +46,51 @@ pub struct AccessKeyCurrent {
     pub admin_scope: bool,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OauthClient {
+    pub client_id: String,
+}
+
+#[derive(Deserialize)]
+pub struct OauthToken {
+    pub access_token: String,
+}
+
+#[derive(Deserialize)]
+pub struct OauthError {
+    pub error: String,
+}
+
+#[derive(Deserialize)]
+pub struct DeviceCode {
+    pub device_code: String,
+    pub user_code: String,
+    pub interval: Option<u64>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+pub struct OauthAccount {
+    pub sub: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub email: String,
+}
+
+#[derive(Serialize)]
+pub struct IssueAccessKey<'a> {
+    pub name: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replaces: Option<&'a str>,
+}
+
+#[derive(Deserialize)]
+pub struct IssuedAccessKey {
+    pub id: String,
+    pub code: String,
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ReportCreated {
@@ -77,6 +122,46 @@ pub fn access_key_current(
         .get(format!("{base_url}/api/api-keys/info"))
         .header(ACCEPT, JSON)
         .header(AUTHORIZATION, authorization)
+}
+
+pub fn oauth_client(client: &Client, base_url: &str, app_id: &str) -> RequestBuilder {
+    client
+        .get(format!("{base_url}/api/oauth-clients/by-app/{app_id}"))
+        .header(ACCEPT, JSON)
+}
+
+pub fn oauth_token(client: &Client, base_url: &str, form: &[(&str, &str)]) -> RequestBuilder {
+    client
+        .post(format!("{base_url}/api/auth/oauth2/token"))
+        .header(ACCEPT, JSON)
+        .form(form)
+}
+
+pub fn device_code(client: &Client, base_url: &str, form: &[(&str, &str)]) -> RequestBuilder {
+    client
+        .post(format!("{base_url}/api/auth/device/code"))
+        .header(ACCEPT, JSON)
+        .form(form)
+}
+
+pub fn oauth_userinfo(client: &Client, base_url: &str, bearer: HeaderValue) -> RequestBuilder {
+    client
+        .get(format!("{base_url}/api/auth/oauth2/userinfo"))
+        .header(ACCEPT, JSON)
+        .header(AUTHORIZATION, bearer)
+}
+
+pub fn issue_access_key(
+    client: &Client,
+    base_url: &str,
+    bearer: HeaderValue,
+    body: &IssueAccessKey<'_>,
+) -> RequestBuilder {
+    client
+        .post(format!("{base_url}/api/api-keys/issue"))
+        .header(ACCEPT, JSON)
+        .header(AUTHORIZATION, bearer)
+        .json(body)
 }
 
 pub fn languages(

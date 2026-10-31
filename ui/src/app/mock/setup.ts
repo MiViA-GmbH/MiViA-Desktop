@@ -1,3 +1,4 @@
+import { events } from '../../shared/ipc';
 import type {
 	CatalogueView,
 	ConnectionNote,
@@ -122,6 +123,8 @@ const INTEGRATION: IntegrationView = {
 
 type Args = Record<string, unknown>;
 
+let finishCode: (outcome: ConnectOutcome) => void = () => null;
+
 export function setupResponses(state: SetupView): Record<string, (args: Args) => unknown> {
 	return {
 		get_setup: () => state,
@@ -139,6 +142,14 @@ export function setupResponses(state: SetupView): Record<string, (args: Args) =>
 		},
 		pick_setup_folder: () => Object.assign(state, { folder: FOLDER, report: REPORT }),
 		connect_access_key: (args) => connected(state, String(args.key ?? '')),
+		start_browser_sign_in: () => connected(state, 'browser', ['browser']),
+		start_code_sign_in: () => {
+			void events.signInCode.emit({ userCode: 'WDJB-MJHT' });
+			return new Promise<ConnectOutcome>((done) => {
+				finishCode = done;
+			});
+		},
+		cancel_sign_in: () => finishCode({ kind: 'cancelled' }),
 		import_legacy_key: () => connected(state, 'imported', ['imported']),
 		complete_setup: () => {
 			state.completed = true;

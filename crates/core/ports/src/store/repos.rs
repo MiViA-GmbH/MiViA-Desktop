@@ -18,6 +18,7 @@ pub struct NewAccount {
     pub server_account_id: String,
     pub display_name: String,
     pub email: String,
+    pub issued_key_id: Option<String>,
 }
 
 pub trait AccountRepo {
@@ -30,6 +31,11 @@ pub trait AccountRepo {
         server_url: &str,
         server_account_id: &str,
     ) -> Result<Option<AccountId>, TxError>;
+    fn issued_key_id(
+        &mut self,
+        server_url: &str,
+        server_account_id: &str,
+    ) -> Result<Option<String>, TxError>;
 }
 
 pub trait HoldRepo {

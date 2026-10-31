@@ -3,10 +3,11 @@ mod diagnostics;
 mod jobs;
 mod record;
 mod reports;
+mod sign_in;
 
 use std::error::Error;
 use std::io::Write as _;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -21,10 +22,12 @@ use record::Recorder;
 use reqwest::header::{AUTHORIZATION, HeaderValue};
 use secrecy::{ExposeSecret, SecretString};
 use serde_json::Value;
+use sign_in::scrub::SignInRecorder;
 use uuid::Uuid;
 
 type Outcome<T> = Result<T, Box<dyn Error>>;
 
+const SIGN_IN_FLAG: &str = "--sign-in";
 const USER_AGENT: &str = "MiViA-Desktop/2.0.0 (Windows 10.0.26200; stable)";
 const PAIRS: [(&str, &str); 3] = [
     ("pearlite", "PEARLITE"),
@@ -168,23 +171,47 @@ fn host_of(origin: &str) -> Outcome<String> {
         .strip_prefix("https://")
         .ok_or("origin must be https")?;
     let host = rest.split('/').next().unwrap_or_default().to_owned();
-    if host == "app.mivia.ai" {
+    let parsed = url::Url::parse(origin)?;
+    let name = parsed.host_str().unwrap_or_default().trim_end_matches('.');
+    if name == "app.mivia.ai" {
         return Err("the smoke never runs against production".into());
     }
     Ok(host)
+}
+
+async fn sign_in_smoke(base: &str, host: String, fixtures: Option<PathBuf>) -> Outcome<()> {
+    let clients = build_clients(USER_AGENT).map_err(|e| format!("clients: {e}"))?;
+    let mut recorder = SignInRecorder {
+        dir: fixtures,
+        host,
+        held: Vec::new(),
+    };
+    sign_in::run(
+        base,
+        &clients.api,
+        &mut recorder,
+        Path::new(sign_in::KEY_ID_FILE),
+    )
+    .await?;
+    say("sign-in smoke passed");
+    Ok(())
 }
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Outcome<()> {
     let base = env("MIVIA_CI_ORIGIN")?.trim_end_matches('/').to_owned();
     let host = host_of(&base)?;
+    let mut args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|arg| arg == SIGN_IN_FLAG) {
+        return sign_in_smoke(&base, host, args.get(1).map(PathBuf::from)).await;
+    }
+    args.reverse();
     let secret = SecretString::from(env("MIVIA_CI_KEY")?);
-    let mut args = std::env::args().skip(1);
     let samples = PathBuf::from(
-        args.next()
-            .ok_or("usage: live-smoke <samples> [fixtures]")?,
+        args.pop()
+            .ok_or("usage: live-smoke <samples> [fixtures] | live-smoke --sign-in [fixtures]")?,
     );
-    let fixtures = args.next().map(PathBuf::from);
+    let fixtures = args.pop().map(PathBuf::from);
     let clients = Arc::new(ArcSwap::from_pointee(
         build_clients(USER_AGENT).map_err(|e| format!("clients: {e}"))?,
     ));
@@ -224,4 +251,37 @@ async fn main() -> Outcome<()> {
     diagnostics::telemetry(&smoke, &session).await?;
     say("smoke passed");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::host_of;
+
+    #[test]
+    fn production_is_refused_however_it_is_written() {
+        for origin in [
+            "https://app.mivia.ai",
+            "https://app.mivia.ai/",
+            "https://APP.mivia.ai",
+            "https://app.mivia.ai:443",
+            "https://someone@app.mivia.ai",
+            "https://app.mivia.ai.",
+        ] {
+            let refused = host_of(origin).unwrap_err().to_string();
+            assert!(refused.contains("production"), "{origin}: {refused}");
+        }
+    }
+
+    #[test]
+    fn only_https_origins_run() {
+        assert!(host_of("http://127.0.0.1:4319").is_err());
+    }
+
+    #[test]
+    fn the_test_server_runs_with_its_host_kept() {
+        assert_eq!(
+            host_of("https://staging.example.test:8443/").unwrap(),
+            "staging.example.test:8443"
+        );
+    }
 }

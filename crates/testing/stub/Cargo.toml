@@ -10,11 +10,14 @@ workspace = true
 
 [dependencies]
 async-trait = "=0.1.92"
-axum = { version = "=0.8.9", default-features = false, features = ["tokio", "http1", "json", "query", "multipart"] }
+axum = { version = "=0.8.9", default-features = false, features = ["tokio", "http1", "json", "query", "form", "multipart"] }
+base64 = "=0.22.1"
 flate2 = "=1.1.9"
 mivia-testkit.workspace = true
 parking_lot = "=0.12.5"
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.150"
-tokio = { version = "=1.53.3", features = ["macros", "net", "rt"] }
+sha2 = "=0.11.0"
+tokio = { version = "=1.53.3", features = ["macros", "net", "rt", "time"] }
+url = "=2.5.8"
 uuid = { version = "=1.26.1", default-features = false }

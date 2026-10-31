@@ -13,6 +13,7 @@ import type { AccountView, ConnectOutcome } from '../../shared/ipc/bindings';
 import { outcomeError } from '../../shared/ui/key-error';
 import { KeyField } from '../../shared/ui/key-field';
 import { Notice } from '../../shared/ui/notice';
+import { SignInTabs } from '../../shared/ui/sign-in-tabs';
 
 type SwitchProps = { outcome: ConnectOutcome | null; onDone: (outcome: ConnectOutcome) => void; onCancel: () => void };
 
@@ -21,6 +22,10 @@ function SwitchModal({ outcome, onDone, onCancel }: SwitchProps) {
 	const confirm = useMutation({ mutationFn: () => commands.switchAccount(), onSuccess: onDone });
 	const opened = outcome?.kind === 'switchAccount';
 	const names = opened ? { current: outcome.currentName, next: outcome.newName } : { current: '', next: '' };
+	const text =
+		opened && outcome.signedIn
+			? `${t('desktop.account.switch.signInText', names)} ${t('desktop.account.switch.signInEffect')}`
+			: t('desktop.account.switch.text', names);
 	return (
 		<Modal
 			centered
@@ -30,7 +35,7 @@ function SwitchModal({ outcome, onDone, onCancel }: SwitchProps) {
 			title={t('desktop.account.switch.title')}
 		>
 			<Text c="stone.8" size="sm">
-				{t('desktop.account.switch.text', names)}
+				{text}
 			</Text>
 			<Group justify="flex-end" mt="lg">
 				<Button data-autofocus onClick={onCancel} variant="default">
@@ -62,6 +67,7 @@ function SignOut({ account }: { account: AccountView }) {
 			>
 				<Text c="stone.8" size="sm">
 					{t('desktop.account.signOut.text', { name: account.displayName })}
+					{account.issuedKey && ` ${t('desktop.account.signOut.issued')}`}
 				</Text>
 				<Group justify="flex-end" mt="lg">
 					<Button data-autofocus onClick={close} variant="default">
@@ -76,7 +82,7 @@ function SignOut({ account }: { account: AccountView }) {
 	);
 }
 
-function KeyForm({ host }: { host: string }) {
+function SignInForm({ host, lead }: { host: string; lead: string }) {
 	const { t } = useTranslation();
 	const client = useQueryClient();
 	const [key, setKey] = useState('');
@@ -92,20 +98,41 @@ function KeyForm({ host }: { host: string }) {
 		}
 	};
 	const save = useMutation({ mutationFn: () => commands.connectAccessKey(key), onSuccess: settle });
+	const dismiss = () => {
+		setOutcome(null);
+		commands.cancelSignIn();
+	};
+	const error = outcomeError(outcome, host, t);
 	return (
 		<Stack gap="sm">
-			<KeyField error={outcomeError(outcome, host, t)} inputRef={input} onChange={setKey} value={key} />
-			<Group>
-				<Button loading={save.isPending} onClick={() => save.mutate()}>
-					{t('desktop.account.key.save')}
-				</Button>
-			</Group>
+			<SignInTabs
+				error={error}
+				host={host}
+				offlineDetails={outcome?.kind === 'offline' ? outcome.details : null}
+				keyPanel={
+					<>
+						<Text c="stone.8" size="sm">
+							{lead}
+						</Text>
+						<KeyField error={error} inputRef={input} onChange={setKey} value={key} />
+						<Group>
+							<Button loading={save.isPending} onClick={() => save.mutate()}>
+								{t('desktop.account.key.save')}
+							</Button>
+						</Group>
+					</>
+				}
+				onOutcome={settle}
+				onTabChange={() => setOutcome(null)}
+			/>
 			{outcome?.kind === 'connected' && (
 				<Notice tone="success">
-					{t('desktop.account.key.saved', { name: outcome.connection.name })} {t('desktop.account.key.hint', { host })}
+					{t('desktop.account.key.saved', { name: outcome.connection.name })}
+					{!outcome.connection.notes.some((note) => note === 'browser' || note === 'code') &&
+						` ${t('desktop.account.key.hint', { host })}`}
 				</Notice>
 			)}
-			<SwitchModal onCancel={() => setOutcome(null)} onDone={settle} outcome={outcome} />
+			<SwitchModal onCancel={dismiss} onDone={settle} outcome={outcome} />
 		</Stack>
 	);
 }
@@ -114,36 +141,28 @@ export function AccountPanel() {
 	const { t } = useTranslation();
 	const account = useQuery(accountQuery).data;
 	const host = useQuery(setupQuery).data?.host ?? '';
-	if (!account) {
-		return (
-			<Stack gap="sm">
-				<Text fw={600} size="sm">
-					{t('desktop.account.key.connect')}
-				</Text>
-				<Text c="stone.7" size="sm">
-					{t('desktop.account.key.connectLead')}
-				</Text>
-				<KeyForm host={host} />
-			</Stack>
-		);
-	}
 	return (
 		<Stack gap="md">
-			<Group justify="space-between" wrap="nowrap">
-				<Stack gap={2} miw={0}>
-					<Text fw={600} size="sm">
-						{account.displayName}
-					</Text>
-					<Text c="stone.7" size="sm">
-						{account.email || account.serverUrl}
-					</Text>
-				</Stack>
-				<SignOut account={account} />
-			</Group>
+			{account && (
+				<Group justify="space-between" wrap="nowrap">
+					<Stack gap={2} miw={0}>
+						<Text fw={600} size="sm">
+							{account.displayName}
+						</Text>
+						<Text c="stone.7" size="sm">
+							{account.email || account.serverUrl}
+						</Text>
+					</Stack>
+					<SignOut account={account} />
+				</Group>
+			)}
 			<Text fw={600} mt="xs" size="md">
-				{t('desktop.account.key.replace')}
+				{account ? t('desktop.hold.signInAgain') : t('desktop.wizard.key.title')}
 			</Text>
-			<KeyForm host={host} />
+			<SignInForm
+				host={host}
+				lead={account ? t('desktop.account.key.replaceLead') : t('desktop.account.key.connectLead')}
+			/>
 		</Stack>
 	);
 }

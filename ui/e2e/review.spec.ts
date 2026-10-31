@@ -78,7 +78,8 @@ const wizard = {
 	},
 	typed: async (c: Ctx, key: string, outcome: string) => {
 		await wizard.key(c);
-		await c.page.getByLabel(c.t('desktop.wizard.key.label')).fill(key);
+		await c.page.getByRole('tab', { name: c.t('desktop.wizard.key.label') }).click();
+		await c.page.getByRole('tabpanel').getByLabel(c.t('desktop.wizard.key.label')).fill(key);
 		await c.page.keyboard.press('Enter');
 		await visible(c, outcome);
 	},

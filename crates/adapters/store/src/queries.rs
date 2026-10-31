@@ -271,6 +271,7 @@ impl Queries for SqliteStore {
                             server_url: row.get(1)?,
                             server_account_id: row.get(2)?,
                             email: row.get(3)?,
+                            issued_key: row.get(4)?,
                         })
                     })
                     .optional()

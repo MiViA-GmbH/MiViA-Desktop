@@ -102,6 +102,27 @@ fn sql_gate_predicate_equals_domain_matrix_for_every_hold_subset() {
 }
 
 #[test]
+fn accounts_from_before_issued_keys_have_no_issued_key_after_the_migration() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let migrations = crate::open::migrations();
+    migrations.to_version(&mut conn, 4).unwrap();
+    conn.execute(
+        "INSERT INTO account (id, server_url, server_account_id, display_name) VALUES (1, 'u', 'a', 'A')",
+        [],
+    )
+    .unwrap();
+    migrations.to_latest(&mut conn).unwrap();
+    let stored: Option<String> = conn
+        .query_row(
+            "SELECT issued_key_id FROM account WHERE id = 1",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(stored, None);
+}
+
+#[test]
 fn migrations_are_valid() {
     crate::open::migrations().validate().unwrap();
 }

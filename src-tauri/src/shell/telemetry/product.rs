@@ -8,7 +8,8 @@ use mivia_ports::server::ServerApi;
 use mivia_ports::store::AccountScope;
 use mivia_ports::telemetry::{
     AccountConnected, AccountDisconnected, AccountKind, AccountState, AccountSwitched,
-    ExportFormat, FolderAdded, FolderVia, HistoryExport, ReportCustomCreated,
+    ExportFormat, FolderAdded, FolderVia, HistoryExport, ReportCustomCreated, SignInFailed,
+    SignInMethod, SignInReason,
 };
 
 use super::Link;
@@ -28,11 +29,21 @@ pub(crate) fn folder_added(services: &Services, id: FolderId, input: &NewFolderI
     );
 }
 
-pub(crate) fn account_connected(services: &Services, imported: bool) {
+pub(crate) fn account_connected(services: &Services, kind: AccountKind, imported: bool) {
     services.telemetry.record(
         AccountConnected {
-            kind: Some(AccountKind::AccessKey),
+            kind: Some(kind),
             imported_from_v1: Some(imported),
+        }
+        .into(),
+    );
+}
+
+pub(crate) fn sign_in_failed(services: &Services, method: SignInMethod, reason: SignInReason) {
+    services.telemetry.record(
+        SignInFailed {
+            method: Some(method),
+            reason: Some(reason),
         }
         .into(),
     );

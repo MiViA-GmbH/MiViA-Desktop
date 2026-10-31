@@ -248,3 +248,26 @@ test('a required version without a signed update shows a warning banner', async 
 	await noHorizontalScroll(page);
 	await page.screenshot({ path: `${SHOTS}/o5-update-unsigned-en.png` });
 });
+
+test('the access key hold opens the account panel where signing in again works', async ({ page }) => {
+	await open(page, '/?scenario=hold-accessKey');
+	await page.getByRole('button', { name: 'Sign in again' }).click();
+	await expect(page.getByRole('tab', { name: 'Browser' })).toHaveAttribute('aria-selected', 'true');
+	await expect(page.getByRole('tab', { name: 'Code' })).toBeVisible();
+	await expect(page.getByRole('tab', { name: 'API key' })).toBeVisible();
+	await structure(page);
+	await page.getByRole('button', { name: 'Open the browser' }).click();
+	await expect(page.getByText('New API key saved.')).toBeVisible();
+});
+
+test('the account panel offers the tabs without an account and still takes a pasted key', async ({ page }) => {
+	await open(page, '/settings/account?scenario=no-account');
+	await expect(page.getByRole('tab', { name: 'Browser' })).toHaveAttribute('aria-selected', 'true');
+	await page.getByRole('tab', { name: 'API key' }).click();
+	await expect(page.getByText('No account is connected.')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'app.mivia.ai/api-keys' })).toBeVisible();
+	const field = page.getByRole('tabpanel').getByLabel('API key');
+	await field.fill('mv-AbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhIjKl');
+	await page.getByRole('button', { name: 'Save key' }).click();
+	await expect(page.getByText('New API key saved.')).toBeVisible();
+});

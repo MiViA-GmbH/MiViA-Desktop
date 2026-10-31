@@ -73,6 +73,7 @@ async fn open_store(dir: &Path) -> (Arc<SqliteStore>, AccountScope) {
                 server_account_id: "burst".to_owned(),
                 display_name: "Burst".to_owned(),
                 email: String::new(),
+                issued_key_id: None,
             })?;
             tx.accounts().activate(id)?;
             Ok(AccountScope(id))

@@ -1,35 +1,18 @@
-import { type ChildProcess, spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
-import { type Browser, chromium, expect, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
-const REPO = resolve(import.meta.dirname, '../..');
-const TARGET = join(REPO, 'target', 'e2e');
+import { launch, REPO, type Running, STUB_KEY, shutdown, stop, TARGET } from './stub-app';
+
 const RUN = join(REPO, 'target', 'e2e-run', String(Date.now()));
 const WATCHED = join(RUN, 'Mikroskop');
 const REPORTS = join(WATCHED, 'MiViA reports');
 const SENT = join(RUN, 'Gesendet');
 const SENT_REPORTS = join(SENT, 'MiViA reports');
-const CDP_PORT = 9333;
-const STUB_KEY = 'stub-access-key-0123456789-abcdefghijkl';
 const MODEL = '00000009-0000-4000-8000-000000000001';
-
-type Running = { stub: ChildProcess; app: ChildProcess; origin: string; browser: Browser; page: Page };
-
-function startStub(): Promise<{ stub: ChildProcess; origin: string }> {
-	const stub = spawn(join(TARGET, 'mivia-stub.exe'), [], { env: { ...process.env, MIVIA_STUB_KEY: STUB_KEY } });
-	return new Promise((done, failed) => {
-		stub.stdout?.once('data', (chunk: Buffer) => done({ stub, origin: chunk.toString().trim() }));
-		stub.once('error', failed);
-	});
-}
-
-function startApp(origin: string, extra: Record<string, string>): ChildProcess {
-	const env = { ...process.env, MIVIA_E2E_SERVER_ORIGIN: origin, MIVIA_E2E_CDP_PORT: String(CDP_PORT), ...extra };
-	return spawn(join(TARGET, 'mivia-desktop.exe'), [], { env });
-}
 
 function seeded(): Record<string, string> {
 	return {
@@ -40,67 +23,6 @@ function seeded(): Record<string, string> {
 		MIVIA_E2E_MODEL: MODEL,
 		MIVIA_E2E_QUIET_SECS: '10',
 	};
-}
-
-async function launch(extra: Record<string, string>): Promise<Running> {
-	const { stub, origin } = await startStub();
-	const app = startApp(origin, extra);
-	try {
-		const browser = await connect();
-		const page = await firstPage(browser);
-		return { stub, app, origin, browser, page };
-	} catch (error) {
-		await Promise.all([stop(app), stop(stub)]);
-		throw error;
-	}
-}
-
-async function firstPage(browser: Browser): Promise<Page> {
-	let page: Page | undefined;
-	await expect
-		.poll(
-			() => {
-				page = browser.contexts()[0]?.pages()[0];
-				return page !== undefined;
-			},
-			{ timeout: 30_000, intervals: [250] },
-		)
-		.toBe(true);
-	if (!page) {
-		throw new Error('no page in the app window');
-	}
-	return page;
-}
-
-async function shutdown(running: Running | undefined): Promise<void> {
-	await running?.browser.close().catch(() => undefined);
-	await Promise.all([stop(running?.app), stop(running?.stub)]);
-}
-
-async function connect(): Promise<Browser> {
-	let browser: Browser | undefined;
-	await expect
-		.poll(
-			async () => {
-				browser = await chromium.connectOverCDP(`http://127.0.0.1:${CDP_PORT}`).catch(() => undefined);
-				return browser !== undefined;
-			},
-			{ timeout: 60_000, intervals: [500] },
-		)
-		.toBe(true);
-	if (!browser) {
-		throw new Error('the app window did not open a debugging endpoint');
-	}
-	return browser;
-}
-
-function stop(child: ChildProcess | undefined): Promise<void> {
-	if (!child || child.exitCode !== null) {
-		return Promise.resolve();
-	}
-	const exited = new Promise<void>((done) => child.once('exit', () => done()));
-	spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f']);
-	return exited;
 }
 
 function jpeg(seed: number): Buffer {
@@ -197,7 +119,8 @@ test.describe
 			const { page } = running;
 			await expect(page.getByRole('heading', { name: 'Welcome to MiViA Desktop' })).toBeVisible({ timeout: 30_000 });
 			await next(page, 'Start setup');
-			await page.getByLabel('API key').fill(STUB_KEY);
+			await page.getByRole('tab', { name: 'API key' }).click();
+			await page.getByRole('tabpanel').getByLabel('API key').fill(STUB_KEY);
 			await next(page);
 			await expect(page.getByText('Connected as Stub Lab')).toBeVisible({ timeout: 20_000 });
 			await next(page);
@@ -253,6 +176,163 @@ test.describe
 			await sw.click({ force: true });
 			await expect(sw).not.toBeChecked();
 			await expect(page.getByText('nothing is recorded or sent', { exact: false })).toBeVisible();
+		});
+	});
+
+const BROWSER = join(RUN, 'browser');
+const BROWSER_WATCHED = join(BROWSER, 'Labor');
+const SIGN_IN_URL_FILE = join(BROWSER, 'sign-in-url.txt');
+const COMPUTER = 'LAB-PC-7';
+
+function signInUrl(file = SIGN_IN_URL_FILE): string {
+	try {
+		return readFileSync(file, 'utf8');
+	} catch {
+		return '';
+	}
+}
+
+function browserLogs(): string {
+	const appdata = join(BROWSER, 'appdata');
+	return readdirSync(appdata, { recursive: true, encoding: 'utf8' })
+		.filter((name) => /^[^\\/]+[\\/]logs[\\/][^\\/]+\.\w+$/.test(name))
+		.map((name) => readFileSync(join(appdata, name), 'utf8'))
+		.join('\n');
+}
+
+test.describe
+	.serial('browser sign-in against the stub', () => {
+		let running: Running;
+
+		test.beforeAll(async () => {
+			mkdirSync(BROWSER_WATCHED, { recursive: true });
+			running = await launch({
+				LOCALAPPDATA: join(BROWSER, 'appdata'),
+				MIVIA_E2E_PICK_FOLDER: BROWSER_WATCHED,
+				MIVIA_E2E_SIGN_IN_URL_FILE: SIGN_IN_URL_FILE,
+				COMPUTERNAME: COMPUTER,
+			});
+		});
+
+		test.afterAll(async () => {
+			await shutdown(running);
+		});
+
+		test('scenario 9: signing in through the browser connects the wizard and names the key', async () => {
+			const { page, origin } = running;
+			await expect(page.getByRole('heading', { name: 'Welcome to MiViA Desktop' })).toBeVisible({ timeout: 30_000 });
+			await next(page, 'Start setup');
+			await expect(page.getByRole('heading', { name: 'Connect your MiViA account' })).toBeVisible();
+			await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+			await page.getByRole('button', { name: 'Open the browser' }).click();
+			await expect(page.getByText('Finish signing in in your browser.')).toBeVisible();
+			await expect.poll(signInUrl, { timeout: 20_000, intervals: [250] }).toContain('/api/auth/oauth2/authorize?');
+
+			const answer = await fetch(signInUrl());
+			expect(answer.status).toBe(200);
+			expect(answer.headers.get('content-security-policy')).toBe("default-src 'none'");
+			expect(answer.headers.get('referrer-policy')).toBe('no-referrer');
+			expect(await answer.text()).toContain('Sign-in finished. Return to MiViA Desktop.');
+
+			await expect(page.getByText('Connected as Stub Lab')).toBeVisible({ timeout: 20_000 });
+			expect(await (await fetch(`${origin}/__stub/issued`)).json()).toEqual([`MiViA Desktop on ${COMPUTER}`]);
+
+			await next(page);
+			await page.getByRole('button', { name: 'Choose folder…' }).click();
+			await expect(page.getByText(BROWSER_WATCHED)).toBeVisible();
+			await next(page);
+			await expect(page.getByRole('heading', { name: 'How do images arrive in this folder?' })).toBeVisible();
+			await next(page);
+			await expect(page.getByRole('checkbox', { name: 'Grain size' })).toBeChecked({ timeout: 20_000 });
+			await next(page);
+			const consent = page.getByRole('checkbox', { name: /Help improve MiViA/ });
+			await consent.click();
+			await expect(consent).toBeChecked();
+			await next(page, 'Finish setup');
+			await expect(page.getByRole('heading', { name: 'MiViA Desktop is ready' })).toBeVisible({ timeout: 30_000 });
+
+			const connected = async () => {
+				const batches: { events: { name: string }[] }[] = await (await fetch(`${origin}/__stub/telemetry`)).json();
+				return JSON.stringify(batches.flatMap((batch) => batch.events).find((e) => e.name === 'account.connected'));
+			};
+			await expect.poll(connected, { timeout: 60_000, intervals: [1000] }).toContain('"browser"');
+			const sent = JSON.stringify(await (await fetch(`${origin}/__stub/telemetry`)).json());
+			const params = new URL(signInUrl()).searchParams;
+			const state = params.get('state') ?? 'missing';
+			for (const secret of [COMPUTER, STUB_KEY, state]) {
+				expect(sent).not.toContain(secret);
+			}
+			await stop(running.app);
+			const logs = browserLogs();
+			expect(logs).not.toBe('');
+			for (const secret of [STUB_KEY, state, 'stub-code-', 'stub-token-']) {
+				expect(logs).not.toContain(secret);
+			}
+		});
+	});
+
+const HELD = join(RUN, 'held');
+const HELD_WATCHED = join(HELD, 'Labor');
+const HELD_URL_FILE = join(HELD, 'sign-in-url.txt');
+
+test.describe
+	.serial('signing in again against the stub', () => {
+		let running: Running;
+
+		test.beforeAll(async () => {
+			mkdirSync(HELD_WATCHED, { recursive: true });
+			running = await launch({
+				...seeded(),
+				LOCALAPPDATA: join(HELD, 'appdata'),
+				MIVIA_E2E_FOLDER: HELD_WATCHED,
+				MIVIA_E2E_SIGN_IN_URL_FILE: HELD_URL_FILE,
+			});
+		});
+
+		test.afterAll(async () => {
+			await shutdown(running);
+		});
+
+		test('scenario 10: a stopped key holds the work and signing in again resumes it', async () => {
+			const { page, origin } = running;
+			await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible({ timeout: 30_000 });
+			await page
+				.getByRole('link', { name: /Settings/ })
+				.first()
+				.click();
+			await page.getByRole('link', { name: 'Privacy' }).click();
+			await page.getByRole('switch').click({ force: true });
+			await expect(page.getByRole('switch')).toBeChecked();
+			await page.getByRole('link', { name: 'Account', exact: true }).click();
+			await page.getByRole('button', { name: 'Sign out' }).click();
+			await expect(
+				page.getByRole('dialog').getByText('Input folders are no longer watched.', { exact: false }),
+			).toBeVisible();
+			await expect(page.getByText('keeps working for up to 90 days', { exact: false })).toBeHidden();
+			await page.keyboard.press('Escape');
+			await page.getByRole('link', { name: 'Overview', exact: true }).click();
+
+			await fetch(`${origin}/__stub/revoke-key`, { method: 'POST' });
+			writeFileSync(join(HELD_WATCHED, 'probe_001.jpg'), jpeg(30));
+			const again = page.getByRole('button', { name: 'Sign in again' });
+			await expect(again).toBeVisible({ timeout: 60_000 });
+
+			await again.click();
+			await expect(page.getByRole('tab', { name: 'Browser' })).toHaveAttribute('aria-selected', 'true');
+			await page.getByRole('button', { name: 'Open the browser' }).click();
+			await expect.poll(() => signInUrl(HELD_URL_FILE), { timeout: 20_000, intervals: [250] }).toContain('authorize?');
+			expect((await fetch(signInUrl(HELD_URL_FILE))).status).toBe(200);
+
+			await expect(page.getByText('New API key saved.')).toBeVisible({ timeout: 20_000 });
+			await expect(again).toBeHidden();
+			await page.getByRole('link', { name: 'Overview', exact: true }).click();
+			await expect(page.getByText(/: 1 of 1 done/)).toBeVisible({ timeout: 60_000 });
+
+			const connected = async () => {
+				const batches: { events: { name: string }[] }[] = await (await fetch(`${origin}/__stub/telemetry`)).json();
+				return JSON.stringify(batches.flatMap((batch) => batch.events).find((e) => e.name === 'account.connected'));
+			};
+			await expect.poll(connected, { timeout: 60_000, intervals: [1000] }).toContain('"browser"');
 		});
 	});
 

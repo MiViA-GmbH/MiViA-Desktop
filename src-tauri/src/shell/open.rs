@@ -48,6 +48,11 @@ async fn link(ready: &Ready, link: KnownLink) -> Result<(), AppError> {
         KnownLink::Releases => RELEASES.to_owned(),
         KnownLink::License => format!("{}/dashboard", ready.services.origin.0),
         KnownLink::AccessKeys => format!("{}/api-keys", ready.services.origin.0),
+        KnownLink::DevicePage => {
+            return super::sign_in::open_device_page(&ready.services.origin.0)
+                .await
+                .map_err(|_| shell_error(&io::Error::other("device page")));
+        }
         KnownLink::InfoMail => INFO_MAIL.to_owned(),
         KnownLink::Notices => notices()?,
     };

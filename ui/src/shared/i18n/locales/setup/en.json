@@ -2,22 +2,24 @@
 	"desktop": {
 		"account": {
 			"key": {
-				"connect": "Connect with an API key",
 				"connectLead": "No account is connected. Paste your API key to connect this PC again.",
 				"hint": "Tip for the key owner: the old key can be deleted at {{host}} › API keys.",
-				"replace": "Replace API key",
+				"replaceLead": "Paste a new API key to replace the current one.",
 				"save": "Save key",
 				"saved": "New API key saved. Connected as {{name}}."
 			},
 			"signOut": {
 				"button": "Sign out",
 				"cancel": "Cancel",
+				"issued": "This key keeps working for up to 90 days unless you remove it on the website.",
 				"text": "Input folders are no longer watched. Images in the folders are not deleted. Image series that are still collecting are closed; their analyses and reports continue when you sign in to {{name}} again.",
 				"title": "Sign out of {{name}}?"
 			},
 			"switch": {
 				"cancel": "Cancel",
 				"confirm": "Switch account",
+				"signInEffect": "If you switch, input folders are no longer watched.",
+				"signInText": "You signed in as {{next}}, not {{current}}.",
 				"text": "This key belongs to {{next}}, not {{current}}. If you continue, the input folders of {{current}} are no longer watched. Their reports and history stay on this PC.",
 				"title": "Switch account?"
 			}
@@ -115,12 +117,20 @@
 				"adminScope": "This key has administrator rights. Create a key without administrator rights in MiViA and use that one.",
 				"autoRetry": "MiViA tries again every 30 seconds. You can also close MiViA Desktop and continue later.",
 				"blocked": "Your MiViA account is blocked. Contact MiViA support.",
+				"browserCancel": "Cancel",
+				"browserOpen": "Open the browser",
+				"browserWaiting": "Finish signing in in your browser.",
+				"codeCopy": "Copy code",
+				"codeLink": "Go to {{link}} and enter this code:",
+				"codeWaiting": "Waiting for approval.",
 				"connected": "Connected as {{name}} ({{email}})",
 				"copyForIt": "Copy details for IT",
+				"differentAccount": "Use a different account",
 				"help": "Ask the person who manages MiViA in your lab, or sign in at {{host}} and open API keys. A key starts with “mv-” and has 64 letters after it.",
 				"helpTitle": "Where do I find my API key?",
 				"imported": "The API key of the old MiViA Desktop was accepted.",
 				"importedInvalid": "The API key of the old MiViA Desktop is no longer accepted. Enter a new one.",
+				"keyLink": "Create a key at {{link}}.",
 				"label": "API key",
 				"lead": "Paste or type your API key. It connects this PC to your MiViA account.",
 				"licenseInactive": "Your MiViA license is not active. You can finish setup now; analysis starts as soon as the license is active.",
@@ -130,10 +140,16 @@
 				"other": "Use a different key",
 				"otherAccount": "This key belongs to another account. The models you chose were reset.",
 				"rejected": "This API key was not accepted. Check that you copied the whole key, or ask for a new one.",
+				"signInDenied": "The sign-in was denied.",
+				"signInExpired": "The code has expired.",
+				"signInTimedOut": "The browser did not return in time.",
+				"signInUnavailable": "Sign-in in the browser isn’t available. Paste an API key.",
 				"storeFailed": "Windows could not store the API key. You will need to enter it again after restarting MiViA Desktop.",
 				"stored": "The key is stored safely in Windows. For security, the copy in the clipboard was deleted.",
 				"storedOnly": "The key is stored safely in Windows.",
-				"title": "Connect to your MiViA account"
+				"tabBrowser": "Browser",
+				"tabCode": "Code",
+				"title": "Connect your MiViA account"
 			},
 			"legacy": {
 				"closeIt": "Close old MiViA Desktop",
@@ -199,7 +215,7 @@
 			"steps": {
 				"finish": "Finish",
 				"folder": "Input folder",
-				"key": "API key",
+				"key": "Account",
 				"legacy": "Old version",
 				"models": "Models",
 				"series": "Image series",

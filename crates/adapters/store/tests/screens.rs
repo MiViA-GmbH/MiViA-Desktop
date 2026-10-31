@@ -12,17 +12,66 @@ use mivia_ports::ipc::screens::{AccountView, HoldKind, NeedsAttention};
 use mivia_ports::queries::Queries;
 use mivia_ports::store::intake::FolderChange;
 use mivia_ports::store::{
-    AttentionCleared, NewBatch, NewComputation, NewFolder, Origin, SettingsScope, StoreExt,
+    AccountScope, AttentionCleared, NewAccount, NewBatch, NewComputation, NewFolder, Origin,
+    SettingsScope, StoreExt,
 };
 use mivia_store::StoreConfig;
 
 use crate::common::{account, fixture, new_batch, new_file, seed};
 
-fn folder(
-    tx: &mut dyn mivia_ports::store::WriteTx,
-    scope: mivia_ports::store::AccountScope,
-    name: &str,
-) -> FolderId {
+const SERVER: &str = "https://app.mivia.ai";
+
+fn lab(name: &str, issued_key_id: Option<&str>) -> NewAccount {
+    NewAccount {
+        server_url: SERVER.to_owned(),
+        server_account_id: name.to_owned(),
+        display_name: name.to_owned(),
+        email: String::new(),
+        issued_key_id: issued_key_id.map(str::to_owned),
+    }
+}
+
+async fn stored_id(fx: &crate::common::Fixture, name: &'static str) -> Option<String> {
+    fx.store
+        .write(move |tx| tx.accounts().issued_key_id(SERVER, name))
+        .await
+        .unwrap()
+}
+
+#[tokio::test]
+async fn the_issued_key_id_survives_switching_away_and_back() {
+    let fx = fixture(StoreConfig::for_tests()).await;
+    let first = seed(&fx.store, |tx| {
+        let first = tx.accounts().upsert(&lab("first", Some("key-1"))).unwrap();
+        tx.accounts().activate(first).unwrap();
+        let second = tx.accounts().upsert(&lab("second", None)).unwrap();
+        tx.accounts().activate(second).unwrap();
+        tx.accounts().deactivate().unwrap();
+        tx.accounts().activate(first).unwrap();
+        first
+    })
+    .await;
+    assert_eq!(stored_id(&fx, "first").await.as_deref(), Some("key-1"));
+    assert_eq!(stored_id(&fx, "second").await, None);
+    assert_eq!(stored_id(&fx, "unknown").await, None);
+    let view = fx.store.get_account(AccountScope(first)).await.unwrap();
+    assert!(view.unwrap().issued_key);
+}
+
+#[tokio::test]
+async fn a_pasted_key_leaves_the_account_without_an_issued_key() {
+    let fx = fixture(StoreConfig::for_tests()).await;
+    let id = seed(&fx.store, |tx| {
+        tx.accounts().upsert(&lab("lab", Some("key-1"))).unwrap();
+        tx.accounts().upsert(&lab("lab", None)).unwrap()
+    })
+    .await;
+    assert_eq!(stored_id(&fx, "lab").await, None);
+    let view = fx.store.get_account(AccountScope(id)).await.unwrap();
+    assert!(!view.unwrap().issued_key);
+}
+
+fn folder(tx: &mut dyn mivia_ports::store::WriteTx, scope: AccountScope, name: &str) -> FolderId {
     tx.folders(scope)
         .add(&NewFolder {
             path: WinPath::parse(&format!(r"D:\Lab\{name}")).unwrap(),
@@ -206,6 +255,7 @@ async fn holds_account_and_settings_read_back() {
             server_url: "https://app.mivia.ai".to_owned(),
             server_account_id: "Lab".to_owned(),
             email: String::new(),
+            issued_key: false,
         })
     );
     assert_eq!(

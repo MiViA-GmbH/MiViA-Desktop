@@ -42,6 +42,12 @@ pub(crate) struct UpdateNotice {
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub(crate) struct UpdateChanged;
 
+#[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SignInCode {
+    pub(crate) user_code: String,
+}
+
 macro_rules! app_commands {
     () => {
         collect_commands![
@@ -73,6 +79,9 @@ macro_rules! app_commands {
             setup::save_setup,
             setup::pick_setup_folder,
             setup::connect_access_key,
+            setup::start_browser_sign_in,
+            setup::start_code_sign_in,
+            setup::cancel_sign_in,
             setup::import_legacy_key,
             setup::close_legacy_app,
             setup::complete_setup,
@@ -143,7 +152,8 @@ pub(crate) fn builder() -> Builder<tauri::Wry> {
             QuitRequested,
             DropHover,
             UpdateNotice,
-            UpdateChanged
+            UpdateChanged,
+            SignInCode
         ])
         .error_handling(ErrorHandlingMode::Throw)
 }

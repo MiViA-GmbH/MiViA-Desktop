@@ -177,6 +177,7 @@ mod draft {
 
     fn connection(account: &str) -> DraftConnection {
         DraftConnection {
+            issued_key_id: None,
             origin: "https://app.mivia.ai".to_owned(),
             account_id: account.to_owned(),
             name: "Lab".to_owned(),

@@ -7,7 +7,10 @@ use mivia_api::types::{
     ReportingControllerGetReportResponse, UploadRejectedBody, UploadRejectedBodyErrorsItem,
     UserJobDto,
 };
-use mivia_api::{AccessKeyCurrent, ApiErrorBody, ReportCreated, Version};
+use mivia_api::{
+    AccessKeyCurrent, ApiErrorBody, DeviceCode, IssuedAccessKey, OauthAccount, OauthClient,
+    OauthError, OauthToken, ReportCreated, Version,
+};
 use serde::de::DeserializeOwned;
 
 type Decode = fn(&[u8]) -> Result<(), String>;
@@ -30,6 +33,12 @@ fn decoder(operation: &str, status: &str) -> Option<Decode> {
         ("ImageController_uploadImages", "400") => parses::<UploadRejectedBody>,
         ("version", "200") => parses::<Version>,
         ("accessKeysInfo", "200") => parses::<AccessKeyCurrent>,
+        ("oauthClientByApp", "200") => parses::<OauthClient>,
+        ("oauthToken", "200") => parses::<OauthToken>,
+        ("oauthToken", "400") => parses::<OauthError>,
+        ("oauthDeviceCode", "200") => parses::<DeviceCode>,
+        ("oauthUserinfo", "200") => parses::<OauthAccount>,
+        ("accessKeyIssue", "201") => parses::<IssuedAccessKey>,
         ("JobsV2Controller_getJobResults", "200") => parses::<JobV2Detail>,
         ("ReportingController_createPdf", "202") => parses::<ReportCreated>,
         ("ReportingController_getReport", "200") => parses::<ReportingControllerGetReportResponse>,
@@ -125,6 +134,40 @@ fn unknown_rejection_code_falls_into_the_catch_all() {
 }
 
 #[test]
+fn sign_in_fixtures_hold_only_placeholder_tokens_and_keys() {
+    let expected = [
+        (
+            "oauthDeviceCode/200.json",
+            "device_code",
+            "fixture-device-code",
+        ),
+        ("oauthDeviceCode/200.json", "user_code", "WDJB-MJHT"),
+        (
+            "oauthToken/200.json",
+            "access_token",
+            "fixture-access-token",
+        ),
+        ("oauthToken/200.json", "id_token", "fixture-id-token"),
+        (
+            "oauthToken/200.json",
+            "refresh_token",
+            "fixture-refresh-token",
+        ),
+        (
+            "accessKeyIssue/201.json",
+            "code",
+            "mv-fixtureAccessKeyAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ),
+        ("accessKeyIssue/201.json", "start", "mv-fix"),
+    ];
+    for (file, field, placeholder) in expected {
+        let value: serde_json::Value = serde_json::from_slice(&fixture(file)).unwrap();
+        let found = value.get(field).unwrap_or(&serde_json::Value::Null);
+        assert!(found.is_null() || found == placeholder, "{file} {field}");
+    }
+}
+
+#[test]
 fn fixtures_hold_no_internal_hosts_accounts_or_signed_links() {
     let banned = [
         ".internal.",
@@ -133,6 +176,7 @@ fn fixtures_hold_no_internal_hosts_accounts_or_signed_links() {
         "amazonaws",
         "X-Amz-",
         "Signature=",
+        "eyJ",
     ];
     for file in fixtures() {
         let text = std::fs::read_to_string(&file).unwrap();

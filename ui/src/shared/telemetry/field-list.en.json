@@ -337,12 +337,30 @@
 				{
 					"name": "kind",
 					"type": "choice",
-					"values": ["access_key"]
+					"values": ["access_key", "browser", "code"]
 				}
 			],
 			"name": "account.connected",
 			"priority": "core",
 			"purpose": "Shows that an API key was accepted."
+		},
+		{
+			"category": "diagnostics",
+			"fields": [
+				{
+					"name": "method",
+					"type": "choice",
+					"values": ["browser", "code"]
+				},
+				{
+					"name": "reason",
+					"type": "choice",
+					"values": ["timeout", "unavailable", "denied", "offline", "cancelled"]
+				}
+			],
+			"name": "sign_in.failed",
+			"priority": "core",
+			"purpose": "Shows which sign-in method did not finish and why."
 		},
 		{
 			"category": "diagnostics",

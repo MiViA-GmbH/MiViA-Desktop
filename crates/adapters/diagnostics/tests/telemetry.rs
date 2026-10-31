@@ -9,8 +9,8 @@ use mivia_domain::ids::{BatchId, FolderId};
 use mivia_ports::ipc::setup::{ArrivalPreset, ReportMode};
 use mivia_ports::store::telemetry::TelemetryRow;
 use mivia_ports::telemetry::{
-    BatchRenamed, Field, FieldKind, FolderAdded, FolderPaused, FolderVia, ProductEvent, UiView,
-    UpdateCheck, Version, View,
+    BatchRenamed, Field, FieldKind, FolderAdded, FolderPaused, FolderVia, ProductEvent,
+    SignInFailed, SignInMethod, SignInReason, UiView, UpdateCheck, Version, View,
 };
 use proptest::prelude::*;
 use serde_json::Value;
@@ -92,7 +92,7 @@ fn the_table_and_the_typed_events_agree_both_ways() {
         .collect();
     assert_eq!(table.event.len(), from_table.len(), "duplicate event names");
     assert_eq!(ProductEvent::CATALOGUE.len(), from_types.len());
-    assert_eq!(from_table.len(), 64);
+    assert_eq!(from_table.len(), 65);
     for (name, fields) in &from_table {
         assert_eq!(Some(fields), from_types.get(name), "{name}");
     }
@@ -222,6 +222,29 @@ fn typed_events_carry_their_values() {
     };
     let check = schema().encode(&check.into(), "install-a").unwrap();
     assert_eq!(check.payload, r#"{"to":"2.1.0"}"#);
+}
+
+#[test]
+fn a_failed_sign_in_carries_only_its_method_and_reason() {
+    let reasons = [
+        (SignInReason::Timeout, "timeout"),
+        (SignInReason::Unavailable, "unavailable"),
+        (SignInReason::Denied, "denied"),
+        (SignInReason::Offline, "offline"),
+        (SignInReason::Cancelled, "cancelled"),
+    ];
+    for (reason, text) in reasons {
+        let event = SignInFailed {
+            method: Some(SignInMethod::Browser),
+            reason: Some(reason),
+        };
+        let checked = schema().encode(&event.into(), "install-a").unwrap();
+        assert_eq!(checked.name, "sign_in.failed");
+        assert_eq!(
+            serde_json::from_str::<Value>(&checked.payload).unwrap(),
+            serde_json::json!({ "method": "browser", "reason": text })
+        );
+    }
 }
 
 #[test]

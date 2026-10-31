@@ -1,10 +1,11 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
 const PUBLIC_HOST: &str = "app.mivia.ai";
 const OTHER_HOST: &str = "example.invalid";
 const EMAIL: &str = "ci@example.invalid";
+const USERINFO_FIELDS: [&str; 4] = ["sub", "name", "email", "email_verified"];
 
 pub(crate) struct Recorder {
     pub(crate) dir: Option<PathBuf>,
@@ -55,12 +56,39 @@ fn set(value: &mut Value, pointer: &str, text: &str) {
     }
 }
 
-fn personal(operation: &str, value: &mut Value) {
-    if operation == "accessKeysInfo" {
-        set(value, "/account/name", "CI Lab");
-        set(value, "/key/name", "Desktop");
-        set(value, "/key/start", "mv-AbCdEf");
+pub(crate) fn personal(operation: &str, value: &mut Value) {
+    match operation {
+        "accessKeysInfo" => {
+            set(value, "/account/name", "CI Lab");
+            set(value, "/key/name", "Desktop");
+            set(value, "/key/start", "mv-AbCdEf");
+        }
+        "accessKeyIssue" => {
+            set(value, "/name", "MiViA Desktop on LAB-PC");
+            set(value, "/start", "mv-fix");
+        }
+        "oauthUserinfo" => {
+            if let Some(fields) = value.as_object_mut() {
+                fields.retain(|field, _| USERINFO_FIELDS.contains(&field.as_str()));
+            }
+            set(value, "/name", "Lab User");
+        }
+        _ => {}
     }
+}
+
+pub(crate) fn write_fixture(
+    dir: &Path,
+    operation: &str,
+    stem: &str,
+    value: &Value,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let folder = dir.join(operation);
+    std::fs::create_dir_all(&folder)?;
+    let mut text = serde_json::to_string_pretty(value)?;
+    text.push('\n');
+    std::fs::write(folder.join(format!("{stem}.json")), text)?;
+    Ok(())
 }
 
 impl Recorder {
@@ -86,12 +114,7 @@ impl Recorder {
         let mut value: Value = serde_json::from_slice(body)?;
         scrub(&mut value, &self.host);
         personal(operation, &mut value);
-        let folder = dir.join(operation);
-        std::fs::create_dir_all(&folder)?;
-        let mut text = serde_json::to_string_pretty(&value)?;
-        text.push('\n');
-        std::fs::write(folder.join(format!("{status}.json")), text)?;
-        Ok(())
+        write_fixture(dir, operation, &status.to_string(), &value)
     }
 }
 

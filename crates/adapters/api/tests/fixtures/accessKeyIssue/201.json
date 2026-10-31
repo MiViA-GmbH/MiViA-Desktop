@@ -1,0 +1,11 @@
+{
+	"code": "mv-fixtureAccessKeyAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	"createdAt": "2026-10-31T08:02:05.131Z",
+	"enabled": true,
+	"generatedBy": "MiViA Desktop",
+	"id": "705183a8-a2c3-466a-ab5d-0da43cbea2e6",
+	"lastUsed": null,
+	"name": "MiViA Desktop on LAB-PC",
+	"scopes": ["images:write", "images:delete", "jobs:read", "jobs:write", "jobs:delete"],
+	"start": "mv-fix"
+}

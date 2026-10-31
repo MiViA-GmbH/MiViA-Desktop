@@ -16,9 +16,9 @@ use mivia_ports::server::{License, ServerApi, ServerError};
 use mivia_ports::store::{AccountScope, NewAccount, SettingsScope, StoreExt, TxError, WriteTx};
 use mivia_server::HttpIdentityApi;
 use secrecy::{ExposeSecret, SecretString};
-use tauri::AppHandle;
 
 use super::cx::{Cx, Ready, Services, now};
+use super::setup::{NewKey, Switch};
 use super::telemetry;
 use super::{intake, pipeline};
 
@@ -153,8 +153,9 @@ fn connected(identity: &Identity, stored: Stored) -> ConnectionView {
     }
 }
 
-fn new_account(services: &Services, identity: &Identity) -> NewAccount {
+fn new_account(services: &Services, identity: &Identity, issued_id: Option<String>) -> NewAccount {
     NewAccount {
+        issued_key_id: issued_id,
         server_url: services.origin.0.clone(),
         server_account_id: identity.account_id.clone(),
         display_name: identity.name.clone(),
@@ -195,7 +196,7 @@ fn enter(tx: &mut dyn WriteTx, account: &NewAccount) -> Result<AccountScope, TxE
     Ok(AccountScope(id))
 }
 
-async fn previous_account(ready: &Ready) -> Option<AccountView> {
+pub(crate) async fn previous_account(ready: &Ready) -> Option<AccountView> {
     if let Some(account) = ready.store.get_account(ready.scope).await.ok().flatten() {
         return Some(account);
     }
@@ -218,9 +219,9 @@ async fn previous_account(ready: &Ready) -> Option<AccountView> {
         .flatten()
 }
 
-pub(crate) async fn replace_key(cx: &Cx, key: SecretString) -> Result<ConnectOutcome, AppError> {
+pub(crate) async fn replace_key(cx: &Cx, new_key: NewKey) -> Result<ConnectOutcome, AppError> {
     let ready = cx.ready().await;
-    let identity = match identify(&ready.services, &key).await {
+    let identity = match identify(&ready.services, &new_key.key).await {
         Ok(identity) => identity,
         Err(outcome) => return Ok(outcome),
     };
@@ -231,25 +232,35 @@ pub(crate) async fn replace_key(cx: &Cx, key: SecretString) -> Result<ConnectOut
         let outcome = ConnectOutcome::SwitchAccount {
             current_name: previous.display_name.clone(),
             new_name: identity.name.clone(),
+            signed_in: false,
         };
-        cx.setup.hold_switch(previous, identity, key);
+        cx.setup.hold_switch(Switch::Key {
+            previous,
+            identity,
+            new_key,
+        });
         return Ok(outcome);
     }
-    enter_account(cx, &ready.services, identity, key).await
+    enter_account(cx, identity, new_key).await
 }
 
 pub(crate) async fn enter_account(
     cx: &Cx,
-    services: &Arc<Services>,
     identity: Identity,
-    key: SecretString,
+    new_key: NewKey,
 ) -> Result<ConnectOutcome, AppError> {
-    let stored = store_key(services, &identity, &key).await;
+    let NewKey {
+        key,
+        source,
+        issued_id,
+    } = new_key;
+    let services = &Arc::clone(&cx.ready().await.services);
+    let mut stored = store_key(services, &identity, &key).await;
     if stored.notes.contains(&ConnectionNote::StoreFailed) {
         cx.setup.keep_session_key(key.clone());
     }
     super::support::outbox(services).clear();
-    let account = new_account(services, &identity);
+    let account = new_account(services, &identity, issued_id);
     services
         .store
         .write(move |tx| enter(tx, &account).map(drop))
@@ -257,26 +268,13 @@ pub(crate) async fn enter_account(
         .map_err(|error| app_error(&error, "connect_access_key"))?;
     let cleared = clear_clipboard_if(&key);
     rebuild(cx, false).await;
-    telemetry::account_connected(services, false);
+    stored.notes.extend(source);
+    telemetry::account_connected(services, telemetry::kind_of(&stored.notes), false);
     Ok(ConnectOutcome::Connected {
         connection: connected(&identity, stored),
         other_account: false,
         clipboard_cleared: cleared,
     })
-}
-
-pub(crate) async fn switch(cx: &Cx, app: &AppHandle) -> Result<ConnectOutcome, AppError> {
-    let ready = cx.ready().await;
-    let Some((previous, identity, key)) = cx.setup.take_switch() else {
-        return Ok(ConnectOutcome::Cancelled);
-    };
-    let confirmed = super::setup::confirm_switch(cx, app, &previous, &identity).await;
-    if !confirmed {
-        return Ok(ConnectOutcome::Cancelled);
-    }
-    let entered = enter_account(cx, &ready.services, identity, key).await?;
-    telemetry::account_switched(&ready.services);
-    Ok(entered)
 }
 
 pub(crate) async fn sign_out(cx: &Cx) -> Result<(), AppError> {

@@ -4,6 +4,7 @@ mod legacy;
 mod wizard;
 
 use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
@@ -15,9 +16,13 @@ use mivia_ports::auth::{
     CredentialStore, CredentialStoreError, Identity, ServerOrigin, StoredCredential,
 };
 use mivia_ports::ipc::screens::AccountView;
+use mivia_ports::ipc::setup::ConnectionNote;
+use mivia_ports::telemetry::SignInMethod;
+use mivia_server::{IssuedKey, SignedIn};
 use parking_lot::Mutex;
 use secrecy::SecretString;
 use tauri::{AppHandle, Manager};
+use tokio::sync::Notify;
 use uuid::Uuid;
 
 use super::cx::{Cx, Ready};
@@ -27,18 +32,55 @@ use super::window::LABEL;
 pub(crate) use catalogue::catalogue;
 pub(crate) use complete::complete;
 pub(crate) use legacy::{close_legacy, retry_legacy_stop};
-pub(crate) use wizard::{connect, import_legacy, pick, save, view};
+pub(crate) use wizard::{connect, connect_new, import_legacy, pick, save, view};
 
 const PICK_LIFETIME: Duration = Duration::from_secs(600);
 const REFUSAL: Duration = Duration::from_secs(60);
 
-type Switch = (AccountView, Identity, SecretString);
+pub(crate) enum Switch {
+    Key {
+        previous: AccountView,
+        identity: Identity,
+        new_key: NewKey,
+    },
+    SignedIn {
+        previous: AccountView,
+        signed_in: SignedIn,
+        method: SignInMethod,
+    },
+}
+
+#[derive(Clone)]
+pub(crate) struct NewKey {
+    pub(crate) key: SecretString,
+    pub(crate) source: Option<ConnectionNote>,
+    pub(crate) issued_id: Option<String>,
+}
+
+impl NewKey {
+    pub(crate) fn from_source(key: SecretString, source: Option<ConnectionNote>) -> Self {
+        Self {
+            key,
+            source,
+            issued_id: None,
+        }
+    }
+
+    pub(crate) fn issued(issued: IssuedKey, note: ConnectionNote) -> Self {
+        Self {
+            key: issued.key,
+            source: Some(note),
+            issued_id: Some(issued.id),
+        }
+    }
+}
 
 #[derive(Default)]
 pub(crate) struct Session {
-    retry_key: Mutex<Option<SecretString>>,
+    retry_key: Mutex<Option<NewKey>>,
     memory_key: Mutex<Option<SecretString>>,
     switch: Mutex<Option<Switch>>,
+    sign_in: Mutex<Option<Arc<Notify>>>,
     refused_until: Mutex<Option<Instant>>,
     legacy: Mutex<Option<LegacyInstall>>,
     picks: Mutex<HashMap<String, (WinPath, Instant)>>,
@@ -54,11 +96,11 @@ impl Session {
         *self.memory_key.lock() = Some(key);
     }
 
-    pub(crate) fn hold_pending(&self, key: SecretString) {
+    pub(crate) fn hold_pending(&self, key: NewKey) {
         *self.retry_key.lock() = Some(key);
     }
 
-    pub(crate) fn pending(&self) -> Option<SecretString> {
+    pub(crate) fn pending(&self) -> Option<NewKey> {
         self.retry_key.lock().clone()
     }
 
@@ -68,12 +110,29 @@ impl Session {
         *self.switch.lock() = None;
     }
 
-    pub(crate) fn hold_switch(&self, previous: AccountView, identity: Identity, key: SecretString) {
-        *self.switch.lock() = Some((previous, identity, key));
+    pub(crate) fn hold_switch(&self, switch: Switch) {
+        *self.switch.lock() = Some(switch);
     }
 
     pub(crate) fn take_switch(&self) -> Option<Switch> {
         self.switch.lock().take()
+    }
+
+    pub(crate) fn begin_sign_in(&self) -> Arc<Notify> {
+        let stop = Arc::new(Notify::new());
+        let earlier = self.sign_in.lock().replace(Arc::clone(&stop));
+        if let Some(earlier) = earlier {
+            earlier.notify_one();
+        }
+        stop
+    }
+
+    pub(crate) fn stop_sign_in(&self) {
+        *self.switch.lock() = None;
+        let current = self.sign_in.lock().take();
+        if let Some(current) = current {
+            current.notify_one();
+        }
     }
 
     pub(crate) fn found_legacy(&self, install: Option<LegacyInstall>) {
@@ -171,40 +230,59 @@ pub(crate) fn owner(app: &AppHandle) -> isize {
         .map_or(0, |hwnd| hwnd.0 as isize)
 }
 
-fn switch_text(
+pub(crate) fn key_switch_text(
     language: Language,
     previous: &AccountView,
     next: &Identity,
-) -> (String, [&'static str; 2]) {
+) -> String {
     match language {
-        Language::En => (
-            format!(
-                "This key belongs to a different MiViA account than {}. New account: {} ({}). Switch account?",
-                previous.email, next.name, next.email
-            ),
-            ["Switch account", "Cancel"],
+        Language::En => format!(
+            "This key belongs to a different MiViA account than {}. New account: {} ({}). Switch account?",
+            previous.email, next.name, next.email
         ),
-        Language::De => (
-            format!(
-                "Dieser Schl\u{fc}ssel geh\u{f6}rt zu einem anderen MiViA-Konto als {}. Neues Konto: {} ({}). Konto wechseln?",
-                previous.email, next.name, next.email
-            ),
-            ["Konto wechseln", "Abbrechen"],
+        Language::De => format!(
+            "Dieser Schl\u{fc}ssel geh\u{f6}rt zu einem anderen MiViA-Konto als {}. Neues Konto: {} ({}). Konto wechseln?",
+            previous.email, next.name, next.email
         ),
+    }
+}
+
+pub(crate) fn sign_in_switch_text(
+    language: Language,
+    current_email: &str,
+    name: &str,
+    email: &str,
+) -> String {
+    match language {
+        Language::En => {
+            format!(
+                "You signed in as {name} ({email}), not {current_email}. If you switch, input folders are no longer watched. Switch account?"
+            )
+        }
+        Language::De => format!(
+            "Sie haben sich als {name} ({email}) angemeldet, nicht als {current_email}. Beim Wechsel werden Eingangsordner nicht mehr \u{fc}berwacht. Konto wechseln?"
+        ),
+    }
+}
+
+fn switch_buttons(language: Language) -> [&'static str; 2] {
+    match language {
+        Language::En => ["Switch account", "Cancel"],
+        Language::De => ["Konto wechseln", "Abbrechen"],
     }
 }
 
 pub(crate) async fn confirm_switch(
     cx: &Cx,
     app: &AppHandle,
-    previous: &AccountView,
-    next: &Identity,
+    text: impl FnOnce(Language) -> String,
 ) -> bool {
     if cx.setup.refused() {
         return false;
     }
     let language = language(&*cx.ready().await).await;
-    let (text, buttons) = switch_text(language, previous, next);
+    let text = text(language);
+    let buttons = switch_buttons(language);
     let owner = owner(app);
     let confirmed = tokio::task::spawn_blocking(move || {
         mivia_os::confirm(owner, "MiViA Desktop", &text, buttons)

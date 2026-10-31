@@ -87,6 +87,7 @@ const ACCOUNT = {
 	displayName: 'Dr. Katrin Möller',
 	serverUrl: 'https://app.mivia.ai',
 	serverAccountId: 'a1',
+	issuedKey: false,
 	email: 'k.moeller@kessler-werkstoff.de',
 };
 

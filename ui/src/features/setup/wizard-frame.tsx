@@ -55,7 +55,7 @@ function WizardStepper({ view, step }: { view: SetupView; step: SetupStep }) {
 	);
 }
 
-type Primary = { label: string; onClick: () => void; loading?: boolean };
+type Primary = { label: string; onClick: () => void; loading?: boolean; disabled?: boolean };
 
 type FrameProps = {
 	view: SetupView;
@@ -85,7 +85,7 @@ function Footer({ view, step, primary, onBack }: Omit<FrameProps, 'title' | 'chi
 				</Text>
 			)}
 			<Box flex={1} />
-			<Button loading={primary.loading ?? false} type="submit">
+			<Button disabled={primary.disabled ?? false} loading={primary.loading ?? false} type="submit">
 				{primary.label}
 			</Button>
 		</Group>

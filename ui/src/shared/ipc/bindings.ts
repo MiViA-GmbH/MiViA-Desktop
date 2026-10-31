@@ -11,6 +11,7 @@ export const commands = {
 	serverUrl: string,
 	serverAccountId: string,
 	email: string,
+	issuedKey: boolean,
 } | null>("get_account"),
 	listFolders: () => __TAURI_INVOKE<FoldersView>("list_folders"),
 	listHolds: () => __TAURI_INVOKE<HoldsView>("list_holds"),
@@ -58,6 +59,9 @@ export const commands = {
 	saveSetup: (input: SetupInput) => __TAURI_INVOKE<SetupView>("save_setup", { input }),
 	pickSetupFolder: (purpose: PickPurpose) => __TAURI_INVOKE<SetupView>("pick_setup_folder", { purpose }),
 	connectAccessKey: (key: string | null) => __TAURI_INVOKE<ConnectOutcome>("connect_access_key", { key }),
+	startBrowserSignIn: (differentAccount: boolean) => __TAURI_INVOKE<ConnectOutcome>("start_browser_sign_in", { differentAccount }),
+	startCodeSignIn: () => __TAURI_INVOKE<ConnectOutcome>("start_code_sign_in"),
+	cancelSignIn: () => __TAURI_INVOKE<null>("cancel_sign_in"),
 	importLegacyKey: () => __TAURI_INVOKE<ConnectOutcome>("import_legacy_key"),
 	closeLegacyApp: () => __TAURI_INVOKE<SetupView>("close_legacy_app"),
 	completeSetup: () => __TAURI_INVOKE<DoneView>("complete_setup"),
@@ -132,6 +136,7 @@ export const events = {
 	languageChanged: makeEvent<LanguageChanged>("language-changed"),
 	navigate: makeEvent<Navigate>("navigate"),
 	quitRequested: makeEvent<QuitRequested>("quit-requested"),
+	signInCode: makeEvent<SignInCode>("sign-in-code"),
 	storeChangedEvent: makeEvent<StoreChangedEvent>("store-changed-event"),
 	updateChanged: makeEvent<UpdateChanged>("update-changed"),
 	updateNotice: makeEvent<UpdateNotice>("update-notice"),
@@ -143,6 +148,7 @@ export type AccountView = {
 	serverUrl: string,
 	serverAccountId: string,
 	email: string,
+	issuedKey: boolean,
 };
 
 export type AnalysisView = {
@@ -263,9 +269,9 @@ export type ComputationItem = {
 	reason: string | null,
 };
 
-export type ConnectOutcome = { kind: "connected"; connection: ConnectionView; otherAccount: boolean; clipboardCleared: boolean } | { kind: "malformed" } | { kind: "rejected" } | { kind: "accountBlocked" } | { kind: "adminScope" } | { kind: "missingScopes" } | { kind: "offline"; details: string } | { kind: "switchAccount"; currentName: string; newName: string } | { kind: "cancelled" };
+export type ConnectOutcome = { kind: "connected"; connection: ConnectionView; otherAccount: boolean; clipboardCleared: boolean } | { kind: "malformed" } | { kind: "rejected" } | { kind: "accountBlocked" } | { kind: "adminScope" } | { kind: "missingScopes" } | { kind: "offline"; details: string } | { kind: "switchAccount"; currentName: string; newName: string; signedIn: boolean } | { kind: "cancelled" } | { kind: "signInUnavailable" } | { kind: "signInTimedOut" } | { kind: "signInDenied" } | { kind: "signInExpired" };
 
-export type ConnectionNote = "licenseInactive" | "storeFailed" | "imported";
+export type ConnectionNote = "licenseInactive" | "storeFailed" | "imported" | "browser" | "code";
 
 export type ConnectionView = {
 	name: string,
@@ -484,7 +490,7 @@ export type IntegrationView = {
 
 export type IssueReporting = "on" | "mailtoOnly" | "off";
 
-export type KnownLink = "support" | "releases" | "license" | "accessKeys" | "infoMail" | "notices";
+export type KnownLink = "support" | "releases" | "license" | "accessKeys" | "devicePage" | "infoMail" | "notices";
 
 export type Language = "en" | "de";
 
@@ -758,6 +764,10 @@ export type SetupView = {
 	models: ModelChoiceView[],
 	options: SetupOption[],
 	imagesSent: number,
+};
+
+export type SignInCode = {
+	userCode: string,
 };
 
 export type StartupState = "on" | "off" | "turnedOffInTaskManager";

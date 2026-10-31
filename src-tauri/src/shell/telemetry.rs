@@ -29,9 +29,9 @@ pub(crate) use events::{flush_on_stop, record_stop};
 use loops::{spawn_sender, spawn_writer};
 pub(crate) use product::{
     account_connected, account_disconnected, account_switched, attach_pipeline, custom_report,
-    exported, folder_added,
+    exported, folder_added, sign_in_failed,
 };
-pub(crate) use setup::{finished as setup_finished, restarted, step_changed};
+pub(crate) use setup::{finished as setup_finished, kind_of, restarted, step_changed};
 
 const UNKNOWN_MACHINE: &str = "unknown";
 
