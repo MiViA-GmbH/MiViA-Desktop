@@ -11,7 +11,7 @@ const json = (args) => JSON.parse(gh(args));
 
 const jobs = json(['api', '--paginate', '--slurp', `repos/${repo}/actions/runs/${runId}/jobs?per_page=100`])
 	.flatMap((page) => page.jobs)
-	.filter((job) => job.status === 'completed' && job.name !== 'Nightly report');
+	.filter((job) => job.status === 'completed' && !job.name.endsWith(' report'));
 const open = json([
 	'issue',
 	'list',
