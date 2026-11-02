@@ -137,7 +137,11 @@ fn final_stem_rules() {
     assert_eq!(finish_stem("com¹"), "_com¹");
     assert_eq!(finish_stem("LPT9.x.y"), "_LPT9.x.y");
     assert_eq!(finish_stem("Desktop.ini"), "_Desktop.ini");
-    assert_eq!(finish_stem("a_vti_b"), "_a_vti_b");
+    assert_eq!(finish_stem("a_vti_b"), "a-vti_b");
+    assert_eq!(finish_stem("_VtI_"), "-VtI_");
+    assert_eq!(finish_stem("_vti_vti_"), "-vti-vti_");
+    assert!(!is_reserved(&finish_stem("x_vtı_")));
+    assert!(!is_reserved(&finish_stem("a_vti_b")));
     assert_eq!(finish_stem("~$lock"), "_lock");
     assert_eq!(finish_stem("  name. . "), "name");
     assert_eq!(finish_stem("CONSOLE"), "CONSOLE");
