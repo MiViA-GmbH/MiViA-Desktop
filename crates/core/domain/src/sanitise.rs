@@ -1,7 +1,7 @@
 use unicode_general_category::{GeneralCategory, get_general_category};
 use unicode_normalization::UnicodeNormalization;
 
-use crate::path::fold;
+use crate::path::{fold, fold_char};
 
 const INVALID: &[char] = &['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
 const RESERVED: &[&str] = &[
@@ -9,6 +9,7 @@ const RESERVED: &[&str] = &[
     "COM8", "COM9", "COM¹", "COM²", "COM³", "LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6",
     "LPT7", "LPT8", "LPT9", "LPT¹", "LPT²", "LPT³",
 ];
+const SHAREPOINT_MARK: [char; 5] = ['_', 'V', 'T', 'I', '_'];
 
 pub fn is_hidden_format(c: char) -> bool {
     matches!(
@@ -44,10 +45,27 @@ pub fn finish_stem(stem: &str) -> String {
     let unprefixed = trimmed
         .strip_prefix("~$")
         .map_or_else(|| trimmed.to_owned(), |rest| format!("_{rest}"));
-    if is_reserved(&unprefixed) {
-        return format!("_{unprefixed}");
+    let unmarked = break_sharepoint_mark(&unprefixed);
+    if is_reserved(&unmarked) {
+        return format!("_{unmarked}");
     }
-    unprefixed
+    unmarked
+}
+
+fn break_sharepoint_mark(stem: &str) -> String {
+    let chars: Vec<char> = stem.chars().collect();
+    chars
+        .iter()
+        .enumerate()
+        .map(|(at, &c)| {
+            let window = chars.iter().skip(at).take(SHAREPOINT_MARK.len());
+            if window.map(|&next| fold_char(next)).eq(SHAREPOINT_MARK) {
+                '-'
+            } else {
+                c
+            }
+        })
+        .collect()
 }
 
 pub fn is_reserved(stem: &str) -> bool {
