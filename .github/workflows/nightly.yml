@@ -375,9 +375,10 @@ jobs:
         shell: bash
         env:
           CRATE: ${{ matrix.crate }}
+          NEXTEST_TEST_THREADS: 2
         run: |
           status=0
-          cargo mutants -p "$CRATE" --test-tool nextest || status=$?
+          cargo mutants -p "$CRATE" --test-tool nextest --jobs 2 || status=$?
           case "$status" in 0|2|3) ;; *) exit "$status" ;; esac
           cargo xtask mutation-floor "$CRATE" mutants.out/outcomes.json
       - name: Upload mutants-${{ matrix.crate }}
