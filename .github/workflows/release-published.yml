@@ -19,7 +19,7 @@ jobs:
       contents: read  # check out the repository
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: block
           allowed-endpoints: api.github.com:443 github.com:443 codeload.github.com:443 raw.githubusercontent.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443 static.crates.io:443 index.crates.io:443 crates.io:443 static.rust-lang.org:443 registry.npmjs.org:443 nodejs.org:443 moonrepo.dev:443 registry.moonrepo.app:443 ghcr.io:443 pkg-containers.githubusercontent.com:443 tuf-repo-cdn.sigstore.dev:443 tuf-repo.github.com:443 tmaproduction.blob.core.windows.net:443
@@ -54,7 +54,7 @@ jobs:
       contents: read  # check out the repository
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: block
           allowed-endpoints: api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 objects.githubusercontent.com:443
